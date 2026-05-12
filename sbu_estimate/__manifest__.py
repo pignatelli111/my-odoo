@@ -1,0 +1,40 @@
+{
+    'name': 'SBU Estimate',
+    'version': '19.0.1.0.0',
+    'summary': 'Custom estimating engine for Suburban SRL (ANACO → Odoo)',
+    'description': '''
+        Translates the ANACO Excel estimating tool into Odoo.
+        - Estimate header with versioning (REV00, REV01...)
+        - Line items with B×H→sqm automatic calculation
+        - BOM per item with calc types: lump_sum, per_piece, linear, surface, pack
+        - Cost and price columns matching ANACO structure
+        - SAL contractual items
+        - Wizard: Won → Project creation
+    ''',
+    'author': 'SBU Development',
+    'category': 'Sales/Estimation',
+    'depends': [
+        'base',
+        'sale_management',
+        'crm',
+        'project',
+        'mrp',
+        'purchase',
+        'account',
+    ],
+    'data': [
+        'security/ir.model.access.csv',
+        'data/sbu_estimate_sequence.xml',
+        'data/sbu_uom_data.xml',
+        'views/sbu_estimate_views.xml',
+        'views/sbu_estimate_line_views.xml',
+        'views/sbu_estimate_bom_views.xml',
+        'views/sbu_estimate_menu.xml',
+        'wizards/sbu_estimate_to_project_wizard_views.xml',
+        'report/sbu_estimate_report.xml',
+        'report/sbu_estimate_report_template.xml',
+    ],
+    'installable': True,
+    'application': True,
+    'license': 'LGPL-3',
+}

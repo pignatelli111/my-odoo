@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ── List view ──────────────────────────────────────────────────────── -->
+    <record id="view_sbu_estimate_list" model="ir.ui.view">
+        <field name="name">sbu.estimate.list</field>
+        <field name="model">sbu.estimate</field>
+        <field name="arch" type="xml">
+            <list string="Preventivi" decoration-success="state == 'won'"
+                  decoration-danger="state == 'lost'"
+                  decoration-muted="state == 'cancelled'">
+                <field name="name"/>
+                <field name="revision"/>
+                <field name="date"/>
+                <field name="partner_id"/>
+                <field name="job_site"/>
+                <field name="total_sqm" sum="Totale MQ"/>
+                <field name="total_price" sum="Totale Prezzo" widget="monetary"/>
+                <field name="total_cost" sum="Totale Costo" widget="monetary"/>
+                <field name="expected_margin_pct" string="MOL %"/>
+                <field name="probability" string="Prob. %"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'won'"
+                       decoration-danger="state == 'lost'"
+                       decoration-info="state == 'sent'"
+                       decoration-warning="state == 'draft'"/>
+                <field name="currency_id" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ── Form view ──────────────────────────────────────────────────────── -->
+    <record id="view_sbu_estimate_form" model="ir.ui.view">
+        <field name="name">sbu.estimate.form</field>
+        <field name="model">sbu.estimate</field>
+        <field name="arch" type="xml">
+            <form string="Preventivo">
+                <header>
+                    <button name="action_send" string="Invia" type="object"
+                            class="btn-primary"
+                            invisible="state != 'draft'"/>
+                    <button name="action_won" string="Vinto ✓" type="object"
+                            class="btn-success"
+                            invisible="state not in ('draft','sent')"/>
+                    <button name="action_lost" string="Perso" type="object"
+                            invisible="state not in ('draft','sent')"/>
+                    <button name="action_new_revision" string="Nuova Revisione"
+                            type="object"
+                            invisible="state == 'cancelled'"/>
+                    <button name="action_reset_draft" string="Riporta in Bozza"
+                            type="object"
+                            invisible="state not in ('sent','lost')"/>
+                    <button name="action_view_project" string="Vedi Commessa"
+                            type="object" class="btn-info"
+                            invisible="not project_id"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,sent,won"/>
+                </header>
+
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_project" type="object"
+                                class="oe_stat_button" icon="fa-briefcase"
+                                invisible="not project_id">
+                            <field name="project_count" widget="statinfo"
+                                   string="Commessa"/>
+                        </button>
+                    </div>
+
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                            <span class="text-muted"> — </span>
+                            <field name="revision"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group string="Intestazione">
+                            <field name="partner_id"/>
+                            <field name="opportunity_id"/>
+                            <field name="job_site"/>
+                            <field name="user_id"/>
+                        </group>
+                        <group string="Date e Commerciale">
+                            <field name="date"/>
+                            <field name="validity_date"/>
+                            <field name="validity_days"/>
+                            <field name="probability" widget="percentage"/>
+                        </group>
+                    </group>
+
+                    <!-- Totals summary bar -->
+                    <group string="Riepilogo Economico">
+                        <group>
+                            <field name="total_sqm"/>
+                            <field name="total_price" widget="monetary"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="total_cost" widget="monetary"/>
+                            <field name="margin_amount" widget="monetary"/>
+                            <field name="expected_margin_pct" string="MOL %"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <!-- Tab 1: ANACO lines -->
+                        <page string="Righe Preventivo (ANACO)" name="anaco_lines">
+                            <field name="line_ids" widget="one2many"
+                                   context="{'default_estimate_id': id}">
+                                <list editable="bottom" optional="show">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="pos"/>
+                                    <field name="description"/>
+                                    <field name="qty"/>
+                                    <field name="width_mm" string="B (mm)"/>
+                                    <field name="height_mm" string="H (mm)"/>
+                                    <field name="sqm" string="Mq" readonly="1"/>
+                                    <field name="price_serramento_cad" optional="show"/>
+                                    <field name="price_vetro_cad" optional="show"/>
+                                    <field name="price_total_cad" string="Prezzo CAD" readonly="1"/>
+                                    <field name="price_total_tot" string="Prezzo TOT" readonly="1" sum="Totale Prezzo"/>
+                                    <field name="cost_total_tot" string="Costo TOT" readonly="1" sum="Totale Costo"/>
+                                    <field name="expected_margin_pct" string="MOL %" readonly="1" optional="show"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- Tab 2: Voci Contrattuali SAL -->
+                        <page string="Voci Contrattuali SAL" name="sal_lines">
+                            <field name="sal_line_ids" widget="one2many">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="item_ref"/>
+                                    <field name="description"/>
+                                    <field name="uom_type"/>
+                                    <field name="qty_contract"/>
+                                    <field name="unit_price"/>
+                                    <field name="total_contract" readonly="1" sum="Totale Contratto"/>
+                                    <field name="sal_1_pct" string="SAL-1%"/>
+                                    <field name="sal_2_pct" string="SAL-2%"/>
+                                    <field name="sal_3_pct" string="SAL-3%"/>
+                                    <field name="cumulative_pct" string="Cum.%" readonly="1"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- Tab 3: Conditions -->
+                        <page string="Condizioni di Fornitura" name="conditions">
+                            <group>
+                                <group string="Condizioni Commerciali">
+                                    <field name="delivery_terms"/>
+                                    <field name="delivery_timing"/>
+                                    <field name="payment_terms_text"/>
+                                </group>
+                                <group string="Validità e Note">
+                                    <field name="validity_days"/>
+                                    <field name="inclusions"/>
+                                    <field name="exclusions"/>
+                                </group>
+                            </group>
+                            <group string="Specifiche Particolari">
+                                <field name="special_notes" nolabel="1"/>
+                            </group>
+                        </page>
+
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ── Search view ────────────────────────────────────────────────────── -->
+    <record id="view_sbu_estimate_search" model="ir.ui.view">
+        <field name="name">sbu.estimate.search</field>
+        <field name="model">sbu.estimate</field>
+        <field name="arch" type="xml">
+            <search string="Cerca Preventivi">
+                <field name="name" string="Preventivo"/>
+                <field name="partner_id" string="Cliente"/>
+                <field name="job_site" string="Cantiere"/>
+                <separator/>
+                <filter string="Bozza" name="draft" domain="[('state','=','draft')]"/>
+                <filter string="Inviato" name="sent" domain="[('state','=','sent')]"/>
+                <filter string="Vinto" name="won" domain="[('state','=','won')]"/>
+                <filter string="Perso" name="lost" domain="[('state','=','lost')]"/>
+                <separator/>
+                <filter string="Miei Preventivi" name="my_estimates"
+                        domain="[('user_id','=',uid)]"/>
+                <group expand="0" string="Raggruppa per">
+                    <filter string="Cliente" name="group_partner"
+                            context="{'group_by': 'partner_id'}"/>
+                    <filter string="Stato" name="group_state"
+                            context="{'group_by': 'state'}"/>
+                    <filter string="Mese" name="group_month"
+                            context="{'group_by': 'date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ── Action ─────────────────────────────────────────────────────────── -->
+    <record id="action_sbu_estimate" model="ir.actions.act_window">
+        <field name="name">Preventivi</field>
+        <field name="res_model">sbu.estimate</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_sbu_estimate_search"/>
+        <field name="context">{'search_default_my_estimates': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Crea il tuo primo preventivo
+            </p>
+            <p>
+                Inserisci le dimensioni B e H per ogni item e il sistema
+                calcola automaticamente mq, quantità e costi.
+            </p>
+        </field>
+    </record>
+
+</odoo>

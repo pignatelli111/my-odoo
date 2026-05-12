@@ -1,0 +1,10 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_sbu_estimate_user,sbu.estimate user,model_sbu_estimate,base.group_user,1,1,1,0
+access_sbu_estimate_manager,sbu.estimate manager,model_sbu_estimate,base.group_system,1,1,1,1
+access_sbu_estimate_line_user,sbu.estimate.line user,model_sbu_estimate_line,base.group_user,1,1,1,0
+access_sbu_estimate_line_manager,sbu.estimate.line manager,model_sbu_estimate_line,base.group_system,1,1,1,1
+access_sbu_estimate_bom_line_user,sbu.estimate.bom.line user,model_sbu_estimate_bom_line,base.group_user,1,1,1,0
+access_sbu_estimate_bom_line_manager,sbu.estimate.bom.line manager,model_sbu_estimate_bom_line,base.group_system,1,1,1,1
+access_sbu_estimate_sal_line_user,sbu.estimate.sal.line user,model_sbu_estimate_sal_line,base.group_user,1,1,1,0
+access_sbu_estimate_sal_line_manager,sbu.estimate.sal.line manager,model_sbu_estimate_sal_line,base.group_system,1,1,1,1
+access_sbu_estimate_to_project_wizard,sbu.estimate.to.project.wizard,model_sbu_estimate_to_project_wizard,base.group_user,1,1,1,1

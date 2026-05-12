@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- UoM Category: SBU Construction -->
+        <record id="uom_categ_sbu" model="uom.category">
+            <field name="name">SBU Costruzione</field>
+        </record>
+
+        <!-- mm — millimetri -->
+        <record id="uom_mm" model="uom.uom">
+            <field name="name">mm</field>
+            <field name="category_id" ref="uom_categ_sbu"/>
+            <field name="factor">1000</field>
+            <field name="uom_type">smaller</field>
+            <field name="rounding">1.0</field>
+        </record>
+
+        <!-- m — metri -->
+        <record id="uom_m" model="uom.uom">
+            <field name="name">m</field>
+            <field name="category_id" ref="uom_categ_sbu"/>
+            <field name="factor">1</field>
+            <field name="uom_type">reference</field>
+            <field name="rounding">0.001</field>
+        </record>
+
+        <!-- mq — metri quadri -->
+        <record id="uom_mq" model="uom.uom">
+            <field name="name">mq</field>
+            <field name="category_id" ref="uom_categ_sbu"/>
+            <field name="factor">1</field>
+            <field name="uom_type">bigger</field>
+            <field name="rounding">0.001</field>
+        </record>
+
+        <!-- ml — metri lineari -->
+        <record id="uom_ml" model="uom.uom">
+            <field name="name">ml</field>
+            <field name="category_id" ref="uom_categ_sbu"/>
+            <field name="factor">1</field>
+            <field name="uom_type">reference</field>
+            <field name="rounding">0.001</field>
+        </record>
+
+        <!-- rot — rotolo -->
+        <record id="uom_rot" model="uom.uom">
+            <field name="name">rot</field>
+            <field name="category_id" ref="uom_categ_sbu"/>
+            <field name="factor">1</field>
+            <field name="uom_type">bigger</field>
+            <field name="rounding">1.0</field>
+        </record>
+
+    </data>
+</odoo>

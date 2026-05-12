@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Root menu -->
+    <menuitem id="menu_sbu_root"
+              name="SBU"
+              sequence="1"
+              web_icon="sbu_estimate,static/description/icon.png"/>
+
+    <!-- Estimate menu -->
+    <menuitem id="menu_sbu_estimate_root"
+              name="Preventivi"
+              parent="menu_sbu_root"
+              sequence="10"/>
+
+    <menuitem id="menu_sbu_estimate_list"
+              name="Tutti i Preventivi"
+              parent="menu_sbu_estimate_root"
+              action="action_sbu_estimate"
+              sequence="10"/>
+
+</odoo>
