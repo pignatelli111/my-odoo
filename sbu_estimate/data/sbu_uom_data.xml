@@ -2,53 +2,54 @@
 <odoo>
     <data noupdate="1">
 
-        <!-- UoM Category: SBU Construction -->
-        <record id="uom_categ_sbu" model="uom.category">
-            <field name="name">SBU Costruzione</field>
+        <!-- UoM Category: SBU Construction (length/linear) -->
+        <record id="uom_categ_sbu_length" model="uom.category">
+            <field name="name">SBU Lunghezza</field>
         </record>
 
         <!-- mm — millimetri -->
         <record id="uom_mm" model="uom.uom">
             <field name="name">mm</field>
-            <field name="category_id" ref="uom_categ_sbu"/>
-            <field name="factor">1000</field>
+            <field name="category_id" ref="uom_categ_sbu_length"/>
+            <field name="factor">1000.0</field>
             <field name="uom_type">smaller</field>
             <field name="rounding">1.0</field>
         </record>
 
-        <!-- m — metri -->
-        <record id="uom_m" model="uom.uom">
-            <field name="name">m</field>
-            <field name="category_id" ref="uom_categ_sbu"/>
-            <field name="factor">1</field>
+        <!-- m — metri (reference) -->
+        <record id="uom_m_sbu" model="uom.uom">
+            <field name="name">m (SBU)</field>
+            <field name="category_id" ref="uom_categ_sbu_length"/>
+            <field name="factor">1.0</field>
             <field name="uom_type">reference</field>
             <field name="rounding">0.001</field>
+        </record>
+
+        <!-- UoM Category: SBU Area -->
+        <record id="uom_categ_sbu_area" model="uom.category">
+            <field name="name">SBU Area</field>
         </record>
 
         <!-- mq — metri quadri -->
         <record id="uom_mq" model="uom.uom">
             <field name="name">mq</field>
-            <field name="category_id" ref="uom_categ_sbu"/>
-            <field name="factor">1</field>
-            <field name="uom_type">bigger</field>
+            <field name="category_id" ref="uom_categ_sbu_area"/>
+            <field name="factor">1.0</field>
+            <field name="uom_type">reference</field>
             <field name="rounding">0.001</field>
         </record>
 
-        <!-- ml — metri lineari -->
-        <record id="uom_ml" model="uom.uom">
-            <field name="name">ml</field>
-            <field name="category_id" ref="uom_categ_sbu"/>
-            <field name="factor">1</field>
-            <field name="uom_type">reference</field>
-            <field name="rounding">0.001</field>
+        <!-- UoM Category: SBU Misc -->
+        <record id="uom_categ_sbu_misc" model="uom.category">
+            <field name="name">SBU Varie</field>
         </record>
 
         <!-- rot — rotolo -->
         <record id="uom_rot" model="uom.uom">
             <field name="name">rot</field>
-            <field name="category_id" ref="uom_categ_sbu"/>
-            <field name="factor">1</field>
-            <field name="uom_type">bigger</field>
+            <field name="category_id" ref="uom_categ_sbu_misc"/>
+            <field name="factor">1.0</field>
+            <field name="uom_type">reference</field>
             <field name="rounding">1.0</field>
         </record>
 

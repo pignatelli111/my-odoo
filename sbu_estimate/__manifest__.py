@@ -21,6 +21,7 @@
         'mrp',
         'purchase',
         'account',
+        'uom',
     ],
     'data': [
         'security/ir.model.access.csv',
@@ -31,8 +32,6 @@
         'views/sbu_estimate_bom_views.xml',
         'views/sbu_estimate_menu.xml',
         'wizards/sbu_estimate_to_project_wizard_views.xml',
-        'report/sbu_estimate_report.xml',
-        'report/sbu_estimate_report_template.xml',
     ],
     'installable': True,
     'application': True,
