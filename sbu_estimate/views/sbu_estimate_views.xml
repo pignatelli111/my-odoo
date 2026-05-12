@@ -62,8 +62,9 @@
                         <button name="action_view_project" type="object"
                                 class="oe_stat_button" icon="fa-briefcase"
                                 invisible="not project_id">
-                            <field name="project_count" widget="statinfo"
-                                   string="Commessa"/>
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">Commessa</span>
+                            </div>
                         </button>
                     </div>
 
@@ -107,8 +108,7 @@
                     <notebook>
                         <!-- Tab 1: ANACO lines -->
                         <page string="Righe Preventivo (ANACO)" name="anaco_lines">
-                            <field name="line_ids" widget="one2many"
-                                   context="{'default_estimate_id': id}">
+                            <field name="line_ids" context="{'default_estimate_id': id}">
                                 <list editable="bottom" optional="show">
                                     <field name="sequence" widget="handle"/>
                                     <field name="pos"/>
@@ -120,16 +120,15 @@
                                     <field name="price_serramento_cad" optional="show"/>
                                     <field name="price_vetro_cad" optional="show"/>
                                     <field name="price_total_cad" string="Prezzo CAD" readonly="1"/>
-                                    <field name="price_total_tot" string="Prezzo TOT" readonly="1" sum="Totale Prezzo"/>
-                                    <field name="cost_total_tot" string="Costo TOT" readonly="1" sum="Totale Costo"/>
-                                    <field name="expected_margin_pct" string="MOL %" readonly="1" optional="show"/>
+                                    <field name="price_total_tot" string="Prezzo TOT" readonly="1"/>
+                                    <field name="cost_total_tot" string="Costo TOT" readonly="1"/>
                                 </list>
                             </field>
                         </page>
 
                         <!-- Tab 2: Voci Contrattuali SAL -->
                         <page string="Voci Contrattuali SAL" name="sal_lines">
-                            <field name="sal_line_ids" widget="one2many">
+                            <field name="sal_line_ids">
                                 <list editable="bottom">
                                     <field name="sequence" widget="handle"/>
                                     <field name="item_ref"/>
@@ -137,7 +136,7 @@
                                     <field name="uom_type"/>
                                     <field name="qty_contract"/>
                                     <field name="unit_price"/>
-                                    <field name="total_contract" readonly="1" sum="Totale Contratto"/>
+                                    <field name="total_contract" readonly="1"/>
                                     <field name="sal_1_pct" string="SAL-1%"/>
                                     <field name="sal_2_pct" string="SAL-2%"/>
                                     <field name="sal_3_pct" string="SAL-3%"/>
