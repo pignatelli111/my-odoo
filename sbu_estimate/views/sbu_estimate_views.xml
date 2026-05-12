@@ -6,7 +6,8 @@
         <field name="name">sbu.estimate.list</field>
         <field name="model">sbu.estimate</field>
         <field name="arch" type="xml">
-            <list string="Preventivi" decoration-success="state == 'won'"
+            <list string="Preventivi"
+                  decoration-success="state == 'won'"
                   decoration-danger="state == 'lost'"
                   decoration-muted="state == 'cancelled'">
                 <field name="name"/>
@@ -14,11 +15,11 @@
                 <field name="date"/>
                 <field name="partner_id"/>
                 <field name="job_site"/>
-                <field name="total_sqm" sum="Totale MQ"/>
-                <field name="total_price" sum="Totale Prezzo" widget="monetary"/>
-                <field name="total_cost" sum="Totale Costo" widget="monetary"/>
-                <field name="expected_margin_pct" string="MOL %"/>
-                <field name="probability" string="Prob. %"/>
+                <field name="total_sqm"/>
+                <field name="total_price" widget="monetary"/>
+                <field name="total_cost" widget="monetary"/>
+                <field name="expected_margin_pct"/>
+                <field name="probability"/>
                 <field name="state" widget="badge"
                        decoration-success="state == 'won'"
                        decoration-danger="state == 'lost'"
@@ -36,42 +37,43 @@
         <field name="arch" type="xml">
             <form string="Preventivo">
                 <header>
-                    <button name="action_send" string="Invia" type="object"
+                    <button name="action_send"
+                            string="Invia"
+                            type="object"
                             class="btn-primary"
                             invisible="state != 'draft'"/>
-                    <button name="action_won" string="Vinto ✓" type="object"
+                    <button name="action_won"
+                            string="Vinto"
+                            type="object"
                             class="btn-success"
                             invisible="state not in ('draft','sent')"/>
-                    <button name="action_lost" string="Perso" type="object"
+                    <button name="action_lost"
+                            string="Perso"
+                            type="object"
                             invisible="state not in ('draft','sent')"/>
-                    <button name="action_new_revision" string="Nuova Revisione"
+                    <button name="action_new_revision"
+                            string="Nuova Revisione"
                             type="object"
                             invisible="state == 'cancelled'"/>
-                    <button name="action_reset_draft" string="Riporta in Bozza"
+                    <button name="action_reset_draft"
+                            string="Riporta in Bozza"
                             type="object"
                             invisible="state not in ('sent','lost')"/>
-                    <button name="action_view_project" string="Vedi Commessa"
-                            type="object" class="btn-info"
+                    <button name="action_view_project"
+                            string="Vedi Commessa"
+                            type="object"
+                            class="btn-info"
                             invisible="not project_id"/>
-                    <field name="state" widget="statusbar"
+                    <field name="state"
+                           widget="statusbar"
                            statusbar_visible="draft,sent,won"/>
                 </header>
 
                 <sheet>
-                    <div class="oe_button_box" name="button_box">
-                        <button name="action_view_project" type="object"
-                                class="oe_stat_button" icon="fa-briefcase"
-                                invisible="not project_id">
-                            <div class="o_stat_info">
-                                <span class="o_stat_text">Commessa</span>
-                            </div>
-                        </button>
-                    </div>
-
                     <div class="oe_title">
                         <h1>
                             <field name="name" readonly="1"/>
-                            <span class="text-muted"> — </span>
+                            <span> — </span>
                             <field name="revision"/>
                         </h1>
                     </div>
@@ -87,11 +89,10 @@
                             <field name="date"/>
                             <field name="validity_date"/>
                             <field name="validity_days"/>
-                            <field name="probability" widget="percentage"/>
+                            <field name="probability"/>
                         </group>
                     </group>
 
-                    <!-- Totals summary bar -->
                     <group string="Riepilogo Economico">
                         <group>
                             <field name="total_sqm"/>
@@ -101,15 +102,15 @@
                         <group>
                             <field name="total_cost" widget="monetary"/>
                             <field name="margin_amount" widget="monetary"/>
-                            <field name="expected_margin_pct" string="MOL %"/>
+                            <field name="expected_margin_pct"/>
                         </group>
                     </group>
 
                     <notebook>
-                        <!-- Tab 1: ANACO lines -->
                         <page string="Righe Preventivo (ANACO)" name="anaco_lines">
-                            <field name="line_ids" context="{'default_estimate_id': id}">
-                                <list editable="bottom" optional="show">
+                            <field name="line_ids"
+                                   context="{'default_estimate_id': id}">
+                                <list editable="bottom">
                                     <field name="sequence" widget="handle"/>
                                     <field name="pos"/>
                                     <field name="description"/>
@@ -117,8 +118,8 @@
                                     <field name="width_mm" string="B (mm)"/>
                                     <field name="height_mm" string="H (mm)"/>
                                     <field name="sqm" string="Mq" readonly="1"/>
-                                    <field name="price_serramento_cad" optional="show"/>
-                                    <field name="price_vetro_cad" optional="show"/>
+                                    <field name="price_serramento_cad"/>
+                                    <field name="price_vetro_cad"/>
                                     <field name="price_total_cad" string="Prezzo CAD" readonly="1"/>
                                     <field name="price_total_tot" string="Prezzo TOT" readonly="1"/>
                                     <field name="cost_total_tot" string="Costo TOT" readonly="1"/>
@@ -126,7 +127,6 @@
                             </field>
                         </page>
 
-                        <!-- Tab 2: Voci Contrattuali SAL -->
                         <page string="Voci Contrattuali SAL" name="sal_lines">
                             <field name="sal_line_ids">
                                 <list editable="bottom">
@@ -145,7 +145,6 @@
                             </field>
                         </page>
 
-                        <!-- Tab 3: Conditions -->
                         <page string="Condizioni di Fornitura" name="conditions">
                             <group>
                                 <group string="Condizioni Commerciali">
@@ -153,7 +152,7 @@
                                     <field name="delivery_timing"/>
                                     <field name="payment_terms_text"/>
                                 </group>
-                                <group string="Validità e Note">
+                                <group string="Validita e Note">
                                     <field name="validity_days"/>
                                     <field name="inclusions"/>
                                     <field name="exclusions"/>
@@ -180,20 +179,30 @@
                 <field name="name" string="Preventivo"/>
                 <field name="partner_id" string="Cliente"/>
                 <field name="job_site" string="Cantiere"/>
-                <separator/>
-                <filter string="Bozza" name="draft" domain="[('state','=','draft')]"/>
-                <filter string="Inviato" name="sent" domain="[('state','=','sent')]"/>
-                <filter string="Vinto" name="won" domain="[('state','=','won')]"/>
-                <filter string="Perso" name="lost" domain="[('state','=','lost')]"/>
-                <separator/>
-                <filter string="Miei Preventivi" name="my_estimates"
+                <filter name="draft"
+                        string="Bozza"
+                        domain="[('state','=','draft')]"/>
+                <filter name="sent"
+                        string="Inviato"
+                        domain="[('state','=','sent')]"/>
+                <filter name="won"
+                        string="Vinto"
+                        domain="[('state','=','won')]"/>
+                <filter name="lost"
+                        string="Perso"
+                        domain="[('state','=','lost')]"/>
+                <filter name="my_estimates"
+                        string="Miei Preventivi"
                         domain="[('user_id','=',uid)]"/>
                 <group expand="0" string="Raggruppa per">
-                    <filter string="Cliente" name="group_partner"
+                    <filter name="group_partner"
+                            string="Cliente"
                             context="{'group_by': 'partner_id'}"/>
-                    <filter string="Stato" name="group_state"
+                    <filter name="group_state"
+                            string="Stato"
                             context="{'group_by': 'state'}"/>
-                    <filter string="Mese" name="group_month"
+                    <filter name="group_month"
+                            string="Mese"
                             context="{'group_by': 'date:month'}"/>
                 </group>
             </search>
@@ -213,7 +222,7 @@
             </p>
             <p>
                 Inserisci le dimensioni B e H per ogni item e il sistema
-                calcola automaticamente mq, quantità e costi.
+                calcola automaticamente mq, quantita e costi.
             </p>
         </field>
     </record>
