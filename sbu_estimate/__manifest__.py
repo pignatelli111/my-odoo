@@ -33,7 +33,6 @@
         'views/sbu_estimate_menu.xml',
         'wizards/sbu_estimate_to_project_wizard_views.xml',
     ],
-    'post_init_hook': 'post_init_hook',
     'installable': True,
     'application': True,
     'license': 'LGPL-3',
