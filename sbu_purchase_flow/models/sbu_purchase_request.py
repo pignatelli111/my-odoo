@@ -104,6 +104,13 @@ class SbuPurchaseRequest(models.Model):
         tracking=True,
         help='Applied to captured unit prices in «Evaluated price» for comparison (+4%% buffer).',
     )
+    comparison_margin_buffer_pct = fields.Float(
+        string='Comparison margin buffer %',
+        default=3.0,
+        digits=(16, 2),
+        tracking=True,
+        help='Added to «Margin impact (pp)» for side-by-side comparison (+3%% typical buffer).',
+    )
     offer_ids = fields.One2many(
         'sbu.purchase.request.offer',
         'request_id',
@@ -303,6 +310,25 @@ class SbuPurchaseRequest(models.Model):
             'target': 'current',
         }
 
+    def action_open_offer_comparison_matrix(self):
+        """Pivot/list on supplier offers (matrix: line × vendor, measures)."""
+        self.ensure_one()
+        pivot_id = self.env.ref('sbu_purchase_flow.view_sbu_purchase_request_offer_pivot').id
+        list_id = self.env.ref('sbu_purchase_flow.view_sbu_purchase_request_offer_list_matrix').id
+        search_id = self.env.ref('sbu_purchase_flow.view_sbu_purchase_request_offer_search').id
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Supplier comparison'),
+            'res_model': 'sbu.purchase.request.offer',
+            'view_mode': 'pivot,list',
+            'views': [(pivot_id, 'pivot'), (list_id, 'list')],
+            'search_view_id': search_id,
+            'domain': [('request_id', '=', self.id)],
+            'context': {
+                'default_request_id': self.id,
+            },
+        }
+
     def _load_lines_from_estimate_bom(self, clear=False):
         self.ensure_one()
         estimate = self.estimate_id
@@ -346,6 +372,19 @@ class SbuPurchaseRequest(models.Model):
             'target': 'current',
         }
 
+    def _sbu_offer_for_po_line(self, partner, pr_line):
+        """Prefer chosen offer for this vendor & line, else any offer from that vendor."""
+        self.ensure_one()
+        Offer = self.env['sbu.purchase.request.offer']
+        base = [
+            ('request_line_id', '=', pr_line.id),
+            ('vendor_id', '=', partner.id),
+        ]
+        chosen = Offer.search(base + [('is_chosen', '=', True)], limit=1)
+        if chosen:
+            return chosen
+        return Offer.search(base, limit=1)
+
     def _sbu_create_rfq_po_lines(self, po, pr_lines):
         """Append purchase.order.line rows from PR lines onto ``po``."""
         Pol = self.env['purchase.order.line']
@@ -364,14 +403,21 @@ class SbuPurchaseRequest(models.Model):
             planned = fields.Datetime.now()
             if line.date_required:
                 planned = fields.Datetime.to_datetime(line.date_required)
-            Pol.create({
+            offer = self._sbu_offer_for_po_line(po.partner_id, line)
+            pol_vals = {
                 'order_id': po.id,
                 'product_id': line.product_id.id,
                 'product_qty': line.product_qty,
                 'product_uom_id': line.product_uom.id,
                 'name': prefix + desc,
                 'date_planned': planned,
-            })
+                'sbu_pr_line_id': line.id,
+            }
+            if offer:
+                pol_vals['sbu_offer_id'] = offer.id
+                if offer.unit_price:
+                    pol_vals['price_unit'] = offer.unit_price
+            Pol.create(pol_vals)
 
     def action_create_rfq(self):
         """Create one draft purchase.order per RFQ vendor (multi-vendor RFQ)."""
@@ -399,6 +445,7 @@ class SbuPurchaseRequest(models.Model):
                 'partner_id': vendor.id,
                 'origin': _('%s — %s') % (self.name, vendor.name),
                 'company_id': self.company_id.id,
+                'sbu_purchase_request_id': self.id,
             })
             self._sbu_create_rfq_po_lines(po, self.line_ids)
             created |= po

@@ -1,7 +1,7 @@
 {
     'name': 'SBU Purchase Flow',
-    'version': '19.0.1.0.11',
-    'summary': 'RDA/ACP/ACO/LDS purchase requests; multi-vendor RFQ, supplier offers per line, comparison markup (3.4)',
+    'version': '19.0.1.0.12',
+    'summary': 'RDA/ACP/ACO/LDS purchase requests; supplier comparison matrix, chosen offer → PO trace (3.5)',
     'author': 'SBU Development',
     'category': 'Purchase',
     'depends': [
@@ -16,6 +16,8 @@
         'security/ir.model.access.csv',
         'data/sbu_purchase_request_sequence.xml',
         'views/sbu_purchase_request_views.xml',
+        'views/sbu_purchase_request_offer_views.xml',
+        'views/purchase_order_views.xml',
         'views/project_project_views.xml',
         'views/menu.xml',
     ],

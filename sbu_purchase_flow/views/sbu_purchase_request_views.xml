@@ -52,6 +52,7 @@
                             class="btn-secondary"
                             invisible="state == 'cancelled'"/>
                     <button name="action_create_rfq" string="Create draft RFQ(s)" type="object" class="btn-secondary" invisible="state == 'cancelled'"/>
+                    <button name="action_open_offer_comparison_matrix" string="Comparison matrix" type="object" class="btn-secondary" invisible="state == 'cancelled'"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,submitted,approved,done,cancelled"/>
                 </header>
                 <sheet>
@@ -76,6 +77,7 @@
                                    readonly="state in ('done','cancelled')"
                                    placeholder="Add suppliers for multi-vendor RFQ…"/>
                             <field name="offer_comparison_markup_pct" readonly="state in ('done','cancelled')"/>
+                            <field name="comparison_margin_buffer_pct" readonly="state in ('done','cancelled')"/>
                             <field name="excel_item"/>
                             <field name="topic"/>
                         </group>
@@ -135,19 +137,27 @@
                                            domain="[('request_id', '=', parent.id)]"
                                            options="{'no_create': True}"/>
                                     <field name="vendor_id"/>
+                                    <field name="is_chosen" widget="boolean_toggle" optional="show"/>
                                     <field name="name" optional="show"/>
                                     <field name="unit_price"/>
                                     <field name="currency_id" optional="hide"/>
                                     <field name="price_evaluated" optional="show"/>
+                                    <field name="lead_time_days" optional="show"/>
+                                    <field name="moq" optional="show"/>
+                                    <field name="offer_uom_id" optional="show"/>
+                                    <field name="payment_delivery_terms" optional="hide"/>
+                                    <field name="technical_fit_score" optional="show"/>
+                                    <field name="margin_impact_pct" optional="show"/>
+                                    <field name="margin_impact_evaluated" optional="show"/>
                                     <field name="offer_date" optional="show"/>
-                                    <field name="lead_time_days" optional="hide"/>
                                     <field name="notes" optional="hide"/>
                                     <field name="attachment_ids" widget="many2many_binary" optional="show"/>
                                 </list>
                             </field>
                             <div class="text-muted">
-                                Capture several quotes per line; attach PDF/Excel from the supplier.
-                                «Evaluated price» applies the request «Offer comparison markup %» to the unit price.
+                                Capture several quotes per line; use «Chosen for PO» (one per line) to trace the selected quote on generated RFQs.
+                                «Evaluated price» / «Margin impact (comparison)» use the request comparison percentages.
+                                Open «Comparison matrix» for a pivot by line and vendor.
                             </div>
                         </page>
                         <page string="Attachments">
