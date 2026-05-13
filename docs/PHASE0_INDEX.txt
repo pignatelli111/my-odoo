@@ -1,0 +1,14 @@
+Phase 0 — index & push habit
+============================
+
+Workflow (agreed): whenever a **phase step** runbook is finished in the repo,
+**commit and push** so Odoo.sh / the team stays aligned with the same checklist.
+
+Runbooks:
+  docs/PHASE0_STEP0_1_environment_roles.txt   — Step 0.1
+  docs/PHASE0_STEP0_2_accounting_fiscal.txt  — Step 0.2
+  (0.3 Master data / core structures — add when started)
+  (0.4 — add when started)
+
+After you complete checks in Odoo (not only files): update sign-off in the runbook,
+commit with message like: `docs: Phase 0.2 accounting sign-off`

@@ -47,3 +47,6 @@ Date: ____________
 Verified by: ____________
 Staging DB name (duplicate): ____________
 Notes: _______________________________________________
+
+Next runbook: docs/PHASE0_STEP0_2_accounting_fiscal.txt (commit/push when 0.1 is done).
+See docs/PHASE0_INDEX.txt for phase index and push habit.
