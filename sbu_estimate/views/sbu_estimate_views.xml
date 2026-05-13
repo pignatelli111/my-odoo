@@ -190,6 +190,21 @@
                             </field>
                         </page>
 
+                        <page string="Allegati e riferimenti" name="estimate_references">
+                            <field name="reference_ids"
+                                   context="{'default_estimate_id': id}">
+                                <list string="Riferimenti" editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="ref_type"/>
+                                    <field name="name"/>
+                                    <field name="url" widget="url" optional="show"/>
+                                    <field name="document_file" filename="document_filename" optional="show"/>
+                                    <field name="document_filename" column_invisible="1"/>
+                                    <field name="note" optional="hide"/>
+                                </list>
+                            </field>
+                        </page>
+
                         <page string="Condizioni di Fornitura" name="conditions">
                             <group>
                                 <group string="Condizioni Commerciali">

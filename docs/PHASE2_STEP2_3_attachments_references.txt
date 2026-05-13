@@ -1,0 +1,51 @@
+Phase 2 — Step 2.3: Attachments & references
+============================================
+
+Goal: **Structured** references on the estimate — by type (client, technical,
+supplier quote) — as **files** (stored on the row) and/or **external links**,
+separate from generic chatter attachments.
+
+References:
+  - Model: `sbu_estimate/models/sbu_estimate_reference.py`
+  - Form tab: *Allegati e riferimenti* on `sbu.estimate`
+  - Project external links (different use case): `sbu_documents` → `sbu.external.document`
+
+A) Types (Odoo `ref_type`)
+--------------------------
+| Value | Use for |
+|-------|---------|
+| **Riferimento cliente** | Capitolati, email commerciale, scansioni incarico, varianti richieste dal cliente. |
+| **Riferimento tecnico** | DWG, estratti Logikal, schede tecniche, foto cantiere, vincoli strutturali. |
+| **Preventivo fornitore** | PDF/listini fornitori usati per costificare (tracciabilità in audit). |
+
+Each row needs **at least one** of: uploaded **File** or non-empty **Link (URL)**.
+
+B) Workflow
+-----------
+| Step | Action |
+|------|--------|
+| 1 | Open estimate → tab **Allegati e riferimenti**. |
+| 2 | Add line → choose **Tipo**, **Titolo** (obbligatorio), then file and/or URL. |
+| 3 | Optional **Note** for expiry date, fornitore name, versione disegno, ecc. |
+| 4 | **Nuova revisione** (Step 2.2) **copies** these rows so the new REV keeps the same evidence base (files duplicated in DB). |
+
+C) Relation to `sbu.external.document` (project)
+-------------------------------------------------
+* **Estimate references** (this step): evidence tied to **preventivo / revisione**.  
+* **External document** links on **project**: long-lived URLs (OneDrive, Logikal)
+  after job is opened — see `sbu_documents`.  
+Optional process: when estimate is **won**, re-register critical links on the
+project if they must live past the estimate record.
+
+D) Deliverable of Step 2.3
+--------------------------
+[ ] Estimators use the three types consistently (short internal guideline).
+[ ] Optional: restrict who can delete rows (today: same as estimate edit rights).
+
+E) Sign-off
+-----------
+Date: ____________
+Owner: ______________________________________________________________________
+Notes: ______________________________________________________________________
+
+Next: docs/PHASE2_STEP2_4_optional_excel_import.txt (when starting 2.4).

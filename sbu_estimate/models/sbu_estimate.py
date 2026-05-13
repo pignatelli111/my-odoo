@@ -181,6 +181,11 @@ class SbuEstimate(models.Model):
         'estimate_id',
         string='Voci Contrattuali SAL',
     )
+    reference_ids = fields.One2many(
+        'sbu.estimate.reference',
+        'estimate_id',
+        string='Allegati e riferimenti',
+    )
 
     # ── Totals (computed from lines) ──────────────────────────────────────────
     total_sqm = fields.Float(
