@@ -65,6 +65,8 @@
                                     <field name="calc_type"/>
                                     <field name="qty_formula_factor"/>
                                     <field name="pack_size"/>
+                                    <field name="demand_loss_pct" optional="show"/>
+                                    <field name="demand_moq" optional="show"/>
                                     <field name="qty_theoretical" readonly="1"/>
                                     <field name="qty_ordered" readonly="1"/>
                                     <field name="uom_id"/>

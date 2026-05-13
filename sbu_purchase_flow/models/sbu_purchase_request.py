@@ -1,4 +1,6 @@
-from odoo import models, fields, api, _
+import math
+
+from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
 
@@ -90,6 +92,13 @@ class SbuPurchaseRequest(models.Model):
         default='draft',
         tracking=True,
     )
+    demand_loss_pct = fields.Float(
+        string='Default demand loss %',
+        default=3.0,
+        digits=(16, 2),
+        tracking=True,
+        help='Wastage %% applied when exploding BOM to demand lines (used for BOM components with loss %% = 0).',
+    )
     user_id = fields.Many2one(
         'res.users',
         string='Responsible',
@@ -105,6 +114,47 @@ class SbuPurchaseRequest(models.Model):
         'purchase.order',
         string='Related RFQs / POs',
     )
+
+    def _sbu_loss_pct_for_bom_line(self, bom):
+        """Per-component loss overrides request default when > 0."""
+        self.ensure_one()
+        if bom.demand_loss_pct and bom.demand_loss_pct > 0:
+            return bom.demand_loss_pct
+        return self.demand_loss_pct or 0.0
+
+    def _sbu_supplier_moq(self, product):
+        """Minimum order qty from product supplierinfo (optional preferred vendor)."""
+        self.ensure_one()
+        if not product:
+            return 0.0
+        company = self.company_id
+        tmpl = product.product_tmpl_id
+        sellers = tmpl.seller_ids.filtered(
+            lambda s: (not s.company_id or s.company_id == company) and s.min_qty
+        )
+        if self.vendor_id:
+            sellers = sellers.filtered(lambda s: s.partner_id == self.vendor_id)
+        if not sellers:
+            return 0.0
+        return max(sellers.mapped('min_qty'))
+
+    def _sbu_demand_qty_from_bom(self, bom):
+        """BOM pack-rounded qty × (1 + loss%%), re-pack, then MOQ (BOM override or supplier)."""
+        self.ensure_one()
+        base = bom.qty_ordered
+        loss_pct = self._sbu_loss_pct_for_bom_line(bom)
+        qty = base * (1.0 + (loss_pct / 100.0))
+        pack = bom.pack_size or 0.0
+        if pack > 0:
+            qty = math.ceil(qty / pack) * pack
+        moq = bom.demand_moq or 0.0
+        if moq <= 0:
+            moq = self._sbu_supplier_moq(bom.product_id)
+        if moq > 0:
+            qty = max(qty, moq)
+            if pack > 0:
+                qty = math.ceil(qty / pack) * pack
+        return qty
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -169,7 +219,7 @@ class SbuPurchaseRequest(models.Model):
                     'bom_qty_sync': True,
                     'product_id': bom.product_id.id,
                     'product_uom': bom.uom_id.id,
-                    'product_qty': bom.qty_ordered,
+                    'product_qty': self._sbu_demand_qty_from_bom(bom),
                     'name': bom.description or bom.product_id.display_name,
                     'pos': pos,
                     'article_code': bom.product_id.default_code or '',
@@ -177,7 +227,7 @@ class SbuPurchaseRequest(models.Model):
                 })
                 created += 1
         self.message_post(
-            body=_('Loaded %(n)d purchase line(s) from estimate BOM.') % {'n': created}
+            body=_('Loaded %(n)d demand line(s) from estimate BOM (loss %%, packs, MOQ).') % {'n': created}
         )
         return {
             'type': 'ir.actions.act_window',

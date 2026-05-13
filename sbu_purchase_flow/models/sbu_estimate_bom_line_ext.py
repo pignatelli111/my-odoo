@@ -21,4 +21,4 @@ class SbuEstimateBomLine(models.Model):
         for bom in self:
             for pr_line in bom.purchase_request_line_ids:
                 if pr_line.bom_qty_sync and pr_line.source_bom_line_id == bom:
-                    pr_line.product_qty = bom.qty_ordered
+                    pr_line.product_qty = pr_line.request_id._sbu_demand_qty_from_bom(bom)

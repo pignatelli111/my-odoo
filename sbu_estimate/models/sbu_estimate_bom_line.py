@@ -75,6 +75,18 @@ class SbuEstimateBomLine(models.Model):
         digits=(16, 3),
         help='Quantità minima acquistabile (es. 6m per barra, 10pz per scatola)',
     )
+    demand_loss_pct = fields.Float(
+        string='Perdita demand %',
+        digits=(16, 2),
+        default=0.0,
+        help='Scarto applicato alla quantità distinta per generare la domanda (0 = usa %% della richiesta acquisto). Es. 3 = +3%%.',
+    )
+    demand_moq = fields.Float(
+        string='MOQ demand',
+        digits=(16, 3),
+        default=0.0,
+        help='Quantità minima d\'ordine per questa voce (0 = prova dal fornitore preferito sul prodotto).',
+    )
     qty_ordered = fields.Float(
         string='Quantità da Ordinare',
         compute='_compute_qty',

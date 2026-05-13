@@ -1,7 +1,7 @@
 {
     'name': 'SBU Purchase Flow',
-    'version': '19.0.1.0.5',
-    'summary': 'RDA/ACO/ACP/LDS purchase request flow; BOM-linked demand (Phase 3.1)',
+    'version': '19.0.1.0.7',
+    'summary': 'RDA/ACO/ACP/LDS purchase requests; BOM demand (3.2 loss/MOQ/packs) and RFQ',
     'author': 'SBU Development',
     'category': 'Purchase',
     'depends': [

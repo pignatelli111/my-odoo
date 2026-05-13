@@ -14,6 +14,14 @@
                         <span class="o_stat_text">Purchase req.</span>
                     </div>
                 </button>
+                <button name="action_sbu_create_demand_rda_from_estimate" type="object"
+                        class="oe_stat_button" icon="fa-cubes"
+                        invisible="not sbu_estimate_id or sbu_estimate_id.state != 'won'"
+                        title="Create an RDA and load demand lines from the won estimate BOM (loss %%, packs, MOQ).">
+                    <div class="o_stat_info">
+                        <span class="o_stat_text">Demand RDA</span>
+                    </div>
+                </button>
             </xpath>
         </field>
     </record>

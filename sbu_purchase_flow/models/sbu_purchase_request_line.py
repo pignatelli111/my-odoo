@@ -69,7 +69,12 @@ class SbuPurchaseRequestLine(models.Model):
     bom_qty_sync = fields.Boolean(
         string='Sync qty with BOM',
         default=True,
-        help='Se attivo, la quantità richiesta segue sbu.estimate.bom.line.qty_ordered.',
+        help='If set, quantity follows demand rules from the linked BOM line (loss %%, packs, MOQ).',
+    )
+    bom_qty_ordered_ref = fields.Float(
+        related='source_bom_line_id.qty_ordered',
+        string='BOM qty (pack)',
+        digits=(16, 3),
     )
 
     @api.onchange('product_id')
@@ -86,7 +91,7 @@ class SbuPurchaseRequestLine(models.Model):
                 continue
             line.product_id = bom.product_id
             line.product_uom = bom.uom_id
-            line.product_qty = bom.qty_ordered
+            line.product_qty = line.request_id._sbu_demand_qty_from_bom(bom)
             line.bom_qty_sync = True
             line.name = (bom.description or (bom.product_id.display_name if bom.product_id else '')) or line.name
             eline = bom.estimate_line_id
@@ -120,5 +125,5 @@ class SbuPurchaseRequestLine(models.Model):
 
     def action_refresh_qty_from_bom(self):
         for line in self:
-            if line.bom_qty_sync and line.source_bom_line_id:
-                line.product_qty = line.source_bom_line_id.qty_ordered
+            if line.bom_qty_sync and line.source_bom_line_id and line.request_id:
+                line.product_qty = line.request_id._sbu_demand_qty_from_bom(line.source_bom_line_id)
