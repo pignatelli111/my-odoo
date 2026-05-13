@@ -10,3 +10,4 @@ access_sbu_estimate_sal_line_manager,sbu.estimate.sal.line manager,model_sbu_est
 access_sbu_estimate_reference_user,sbu.estimate.reference user,model_sbu_estimate_reference,base.group_user,1,1,1,0
 access_sbu_estimate_reference_manager,sbu.estimate.reference manager,model_sbu_estimate_reference,base.group_system,1,1,1,1
 access_sbu_estimate_to_project_wizard,sbu.estimate.to.project.wizard,model_sbu_estimate_to_project_wizard,base.group_user,1,1,1,1
+access_sbu_estimate_anaco_import_wizard,sbu.estimate.anaco.import.wizard,model_sbu_estimate_anaco_import_wizard,base.group_user,1,1,1,1

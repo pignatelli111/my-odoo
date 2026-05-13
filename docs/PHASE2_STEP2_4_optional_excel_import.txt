@@ -1,0 +1,58 @@
+Phase 2 — Step 2.4: Optional Excel import
+==========================================
+
+Goal: **Reduce double entry** by importing from the ANACO workbook (sheet **ANACO**
+and sheet **Voci Contrattuali_SAL**) into an existing `sbu.estimate`.
+
+References:
+  - Wizard model: `sbu_estimate/wizards/sbu_estimate_anaco_import_wizard.py`
+  - View / action: `sbu_estimate/wizards/sbu_estimate_anaco_import_wizard_views.xml`
+  - Layout reference workbook: `ANACO_REV7_111122.xlsx` (see `docs/ANACO_REFERENCE.txt`,
+    `docs/EXCEL_SOURCE_INDEX.txt`)
+
+A) Server requirement
+-----------------------
+The Odoo host must have **openpyxl** installed (`pip install openpyxl`). The module
+declares `external_dependencies` on Python `openpyxl`; if missing, the wizard
+shows a clear error.
+
+B) How to use (UI)
+------------------
+1. Open a **Preventivo** (draft or any state — re-import at your own risk).
+2. **Importa Excel ANACO** → attach `.xlsx` → choose ANACO / SAL / both.
+3. **Sostituisci righe…** removes existing `sbu.estimate.line` and/or
+   `sbu.estimate.sal.line` before insert (default: on).
+4. Adjust **prima riga dati** if your template shifts (defaults: ANACO row **12**,
+   SAL row **16** for REV7).
+5. **Comm. % default**: in REV7 the «Comm.» label sits above the price block; the
+   wizard applies this single percentage to **all** imported ANACO lines (0 =
+   leave listino logic to components + Sc).
+
+C) What is mapped (REV7 column indices)
+-----------------------------------------
+**ANACO (per row)**  
+Pos./Cod. B, Descrizione C, B mm D, H mm F, Qt. H; listino CAD columns (N serramento,
+22 accessori, 28 oscuramento, … 52 nolo); coibentazione 30, posa LIN 50, costi
+trasporto/PM/cantiere/extra; **BS** col **71** → `price_anaco_bs_cad`; note BV **74**.  
+**Sheet row 5:** moltiplicatori **K–M** → Sc1–Sc3 Odoo (convertiti in % successivi);
+**BM/BP** → `cost_industrial_pct` / `cost_mol_pct` (0.05 → 5%).
+
+**SAL**  
+Item B, Descrizione C, Q.tà D, importo unit. H; somma blocchi piani L–O (PT), …
+per `floor_pt` … `floor_p8`; colonne **98–107** → SAL-1…10 %.
+
+**Not imported (v1)**  
+- Distinta ITEM (BOM), allegati, testata cliente/cantiere (restano quelli già in Odoo).
+- Moltiplicatori di foglio oltre K–M (vedi Step 2.1): parity BS resta il driver.
+
+D) Deliverable
+--------------
+[ ] One trial import su copia DB + confronto totali vs Excel (Step 2.1 DELTA_LOG).
+[ ] Document any custom workbook where **first data row** ≠ default.
+
+E) Sign-off
+-----------
+Date: ____________
+Owner: ______________________________________________________________________
+
+Next: Phase 3 — BOM → demand → procurement (see project runbook when published).

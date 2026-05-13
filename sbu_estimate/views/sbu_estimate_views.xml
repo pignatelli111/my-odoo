@@ -79,11 +79,11 @@
                             string="Riporta in Bozza"
                             type="object"
                             invisible="state not in ('sent','lost')"/>
-                    <button name="action_view_project"
-                            string="Vedi Commessa"
-                            type="object"
-                            class="btn-info"
-                            invisible="not project_id"/>
+                    <button name="%(sbu_estimate.action_sbu_estimate_anaco_import_wizard)d"
+                            string="Importa Excel ANACO"
+                            type="action"
+                            class="btn-secondary"
+                            context="{'default_estimate_id': id}"/>
                     <field name="state"
                            widget="statusbar"
                            statusbar_visible="draft,sent,won"/>

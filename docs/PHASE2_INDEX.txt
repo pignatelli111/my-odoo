@@ -9,7 +9,7 @@ Runbooks:
   docs/PHASE2_STEP2_1_anaco_field_formula_parity.txt  — Step 2.1
   docs/PHASE2_STEP2_2_revisions_commercial_scenario.txt — Step 2.2
   docs/PHASE2_STEP2_3_attachments_references.txt        — Step 2.3
-  (2.4 Optional Excel import — add when starting)
+  docs/PHASE2_STEP2_4_optional_excel_import.txt           — Step 2.4
 
 Prerequisites: Phase 0 + Phase 1 complete in practice; ANACO workbook available
 (see docs/ANACO_REFERENCE.txt, docs/EXCEL_SOURCE_INDEX.txt).
