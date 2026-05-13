@@ -38,7 +38,7 @@ class SbuEstimateLine(models.Model):
         compute='_compute_sqm',
         store=True,
         digits=(16, 3),
-        help='Calcolato automaticamente: B × H / 1.000.000 × Qt.',
+        help='Equiv. ANACO colonna I (MQ TOTALI): (B×H/1.000.000) × Qt.',
     )
     uom_id = fields.Many2one(
         'uom.uom',
@@ -65,6 +65,11 @@ class SbuEstimateLine(models.Model):
     price_smontaggio_cad = fields.Float(string='Smontaggio/Posa CAD', digits=(16, 2))
     price_nolo_cad = fields.Float(string='Nolo CAD', digits=(16, 2))
     price_cassonetto_cad = fields.Float(string='Cassonetto CAD', digits=(16, 2))
+    price_anaco_bs_cad = fields.Float(
+        string='Prezzo unit. ANACO (col. BS)',
+        digits=(16, 2),
+        help='Se valorizzato, equivale alla cella ANACO BS (PREZZO su OFFERTA): prezzo unitario finale da Excel; ignora somma componenti e sconti Odoo.',
+    )
 
     # Computed price totals (ANACO: listino componenti → sconti successivi → comm %)
     price_gross_cad = fields.Float(
@@ -72,7 +77,7 @@ class SbuEstimateLine(models.Model):
         compute='_compute_price_totals',
         store=True,
         digits=(16, 2),
-        help='Somma delle colonne prezzo prima di Sc1/Sc2/Sc3 e commissione (come da foglio OFFERTA).',
+        help='Somma colonne prezzo Odoo (approssima il blocco BB… in ANACO; il totale certificato Excel è colonna BS).',
     )
     price_total_cad = fields.Float(
         string='Prezzo Cliente CAD',
@@ -219,6 +224,7 @@ class SbuEstimateLine(models.Model):
         'price_kit_avvolgimento_cad', 'price_smontaggio_cad', 'price_nolo_cad',
         'price_cassonetto_cad',
         'discount_sc1', 'discount_sc2', 'discount_sc3', 'commission_pct',
+        'price_anaco_bs_cad',
     )
     def _compute_price_totals(self):
         for line in self:
@@ -238,16 +244,19 @@ class SbuEstimateLine(models.Model):
                 + line.price_cassonetto_cad
             )
             line.price_gross_cad = gross
-            disc_factor = _successive_discount_factor(
-                line.discount_sc1,
-                line.discount_sc2,
-                line.discount_sc3,
-            )
-            after_discounts = gross * disc_factor
-            if line.commission_pct:
-                net_unit = after_discounts * (1.0 - line.commission_pct / 100.0)
+            if line.price_anaco_bs_cad:
+                net_unit = line.price_anaco_bs_cad
             else:
-                net_unit = after_discounts
+                disc_factor = _successive_discount_factor(
+                    line.discount_sc1,
+                    line.discount_sc2,
+                    line.discount_sc3,
+                )
+                after_discounts = gross * disc_factor
+                if line.commission_pct:
+                    net_unit = after_discounts * (1.0 - line.commission_pct / 100.0)
+                else:
+                    net_unit = after_discounts
             line.price_total_cad = net_unit
             line.price_total_tot = net_unit * (line.qty or 1)
             line.price_per_sqm = (line.price_total_tot / line.sqm) if line.sqm else 0.0

@@ -13,6 +13,12 @@ Custom Odoo 19.0 modules for Suburban SRL a Socio Unico.
 | `sbu_documents` | OneDrive integration |
 | `sbu_integrations` | Qonto, Logikal, ReynaPro bridges |
 
+## ANACO Excel (reference)
+
+Authoritative formulas and workbook: keep the team copy outside git or in a shared drive.  
+Example path used for analysis: `f:\TASK\20 . Odoo\New folder\CARTELLA PREVENTIVO\ANALISI E PREVENTIVO\ANACO_REV7_111122.xlsx`  
+Short mapping notes: `docs/ANACO_REFERENCE.txt`.
+
 ## Setup
 
 1. Clone this repo

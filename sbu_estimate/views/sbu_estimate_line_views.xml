@@ -1,26 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-
-    <!-- Detailed form for a single estimate line (opened from the list) -->
+    <!-- Estimate line detail form -->
     <record id="view_sbu_estimate_line_form" model="ir.ui.view">
         <field name="name">sbu.estimate.line.form</field>
         <field name="model">sbu.estimate.line</field>
         <field name="arch" type="xml">
             <form string="Riga Preventivo">
                 <sheet>
-                    <group string="Identificazione">
-                        <field name="pos"/>
-                        <field name="item_code"/>
-                        <field name="description"/>
-                        <field name="note"/>
-                    </group>
-
-                    <group string="Dimensioni e Quantità">
+                    <group>
                         <group>
+                            <field name="pos"/>
+                            <field name="item_code"/>
+                            <field name="description"/>
                             <field name="qty"/>
-                            <field name="width_mm" string="B — Larghezza (mm)"/>
-                            <field name="height_mm" string="H — Altezza (mm)"/>
-                            <field name="sqm" string="Mq (calcolato)" readonly="1"/>
+                            <field name="width_mm"/>
+                            <field name="height_mm"/>
+                            <field name="sqm" readonly="1"/>
                             <field name="uom_id"/>
                         </group>
                         <group>
@@ -28,68 +23,46 @@
                             <field name="discount_sc1"/>
                             <field name="discount_sc2"/>
                             <field name="discount_sc3"/>
+                            <field name="price_anaco_bs_cad"
+                                   string="Prezzo unit. ANACO (BS)"/>
+                            <field name="price_gross_cad" readonly="1"/>
+                            <field name="price_serramento_cad"/>
+                            <field name="price_oscuramento_cad"/>
+                            <field name="price_vetro_cad"/>
+                            <field name="price_pannello_cad"/>
+                            <field name="price_controtelaio_cad"/>
+                            <field name="price_accessori_cad"/>
+                            <field name="price_total_cad" readonly="1"/>
+                            <field name="price_total_tot" readonly="1"/>
+                            <field name="price_per_sqm" readonly="1"/>
                         </group>
                     </group>
-
+                    <group>
+                        <group>
+                            <field name="cost_coibentazione_cad"/>
+                            <field name="cost_posa_lamiera_lin_cad"/>
+                            <field name="cost_industrial_pct"/>
+                            <field name="cost_mol_pct"/>
+                            <field name="cost_tech_pm_cad"/>
+                            <field name="cost_trasporto_cad"/>
+                            <field name="cost_cantiere_cad"/>
+                            <field name="cost_staffame_cad"/>
+                            <field name="cost_extra_cad"/>
+                            <field name="cost_industrial_cad" readonly="1"/>
+                            <field name="cost_mol_amount_cad" readonly="1"/>
+                            <field name="cost_bom_total" readonly="1"/>
+                            <field name="cost_total_cad" readonly="1"/>
+                            <field name="cost_total_tot" readonly="1"/>
+                            <field name="cost_per_sqm" readonly="1"/>
+                        </group>
+                    </group>
                     <notebook>
-                        <page string="Prezzi (Lato Vendita)">
-                            <group>
-                                <group string="Prezzi CAD">
-                                    <field name="price_serramento_cad"/>
-                                    <field name="price_oscuramento_cad"/>
-                                    <field name="price_automatismo_cad"/>
-                                    <field name="price_zanzariera_cad"/>
-                                    <field name="price_vetro_cad"/>
-                                    <field name="price_pannello_cad"/>
-                                    <field name="price_controtelaio_cad"/>
-                                    <field name="price_trasformazione_cad"/>
-                                    <field name="price_accessori_cad"/>
-                                    <field name="price_kit_avvolgimento_cad"/>
-                                    <field name="price_smontaggio_cad"/>
-                                    <field name="price_nolo_cad"/>
-                                    <field name="price_cassonetto_cad"/>
-                                </group>
-                                <group string="Totali Prezzo">
-                                    <field name="price_gross_cad" readonly="1"/>
-                                    <field name="price_total_cad" readonly="1"/>
-                                    <field name="price_total_tot" readonly="1"/>
-                                    <field name="price_per_sqm" readonly="1"/>
-                                </group>
-                            </group>
-                        </page>
-
-                        <page string="Costi (Lato Acquisto)">
-                            <group>
-                                <group string="Costi CAD">
-                                    <field name="cost_coibentazione_cad"/>
-                                    <field name="cost_posa_lamiera_lin_cad"/>
-                                    <field name="cost_industrial_pct"/>
-                                    <field name="cost_tech_pm_cad"/>
-                                    <field name="cost_mol_pct"/>
-                                    <field name="cost_trasporto_cad"/>
-                                    <field name="cost_cantiere_cad"/>
-                                    <field name="cost_staffame_cad"/>
-                                    <field name="cost_extra_cad"/>
-                                </group>
-                                <group string="Totali Costo">
-                                    <field name="cost_industrial_cad" readonly="1"/>
-                                    <field name="cost_mol_amount_cad" readonly="1"/>
-                                    <field name="cost_bom_total" readonly="1"/>
-                                    <field name="cost_total_cad" readonly="1"/>
-                                    <field name="cost_total_tot" readonly="1"/>
-                                    <field name="cost_per_sqm" readonly="1"/>
-                                </group>
-                            </group>
-                        </page>
-
-                        <page string="Distinta Base (ITEM)" name="bom">
+                        <page string="Distinta Base (ITEM)">
                             <field name="bom_line_ids">
                                 <list editable="bottom">
-                                    <field name="sequence" widget="handle"/>
                                     <field name="product_id"/>
                                     <field name="description"/>
                                     <field name="calc_type"/>
-                                    <field name="dimension_source"/>
                                     <field name="qty_formula_factor"/>
                                     <field name="pack_size"/>
                                     <field name="qty_theoretical" readonly="1"/>
@@ -101,27 +74,9 @@
                                 </list>
                             </field>
                         </page>
-
-                        <page string="Budget Tracking">
-                            <group>
-                                <group string="Ordini e Costi">
-                                    <field name="budget_orders_issued"/>
-                                    <field name="budget_costs_incurred"/>
-                                    <field name="budget_to_fulfill" readonly="1"/>
-                                </group>
-                                <group string="Avanzamento">
-                                    <field name="budget_pct_paid" readonly="1"/>
-                                    <field name="budget_order_progress_pct" readonly="1"/>
-                                    <field name="budget_residual" readonly="1"/>
-                                    <field name="budget_vs_estimate_pct" readonly="1"/>
-                                    <field name="budget_advance" readonly="1"/>
-                                </group>
-                            </group>
-                        </page>
                     </notebook>
                 </sheet>
             </form>
         </field>
     </record>
-
 </odoo>

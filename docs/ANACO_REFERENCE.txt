@@ -1,0 +1,33 @@
+ANACO workbook (source of truth for formulas)
+==============================================
+
+File path (local / team):
+  f:\TASK\20 . Odoo\New folder\CARTELLA PREVENTIVO\ANALISI E PREVENTIVO\ANACO_REV7_111122.xlsx
+
+Sheets (REV7_111122):
+  OFFERTA, ANACO, ITEM, Voci Contrattuali_SAL, Sommario-SAL01-DIC21, SUMMARY COSTI
+
+Key mappings for Odoo sbu_estimate
+-----------------------------------
+
+1) Mq (righe ANACO)
+   - Colonna G (MQ/Cad.): =(D*F)/1000000   [B×H mm → mq per pezzo]
+   - Colonna I (MQ TOTALI): =G*H          [mq totali = mq/cad × Qt.]
+   Odoo: campo sqm su sbu.estimate.line = stesso prodotto (B×H/1e6 × Qt.)
+
+2) Prezzo unitario offerta (foglio OFFERTA, colonna PREZZO)
+   - Riferimento: ANACO colonna BS (somma di più colonne intermedie, es. BS12 = BB12+BE12+…)
+   - IMPORTO OFFERTA: quantità × prezzo unit. (es. =G24*H24 con H = BS da ANACO)
+   Odoo: opzionale campo «Prezzo unit. ANACO (col. BS)» su riga — se compilato, è il prezzo
+   unitario finale (identico a Excel); altrimenti si usa la somma delle colonne Odoo + sconti.
+
+3) Sconti globali su catena PVC (esempio riga 12)
+   - K12 = J12*$K$5, L12 = K12*$L$5, M12 = L12*$M$5 (moltiplicatori foglio, celle $K$5, $L$5, $M$5)
+   - Non è solo «tre percentuali sulla somma Odoo»: in Excel ci sono più moltiplicatori di foglio
+     (es. $BE$5, $BG$5, …) su rami CAD/TOT diversi fino a costruire BB/BC e poi BS.
+
+4) Costi riepilogo (SUMMARY COSTI)
+   - D3 = C3*(1-$C$26) con C26 costante globale (nel file campione = 0).
+
+Note: parity 1:1 con tutte le colonne ANACO richiede import o replica della griglia; l’override BS
+per riga consente di allineare importi a offerta già calcolata in Excel.
