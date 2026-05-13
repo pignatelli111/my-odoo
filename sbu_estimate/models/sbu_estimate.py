@@ -241,7 +241,7 @@ class SbuEstimate(models.Model):
         for rec in self:
             rec.full_name = f"{rec.name or ''} {rec.revision or ''}".strip()
 
-    @api.depends('previous_revision_id', 'previous_revision_id.revision_root_id', recursive=True)
+    @api.depends('previous_revision_id', 'previous_revision_id.revision_root_id')
     def _compute_revision_root(self):
         for rec in self:
             prev = rec.previous_revision_id
