@@ -80,6 +80,7 @@
 
                     <group>
                         <group string="Intestazione">
+                            <field name="company_id" groups="base.group_multi_company"/>
                             <field name="partner_id"/>
                             <field name="opportunity_id"/>
                             <field name="job_site"/>

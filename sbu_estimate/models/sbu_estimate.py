@@ -63,6 +63,13 @@ class SbuEstimate(models.Model):
         default=lambda self: self.env.user,
         tracking=True,
     )
+    company_id = fields.Many2one(
+        'res.company',
+        string='Company',
+        required=True,
+        default=lambda self: self.env.company,
+        index=True,
+    )
 
     # ── Commercial scenario ───────────────────────────────────────────────────
     probability = fields.Float(

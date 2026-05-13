@@ -67,9 +67,13 @@ class SbuEstimateToProjectWizard(models.TransientModel):
         if estimate.project_id:
             raise UserError(_('Una commessa esiste già per questo preventivo.'))
 
+        # Same company as the estimate (avoids multi-company "no read access" on project.project)
+        company = estimate.company_id
+
         # Create the project
         project = self.env['project.project'].create({
             'name': f'[{self.project_code}] {self.project_name}',
+            'company_id': company.id,
             'partner_id': estimate.partner_id.id,
             'user_id': self.user_id.id,
             'date_start': self.date_start,
