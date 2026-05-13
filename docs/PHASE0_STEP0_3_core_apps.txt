@@ -84,4 +84,4 @@ Sales app decision (on/off/bridge): _________________________________________
 Documents app decision (on/off): ___________________________________________
 Notes: ______________________________________________________________________
 
-Next: docs/PHASE0_STEP0_4_data_migration.txt (create when starting Step 0.4).
+Next: docs/PHASE0_STEP0_4_data_migration.txt — Index: docs/PHASE0_INDEX.txt

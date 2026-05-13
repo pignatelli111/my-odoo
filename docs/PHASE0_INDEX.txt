@@ -3,13 +3,15 @@ Phase 0 — index & when to push
 
 Push habit (updated): do **not** push after every small step sign-off in Odoo.
 **Push when you move to the next phase** (or when a doc/runbook batch is ready
-for the team): e.g. finishing Step 0.3 checklist in the repo and advancing to 0.4.
+for the team): e.g. completing Phase 0 (0.4) and starting Phase 1.
 
 Runbooks:
   docs/PHASE0_STEP0_1_environment_roles.txt      — Step 0.1
   docs/PHASE0_STEP0_2_accounting_fiscal.txt      — Step 0.2
   docs/PHASE0_STEP0_3_core_apps.txt              — Step 0.3
-  (0.4 Data migration plan — add when started)
+  docs/PHASE0_STEP0_4_data_migration.txt         — Step 0.4 (Phase 0 data)
+
+Next: Phase 1 (add PHASE1_INDEX.txt when starting).
 
 Optional: if you change only sign-off lines in a runbook without advancing phase,
 you may commit locally or batch with the next push.

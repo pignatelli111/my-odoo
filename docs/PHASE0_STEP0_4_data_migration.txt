@@ -1,0 +1,104 @@
+Phase 0 — Step 0.4: Data migration plan (runbook)
+================================================
+
+Goal: Partners, products, UoMs, opening balances, and (if needed) historical
+estimates are migrated with **import templates**, **validation rules**, and a
+clear cut-over plan. No “surprise” master data in production.
+
+Prerequisites: Steps 0.1–0.3 (environment, accounting skeleton, core apps).
+
+Push: with phase advance (see docs/PHASE0_INDEX.txt).
+
+A) Principles (agree before touching production)
+-----------------------------------------------
+[ ] **Source of truth** for v1: Odoo after cut-over, or still Excel for a period?
+    Document: ________________________________________________________________
+[ ] **Cut-over date** (no more parallel edits in old system for migrated objects):
+    ________________________________________________________________________
+[ ] **Staging first**: every import tested on **staging duplicate** DB, then repeat
+    on production with the same files (version-controlled filenames).
+
+B) Partners (`res.partner`)
+---------------------------
+[ ] Export a **sample partner** from Odoo (Settings → Technical → Export) to learn
+    exact column names for your version, then build the real CSV/XLSX.
+[ ] Minimum fields to validate: name, VAT (if company), country, fiscal position
+    (if used), is_company, parent for contacts, customer vs supplier flags.
+[ ] **Duplicates**: decide match key (VAT, email, or external legacy ID in
+    `ref` / `x_legacy_id` if you add a custom field later).
+[ ] Import order: **Companies / parent partners first**, then contacts.
+[ ] Validation: VAT format check (Italy); blacklist test partners removed before prod.
+
+C) Units of measure (`uom.uom` / categories)
+--------------------------------------------
+[ ] List required UoMs: mm, m, m², pz/nr, kg, … — align with Step 0.3 naming and
+    **BOM / estimate** logic (Odoo 19: follow standard UoM setup; avoid duplicate
+    units with same meaning).
+[ ] Import or create UoMs **before** products that reference them.
+[ ] Document conversion factors (e.g. 1 m = 1000 mm) only if you use related UoMs;
+    otherwise keep **one canonical unit per dimension** to reduce errors.
+
+D) Products (`product.product` / `product.template`)
+------------------------------------------------------
+[ ] Categories: align with ANACO / commercial families (see Phase 1 for depth);
+    for 0.4, at least **one category tree** consistent with Purchasing.
+[ ] Default UoM, purchase UoM, cost method, routes (buy/MTO) — defaults only if sure.
+[ ] Internal reference (`default_code`) pattern agreed (see Step 0.3 naming).
+[ ] Taxes on products: link to Step 0.2 tax setup.
+[ ] Import template: export 1–2 sample products from Odoo, fill columns, re-import
+    on staging.
+[ ] **Variants**: avoid in v1 unless already required; document if used.
+
+E) Opening balances (with accountant)
+-------------------------------------
+[ ] **Opening journal entry** (balances per GL account) OR **opening move** workflow
+    your Odoo version supports — date = first fiscal day open in Odoo.
+[ ] **Bank opening balances** per journal aligned with Qonto / bank statement
+    closing on cut-over date.
+[ ] Lock: after opening entry posted, set **lock date** for prior periods (0.2).
+
+F) Historical estimates (optional)
+----------------------------------
+Options (pick one and document):
+
+  (1) **Do not migrate** — keep PDF/Excel archive; only **new** estimates in Odoo.
+  (2) **Manual** re-entry of open/won estimates as `sbu.estimate` (heavy).
+  (3) **Future import wizard** (custom) from ANACO export — schedule Phase 2+.
+
+Decision: __________________________________________________________________
+
+G) Validation rules (lightweight in Phase 0)
+--------------------------------------------
+[ ] **Odoo**: required fields on partner/product enforced by model (standard).
+[ ] **Import**: use “Test import” / small batches; fix file, re-run.
+[ ] **Custom** `ir.rule` or Python constraints — only if needed for multi-company
+    or SBU-specific invariants; otherwise defer to Phase 1.
+[ ] Spreadsheet **validation** (Excel): dropdown lists for category, UoM, VAT country
+    before generating CSV — reduces garbage-in.
+
+H) File naming & version control
+--------------------------------
+Store migration files in a **private** repo or secure drive (may contain VATs):
+
+  `migration_YYYYMMDD_partners_v1.csv`
+  `migration_YYYYMMDD_products_v1.csv`
+  `migration_YYYYMMDD_opening_entry.xlsx` (if used)
+
+[ ] Checklist: who keeps master copy + hash or version note: _________________
+
+I) Production cut-over checklist
+------------------------------
+[ ] Backup production immediately before import.
+[ ] Imports: partners → UoMs → categories → products → opening balances.
+[ ] Smoke: create **test SO or test PO** on prod after import (then cancel/archive).
+[ ] Communicate “read-only” window to users during final import if needed.
+
+J) Sign-off
+-----------
+Date: ____________
+Verified by: ____________
+Accountant sign-off on opening balances: Y / N   Name: ________________________
+Notes: ______________________________________________________________________
+
+Phase 0 complete after 0.1–0.4 sign-offs: proceed to **Phase 1 — Master data &
+product architecture** (categories, attributes, supplier lead times).
