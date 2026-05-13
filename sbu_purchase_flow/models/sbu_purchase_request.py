@@ -8,7 +8,7 @@ class SbuPurchaseRequest(models.Model):
     _name = 'sbu.purchase.request'
     _description = 'SBU Purchase Request (RDA / ACO / ACP / …)'
     _inherit = ['mail.thread', 'mail.activity.mixin']
-    _order = 'name desc'
+    _order = 'priority desc, id desc'
 
     name = fields.Char(
         string='Reference',
@@ -33,6 +33,31 @@ class SbuPurchaseRequest(models.Model):
         required=True,
         default='rda',
         tracking=True,
+    )
+    priority = fields.Selection(
+        [
+            ('0', 'Normal'),
+            ('1', 'Medium'),
+            ('2', 'High'),
+            ('3', 'Critical'),
+        ],
+        string='Priority',
+        default='0',
+        required=True,
+        tracking=True,
+        index=True,
+        help='Operational priority for RDA / ACP / ACO / LDS follow-up.',
+    )
+    need_by_date = fields.Date(
+        string='Need by',
+        tracking=True,
+        index=True,
+        help='Target date for materials / deliverables on this request.',
+    )
+    site_required_date = fields.Date(
+        string='Site / install date',
+        tracking=True,
+        help='Optional date when goods must be on site (ACP / ACO / LDS).',
     )
     company_id = fields.Many2one(
         'res.company',
@@ -114,6 +139,40 @@ class SbuPurchaseRequest(models.Model):
         'purchase.order',
         string='Related RFQs / POs',
     )
+    attachment_ids = fields.Many2many(
+        'ir.attachment',
+        'sbu_purchase_request_attachment_rel',
+        'request_id',
+        'attachment_id',
+        string='Supporting files',
+        help='Drawings, supplier PDFs, e-mail extracts (in addition to chatter).',
+    )
+    submitted_date = fields.Datetime(
+        string='Submitted on',
+        readonly=True,
+        copy=False,
+    )
+    approved_by_id = fields.Many2one(
+        'res.users',
+        string='Approved by',
+        readonly=True,
+        copy=False,
+    )
+    approved_date = fields.Datetime(
+        string='Approved on',
+        readonly=True,
+        copy=False,
+    )
+    date_done = fields.Datetime(
+        string='Closed on',
+        readonly=True,
+        copy=False,
+    )
+    cancel_reason = fields.Text(
+        string='Cancel / reject notes',
+        copy=False,
+        help='Reason when cancelling or rolling back (operational audit).',
+    )
 
     def _sbu_loss_pct_for_bom_line(self, bom):
         """Per-component loss overrides request default when > 0."""
@@ -164,19 +223,47 @@ class SbuPurchaseRequest(models.Model):
         return super().create(vals_list)
 
     def action_submit(self):
-        self.write({'state': 'submitted'})
+        self.write({
+            'state': 'submitted',
+            'submitted_date': fields.Datetime.now(),
+        })
 
     def action_approve(self):
-        self.write({'state': 'approved'})
+        self.write({
+            'state': 'approved',
+            'approved_by_id': self.env.user.id,
+            'approved_date': fields.Datetime.now(),
+        })
 
     def action_done(self):
-        self.write({'state': 'done'})
+        self.write({
+            'state': 'done',
+            'date_done': fields.Datetime.now(),
+        })
 
     def action_cancel(self):
         self.write({'state': 'cancelled'})
 
     def action_reset_draft(self):
-        self.write({'state': 'draft'})
+        self.write({
+            'state': 'draft',
+            'approved_by_id': False,
+            'approved_date': False,
+            'submitted_date': False,
+            'date_done': False,
+            'cancel_reason': False,
+        })
+
+    def action_view_project(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': self.project_id.display_name,
+            'res_model': 'project.project',
+            'res_id': self.project_id.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
 
     def action_load_lines_from_estimate_bom_append(self):
         return self._load_lines_from_estimate_bom(clear=False)
@@ -224,6 +311,7 @@ class SbuPurchaseRequest(models.Model):
                     'pos': pos,
                     'article_code': bom.product_id.default_code or '',
                     'procurement_mode': 'purchase',
+                    'line_priority': self.priority,
                 })
                 created += 1
         self.message_post(
@@ -267,13 +355,16 @@ class SbuPurchaseRequest(models.Model):
                 parts.append(line.dimension_mm)
             prefix = ' '.join(parts) + ' — ' if parts else ''
             desc = (line.name or line.product_id.display_name).strip()
+            planned = fields.Datetime.now()
+            if line.date_required:
+                planned = fields.Datetime.to_datetime(line.date_required)
             self.env['purchase.order.line'].create({
                 'order_id': po.id,
                 'product_id': line.product_id.id,
                 'product_qty': line.product_qty,
                 'product_uom_id': line.product_uom.id,
                 'name': prefix + desc,
-                'date_planned': fields.Datetime.now(),
+                'date_planned': planned,
             })
         self.purchase_order_ids = [(4, po.id)]
         return {

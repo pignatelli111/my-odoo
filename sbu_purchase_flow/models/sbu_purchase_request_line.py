@@ -5,7 +5,7 @@ from odoo.exceptions import ValidationError
 class SbuPurchaseRequestLine(models.Model):
     _name = 'sbu.purchase.request.line'
     _description = 'SBU Purchase Request Line'
-    _order = 'sequence, id'
+    _order = 'line_priority desc, sequence, id'
 
     request_id = fields.Many2one(
         'sbu.purchase.request',
@@ -57,6 +57,18 @@ class SbuPurchaseRequestLine(models.Model):
         help='MAGAZZINO vs ACQUISTO come ultima colonna del template RDA.',
     )
     note = fields.Char(string='Notes')
+    line_priority = fields.Selection(
+        [
+            ('0', 'Normal'),
+            ('1', 'Medium'),
+            ('2', 'High'),
+            ('3', 'Critical'),
+        ],
+        string='Priority',
+        default='0',
+        required=True,
+        help='Line-level priority (defaults from request when exploding BOM).',
+    )
 
     # ── Single BOM truth (Phase 3.1) ───────────────────────────────────────────
     source_bom_line_id = fields.Many2one(

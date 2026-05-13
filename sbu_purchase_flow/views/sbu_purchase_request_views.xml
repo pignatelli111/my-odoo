@@ -6,7 +6,13 @@
         <field name="arch" type="xml">
             <list string="Purchase requests">
                 <field name="name"/>
+                <field name="priority" widget="badge"
+                       decoration-danger="priority == '3'"
+                       decoration-warning="priority == '2'"
+                       decoration-info="priority == '1'"/>
                 <field name="request_type"/>
+                <field name="need_by_date" optional="show"/>
+                <field name="site_required_date" optional="hide"/>
                 <field name="topic" optional="hide"/>
                 <field name="project_id"/>
                 <field name="estimate_id" optional="hide"/>
@@ -46,32 +52,57 @@
                             class="btn-secondary"
                             invisible="state == 'cancelled'"/>
                     <button name="action_create_rfq" string="Create draft RFQ" type="object" class="btn-secondary" invisible="state == 'cancelled'"/>
-                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted,approved,done"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted,approved,done,cancelled"/>
                 </header>
                 <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_project" type="object" class="oe_stat_button" icon="fa-folder-open"
+                                invisible="not project_id">
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">Project</span>
+                            </div>
+                        </button>
+                    </div>
                     <group>
-                        <group>
+                        <group string="Request">
                             <field name="name" readonly="1"/>
-                            <field name="request_type"/>
+                            <field name="request_type" readonly="state in ('done','cancelled')"/>
+                            <field name="priority" readonly="state in ('done','cancelled')"/>
                             <field name="company_id" groups="base.group_multi_company"/>
-                            <field name="project_id"/>
+                            <field name="project_id" readonly="state in ('done','cancelled')"/>
                             <field name="estimate_id"/>
                             <field name="vendor_id"/>
                             <field name="excel_item"/>
                             <field name="topic"/>
                         </group>
-                        <group>
+                        <group string="People &amp; dates">
                             <field name="user_id" widget="many2one_avatar_user"/>
-                            <field name="demand_loss_pct"/>
+                            <field name="need_by_date" readonly="state in ('done','cancelled')"/>
+                            <field name="site_required_date" readonly="state in ('done','cancelled')"/>
+                            <field name="demand_loss_pct" readonly="state in ('done','cancelled')"/>
                             <field name="drawn_by"/>
                             <field name="check_by"/>
                         </group>
+                    </group>
+                    <group string="Approval" invisible="state == 'draft'">
+                        <group>
+                            <field name="submitted_date"/>
+                        </group>
+                        <group>
+                            <field name="approved_by_id"/>
+                            <field name="approved_date"/>
+                            <field name="date_done"/>
+                        </group>
+                    </group>
+                    <group string="Cancellation" invisible="state != 'cancelled'">
+                        <field name="cancel_reason" nolabel="1" placeholder="Reason for cancellation…"/>
                     </group>
                     <notebook>
                         <page string="Lines">
                             <field name="line_ids">
                                 <list editable="bottom">
                                     <field name="sequence" widget="handle"/>
+                                    <field name="line_priority" optional="show"/>
                                     <field name="pos" optional="show"/>
                                     <field name="name"/>
                                     <field name="article_code" optional="show"/>
@@ -92,6 +123,15 @@
                                 </list>
                             </field>
                         </page>
+                        <page string="Attachments">
+                            <group>
+                                <field name="attachment_ids" widget="many2many_binary" nolabel="1"
+                                       readonly="state in ('done','cancelled')"/>
+                                <div class="text-muted" colspan="2">
+                                    Use this for supplier PDFs / drawings; chatter below keeps the discussion trail.
+                                </div>
+                            </group>
+                        </page>
                         <page string="Purchase orders">
                             <field name="purchase_order_ids" widget="many2many_tags"/>
                         </page>
@@ -109,8 +149,26 @@
             <search>
                 <field name="name"/>
                 <field name="project_id"/>
+                <field name="request_type"/>
+                <field name="user_id"/>
                 <filter name="draft" string="Draft" domain="[('state','=','draft')]"/>
+                <filter name="submitted" string="Submitted" domain="[('state','=','submitted')]"/>
                 <filter name="approved" string="Approved" domain="[('state','=','approved')]"/>
+                <filter name="my_requests" string="My requests" domain="[('user_id','=',uid)]"/>
+                <separator/>
+                <filter name="type_rda" string="RDA" domain="[('request_type','=','rda')]"/>
+                <filter name="type_acp" string="ACP" domain="[('request_type','=','acp')]"/>
+                <filter name="type_aco" string="ACO" domain="[('request_type','=','aco')]"/>
+                <filter name="type_lds" string="LDS" domain="[('request_type','=','lds')]"/>
+                <separator/>
+                <filter name="prio_high" string="High / critical" domain="[('priority','in', ('2','3'))]"/>
+                <filter name="need_by_set" string="Need-by set" domain="[('need_by_date','!=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Type" name="grp_type" context="{'group_by': 'request_type'}"/>
+                    <filter string="Priority" name="grp_prio" context="{'group_by': 'priority'}"/>
+                    <filter string="Project" name="grp_project" context="{'group_by': 'project_id'}"/>
+                    <filter string="Status" name="grp_state" context="{'group_by': 'state'}"/>
+                </group>
             </search>
         </field>
     </record>

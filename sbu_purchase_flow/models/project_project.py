@@ -43,6 +43,7 @@ class ProjectProject(models.Model):
             'request_type': 'rda',
             'company_id': self.company_id.id,
             'demand_loss_pct': 3.0,
+            'need_by_date': est.validity_date,
         })
         pr._load_lines_from_estimate_bom(clear=True)
         return {
