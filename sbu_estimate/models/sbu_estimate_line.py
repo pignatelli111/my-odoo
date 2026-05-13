@@ -136,7 +136,8 @@ class SbuEstimateLine(models.Model):
         compute='_compute_cost_bom_total',
         store=True,
         digits=(16, 2),
-        help='Somma costi righe distinta base — per confronto con colonne costo manuali.',
+        help='Somma Σ (qty da distinta × costo unit.) delle righe sbu.estimate.bom.line: unica '
+             '«verità» distinta per confronto costi; acquisti collegati usano le stesse righe.',
     )
     # Computed cost totals
     cost_total_cad = fields.Float(

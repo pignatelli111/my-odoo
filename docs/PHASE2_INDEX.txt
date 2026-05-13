@@ -14,4 +14,4 @@ Runbooks:
 Prerequisites: Phase 0 + Phase 1 complete in practice; ANACO workbook available
 (see docs/ANACO_REFERENCE.txt, docs/EXCEL_SOURCE_INDEX.txt).
 
-Next after Phase 2: Phase 3 (BOM → demand → procurement).
+Next after Phase 2: Phase 3 — see docs/PHASE3_INDEX.txt (BOM → demand → procurement).

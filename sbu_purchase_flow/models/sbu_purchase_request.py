@@ -128,9 +128,69 @@ class SbuPurchaseRequest(models.Model):
     def action_reset_draft(self):
         self.write({'state': 'draft'})
 
+    def action_load_lines_from_estimate_bom_append(self):
+        return self._load_lines_from_estimate_bom(clear=False)
+
+    def action_load_lines_from_estimate_bom_replace(self):
+        return self._load_lines_from_estimate_bom(clear=True)
+
+    def action_refresh_all_bom_quantities(self):
+        self.line_ids.action_refresh_qty_from_bom()
+        self.message_post(body=_('Quantities refreshed from estimate BOM lines.'))
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': self._name,
+            'res_id': self.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
+
+    def _load_lines_from_estimate_bom(self, clear=False):
+        self.ensure_one()
+        estimate = self.estimate_id
+        if not estimate:
+            raise UserError(_('The project has no linked source estimate (won estimate).'))
+        if clear:
+            self.line_ids.unlink()
+        existing_bom = {bid for bid in self.line_ids.mapped('source_bom_line_id').ids if bid}
+        Line = self.env['sbu.purchase.request.line']
+        created = 0
+        for eline in estimate.line_ids:
+            pos = eline.pos or ''
+            for bom in eline.bom_line_ids:
+                if not bom.product_id:
+                    continue
+                if bom.id in existing_bom:
+                    continue
+                existing_bom.add(bom.id)
+                Line.create({
+                    'request_id': self.id,
+                    'source_bom_line_id': bom.id,
+                    'bom_qty_sync': True,
+                    'product_id': bom.product_id.id,
+                    'product_uom': bom.uom_id.id,
+                    'product_qty': bom.qty_ordered,
+                    'name': bom.description or bom.product_id.display_name,
+                    'pos': pos,
+                    'article_code': bom.product_id.default_code or '',
+                    'procurement_mode': 'purchase',
+                })
+                created += 1
+        self.message_post(
+            body=_('Loaded %(n)d purchase line(s) from estimate BOM.') % {'n': created}
+        )
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': self._name,
+            'res_id': self.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
+
     def action_create_rfq(self):
         """Create a draft purchase.order linked to this request (MVP)."""
         self.ensure_one()
+        self.line_ids.action_refresh_qty_from_bom()
         if not self.line_ids:
             raise UserError(_('Add at least one line before creating an RFQ.'))
         if not self.line_ids.filtered('product_id'):
