@@ -1,7 +1,8 @@
 from odoo import models, fields, api
 
 
-class SbuPurchaseRequestLine(models.Model):    _name = 'sbu.purchase.request.line'
+class SbuPurchaseRequestLine(models.Model):
+    _name = 'sbu.purchase.request.line'
     _description = 'SBU Purchase Request Line'
     _order = 'sequence, id'
 
