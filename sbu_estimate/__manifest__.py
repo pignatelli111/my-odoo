@@ -15,6 +15,7 @@
     'category': 'Sales/Estimation',
     'depends': [
         'base',
+        'mail',
         'sale_management',
         'crm',
         'project',

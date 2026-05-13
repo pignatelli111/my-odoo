@@ -36,15 +36,8 @@ def post_init_hook(env):
             'rounding': 1.0,
         })
 
-    # ml — metri lineari (same as m, alias)
-    if not Uom.search([('name', '=', 'ml'), ('category_id', '=', categ_length.id)], limit=1):
-        Uom.create({
-            'name': 'ml',
-            'category_id': categ_length.id,
-            'factor': 1.0,
-            'uom_type': 'reference',
-            'rounding': 0.001,
-        })
+    # ml (metri lineari): same physical unit as m — do not create a second
+    # reference UoM in the same category (Odoo rejects multiple references).
 
     # ── Category: SBU Area ────────────────────────────────────────────────────
     categ_area = UomCategory.search([('name', '=', 'SBU Area')], limit=1)

@@ -4,8 +4,7 @@
     <!-- Root menu -->
     <menuitem id="menu_sbu_root"
               name="SBU"
-              sequence="1"
-              web_icon="sbu_estimate,static/description/icon.png"/>
+              sequence="1"/>
 
     <!-- Estimate menu -->
     <menuitem id="menu_sbu_estimate_root"
