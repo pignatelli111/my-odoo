@@ -54,6 +54,23 @@ class SbuPurchaseRequest(models.Model):
         related='project_id.sbu_estimate_id',
         store=True,
     )
+    # Header fields aligned with RDA/ACP/ACO Excel templates (row «Project», signatures, topic)
+    excel_item = fields.Char(
+        string='Item (foglio Excel)',
+        help='Colonna «item» del modello RDA (es. FT, LA01).',
+    )
+    topic = fields.Char(
+        string='Topic / Argomento',
+        help='TOPIC / ARGOMENTO come nel template RDA.',
+    )
+    drawn_by = fields.Char(
+        string='Redatto da',
+        help='Drawn by / Redatto da (come scheda RDA o SOTTOMISSIONE).',
+    )
+    check_by = fields.Char(
+        string='Verificato da',
+        help='Check by / Verificato da.',
+    )
     state = fields.Selection(
         [
             ('draft', 'Draft'),
@@ -122,12 +139,21 @@ class SbuPurchaseRequest(models.Model):
         for line in self.line_ids:
             if not line.product_id:
                 continue
+            parts = []
+            if line.pos:
+                parts.append(f'[{line.pos}]')
+            if line.article_code:
+                parts.append(line.article_code)
+            if line.dimension_mm:
+                parts.append(line.dimension_mm)
+            prefix = ' '.join(parts) + ' — ' if parts else ''
+            desc = (line.name or line.product_id.display_name).strip()
             self.env['purchase.order.line'].create({
                 'order_id': po.id,
                 'product_id': line.product_id.id,
                 'product_qty': line.product_qty,
                 'product_uom_id': line.product_uom.id,
-                'name': line.name or line.product_id.display_name,
+                'name': prefix + desc,
                 'date_planned': fields.Datetime.now(),
             })
         self.purchase_order_ids = [(4, po.id)]

@@ -17,7 +17,9 @@ Custom Odoo 19.0 modules for Suburban SRL a Socio Unico.
 
 Authoritative formulas and workbook: keep the team copy outside git or in a shared drive.  
 Example path used for analysis: `f:\TASK\20 . Odoo\New folder\CARTELLA PREVENTIVO\ANALISI E PREVENTIVO\ANACO_REV7_111122.xlsx`  
-Short mapping notes: `docs/ANACO_REFERENCE.txt`.
+Short mapping notes: `docs/ANACO_REFERENCE.txt`.  
+All Excel templates under `New folder` (RDA, ACP, ACO, LDS, definizioni): `docs/EXCEL_SOURCE_INDEX.txt`.  
+Regenerate workbook previews: `python tools/dump_excel_workbooks.py` (writes `docs/excel_workbooks_inventory.json`, gitignored).
 
 ## Setup
 

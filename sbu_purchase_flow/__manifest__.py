@@ -1,6 +1,6 @@
 {
     'name': 'SBU Purchase Flow',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.0.1',
     'summary': 'RDA/ACO/ACP/LDS purchase request flow for Suburban SRL',
     'author': 'SBU Development',
     'category': 'Purchase',

@@ -31,3 +31,5 @@ Key mappings for Odoo sbu_estimate
 
 Note: parity 1:1 con tutte le colonne ANACO richiede import o replica della griglia; l’override BS
 per riga consente di allineare importi a offerta già calcolata in Excel.
+
+Altri file Excel (RDA/ACP/ACO/LDS, definizioni ERP): vedi docs/EXCEL_SOURCE_INDEX.txt

@@ -7,6 +7,7 @@
             <list string="Purchase requests">
                 <field name="name"/>
                 <field name="request_type"/>
+                <field name="topic" optional="hide"/>
                 <field name="project_id"/>
                 <field name="estimate_id" optional="hide"/>
                 <field name="state" widget="badge"/>
@@ -33,14 +34,18 @@
                 <sheet>
                     <group>
                         <group>
-                            <field name="name"/>
+                            <field name="name" readonly="1"/>
                             <field name="request_type"/>
                             <field name="company_id" groups="base.group_multi_company"/>
                             <field name="project_id"/>
                             <field name="estimate_id"/>
+                            <field name="excel_item"/>
+                            <field name="topic"/>
                         </group>
                         <group>
                             <field name="user_id" widget="many2one_avatar_user"/>
+                            <field name="drawn_by"/>
+                            <field name="check_by"/>
                         </group>
                     </group>
                     <notebook>
@@ -48,12 +53,19 @@
                             <field name="line_ids">
                                 <list editable="bottom">
                                     <field name="sequence" widget="handle"/>
+                                    <field name="pos" optional="show"/>
                                     <field name="name"/>
+                                    <field name="article_code" optional="show"/>
                                     <field name="product_id"/>
+                                    <field name="dimension_mm" optional="hide"/>
+                                    <field name="utilization" optional="hide"/>
+                                    <field name="weight_kg" optional="hide"/>
                                     <field name="product_qty"/>
                                     <field name="product_uom"/>
                                     <field name="date_required"/>
-                                    <field name="note"/>
+                                    <field name="destination" optional="hide"/>
+                                    <field name="procurement_mode" optional="show"/>
+                                    <field name="note" optional="hide"/>
                                 </list>
                             </field>
                         </page>
