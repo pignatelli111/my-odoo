@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_sbu_sal_root"
+              name="Billing"
+              parent="sbu_estimate.menu_sbu_root"
+              sequence="40"/>
+
+    <menuitem id="menu_sbu_sal_sheet"
+              name="SAL sheets"
+              parent="menu_sbu_sal_root"
+              action="action_sbu_sal_sheet"
+              sequence="10"/>
+</odoo>

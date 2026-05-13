@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_sbu_jobs" model="ir.actions.act_window">
+        <field name="name">SBU jobs</field>
+        <field name="res_model">project.project</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="domain">[('sbu_estimate_id', '!=', False)]</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No SBU job yet</p>
+            <p>Win an estimate to create a project linked to SBU.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_sbu_jobs"
+              name="Jobs"
+              parent="sbu_estimate.menu_sbu_root"
+              action="action_sbu_jobs"
+              sequence="20"/>
+
+    <record id="view_project_form_sbu_fields" model="ir.ui.view">
+        <field name="name">project.project.form.sbu.fields</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.edit_project"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="SBU" name="sbu_project">
+                    <group>
+                        <field name="sbu_estimate_id"/>
+                        <field name="sbu_project_code"/>
+                        <field name="sbu_job_site"/>
+                        <field name="sbu_state"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

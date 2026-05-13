@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_project_form_sbu_sal" model="ir.ui.view">
+        <field name="name">project.project.form.sbu.sal</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.edit_project"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_sbu_sal_sheets" type="object" class="oe_stat_button" icon="fa-book">
+                    <div class="o_stat_info">
+                        <span class="o_stat_value">
+                            <field name="sbu_sal_sheet_count"/>
+                        </span>
+                        <span class="o_stat_text">SAL sheets</span>
+                    </div>
+                </button>
+            </xpath>
+        </field>
+    </record>
+</odoo>

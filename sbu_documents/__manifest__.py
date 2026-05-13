@@ -1,15 +1,18 @@
 {
-    'name': 'SBU Documents',
-    'version': '19.0.1.0.0',
-    'summary': 'OneDrive integration and document management for Suburban SRL',
-    'author': 'SBU Development',
-    'category': 'Document Management',
-    'depends': [
-        'base',
-        'project',
+    "name": "SBU Documents",
+    "version": "19.0.1.0.0",
+    "summary": "OneDrive / document hub placeholders for SBU jobs",
+    "author": "SBU Development",
+    "category": "Document Management",
+    "depends": [
+        "base",
+        "project",
+        "sbu_estimate",
     ],
-    'data': [],
-    'installable': True,
-    'application': False,
-    'license': 'LGPL-3',
+    "data": [
+        "views/project_document_hub.xml",
+    ],
+    "installable": True,
+    "application": False,
+    "license": "LGPL-3",
 }

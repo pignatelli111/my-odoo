@@ -1,7 +1,7 @@
 {
     'name': 'SBU Project',
     'version': '19.0.1.0.0',
-    'summary': 'Project/job container for Suburban SRL',
+    'summary': 'Project/job UI and menus for Suburban SRL',
     'author': 'SBU Development',
     'category': 'Project',
     'depends': [
@@ -9,7 +9,9 @@
         'project',
         'sbu_estimate',
     ],
-    'data': [],
+    'data': [
+        'views/project_sbu_views.xml',
+    ],
     'installable': True,
     'application': False,
     'license': 'LGPL-3',

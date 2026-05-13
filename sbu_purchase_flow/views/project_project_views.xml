@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_project_form_sbu_purchase" model="ir.ui.view">
+        <field name="name">project.project.form.sbu.purchase</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.edit_project"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_sbu_purchase_requests" type="object" class="oe_stat_button" icon="fa-truck">
+                    <div class="o_stat_info">
+                        <span class="o_stat_value">
+                            <field name="sbu_purchase_request_count"/>
+                        </span>
+                        <span class="o_stat_text">Purchase req.</span>
+                    </div>
+                </button>
+            </xpath>
+        </field>
+    </record>
+</odoo>

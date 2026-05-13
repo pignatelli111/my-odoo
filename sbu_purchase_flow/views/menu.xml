@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_sbu_purchase_root"
+              name="Purchasing"
+              parent="sbu_estimate.menu_sbu_root"
+              sequence="30"/>
+
+    <menuitem id="menu_sbu_purchase_request"
+              name="Purchase requests"
+              parent="menu_sbu_purchase_root"
+              action="action_sbu_purchase_request"
+              sequence="10"/>
+</odoo>
