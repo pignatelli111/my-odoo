@@ -39,6 +39,20 @@ class SbuSalSheet(models.Model):
         store=True,
         readonly=True,
     )
+    partner_id = fields.Many2one(
+        'res.partner',
+        string='Customer',
+        related='estimate_id.partner_id',
+        store=True,
+        readonly=True,
+    )
+    invoice_id = fields.Many2one(
+        'account.move',
+        string='Customer invoice',
+        copy=False,
+        readonly=True,
+        tracking=True,
+    )
     date = fields.Date(string='SAL date', default=fields.Date.today, tracking=True)
     state = fields.Selection(
         [
@@ -130,5 +144,60 @@ class SbuSalSheet(models.Model):
             'type': 'ir.actions.act_window',
             'res_model': 'sbu.payment.certificate',
             'res_id': cert.id,
+            'view_mode': 'form',
+        }
+
+    def action_create_draft_invoice(self):
+        """Create a draft customer invoice for the net SAL amount (accounting link)."""
+        self.ensure_one()
+        if self.state != 'confirmed':
+            raise UserError(_('Confirm the SAL before creating an invoice.'))
+        if not self.partner_id:
+            raise UserError(_('The linked estimate has no customer; set a client on the estimate first.'))
+        if self.invoice_id:
+            raise UserError(_('An invoice is already linked to this SAL.'))
+        if not self.amount_net or self.amount_net <= 0:
+            raise UserError(_('Net payable must be greater than zero.'))
+        journal = self.env['account.journal'].search([
+            ('type', '=', 'sale'),
+            ('company_id', '=', self.company_id.id),
+        ], limit=1)
+        if not journal:
+            raise UserError(_('Configure a sales journal for this company.'))
+        account = journal.default_account_id
+        if not account:
+            raise UserError(_('Set a default income account on the sales journal %s.') % journal.display_name)
+        move = self.env['account.move'].with_company(self.company_id).create({
+            'move_type': 'out_invoice',
+            'partner_id': self.partner_id.id,
+            'journal_id': journal.id,
+            'currency_id': self.currency_id.id,
+            'invoice_origin': self.name,
+            'ref': _('SAL %s') % self.name,
+            'invoice_line_ids': [(0, 0, {
+                'name': _('SAL %s — progress billing') % self.name,
+                'quantity': 1.0,
+                'price_unit': self.amount_net,
+                'account_id': account.id,
+                'tax_ids': [(6, 0, [])],
+            })],
+        })
+        self.write({'invoice_id': move.id, 'state': 'invoiced'})
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.move',
+            'res_id': move.id,
+            'view_mode': 'form',
+        }
+
+    def action_view_invoice(self):
+        self.ensure_one()
+        if not self.invoice_id:
+            return False
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Invoice'),
+            'res_model': 'account.move',
+            'res_id': self.invoice_id.id,
             'view_mode': 'form',
         }

@@ -1,1 +1,1 @@
-# models will be added in Week 4
+from . import res_config_settings

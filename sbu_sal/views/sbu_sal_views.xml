@@ -23,6 +23,8 @@
             <form string="SAL sheet">
                 <header>
                     <button name="action_confirm" string="Confirm" type="object" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_create_draft_invoice" string="Draft invoice" type="object" class="btn-secondary" invisible="state != 'confirmed' or invoice_id"/>
+                    <button name="action_view_invoice" string="Open invoice" type="object" invisible="not invoice_id"/>
                     <button name="action_create_certificate" string="Payment certificate" type="object" invisible="state != 'confirmed'"/>
                     <button name="action_reset_draft" string="Reset to draft" type="object" invisible="state not in ('confirmed','cancelled')"/>
                     <button name="action_cancel" string="Cancel" type="object" invisible="state == 'cancelled'"/>
@@ -35,6 +37,8 @@
                             <field name="company_id" groups="base.group_multi_company"/>
                             <field name="project_id"/>
                             <field name="estimate_id"/>
+                            <field name="partner_id"/>
+                            <field name="invoice_id" readonly="1"/>
                             <field name="date"/>
                         </group>
                         <group>
@@ -81,7 +85,9 @@
         <field name="arch" type="xml">
             <form string="Payment certificate">
                 <header>
-                    <field name="state" widget="statusbar"/>
+                    <button name="action_issue" string="Issue" type="object" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_mark_paid" string="Mark paid" type="object" invisible="state != 'issued'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,issued,paid"/>
                 </header>
                 <sheet>
                     <group>

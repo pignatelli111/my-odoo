@@ -1,4 +1,5 @@
 from odoo import models, fields, api, _
+from odoo.exceptions import UserError
 
 
 class SbuPaymentCertificate(models.Model):
@@ -64,3 +65,15 @@ class SbuPaymentCertificate(models.Model):
         for rec in self:
             rec.amount_retention = (rec.amount_gross or 0.0) * (rec.retention_percent or 0.0) / 100.0
             rec.amount_net = (rec.amount_gross or 0.0) - rec.amount_retention
+
+    def action_issue(self):
+        for rec in self:
+            if rec.state != 'draft':
+                raise UserError(_('Only draft certificates can be issued.'))
+        self.write({'state': 'issued'})
+
+    def action_mark_paid(self):
+        for rec in self:
+            if rec.state != 'issued':
+                raise UserError(_('Only issued certificates can be marked paid.'))
+        self.write({'state': 'paid'})

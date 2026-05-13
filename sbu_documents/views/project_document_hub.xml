@@ -9,10 +9,18 @@
                 <page string="Document hub" name="sbu_document_hub">
                     <group>
                         <div class="text-muted mb-3">
-                            Operational files stay in OneDrive. Paste the project folder URL below; future automation will sync metadata and links.
+                            Operational files stay in OneDrive. Paste the project folder URL below; add extra links (Logikal, drawings) in the list.
                         </div>
                         <field name="sbu_onedrive_url" widget="url" string="OneDrive folder URL"/>
                     </group>
+                    <field name="sbu_external_document_ids">
+                        <list editable="bottom">
+                            <field name="sequence" widget="handle"/>
+                            <field name="name"/>
+                            <field name="url" widget="url"/>
+                            <field name="note" optional="hide"/>
+                        </list>
+                    </field>
                 </page>
             </xpath>
         </field>

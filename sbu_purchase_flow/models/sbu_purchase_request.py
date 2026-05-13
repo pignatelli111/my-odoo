@@ -54,6 +54,13 @@ class SbuPurchaseRequest(models.Model):
         related='project_id.sbu_estimate_id',
         store=True,
     )
+    vendor_id = fields.Many2one(
+        'res.partner',
+        string='Preferred vendor',
+        domain=[('supplier_rank', '>', 0)],
+        tracking=True,
+        help='Used as supplier when generating a draft RFQ (Excel: main supplier for the request).',
+    )
     # Header fields aligned with RDA/ACP/ACO Excel templates (row «Project», signatures, topic)
     excel_item = fields.Char(
         string='Item (foglio Excel)',
@@ -128,9 +135,11 @@ class SbuPurchaseRequest(models.Model):
             raise UserError(_('Add at least one line before creating an RFQ.'))
         if not self.line_ids.filtered('product_id'):
             raise UserError(_('At least one line must have a product to generate purchase lines.'))
-        vendor = self.env['res.partner'].search([('supplier_rank', '>', 0)], limit=1)
+        vendor = self.vendor_id
+        if not vendor or not vendor.supplier_rank:
+            vendor = self.env['res.partner'].search([('supplier_rank', '>', 0)], limit=1)
         if not vendor:
-            raise UserError(_('Create at least one vendor contact (supplier) before generating an RFQ.'))
+            raise UserError(_('Set a preferred vendor on the request or create at least one vendor contact (supplier) before generating an RFQ.'))
         po = self.env['purchase.order'].create({
             'partner_id': vendor.id,
             'origin': self.name,
