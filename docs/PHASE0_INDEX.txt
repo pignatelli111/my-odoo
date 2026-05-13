@@ -11,7 +11,7 @@ Runbooks:
   docs/PHASE0_STEP0_3_core_apps.txt              — Step 0.3
   docs/PHASE0_STEP0_4_data_migration.txt         — Step 0.4 (Phase 0 data)
 
-Next: Phase 1 (add PHASE1_INDEX.txt when starting).
+Next: Phase 1 — see docs/PHASE1_INDEX.txt.
 
 Optional: if you change only sign-off lines in a runbook without advancing phase,
 you may commit locally or batch with the next push.

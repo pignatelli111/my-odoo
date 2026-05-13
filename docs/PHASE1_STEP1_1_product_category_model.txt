@@ -1,0 +1,104 @@
+Phase 1 — Step 1.1: Product & category model (runbook)
+======================================================
+
+Goal: Map Suburban **business families** (materials, accessories, gaskets, coils,
+kits, services, subcontracting, logistics) to **Odoo product categories** and
+**attributes** so they drive behaviour (defaults, routes, reporting), not only
+labels on a form.
+
+Prerequisite: Core apps on (0.3); accounting skeleton (0.2); migration plan (0.4)
+understood.
+
+A) Vocabulary: “family” vs Odoo objects
+---------------------------------------
+| Client concept (family)   | Primary Odoo object        | Also use |
+|---------------------------|----------------------------|----------|
+| Standard materials        | `product.category` + product | Variants if needed |
+| Specialist components     | category + product         | Attributes for “system” |
+| Accessories               | category + product         | Often purchase = ordered |
+| Gaskets                   | category + product         | UoM m / ml / pcs |
+| Coils / continuous        | category + product         | UoM length; loss % later |
+| Packs / kits              | category + **Kit** product or BOM | Decide kit vs phantom BOM |
+| External services         | **Service** type product   | No stock |
+| Technical consulting      | Service product            | Timesheet optional later |
+| Subcontracted work        | Service or **Consu** + vendor | Route subcontract if used |
+| Logistics / transport     | Service product            | Link to project cost later |
+
+Document exceptions: ________________________________________________________
+
+B) Category tree (not flat labels)
+----------------------------------
+[ ] In **Inventory → Configuration → Product Categories**, build a **small tree**
+    (max ~3 levels) so buyers and reports can filter without 200 flat tags.
+
+Suggested **top-level** examples (rename to Italian as you prefer):
+
+  `SBU / Materie prime & semilavorati`
+  `SBU / Componenti specialistici`
+  `SBU / Accessori & ferramenta`
+  `SBU / Guarnizioni & nastri`
+  `SBU / Profili & coils`
+  `SBU / Kit & pacchetti`
+  `SBU / Servizi esterni`
+  `SBU / Consulenza`
+  `SBU / Conto terzi / lavorazioni`
+  `SBU / Logistica & trasporti`
+
+[ ] Under each top-level, add **2–8 child categories** that match how you buy
+    (e.g. `… / Profili / Alluminio`, `… / Vetro / stratificato`).
+
+[ ] **Remove** duplicate legacy categories if you imported messy data in 0.4.
+
+C) Attributes (where “label” is not enough)
+-------------------------------------------
+Use **product attributes** when the same product shape has variants OR when
+you need filters without creating infinite SKUs:
+
+  Examples: `Tipo apertura`, `Sistema profilo`, `Finitura`, `Tipo vetro`,
+  `Spessore`, `Ante N°` (if variant-driven).
+
+[ ] List **global attributes** (few, stable) vs **category-specific** (many):
+    Global: _______________________________________________________________
+    By category: __________________________________________________________
+
+[ ] Decide: **variant matrix** (many products from one template) vs **separate
+    products** with `default_code` (simpler for façade BOMs — often preferred v1).
+
+D) Defaults per category (behaviour, not only reporting)
+-------------------------------------------------------
+For each **leaf category**, agree and set where Odoo allows:
+
+[ ] **Costing method** (standard / FIFO) — often one policy per company first.
+[ ] **Routes** (Buy, MTO, Manufacture) — at least Buy vs MTO for stock items.
+[ ] **Income / expense accounts** (on category or on product category properties)
+    so SAL / invoices propose correct accounts.
+[ ] **Purchase / sales UoM** defaults where the family always uses the same unit.
+
+E) Link to SBU custom flows (forward compatibility)
+---------------------------------------------------
+[ ] Categories used on **BOM lines** (`sbu.estimate.bom.line`) should reference
+    `product.product` rows that sit in the right category — no orphan “misc”.
+[ ] **Purchase requests** (RDA-style): later RFQ grouping will use **product /
+    category** filters — keep category tree aligned with buyer mental model.
+
+F) Mapping table (fill — keep a copy outside public git if sensitive)
+----------------------------------------------------------------------
+| Family (client)     | Odoo parent category | Odoo child category | Product type | Route | Notes |
+|---------------------|----------------------|----------------------|---------------|-------|-------|
+| (example) Gaskets   | SBU / Guarnizioni    | EPDM roll            | Consu         | Buy   |       |
+|                     |                      |                      |               |       |       |
+
+G) Validation & cleanup
+-----------------------
+[ ] No product with **empty category** (except deliberate “generic” if any).
+[ ] No **duplicate default_code** among active products.
+[ ] Spot-check 10 high runners: category + UoM + tax + type correct.
+
+H) Sign-off
+-----------
+Date: ____________
+Verified by: ____________
+Buyer + estimator both consulted: Y / N
+Notes: ______________________________________________________________________
+
+Next: docs/PHASE1_STEP1_2_uom_conversion.txt (create when starting Step 1.2).

@@ -1,0 +1,12 @@
+Phase 1 — index & when to push
+===============================
+
+Same habit as Phase 0 (see docs/PHASE0_INDEX.txt): **push when advancing phase /
+milestone**, not after every checkbox in Odoo.
+
+Runbooks:
+  docs/PHASE1_STEP1_1_product_category_model.txt  — Step 1.1
+  (1.2 UoM & conversion policy — add when starting)
+  (1.3 Supplier master — add when starting)
+
+Prerequisite: Phase 0 complete (0.1–0.4) for your environment.
