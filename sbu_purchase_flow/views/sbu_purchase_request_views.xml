@@ -190,12 +190,11 @@
                 <separator/>
                 <filter name="prio_high" string="High / critical" domain="[('priority','in', ('2','3'))]"/>
                 <filter name="need_by_set" string="Need-by set" domain="[('need_by_date','!=', False)]"/>
-                <group expand="0" string="Group By">
-                    <filter string="Type" name="grp_type" context="{'group_by': 'request_type'}"/>
-                    <filter string="Priority" name="grp_prio" context="{'group_by': 'priority'}"/>
-                    <filter string="Project" name="grp_project" context="{'group_by': 'project_id'}"/>
-                    <filter string="Status" name="grp_state" context="{'group_by': 'state'}"/>
-                </group>
+                <separator/>
+                <filter string="Group by type" name="grp_type" context="{'group_by': 'request_type'}"/>
+                <filter string="Group by priority" name="grp_prio" context="{'group_by': 'priority'}"/>
+                <filter string="Group by project" name="grp_project" context="{'group_by': 'project_id'}"/>
+                <filter string="Group by status" name="grp_state" context="{'group_by': 'state'}"/>
             </search>
         </field>
     </record>

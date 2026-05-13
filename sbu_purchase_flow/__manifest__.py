@@ -1,6 +1,6 @@
 {
     'name': 'SBU Purchase Flow',
-    'version': '19.0.1.0.10',
+    'version': '19.0.1.0.11',
     'summary': 'RDA/ACP/ACO/LDS purchase requests; multi-vendor RFQ, supplier offers per line, comparison markup (3.4)',
     'author': 'SBU Development',
     'category': 'Purchase',
