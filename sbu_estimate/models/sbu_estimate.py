@@ -35,6 +35,7 @@ class SbuEstimate(models.Model):
         compute='_compute_revision_root',
         store=True,
         index=True,
+        recursive=True,
     )
     full_name = fields.Char(
         string='Riferimento Completo',

@@ -2,7 +2,9 @@
 <odoo>
     <record id="group_sbu_estimate_approver" model="res.groups">
         <field name="name">Approvatore Preventivi SBU</field>
-        <field name="category_id" ref="base.module_category_sales_sales"/>
+        <field name="sequence">25</field>
+        <field name="privilege_id" ref="sales_team.res_groups_privilege_sales"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
         <field name="comment">Può approvare o rifiutare preventivi in approvazione interna.</field>
     </record>
 </odoo>
