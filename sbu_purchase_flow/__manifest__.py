@@ -1,6 +1,6 @@
 {
     'name': 'SBU Purchase Flow',
-    'version': '19.0.1.0.12',
+    'version': '19.0.1.0.13',
     'summary': 'RDA/ACP/ACO/LDS purchase requests; supplier comparison matrix, chosen offer → PO trace (3.5)',
     'author': 'SBU Development',
     'category': 'Purchase',

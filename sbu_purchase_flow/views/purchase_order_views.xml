@@ -3,7 +3,7 @@
     <record id="purchase_order_form_inherit_sbu_pr" model="ir.ui.view">
         <field name="name">purchase.order.form.inherit.sbu.pr</field>
         <field name="model">purchase.order</field>
-        <field name="inherit_id" ref="purchase.view_purchase_order_form"/>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='partner_id']" position="after">
                 <field name="sbu_purchase_request_id" optional="show"/>
