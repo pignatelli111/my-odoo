@@ -175,10 +175,10 @@
         <field name="name">sbu.estimate.search</field>
         <field name="model">sbu.estimate</field>
         <field name="arch" type="xml">
-            <search string="Cerca Preventivi">
-                <field name="name" string="Preventivo"/>
-                <field name="partner_id" string="Cliente"/>
-                <field name="job_site" string="Cantiere"/>
+            <search>
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="job_site"/>
                 <filter name="draft"
                         string="Bozza"
                         domain="[('state','=','draft')]"/>
@@ -194,17 +194,15 @@
                 <filter name="my_estimates"
                         string="Miei Preventivi"
                         domain="[('user_id','=',uid)]"/>
-                <group expand="0" string="Raggruppa per">
-                    <filter name="group_partner"
-                            string="Cliente"
-                            context="{'group_by': 'partner_id'}"/>
-                    <filter name="group_state"
-                            string="Stato"
-                            context="{'group_by': 'state'}"/>
-                    <filter name="group_month"
-                            string="Mese"
-                            context="{'group_by': 'date:month'}"/>
-                </group>
+                <filter name="group_partner"
+                        string="Raggruppa Cliente"
+                        context="{'group_by': 'partner_id'}"/>
+                <filter name="group_state"
+                        string="Raggruppa Stato"
+                        context="{'group_by': 'state'}"/>
+                <filter name="group_month"
+                        string="Raggruppa Mese"
+                        context="{'group_by': 'date:month'}"/>
             </search>
         </field>
     </record>
