@@ -21,6 +21,8 @@
                 <field name="total_cost" widget="monetary"/>
                 <field name="expected_margin_pct"/>
                 <field name="probability"/>
+                <field name="commercial_scenario" optional="show"/>
+                <field name="approval_state" optional="hide"/>
                 <field name="state" widget="badge"
                        decoration-success="state == 'won'"
                        decoration-danger="state == 'lost'"
@@ -42,7 +44,24 @@
                             string="Invia"
                             type="object"
                             class="btn-primary"
-                            invisible="state != 'draft'"/>
+                            invisible="state != 'draft' or (approval_required and approval_state != 'approved')"/>
+                    <button name="action_request_internal_approval"
+                            string="Richiedi approvazione"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="state != 'draft' or not approval_required or approval_state not in ('na', 'rejected')"/>
+                    <button name="action_approve_internal"
+                            string="Approva"
+                            type="object"
+                            class="btn-success"
+                            groups="sbu_estimate.group_sbu_estimate_approver"
+                            invisible="approval_state != 'pending'"/>
+                    <button name="action_reject_internal"
+                            string="Rifiuta"
+                            type="object"
+                            class="btn-danger"
+                            groups="sbu_estimate.group_sbu_estimate_approver"
+                            invisible="approval_state != 'pending'"/>
                     <button name="action_won"
                             string="Vinto"
                             type="object"
@@ -71,6 +90,15 @@
                 </header>
 
                 <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_revision_chain"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-code-fork"
+                                invisible="revision_same_name_count == 0">
+                            <field name="revision_same_name_count" widget="statinfo" string="Revisioni"/>
+                        </button>
+                    </div>
                     <div class="oe_title">
                         <h1>
                             <field name="name" readonly="1"/>
@@ -92,6 +120,20 @@
                             <field name="validity_date"/>
                             <field name="validity_days"/>
                             <field name="probability"/>
+                            <field name="commercial_scenario"/>
+                        </group>
+                    </group>
+
+                    <group string="Revisione e approvazione">
+                        <group string="Catena revisioni">
+                            <field name="previous_revision_id" readonly="1"/>
+                            <field name="revision_root_id" readonly="1"/>
+                        </group>
+                        <group string="Approvazione interna (opzionale)">
+                            <field name="approval_required"/>
+                            <field name="approval_state"/>
+                            <field name="approved_by_id" invisible="approval_state != 'approved'"/>
+                            <field name="approved_on" invisible="approval_state != 'approved'"/>
                         </group>
                     </group>
 
@@ -197,6 +239,19 @@
                 <filter name="my_estimates"
                         string="Miei Preventivi"
                         domain="[('user_id','=',uid)]"/>
+                <filter name="approval_pending"
+                        string="In approvazione interna"
+                        domain="[('approval_state','=','pending')]"/>
+                <separator/>
+                <filter name="scenario_base"
+                        string="Scenario: Base"
+                        domain="[('commercial_scenario','=','base')]"/>
+                <filter name="scenario_aggressive"
+                        string="Scenario: Aggressivo"
+                        domain="[('commercial_scenario','=','aggressive')]"/>
+                <filter name="scenario_risk"
+                        string="Scenario: Rischio"
+                        domain="[('commercial_scenario','=','risk')]"/>
                 <filter name="group_partner"
                         string="Raggruppa Cliente"
                         context="{'group_by': 'partner_id'}"/>

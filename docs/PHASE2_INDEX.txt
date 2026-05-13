@@ -7,7 +7,7 @@ remote/Odoo.sh to see the full Phase 2 doc set.
 
 Runbooks:
   docs/PHASE2_STEP2_1_anaco_field_formula_parity.txt  — Step 2.1
-  (2.2 Revisions & commercial scenario — add when starting)
+  docs/PHASE2_STEP2_2_revisions_commercial_scenario.txt — Step 2.2
   (2.3 Attachments & references — add when starting)
   (2.4 Optional Excel import — add when starting)
 

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="group_sbu_estimate_approver" model="res.groups">
+        <field name="name">Approvatore Preventivi SBU</field>
+        <field name="category_id" ref="base.module_category_sales_sales"/>
+        <field name="comment">Può approvare o rifiutare preventivi in approvazione interna.</field>
+    </record>
+</odoo>

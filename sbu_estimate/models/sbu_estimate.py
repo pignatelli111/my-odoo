@@ -22,6 +22,20 @@ class SbuEstimate(models.Model):
         default='REV00',
         tracking=True,
     )
+    previous_revision_id = fields.Many2one(
+        'sbu.estimate',
+        string='Revisione precedente',
+        ondelete='set null',
+        index=True,
+        copy=False,
+    )
+    revision_root_id = fields.Many2one(
+        'sbu.estimate',
+        string='Radice revisioni',
+        compute='_compute_revision_root',
+        store=True,
+        index=True,
+    )
     full_name = fields.Char(
         string='Riferimento Completo',
         compute='_compute_full_name',
@@ -72,6 +86,15 @@ class SbuEstimate(models.Model):
     )
 
     # ── Commercial scenario ───────────────────────────────────────────────────
+    commercial_scenario = fields.Selection(
+        selection=[
+            ('base', 'Base (listino / standard)'),
+            ('aggressive', 'Aggressivo'),
+            ('risk', 'Rischio / contingency'),
+        ],
+        string='Scenario commerciale',
+        tracking=True,
+    )
     probability = fields.Float(
         string='Probabilità Chiusura (%)',
         default=50.0,
@@ -113,6 +136,39 @@ class SbuEstimate(models.Model):
         ('lost', 'Perso'),
         ('cancelled', 'Annullato'),
     ], string='Stato', default='draft', tracking=True)
+
+    approval_required = fields.Boolean(
+        string='Richiede approvazione interna',
+        default=False,
+        tracking=True,
+    )
+    approval_state = fields.Selection(
+        selection=[
+            ('na', 'Nessuna'),
+            ('pending', 'In approvazione'),
+            ('approved', 'Approvato'),
+            ('rejected', 'Rifiutato'),
+        ],
+        string='Stato approvazione',
+        default='na',
+        copy=False,
+        tracking=True,
+    )
+    approved_by_id = fields.Many2one(
+        'res.users',
+        string='Approvato da',
+        readonly=True,
+        copy=False,
+    )
+    approved_on = fields.Datetime(
+        string='Approvato il',
+        readonly=True,
+        copy=False,
+    )
+    revision_same_name_count = fields.Integer(
+        string='Revisioni (stesso Ns.)',
+        compute='_compute_revision_same_name_count',
+    )
 
     # ── Lines ─────────────────────────────────────────────────────────────────
     line_ids = fields.One2many(
@@ -180,6 +236,25 @@ class SbuEstimate(models.Model):
         for rec in self:
             rec.full_name = f"{rec.name or ''} {rec.revision or ''}".strip()
 
+    @api.depends('previous_revision_id', 'previous_revision_id.revision_root_id', recursive=True)
+    def _compute_revision_root(self):
+        for rec in self:
+            prev = rec.previous_revision_id
+            if prev:
+                rec.revision_root_id = prev.revision_root_id or prev
+            else:
+                rec.revision_root_id = rec
+
+    @api.depends('name')
+    def _compute_revision_same_name_count(self):
+        Estimate = self.env['sbu.estimate']
+        for rec in self:
+            name = rec.name
+            if not name or name == _('New'):
+                rec.revision_same_name_count = 0
+            else:
+                rec.revision_same_name_count = Estimate.search_count([('name', '=', name)])
+
     @api.depends(
         'line_ids.price_total_tot',
         'line_ids.cost_total_tot',
@@ -217,6 +292,11 @@ class SbuEstimate(models.Model):
     # ── State transitions ─────────────────────────────────────────────────────
     def action_send(self):
         self.ensure_one()
+        if self.approval_required and self.approval_state != 'approved':
+            raise UserError(
+                _('Impossibile inviare: richiesta approvazione interna non completata '
+                  '(stato deve essere «Approvato»).')
+            )
         self.state = 'sent'
 
     def action_won(self):
@@ -247,6 +327,11 @@ class SbuEstimate(models.Model):
             'revision': new_rev,
             'state': 'draft',
             'name': self.name,
+            'previous_revision_id': self.id,
+            'project_id': False,
+            'approval_state': 'na',
+            'approved_by_id': False,
+            'approved_on': False,
         })
         return {
             'type': 'ir.actions.act_window',
@@ -276,3 +361,54 @@ class SbuEstimate(models.Model):
             'res_id': self.project_id.id,
             'view_mode': 'form',
         }
+
+    def action_view_revision_chain(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Revisioni stesso preventivo'),
+            'res_model': 'sbu.estimate',
+            'view_mode': 'list,form',
+            'domain': [('name', '=', self.name)],
+            'context': {'default_name': self.name},
+        }
+
+    def _require_approver_rights(self):
+        if not self.env.user.has_group('sbu_estimate.group_sbu_estimate_approver'):
+            raise UserError(_('Operazione riservata agli approvatori preventivi SBU.'))
+
+    def action_request_internal_approval(self):
+        for rec in self:
+            if not rec.approval_required:
+                raise UserError(_('Attivare «Richiede approvazione interna» prima di richiedere l\'approvazione.'))
+            if rec.approval_state == 'pending':
+                continue
+            if rec.approval_state not in ('na', 'rejected'):
+                raise UserError(_('Stato approvazione non compatibile con una nuova richiesta.'))
+            rec.write({
+                'approval_state': 'pending',
+                'approved_by_id': False,
+                'approved_on': False,
+            })
+
+    def action_approve_internal(self):
+        self._require_approver_rights()
+        for rec in self:
+            if rec.approval_state != 'pending':
+                raise UserError(_('Solo preventivi «In approvazione» possono essere approvati.'))
+            rec.write({
+                'approval_state': 'approved',
+                'approved_by_id': self.env.user.id,
+                'approved_on': fields.Datetime.now(),
+            })
+
+    def action_reject_internal(self):
+        self._require_approver_rights()
+        for rec in self:
+            if rec.approval_state != 'pending':
+                raise UserError(_('Solo preventivi «In approvazione» possono essere rifiutati.'))
+            rec.write({
+                'approval_state': 'rejected',
+                'approved_by_id': False,
+                'approved_on': False,
+            })

@@ -1,0 +1,71 @@
+Phase 2 — Step 2.2: Revisions & commercial scenario
+=====================================================
+
+Goal: **Formal revision workflow** (traceable chain, same Ns. Preventivo), optional
+**commercial scenario** tagging (base / aggressivo / rischio), and **internal
+approval** when the company requires it before «Invia».
+
+References:
+  - Code: `sbu_estimate/models/sbu_estimate.py`, `views/sbu_estimate_views.xml`
+  - Security: `sbu_estimate/security/sbu_estimate_groups.xml`
+  - Related: Step 2.1 `docs/PHASE2_STEP2_1_anaco_field_formula_parity.txt`
+
+A) Revision workflow (Odoo behaviour)
+--------------------------------------
+| Step | Who | Action |
+|------|-----|--------|
+| 1 | Estimator | Create estimate → `name` from sequence, `revision` = REV00, no «Revisione precedente». |
+| 2 | Estimator | After customer feedback: **Nuova Revisione** → duplicate with same `name`, next `revision` (REV01…), **Revisione precedente** = prior record. |
+| 3 | Anyone | **Revisioni** smart button → list all records with same `name` (full chain). |
+| 4 | Process owner | Decide whether **older revisions** stay `draft`/`sent` or move to `cancelled` to avoid duplicate active offers (policy; not enforced in code). |
+
+**Radice revisioni** (`revision_root_id`): first record in the chain (no predecessor).
+Use it for reporting «tutte le revisioni di questo preventivo» if you extend BI.
+
+**ANACO / Excel note:** Excel files often use copy-of-workbook or manual REV;
+Odoo uses one DB record per revision with shared `name` — align naming in
+customer PDFs with `full_name` (Ns. + revisione).
+
+B) Commercial scenario (optional record)
+----------------------------------------
+| Scenario | When to use |
+|----------|-------------|
+| **Base (listino / standard)** | Default pricing path, standard risk. |
+| **Aggressivo** | Compressed margin or competitive match — document in chatter. |
+| **Rischio / contingency** | Extra risk allowance, provisional numbers — pair with probability. |
+
+Field: **Scenario commerciale** on the estimate (optional). It is **one tag per
+revision**; for **parallel** what-if versions (e.g. three live scenarios at once),
+use **separate estimates** or **separate revisions** each with its own scenario,
+then compare totals in list view.
+
+C) Internal approval (if required)
+----------------------------------
+| Field / state | Meaning |
+|---------------|---------|
+| **Richiede approvazione interna** | If enabled, «Invia» is blocked until approved. |
+| **Stato approvazione** | Nessuna → In approvazione → Approvato / Rifiutato. |
+| **Approvato da / il** | Set on approval (chatter + tracking). |
+
+Workflow:
+  1. Tick **Richiede approvazione interna** when commercial policy demands it.
+  2. **Richiedi approvazione** → stato «In approvazione».
+  3. User in group **Approvatore Preventivi SBU** → **Approva** or **Rifiuta**.
+  4. After **Approva**, **Invia** is allowed (still `draft` → `sent`).
+
+Assign **Approvatore Preventivi SBU** to sales manager / direzione commerciale
+in *Impostazioni → Utenti* (or duplicate group for «second level» if needed).
+
+D) Deliverable of Step 2.2
+--------------------------
+[ ] Written policy: when to create a revision vs new `name`; who cancels old rev.
+[ ] List of users with **Approvatore Preventivi SBU** (if approval is used).
+[ ] Optional: require approval above €X (future: automated rule or studio).
+
+E) Sign-off
+-----------
+Date: ____________
+Process owner: _______________________________________________________________
+Notes: ______________________________________________________________________
+
+Next: docs/PHASE2_STEP2_3_attachments_references.txt (when starting 2.3).
