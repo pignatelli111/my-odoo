@@ -145,6 +145,13 @@ class SbuEstimate(models.Model):
         store=True,
         currency_field='currency_id',
     )
+    total_contract_sal = fields.Monetary(
+        string='Totale Contrattuale SAL',
+        compute='_compute_totals',
+        store=True,
+        currency_field='currency_id',
+        help='Somma «Tot. € Contrattuali» delle voci SAL (foglio Voci Contrattuali).',
+    )
     margin_amount = fields.Monetary(
         string='Margine €',
         compute='_compute_margin',
@@ -173,12 +180,18 @@ class SbuEstimate(models.Model):
         for rec in self:
             rec.full_name = f"{rec.name or ''} {rec.revision or ''}".strip()
 
-    @api.depends('line_ids.price_total_tot', 'line_ids.cost_total_tot', 'line_ids.sqm')
+    @api.depends(
+        'line_ids.price_total_tot',
+        'line_ids.cost_total_tot',
+        'line_ids.sqm',
+        'sal_line_ids.total_contract',
+    )
     def _compute_totals(self):
         for rec in self:
             rec.total_sqm = sum(rec.line_ids.mapped('sqm'))
             rec.total_price = sum(rec.line_ids.mapped('price_total_tot'))
             rec.total_cost = sum(rec.line_ids.mapped('cost_total_tot'))
+            rec.total_contract_sal = sum(rec.sal_line_ids.mapped('total_contract'))
 
     @api.depends('total_price', 'total_cost')
     def _compute_margin(self):

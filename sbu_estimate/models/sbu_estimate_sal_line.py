@@ -1,4 +1,5 @@
-from odoo import models, fields, api
+from odoo import models, fields, api, _
+from odoo.exceptions import ValidationError
 
 
 class SbuEstimateSalLine(models.Model):
@@ -86,3 +87,21 @@ class SbuEstimateSalLine(models.Model):
                 + line.sal_7_pct + line.sal_8_pct + line.sal_9_pct
                 + line.sal_10_pct
             )
+
+    @api.constrains(
+        'sal_1_pct', 'sal_2_pct', 'sal_3_pct', 'sal_4_pct', 'sal_5_pct',
+        'sal_6_pct', 'sal_7_pct', 'sal_8_pct', 'sal_9_pct', 'sal_10_pct',
+    )
+    def _check_sal_progress_cap(self):
+        for line in self:
+            total = (
+                line.sal_1_pct + line.sal_2_pct + line.sal_3_pct
+                + line.sal_4_pct + line.sal_5_pct + line.sal_6_pct
+                + line.sal_7_pct + line.sal_8_pct + line.sal_9_pct
+                + line.sal_10_pct
+            )
+            if total > 100.0000001:
+                raise ValidationError(
+                    _('La somma SAL-1…SAL-10 non può superare il 100%% (riga: %s).')
+                    % ((line.description or '')[:80] or line.item_ref or line.id)
+                )

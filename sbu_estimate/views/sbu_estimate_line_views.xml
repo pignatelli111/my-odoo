@@ -50,6 +50,7 @@
                                     <field name="price_cassonetto_cad"/>
                                 </group>
                                 <group string="Totali Prezzo">
+                                    <field name="price_gross_cad" readonly="1"/>
                                     <field name="price_total_cad" readonly="1"/>
                                     <field name="price_total_tot" readonly="1"/>
                                     <field name="price_per_sqm" readonly="1"/>
@@ -71,6 +72,9 @@
                                     <field name="cost_extra_cad"/>
                                 </group>
                                 <group string="Totali Costo">
+                                    <field name="cost_industrial_cad" readonly="1"/>
+                                    <field name="cost_mol_amount_cad" readonly="1"/>
+                                    <field name="cost_bom_total" readonly="1"/>
                                     <field name="cost_total_cad" readonly="1"/>
                                     <field name="cost_total_tot" readonly="1"/>
                                     <field name="cost_per_sqm" readonly="1"/>

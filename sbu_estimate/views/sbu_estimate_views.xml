@@ -17,6 +17,7 @@
                 <field name="job_site"/>
                 <field name="total_sqm"/>
                 <field name="total_price" widget="monetary"/>
+                <field name="total_contract_sal" widget="monetary"/>
                 <field name="total_cost" widget="monetary"/>
                 <field name="expected_margin_pct"/>
                 <field name="probability"/>
@@ -98,6 +99,7 @@
                         <group>
                             <field name="total_sqm"/>
                             <field name="total_price" widget="monetary"/>
+                            <field name="total_contract_sal" widget="monetary"/>
                             <field name="currency_id" invisible="1"/>
                         </group>
                         <group>

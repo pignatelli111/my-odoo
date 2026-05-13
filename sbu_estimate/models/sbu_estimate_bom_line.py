@@ -1,3 +1,5 @@
+import math
+
 from odoo import models, fields, api
 
 
@@ -114,7 +116,6 @@ class SbuEstimateBomLine(models.Model):
         'estimate_line_id.qty',
     )
     def _compute_qty(self):
-        import math
         for line in self:
             parent = line.estimate_line_id
             if not parent:
