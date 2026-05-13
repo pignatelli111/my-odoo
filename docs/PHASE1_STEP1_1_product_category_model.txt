@@ -101,4 +101,4 @@ Verified by: ____________
 Buyer + estimator both consulted: Y / N
 Notes: ______________________________________________________________________
 
-Next: docs/PHASE1_STEP1_2_uom_conversion.txt (create when starting Step 1.2).
+Next: docs/PHASE1_STEP1_2_uom_conversion.txt — no push for this step alone; see docs/PHASE1_INDEX.txt
