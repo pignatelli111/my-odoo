@@ -86,7 +86,28 @@ class SbuPurchaseRequest(models.Model):
         string='Preferred vendor',
         domain=[('supplier_rank', '>', 0)],
         tracking=True,
-        help='Used as supplier when generating a draft RFQ (Excel: main supplier for the request).',
+        help='Used when «RFQ vendors» is empty: one draft RFQ is created for this supplier.',
+    )
+    vendor_ids = fields.Many2many(
+        'res.partner',
+        'sbu_purchase_request_vendor_rel',
+        'request_id',
+        'partner_id',
+        string='RFQ vendors',
+        domain=[('supplier_rank', '>', 0)],
+        help='Multi-vendor RFQ: one draft purchase order per supplier. If empty, the preferred vendor is used.',
+    )
+    offer_comparison_markup_pct = fields.Float(
+        string='Offer comparison markup %',
+        default=4.0,
+        digits=(16, 2),
+        tracking=True,
+        help='Applied to captured unit prices in «Evaluated price» for comparison (+4%% buffer).',
+    )
+    offer_ids = fields.One2many(
+        'sbu.purchase.request.offer',
+        'request_id',
+        string='Supplier offers',
     )
     # Header fields aligned with RDA/ACP/ACO Excel templates (row «Project», signatures, topic)
     excel_item = fields.Char(
@@ -325,25 +346,10 @@ class SbuPurchaseRequest(models.Model):
             'target': 'current',
         }
 
-    def action_create_rfq(self):
-        """Create a draft purchase.order linked to this request (MVP)."""
-        self.ensure_one()
-        self.line_ids.action_refresh_qty_from_bom()
-        if not self.line_ids:
-            raise UserError(_('Add at least one line before creating an RFQ.'))
-        if not self.line_ids.filtered('product_id'):
-            raise UserError(_('At least one line must have a product to generate purchase lines.'))
-        vendor = self.vendor_id
-        if not vendor or not vendor.supplier_rank:
-            vendor = self.env['res.partner'].search([('supplier_rank', '>', 0)], limit=1)
-        if not vendor:
-            raise UserError(_('Set a preferred vendor on the request or create at least one vendor contact (supplier) before generating an RFQ.'))
-        po = self.env['purchase.order'].create({
-            'partner_id': vendor.id,
-            'origin': self.name,
-            'company_id': self.company_id.id,
-        })
-        for line in self.line_ids:
+    def _sbu_create_rfq_po_lines(self, po, pr_lines):
+        """Append purchase.order.line rows from PR lines onto ``po``."""
+        Pol = self.env['purchase.order.line']
+        for line in pr_lines:
             if not line.product_id:
                 continue
             parts = []
@@ -358,7 +364,7 @@ class SbuPurchaseRequest(models.Model):
             planned = fields.Datetime.now()
             if line.date_required:
                 planned = fields.Datetime.to_datetime(line.date_required)
-            self.env['purchase.order.line'].create({
+            Pol.create({
                 'order_id': po.id,
                 'product_id': line.product_id.id,
                 'product_qty': line.product_qty,
@@ -366,10 +372,50 @@ class SbuPurchaseRequest(models.Model):
                 'name': prefix + desc,
                 'date_planned': planned,
             })
-        self.purchase_order_ids = [(4, po.id)]
+
+    def action_create_rfq(self):
+        """Create one draft purchase.order per RFQ vendor (multi-vendor RFQ)."""
+        self.ensure_one()
+        self.line_ids.action_refresh_qty_from_bom()
+        if not self.line_ids:
+            raise UserError(_('Add at least one line before creating an RFQ.'))
+        if not self.line_ids.filtered('product_id'):
+            raise UserError(_('At least one line must have a product to generate purchase lines.'))
+        vendors = self.vendor_ids
+        if self.vendor_id:
+            vendors |= self.vendor_id
+        vendors = vendors.filtered(lambda p: p.supplier_rank)
+        if not vendors:
+            fallback = self.env['res.partner'].search([('supplier_rank', '>', 0)], limit=1)
+            vendors = fallback
+        if not vendors:
+            raise UserError(
+                _('Set «RFQ vendors» and/or a preferred vendor, or create at least one supplier contact before generating RFQs.')
+            )
+        Po = self.env['purchase.order']
+        created = Po.browse()
+        for vendor in vendors:
+            po = Po.create({
+                'partner_id': vendor.id,
+                'origin': _('%s — %s') % (self.name, vendor.name),
+                'company_id': self.company_id.id,
+            })
+            self._sbu_create_rfq_po_lines(po, self.line_ids)
+            created |= po
+        for po in created:
+            self.purchase_order_ids = [(4, po.id)]
+        if len(created) == 1:
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'purchase.order',
+                'res_id': created.id,
+                'view_mode': 'form',
+            }
         return {
             'type': 'ir.actions.act_window',
+            'name': _('Draft RFQs'),
             'res_model': 'purchase.order',
-            'res_id': po.id,
-            'view_mode': 'form',
+            'view_mode': 'list,form',
+            'domain': [('id', 'in', created.ids)],
+            'target': 'current',
         }

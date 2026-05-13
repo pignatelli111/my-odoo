@@ -51,7 +51,7 @@
                             type="object"
                             class="btn-secondary"
                             invisible="state == 'cancelled'"/>
-                    <button name="action_create_rfq" string="Create draft RFQ" type="object" class="btn-secondary" invisible="state == 'cancelled'"/>
+                    <button name="action_create_rfq" string="Create draft RFQ(s)" type="object" class="btn-secondary" invisible="state == 'cancelled'"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,submitted,approved,done,cancelled"/>
                 </header>
                 <sheet>
@@ -72,6 +72,10 @@
                             <field name="project_id" readonly="state in ('done','cancelled')"/>
                             <field name="estimate_id"/>
                             <field name="vendor_id"/>
+                            <field name="vendor_ids" widget="many2many_tags"
+                                   readonly="state in ('done','cancelled')"
+                                   placeholder="Add suppliers for multi-vendor RFQ…"/>
+                            <field name="offer_comparison_markup_pct" readonly="state in ('done','cancelled')"/>
                             <field name="excel_item"/>
                             <field name="topic"/>
                         </group>
@@ -120,8 +124,31 @@
                                     <field name="destination" optional="hide"/>
                                     <field name="procurement_mode" optional="show"/>
                                     <field name="note" optional="hide"/>
+                                    <field name="offer_count" optional="show"/>
                                 </list>
                             </field>
+                        </page>
+                        <page string="Supplier offers">
+                            <field name="offer_ids" readonly="state in ('done','cancelled')">
+                                <list editable="bottom">
+                                    <field name="request_line_id"
+                                           domain="[('request_id', '=', parent.id)]"
+                                           options="{'no_create': True}"/>
+                                    <field name="vendor_id"/>
+                                    <field name="name" optional="show"/>
+                                    <field name="unit_price"/>
+                                    <field name="currency_id" optional="hide"/>
+                                    <field name="price_evaluated" optional="show"/>
+                                    <field name="offer_date" optional="show"/>
+                                    <field name="lead_time_days" optional="hide"/>
+                                    <field name="notes" optional="hide"/>
+                                    <field name="attachment_ids" widget="many2many_binary" optional="show"/>
+                                </list>
+                            </field>
+                            <div class="text-muted">
+                                Capture several quotes per line; attach PDF/Excel from the supplier.
+                                «Evaluated price» applies the request «Offer comparison markup %» to the unit price.
+                            </div>
                         </page>
                         <page string="Attachments">
                             <group>

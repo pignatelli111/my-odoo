@@ -88,6 +88,20 @@ class SbuPurchaseRequestLine(models.Model):
         string='BOM qty (pack)',
         digits=(16, 3),
     )
+    offer_ids = fields.One2many(
+        'sbu.purchase.request.offer',
+        'request_line_id',
+        string='Supplier offers',
+    )
+    offer_count = fields.Integer(
+        string='# Offers',
+        compute='_compute_offer_count',
+    )
+
+    @api.depends('offer_ids')
+    def _compute_offer_count(self):
+        for line in self:
+            line.offer_count = len(line.offer_ids)
 
     @api.onchange('product_id')
     def _onchange_product_id_article(self):
