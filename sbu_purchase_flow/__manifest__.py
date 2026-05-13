@@ -1,7 +1,7 @@
 {
     'name': 'SBU Purchase Flow',
-    'version': '19.0.1.0.13',
-    'summary': 'RDA/ACP/ACO/LDS purchase requests; supplier comparison matrix, chosen offer → PO trace (3.5)',
+    'version': '19.0.1.0.14',
+    'summary': 'RDA/ACP/ACO/LDS purchase requests; PR→PO project link with sbu_stock_config (4.2)',
     'author': 'SBU Development',
     'category': 'Purchase',
     'depends': [
@@ -11,6 +11,7 @@
         'stock',
         'project',
         'sbu_estimate',
+        'sbu_stock_config',
     ],
     'data': [
         'security/ir.model.access.csv',

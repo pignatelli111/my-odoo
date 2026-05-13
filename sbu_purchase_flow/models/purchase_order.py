@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from odoo import fields, models
+from odoo import api, fields, models
 
 
 class PurchaseOrder(models.Model):
@@ -13,6 +13,15 @@ class PurchaseOrder(models.Model):
         copy=False,
         help='Purchase request this RFQ/PO was generated from (SBU traceability).',
     )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('sbu_purchase_request_id') and not vals.get('project_id'):
+                pr = self.env['sbu.purchase.request'].browse(vals['sbu_purchase_request_id'])
+                if 'project_id' in self._fields and pr.project_id:
+                    vals['project_id'] = pr.project_id.id
+        return super().create(vals_list)
 
 
 class PurchaseOrderLine(models.Model):

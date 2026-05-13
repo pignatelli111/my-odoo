@@ -441,12 +441,15 @@ class SbuPurchaseRequest(models.Model):
         Po = self.env['purchase.order']
         created = Po.browse()
         for vendor in vendors:
-            po = Po.create({
+            po_vals = {
                 'partner_id': vendor.id,
                 'origin': _('%s — %s') % (self.name, vendor.name),
                 'company_id': self.company_id.id,
                 'sbu_purchase_request_id': self.id,
-            })
+            }
+            if 'project_id' in Po._fields:
+                po_vals['project_id'] = self.project_id.id
+            po = Po.create(po_vals)
             self._sbu_create_rfq_po_lines(po, self.line_ids)
             created |= po
         for po in created:
