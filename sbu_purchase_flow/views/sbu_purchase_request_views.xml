@@ -79,7 +79,8 @@
                                     <field name="dimension_mm" optional="hide"/>
                                     <field name="utilization" optional="hide"/>
                                     <field name="weight_kg" optional="hide"/>
-                                    <field name="product_qty" readonly="bom_qty_sync and source_bom_line_id"/>
+                                    <!-- Do not use source_bom_line_id in modifiers: Many2one is not a safe boolean in list views. -->
+                                    <field name="product_qty" readonly="bom_qty_sync"/>
                                     <field name="product_uom"/>
                                     <field name="date_required"/>
                                     <field name="destination" optional="hide"/>

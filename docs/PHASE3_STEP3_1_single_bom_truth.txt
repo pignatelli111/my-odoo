@@ -51,11 +51,12 @@ Per modificare manualmente la quantità su una riga collegata: disattivare
 
 C) Propagazione automatica
 ---------------------------
-- Modifica **B**, **H**, **Qt.** su `sbu.estimate.line` → ricalcolo qty BOM →
-  aggiornamento `product_qty` sulle righe richiesta collegate con sync attivo
-  (via `sbu_estimate_line_ext`).
-- Modifica parametri sulla **riga BOM** (tipo calcolo, pack, fattore, …) →
-  `write` su `sbu.estimate.bom.line` ripropaga le quantità (`sbu_estimate_bom_line_ext`).
+- Modifica **B**, **H**, **Qt.** su `sbu.estimate.line` → invalidazione campi calcolati BOM
+  poi aggiornamento `product_qty` sulle righe richiesta con sync attivo.
+- Modifica parametri sulla **riga BOM** → `write` su `sbu.estimate.bom.line` ripropaga le quantità.
+
+Nota UI: in lista richiesta la colonna **Quantity** è in sola lettura quando **Sync qty with BOM**
+è attivo (non usare il campo Many2one distinta nei modificatori OWL: può mandare in errore il client).
 
 Nota: alcuni ricalcoli ORM su campi `store=True` calcolati possono non passare sempre
 da `write` sulla BOM; usare **Refresh BOM quantities** prima di RFQ critiche.
