@@ -85,8 +85,7 @@
                                     <field name="product_id"/>
                                     <field name="description"/>
                                     <field name="calc_type"/>
-                                    <field name="dimension_source"
-                                           column_invisible="calc_type not in ('linear', 'surface')"/>
+                                    <field name="dimension_source"/>
                                     <field name="qty_formula_factor"/>
                                     <field name="pack_size"/>
                                     <field name="qty_theoretical" readonly="1"/>
