@@ -1,0 +1,72 @@
+Phase 2 — Step 2.1: Field & formula parity (ANACO ↔ Odoo)
+==========================================================
+
+Goal: Each **ANACO block** is mapped to **Odoo `sbu_estimate` fields** (or a
+documented **delta** + workaround). Until numeric parity is proven on real jobs,
+keep using **`price_anaco_bs_cad`** (column **BS**) as the certified unit selling
+price when needed.
+
+References:
+  - Workbook path & formulas: docs/ANACO_REFERENCE.txt
+  - Other Excel templates: docs/EXCEL_SOURCE_INDEX.txt
+  - Code models: `sbu_estimate/models/sbu_estimate.py`,
+    `sbu_estimate_line.py`, `sbu_estimate_bom_line.py`, `sbu_estimate_sal_line.py`
+
+A) Sheet **ANACO** (main grid) ↔ `sbu.estimate` + `sbu.estimate.line`
+--------------------------------------------------------------------
+| ANACO concept / column area (indicative) | Odoo mapping | Parity note |
+|------------------------------------------|--------------|-------------|
+| Header: cliente, data, oggetto, …       | `sbu.estimate` partner, date, job_site, opportunity | Manual alignment |
+| Pos., cod., descrizione                  | `pos`, `item_code`, `description` | OK |
+| B, H (mm), Qt., Mq/cad., Mq totali       | `width_mm`, `height_mm`, `qty`, `sqm` (computed) | Same as G,I |
+| Sc1–Sc3 (Excel chain / %)                | `discount_sc1..3` (successive %) on line | **Delta**: Excel also uses **sheet multipliers** `$K$5,$L$5,$M$5` and other `$BE$5`… on branches → not all replicated in Odoo; document row-level vs sheet-level |
+| Comm. %                                  | `commission_pct` | Applied after Sc on **Odoo listino**; confirm same order as your Excel |
+| Price component columns → BS           | Sum → `price_gross_cad`; **BS** → `price_anaco_bs_cad` | **Delta**: BS = BB+BE+… in Excel; Odoo uses **named component fields**; use **BS override** until 1:1 |
+| Cost columns + industrial % + MOL %    | `cost_*` fields, `cost_industrial_pct`, `cost_mol_amount_cad` (indicator) | MOL not in `cost_total_cad` in Odoo by design; confirm vs your sheet |
+| Budget / ordini columns                  | `budget_*` on line | Validate formulas vs ITEM / SUMMARY |
+
+**Action checklist**
+[ ] Pick **3 real past estimates** (small / medium / large).
+[ ] For each line: record Excel **BS** vs Odoo **price_total_cad** with and without **override**.
+[ ] Log deltas in a spreadsheet tab “DELTA_LOG” (date, row id, Excel cell, Odoo field, diff €).
+
+B) Sheet **OFFERTA** ↔ print / customer view
+---------------------------------------------
+[ ] OFFERTA pulls ANACO for qty and BS; Odoo **report** (QWeb/PDF) not mandatory in 2.1.
+[ ] Decide: first customer PDF = **Odoo standard** export vs **custom QWeb** later.
+
+C) Sheet **ITEM** (budget / lavoraccio) ↔ `sbu.estimate.bom.line` + line budget fields
+--------------------------------------------------------------------------------------
+[ ] BOM line `calc_type` (lump, piece, linear, surface, pack) ↔ ITEM logic.
+[ ] `qty_theoretical`, `qty_ordered`, `pack_size` ↔ minimum purchasable / pack.
+[ ] `total_cost` ↔ cost column; reconcile with **SUMMARY COSTI** if used.
+
+D) Sheet **Voci Contrattuali_SAL** ↔ `sbu.estimate.sal.line`
+------------------------------------------------------------
+[ ] Quantities / contract amounts / floor grid ↔ `qty_contract`, `unit_price`, floors, `sal_1_pct`…`sal_10_pct`.
+[ ] Odoo constraint: sum SAL % ≤ 100 per line (module); confirm vs Excel practice.
+
+E) Sheet **SUMMARY COSTI** ↔ cost rollups
+-----------------------------------------
+[ ] Excel applies `(1-$C$26)` on buckets; Odoo may differ — **document** C26 meaning
+    with accountant and whether to add **estimate-level factor** later.
+
+F) **BS override** rule (until parity signed off)
+-------------------------------------------------
+[ ] For any row where Odoo net ≠ Excel BS: set **`price_anaco_bs_cad`** = BS.
+[ ] **Sign-off criterion for “parity proven”**: e.g. ≥95% of lines within €X or 0.5%
+    without override on last **N** estimates.
+
+G) Deliverable of Step 2.1
+--------------------------
+[ ] One **mapping document** (this runbook + filled tables + DELTA_LOG) agreed by
+    estimator + buyer + (if needed) accountant.
+
+H) Sign-off
+-----------
+Date: ____________
+Verified by: ____________
+Estimator owner: ___________________________________________________________
+Notes: ______________________________________________________________________
+
+Next: docs/PHASE2_STEP2_2_revisions_commercial_scenario.txt (when starting 2.2).

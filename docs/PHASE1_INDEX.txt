@@ -17,4 +17,4 @@ Odoo.sh / remote to see them (e.g. before starting Phase 2).
 
 Prerequisite: Phase 0 complete (0.1–0.4) for your environment.
 
-Next: Phase 2 — add docs/PHASE2_INDEX.txt when starting.
+Next: Phase 2 — docs/PHASE2_INDEX.txt (estimating / ANACO parity).
