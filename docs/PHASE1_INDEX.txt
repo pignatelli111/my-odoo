@@ -10,6 +10,11 @@ Local `git commit` is fine after each step if you want a clear history.
 Runbooks:
   docs/PHASE1_STEP1_1_product_category_model.txt  — Step 1.1
   docs/PHASE1_STEP1_2_uom_conversion.txt         — Step 1.2
-  (1.3 Supplier master — add when starting)
+  docs/PHASE1_STEP1_3_supplier_master.txt         — Step 1.3
+
+Phase 1 runbooks (1.1–1.3) are complete in this repo. **Push** when you want
+Odoo.sh / remote to see them (e.g. before starting Phase 2).
 
 Prerequisite: Phase 0 complete (0.1–0.4) for your environment.
+
+Next: Phase 2 — add docs/PHASE2_INDEX.txt when starting.
