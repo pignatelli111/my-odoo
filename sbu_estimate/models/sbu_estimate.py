@@ -296,6 +296,17 @@ class SbuEstimate(models.Model):
         return super().create(vals_list)
 
     # ── State transitions ─────────────────────────────────────────────────────
+    def action_open_anaco_import_wizard(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Importa da Excel ANACO'),
+            'res_model': 'sbu.estimate.anaco.import.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_estimate_id': self.id},
+        }
+
     def action_send(self):
         self.ensure_one()
         if self.approval_required and self.approval_state != 'approved':
