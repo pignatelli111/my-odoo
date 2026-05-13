@@ -7,7 +7,8 @@ and configured so SBU flows (SAL, RFQ, certificates) can post cleanly later.
 
 Prerequisite: Step 0.1 complete (companies, users, staging duplicate).
 
-When this step is done: commit/push this file update + sign-off, then proceed to 0.3.
+When this step is done in Odoo: fill sign-off below; push is batched when moving
+to the next phase (see docs/PHASE0_INDEX.txt).
 
 A) Localisation (Italy — Suburban context)
 ------------------------------------------
@@ -83,3 +84,5 @@ Date: ____________
 Verified by: ____________
 Accountant consulted: Y / N   Name: ____________
 Notes: _______________________________________________
+
+Next: docs/PHASE0_STEP0_3_core_apps.txt — Index: docs/PHASE0_INDEX.txt
