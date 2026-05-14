@@ -7,13 +7,15 @@
             <form string="SBU settings (JSON)">
                 <p class="text-muted">
                     <strong>Development → Production:</strong> open this screen on <strong>Development</strong>,
-                    click <em>Export sbu.* parameters</em>, copy the JSON. On <strong>Production</strong>, paste it
-                    written. Administrator access only.
+                    click <em>Export sbu.* parameters</em>, copy the JSON. On <strong>Production</strong>, paste it here and click
+                    <em>Import sbu.* parameters</em>. Administrator access only. If export is empty, save the SBU block once under
+                    <strong>Settings</strong>, or use <em>Fill missing code defaults</em> (non-secret values only).
                 </p>
                 <group>
                     <field name="json_text" widget="text" nolabel="1" placeholder='{"sbu.graph_tenant_id": "..."}'/>
                 </group>
                 <footer>
+                    <button name="action_seed_missing_defaults" type="object" string="Fill missing code defaults" class="btn-secondary"/>
                     <button name="action_export" type="object" string="Export sbu.* parameters" class="btn-secondary"/>
                     <button name="action_import" type="object" string="Import sbu.* parameters" class="btn-primary"/>
                     <button string="Close" class="btn-secondary" special="cancel"/>
