@@ -131,7 +131,7 @@ class ProjectProject(models.Model):
         copy=False,
     )
 
-    @api.depends('name', 'sbu_project_code', 'id')
+    @api.depends('name', 'sbu_project_code')
     def _compute_sbu_onedrive_folder_name_suggested(self):
         icp = self.env['ir.config_parameter'].sudo()
         prefix = (icp.get_param('sbu.onedrive_folder_prefix') or 'SBU-').strip()
@@ -165,7 +165,12 @@ class ProjectProject(models.Model):
         for vals in vals_list:
             if vals.get('sbu_onedrive_url'):
                 vals['sbu_onedrive_linked_at'] = now
-        return super().create(vals_list)
+        records = super().create(vals_list)
+        # Odoo 19 forbids @api.depends('id'); invalidate so P##### fallback uses the real id after create.
+        records.invalidate_recordset(
+            ['sbu_onedrive_folder_name_suggested', 'sbu_onedrive_folder_name_effective']
+        )
+        return records
 
     def write(self, vals):
         if 'sbu_onedrive_url' in vals and vals.get('sbu_onedrive_url'):
