@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sbu_closure_requirement_form" model="ir.ui.view">
+        <field name="name">sbu.closure.requirement.form</field>
+        <field name="model">sbu.closure.requirement</field>
+        <field name="arch" type="xml">
+            <form string="Closure checklist line">
+                <sheet>
+                    <group>
+                        <field name="project_id" readonly="1"/>
+                        <field name="document_type_id"/>
+                        <field name="name"/>
+                        <field name="required"/>
+                        <field name="state"/>
+                        <field name="due_date"/>
+                        <field name="user_id" widget="many2one_avatar_user"/>
+                        <field name="external_url" widget="url"/>
+                    </group>
+                    <group>
+                        <field name="note" colspan="2" nolabel="1"/>
+                    </group>
+                    <group string="Attachments (optional)">
+                        <field name="attachment_ids" widget="many2many_binary" nolabel="1" colspan="2"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_project_form_sbu_closure" model="ir.ui.view">
+        <field name="name">project.project.form.sbu.closure</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.edit_project"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Chiusura / DOP" name="sbu_closure" groups="project.group_project_user">
+                    <group>
+                        <div class="text-muted mb-2" colspan="2">
+                            Checklist for DOP, certifications, and final handover. Use <strong>Link</strong> for OneDrive / PA
+                            portals (see also <strong>Document hub</strong>). When the job is <em>In chiusura</em> or
+                            <em>Chiusa</em>, complete required items before archiving.
+                        </div>
+                    </group>
+                    <group string="Chiusura commessa" invisible="sbu_state not in ('closing', 'closed')">
+                        <field name="sbu_closure_ready" readonly="1"/>
+                        <field name="sbu_closure_required_open" readonly="1"/>
+                    </group>
+                    <group>
+                        <button
+                            name="action_sbu_closure_init_checklist"
+                            type="object"
+                            string="Initialize closure checklist"
+                            class="btn-secondary"
+                            groups="project.group_project_user"
+                            help="Adds default lines from Closure document types (only missing types)."
+                        />
+                    </group>
+                    <field name="sbu_closure_requirement_ids" nolabel="1" colspan="2" context="{'default_project_id': id}">
+                        <list editable="bottom" string="Closure checklist">
+                            <field name="sequence" widget="handle"/>
+                            <field name="document_type_id" optional="show"/>
+                            <field name="name"/>
+                            <field name="required"/>
+                            <field name="state" widget="badge"/>
+                            <field name="due_date" optional="show"/>
+                            <field name="user_id" widget="many2one_avatar_user" optional="show"/>
+                            <field name="external_url" widget="url" optional="show"/>
+                            <button name="action_mark_done" type="object" string="Done" class="btn-link" invisible="state != 'pending'"/>
+                            <button name="action_mark_waived" type="object" string="Waive" class="btn-link" invisible="state != 'pending'"/>
+                            <button name="action_mark_na" type="object" string="N/A" class="btn-link" invisible="state != 'pending'"/>
+                            <button name="action_mark_pending" type="object" string="Reopen" class="btn-link" invisible="state == 'pending'"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

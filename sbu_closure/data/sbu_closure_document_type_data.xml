@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="closure_doc_type_dop" model="sbu.closure.document.type">
+            <field name="name">DOP / Documentazione di offerta in chiusura</field>
+            <field name="code">DOP</field>
+            <field name="sequence">10</field>
+            <field name="init_on_project" eval="True"/>
+            <field name="default_required" eval="True"/>
+        </record>
+        <record id="closure_doc_type_cert" model="sbu.closure.document.type">
+            <field name="name">Certificazioni (conformità / sicurezza / collaudi)</field>
+            <field name="code">CERT</field>
+            <field name="sequence">20</field>
+            <field name="init_on_project" eval="True"/>
+            <field name="default_required" eval="True"/>
+        </record>
+        <record id="closure_doc_type_collaudo" model="sbu.closure.document.type">
+            <field name="name">Verbale di collaudo / fine lavori</field>
+            <field name="code">COLLAUDO</field>
+            <field name="sequence">30</field>
+            <field name="init_on_project" eval="True"/>
+            <field name="default_required" eval="True"/>
+        </record>
+        <record id="closure_doc_type_asbuilt" model="sbu.closure.document.type">
+            <field name="name">Elaborati as-built / redazione esecutiva</field>
+            <field name="code">ASBUILT</field>
+            <field name="sequence">40</field>
+            <field name="init_on_project" eval="True"/>
+            <field name="default_required" eval="False"/>
+        </record>
+        <record id="closure_doc_type_consegna" model="sbu.closure.document.type">
+            <field name="name">Consegna documentazione finale al cliente</field>
+            <field name="code">CONSEGNA</field>
+            <field name="sequence">50</field>
+            <field name="init_on_project" eval="True"/>
+            <field name="default_required" eval="True"/>
+        </record>
+    </data>
+</odoo>
