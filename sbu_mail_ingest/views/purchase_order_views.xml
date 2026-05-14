@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="purchase_order_form_inherit_sbu_mail_ingest" model="ir.ui.view">
+        <field name="name">purchase.order.form.inherit.sbu.mail.ingest</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="alias_name" string="Inbound email local part"
+                       placeholder="e.g. rfq-p00142-vendor"
+                       groups="purchase.group_purchase_manager"/>
+                <field name="alias_email" string="Inbound address" readonly="1"
+                       groups="purchase.group_purchase_user"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

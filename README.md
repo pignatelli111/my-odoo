@@ -13,6 +13,7 @@ Custom Odoo 19.0 modules for Suburban SRL a Socio Unico.
 | `sbu_documents` | OneDrive integration |
 | `sbu_integrations` | Microsoft Graph, OneDrive, M365 settings |
 | `sbu_logikal` | Logikal / ReynaPro file or API bridge → products & BOM |
+| `sbu_mail_ingest` | Email aliases on RFQ/PO; supplier/project ingest routes |
 
 ## ANACO Excel (reference)
 

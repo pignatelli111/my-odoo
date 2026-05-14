@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_sbu_mail_ingest_route_purchase_user,sbu.mail.ingest.route purchase user,model_sbu_mail_ingest_route,purchase.group_purchase_user,1,0,0,0
+access_sbu_mail_ingest_route_purchase_manager,sbu.mail.ingest.route purchase manager,model_sbu_mail_ingest_route,purchase.group_purchase_manager,1,1,1,1

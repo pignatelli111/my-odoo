@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_sbu_mail_ingest_route"
+              name="Mail ingest routes"
+              parent="purchase.menu_purchase_root"
+              action="action_sbu_mail_ingest_route"
+              sequence="85"
+              groups="purchase.group_purchase_manager"/>
+</odoo>
