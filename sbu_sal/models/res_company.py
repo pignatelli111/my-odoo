@@ -27,6 +27,6 @@ class ResCompany(models.Model):
         'account.account',
         string='SAL retention account',
         check_company=True,
-        domain="[('deprecated', '=', False)]",
+        domain="[('active', '=', True)]",
         help='Credit line for retention on SAL customer invoices (liability / garanzia). Required when invoicing with retention > 0.',
     )
