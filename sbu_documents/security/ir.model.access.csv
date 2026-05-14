@@ -1,2 +1,7 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_sbu_external_document_user,sbu.external.document user,model_sbu_external_document,base.group_user,1,1,1,1
+access_sbu_external_document_project_user,sbu.external.document project user,model_sbu_external_document,project.group_project_user,1,1,1,0
+access_sbu_external_document_project_manager,sbu.external.document project manager,model_sbu_external_document,project.group_project_manager,1,1,1,1
+access_sbu_external_document_system,sbu.external.document system,model_sbu_external_document,base.group_system,1,1,1,1
+access_sbu_graph_drive_item_project_user,sbu.graph.drive.item project user,model_sbu_graph_drive_item,project.group_project_user,1,1,1,0
+access_sbu_graph_drive_item_project_manager,sbu.graph.drive.item project manager,model_sbu_graph_drive_item,project.group_project_manager,1,1,1,1
+access_sbu_graph_drive_item_system,sbu.graph.drive.item system,model_sbu_graph_drive_item,base.group_system,1,1,1,1

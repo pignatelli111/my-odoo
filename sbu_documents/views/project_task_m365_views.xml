@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_task_form2_sbu_m365" model="ir.ui.view">
+        <field name="name">project.task.form.sbu.m365</field>
+        <field name="model">project.task</field>
+        <field name="inherit_id" ref="project.view_task_form2"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="M365" name="sbu_task_m365" groups="project.group_project_user">
+                    <group>
+                        <div class="text-muted mb-2" colspan="2">
+                            Optional deep link to Planner, Teams, or Outlook for this task.
+                            Prefer leaving execution in Microsoft 365; no automatic sync.
+                        </div>
+                        <field name="sbu_m365_deeplink" widget="url"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>
