@@ -10,6 +10,7 @@
                     <field name="sbu_sal_invoice_post_default"/>
                     <field name="sbu_sal_default_tax_ids" widget="many2many_tags"
                            options="{'no_create': True}"/>
+                    <field name="sbu_sal_retention_account_id"/>
                 </group>
             </xpath>
         </field>

@@ -1,4 +1,4 @@
-from odoo import models, fields, api, _
+from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
 
@@ -172,28 +172,56 @@ class SbuSalSheet(models.Model):
             return self.company_id.sbu_sal_invoice_post_default or 'draft'
         return self.invoice_post_override
 
-    def _sbu_sal_prepare_invoice_line_vals(self, account, fiscal_position):
+    def _sbu_sal_prepare_invoice_line_commands(self, income_account, fiscal_position):
+        """Gross + retention lines (taxes on gross) when retention > 0; else single gross (= net) line."""
         self.ensure_one()
-        partner = self.partner_id
         base_taxes = self.invoice_tax_ids or self.company_id.sbu_sal_default_tax_ids
+        gross_account = income_account
         if fiscal_position:
-            account = fiscal_position.map_account(account)
+            gross_account = fiscal_position.map_account(income_account)
             taxes = fiscal_position.map_tax(base_taxes)
         else:
             taxes = base_taxes
 
-        line_vals = {
-            'name': _('SAL %s — progress billing') % self.name,
-            'quantity': 1.0,
-            'price_unit': self.amount_net,
-            'account_id': account.id,
-            'tax_ids': [fields.Command.set(taxes.ids)],
-        }
+        analytic_kw = {}
         project = self.project_id
         aa = project.account_id if project else False
         if aa and 'analytic_distribution' in self.env['account.move.line']._fields:
-            line_vals['analytic_distribution'] = {str(aa.id): 100.0}
-        return line_vals
+            analytic_kw['analytic_distribution'] = {str(aa.id): 100.0}
+
+        commands = []
+        ret_account = self.company_id.sbu_sal_retention_account_id
+        if self.amount_retention > 0 and ret_account:
+            gross_line = {
+                'name': _('SAL %s — progress (gross)') % self.name,
+                'quantity': 1.0,
+                'price_unit': self.amount_gross,
+                'account_id': gross_account.id,
+                'tax_ids': [fields.Command.set(taxes.ids)],
+                **analytic_kw,
+            }
+            commands.append(fields.Command.create(gross_line))
+            ret_acc = fiscal_position.map_account(ret_account) if fiscal_position else ret_account
+            ret_line = {
+                'name': _('Retention (withholding) — %s') % self.name,
+                'quantity': 1.0,
+                'price_unit': -self.amount_retention,
+                'account_id': ret_acc.id,
+                'tax_ids': [fields.Command.clear()],
+                **analytic_kw,
+            }
+            commands.append(fields.Command.create(ret_line))
+        else:
+            net_line = {
+                'name': _('SAL %s — progress billing') % self.name,
+                'quantity': 1.0,
+                'price_unit': self.amount_net,
+                'account_id': gross_account.id,
+                'tax_ids': [fields.Command.set(taxes.ids)],
+                **analytic_kw,
+            }
+            commands.append(fields.Command.create(net_line))
+        return commands
 
     def action_create_draft_invoice(self):
         """Create a customer invoice from the SAL: taxes, fiscal position, analytic to project; post per policy."""
@@ -206,6 +234,10 @@ class SbuSalSheet(models.Model):
             raise UserError(_('An invoice is already linked to this SAL.'))
         if not self.amount_net or self.amount_net <= 0:
             raise UserError(_('Net payable must be greater than zero.'))
+        if self.amount_retention > 0 and not self.company_id.sbu_sal_retention_account_id:
+            raise UserError(
+                _('Configure the SAL retention account on the company before invoicing a SAL with retention.')
+            )
         journal = self.env['account.journal'].search([
             ('type', '=', 'sale'),
             ('company_id', '=', self.company_id.id),
@@ -218,7 +250,7 @@ class SbuSalSheet(models.Model):
 
         Fiscal = self.env['account.fiscal.position'].with_company(self.company_id)
         fiscal_position = Fiscal._get_fiscal_position(self.partner_id)
-        line_vals = self._sbu_sal_prepare_invoice_line_vals(account, fiscal_position)
+        line_commands = self._sbu_sal_prepare_invoice_line_commands(account, fiscal_position)
 
         move_vals = {
             'move_type': 'out_invoice',
@@ -228,7 +260,7 @@ class SbuSalSheet(models.Model):
             'invoice_origin': self.name,
             'ref': _('SAL %s') % self.name,
             'fiscal_position_id': fiscal_position.id if fiscal_position else False,
-            'invoice_line_ids': [fields.Command.create(line_vals)],
+            'invoice_line_ids': line_commands,
         }
         if 'project_id' in self.env['account.move']._fields:
             move_vals['project_id'] = self.project_id.id

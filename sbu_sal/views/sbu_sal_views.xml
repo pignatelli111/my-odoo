@@ -72,6 +72,8 @@
                                     <field name="date"/>
                                     <field name="amount_gross"/>
                                     <field name="amount_net"/>
+                                    <field name="invoice_payment_state" optional="show" widget="badge"/>
+                                    <field name="payment_id" optional="show"/>
                                     <field name="state"/>
                                 </list>
                             </field>
@@ -90,14 +92,20 @@
             <form string="Payment certificate">
                 <header>
                     <button name="action_issue" string="Issue" type="object" class="btn-primary" invisible="state != 'draft'"/>
-                    <button name="action_mark_paid" string="Mark paid" type="object" invisible="state != 'issued'"/>
+                    <button name="action_sync_payment_from_invoice" string="Sync payment link" type="object"
+                            class="btn-secondary" invisible="not invoice_id"/>
+                    <button name="action_mark_paid" string="Mark paid" type="object" invisible="state != 'issued' or invoice_payment_state == 'paid'"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,issued,paid"/>
                 </header>
                 <sheet>
                     <group>
                         <field name="name"/>
                         <field name="sal_sheet_id"/>
+                        <field name="company_id" groups="base.group_multi_company"/>
                         <field name="project_id"/>
+                        <field name="invoice_id" readonly="1"/>
+                        <field name="invoice_payment_state" widget="badge" readonly="1"/>
+                        <field name="payment_id"/>
                         <field name="date"/>
                         <field name="currency_id" invisible="1"/>
                         <field name="amount_gross"/>

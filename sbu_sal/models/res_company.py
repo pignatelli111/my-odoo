@@ -23,3 +23,10 @@ class ResCompany(models.Model):
         domain="[('type_tax_use', '=', 'sale'), ('company_id', 'parent_of', id)]",
         help='Applied to SAL-generated invoices when the SAL sheet has no tax override.',
     )
+    sbu_sal_retention_account_id = fields.Many2one(
+        'account.account',
+        string='SAL retention account',
+        check_company=True,
+        domain="[('deprecated', '=', False)]",
+        help='Credit line for retention on SAL customer invoices (liability / garanzia). Required when invoicing with retention > 0.',
+    )
