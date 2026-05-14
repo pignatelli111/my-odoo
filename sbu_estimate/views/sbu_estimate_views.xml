@@ -212,7 +212,6 @@
                                     <field name="payment_terms_text"/>
                                 </group>
                                 <group string="Validita e Note">
-                                    <field name="validity_days"/>
                                     <field name="inclusions"/>
                                     <field name="exclusions"/>
                                 </group>
