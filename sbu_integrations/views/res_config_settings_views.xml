@@ -5,9 +5,9 @@
         <field name="model">res.config.settings</field>
         <field name="inherit_id" ref="base_setup.res_config_settings_view_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//form" position="inside">
-                <app data-string="SBU" string="SBU" name="sbu_integrations">
-                    <block title="Microsoft Graph (SBU)" name="sbu_integration_block">
+            <!-- SBU blocks live under General Settings (one <app>) so the Settings client stays stable; Qonto/Revolut/Logikal xpaths still target named blocks. -->
+            <xpath expr="//app[@name='general_settings']" position="inside">
+                <block title="Microsoft Graph (SBU)" name="sbu_integration_block">
                         <setting string="Enable Graph sync" help="Allows project users to run “Sync folder from Graph” when drive and item ids are set.">
                             <field name="sbu_graph_sync_enabled"/>
                         </setting>
@@ -26,8 +26,8 @@
                         <setting string="PDF max size (bytes)" help="Hard limit per file when fetch mode is enabled.">
                             <field name="sbu_graph_pdf_max_bytes"/>
                         </setting>
-                    </block>
-                    <block title="OneDrive / SharePoint (SBU convention)" name="sbu_onedrive_block">
+                </block>
+                <block title="OneDrive / SharePoint (SBU convention)" name="sbu_onedrive_block">
                         <setting string="Folder name prefix" help="Suggested job folder names use: prefix + Codice Commessa + separator + name slug (see project Document hub).">
                             <field name="sbu_onedrive_folder_prefix" placeholder="SBU-"/>
                         </setting>
@@ -46,16 +46,15 @@
                         <setting string="Teams / Planner / Outlook policy" help="When to use Odoo tasks vs Planner; shared channel naming; deep links only (no duplicate task sync).">
                             <field name="sbu_m365_collaboration_policy" placeholder="e.g. Execution in Planner; Odoo task optional with link to Planner item; Teams shared channel per job."/>
                         </setting>
-                    </block>
-                    <block title="Other integrations" name="sbu_integration_block_other">
+                </block>
+                <block title="Other integrations" name="sbu_integration_block_other">
                         <setting string="Qonto organisation" help="Placeholder for a future Qonto bridge.">
                             <field name="sbu_qonto_org"/>
                         </setting>
                         <setting string="Logikal API base URL" help="Middleware root URL for JSON imports (module sbu_logikal). Example: https://bridge.example.com">
                             <field name="sbu_logikal_base_url"/>
                         </setting>
-                    </block>
-                </app>
+                </block>
             </xpath>
         </field>
     </record>
