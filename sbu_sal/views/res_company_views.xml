@@ -5,13 +5,15 @@
         <field name="model">res.company</field>
         <field name="inherit_id" ref="base.view_company_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//form/sheet" position="inside">
-                <group string="SBU SAL" name="sbu_sal_policy" groups="account.group_account_manager" colspan="2">
-                    <field name="sbu_sal_invoice_post_default"/>
-                    <field name="sbu_sal_default_tax_ids" widget="many2many_tags"
-                           options="{'no_create': True}"/>
-                    <field name="sbu_sal_retention_account_id"/>
-                </group>
+            <xpath expr="//sheet/notebook" position="inside">
+                <page string="SBU SAL" name="sbu_sal_company" groups="account.group_account_manager">
+                    <group>
+                        <field name="sbu_sal_invoice_post_default"/>
+                        <field name="sbu_sal_default_tax_ids" widget="many2many_tags"
+                               options="{'no_create': True}"/>
+                        <field name="sbu_sal_retention_account_id"/>
+                    </group>
+                </page>
             </xpath>
         </field>
     </record>
