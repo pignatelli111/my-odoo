@@ -121,10 +121,10 @@ class SbuLogikalImportBatch(models.Model):
     line_ids = fields.One2many(
         'sbu.logikal.import.line',
         'batch_id',
-        string='Lines',
+        string='Import lines',
     )
-    line_count = fields.Integer(compute='_compute_line_stats', string='Lines')
-    unmapped_count = fields.Integer(compute='_compute_line_stats', string='Unmapped')
+    line_count = fields.Integer(compute='_compute_line_stats', string='Line count')
+    unmapped_count = fields.Integer(compute='_compute_line_stats', string='Unmapped lines')
 
     last_message = fields.Text(string='Last run log', readonly=True)
 

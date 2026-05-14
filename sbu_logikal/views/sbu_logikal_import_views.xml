@@ -66,7 +66,7 @@
                     </group>
                     <field name="last_message" invisible="not last_message"/>
                     <notebook>
-                        <page string="Lines" name="lines">
+                        <page string="Import lines" name="lines">
                             <field name="line_ids" readonly="state == 'applied'">
                                 <list create="false" delete="false">
                                     <field name="sequence" widget="handle"/>
