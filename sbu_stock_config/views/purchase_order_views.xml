@@ -7,6 +7,22 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='partner_id']" position="after">
                 <field name="project_id"/>
+                <group string="Job logistics" colspan="2">
+                    <label for="sbu_service_line_count" string="Line mix"/>
+                    <div class="o_row">
+                        <span><field name="sbu_service_line_count" class="oe_inline" readonly="1"/> service · </span>
+                        <span><field name="sbu_stock_line_count" class="oe_inline" readonly="1"/> stock · </span>
+                        <span><field name="sbu_subcontract_line_count" class="oe_inline" readonly="1"/> subcontract</span>
+                    </div>
+                </group>
+                <div class="alert alert-info mb-0" role="alert"
+                     invisible="sbu_service_line_count == 0 or sbu_stock_line_count != 0">
+                    Service-only PO: no goods receipt is expected. The job/project above still ties this order to the site for reporting.
+                </div>
+                <div class="alert alert-warning mb-0" role="alert"
+                     invisible="sbu_subcontract_line_count == 0">
+                    Subcontracting detected: transfers and MOs inherit the job when moves link to this PO or to manufacturing with a project.
+                </div>
             </xpath>
         </field>
     </record>
