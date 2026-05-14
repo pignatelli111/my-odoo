@@ -104,6 +104,25 @@ class SbuSalSheet(models.Model):
         default=lambda self: self.env.company.currency_id,
         required=True,
     )
+    invoice_post_override = fields.Selection(
+        selection=[
+            ('company', 'Use company default'),
+            ('draft', 'Always keep invoice in draft'),
+            ('posted', 'Always post invoice'),
+        ],
+        string='Invoice posting',
+        default='company',
+        help='Overrides the company default for this SAL only (draft vs posted customer invoice).',
+    )
+    invoice_tax_ids = fields.Many2many(
+        'account.tax',
+        'sbu_sal_sheet_invoice_tax_rel',
+        'sheet_id',
+        'tax_id',
+        string='Invoice taxes',
+        domain="[('type_tax_use', '=', 'sale'), ('company_id', 'parent_of', company_id)]",
+        help='Optional. If empty, company SAL default sale taxes apply, then fiscal position mapping.',
+    )
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -147,8 +166,37 @@ class SbuSalSheet(models.Model):
             'view_mode': 'form',
         }
 
+    def _sbu_sal_effective_invoice_post_mode(self):
+        self.ensure_one()
+        if self.invoice_post_override == 'company':
+            return self.company_id.sbu_sal_invoice_post_default or 'draft'
+        return self.invoice_post_override
+
+    def _sbu_sal_prepare_invoice_line_vals(self, account, fiscal_position):
+        self.ensure_one()
+        partner = self.partner_id
+        base_taxes = self.invoice_tax_ids or self.company_id.sbu_sal_default_tax_ids
+        if fiscal_position:
+            account = fiscal_position.map_account(account)
+            taxes = fiscal_position.map_tax(base_taxes)
+        else:
+            taxes = base_taxes
+
+        line_vals = {
+            'name': _('SAL %s — progress billing') % self.name,
+            'quantity': 1.0,
+            'price_unit': self.amount_net,
+            'account_id': account.id,
+            'tax_ids': [fields.Command.set(taxes.ids)],
+        }
+        project = self.project_id
+        aa = project.account_id if project else False
+        if aa and 'analytic_distribution' in self.env['account.move.line']._fields:
+            line_vals['analytic_distribution'] = {str(aa.id): 100.0}
+        return line_vals
+
     def action_create_draft_invoice(self):
-        """Create a draft customer invoice for the net SAL amount (accounting link)."""
+        """Create a customer invoice from the SAL: taxes, fiscal position, analytic to project; post per policy."""
         self.ensure_one()
         if self.state != 'confirmed':
             raise UserError(_('Confirm the SAL before creating an invoice.'))
@@ -167,22 +215,30 @@ class SbuSalSheet(models.Model):
         account = journal.default_account_id
         if not account:
             raise UserError(_('Set a default income account on the sales journal %s.') % journal.display_name)
-        move = self.env['account.move'].with_company(self.company_id).create({
+
+        Fiscal = self.env['account.fiscal.position'].with_company(self.company_id)
+        fiscal_position = Fiscal._get_fiscal_position(self.partner_id)
+        line_vals = self._sbu_sal_prepare_invoice_line_vals(account, fiscal_position)
+
+        move_vals = {
             'move_type': 'out_invoice',
             'partner_id': self.partner_id.id,
             'journal_id': journal.id,
             'currency_id': self.currency_id.id,
             'invoice_origin': self.name,
             'ref': _('SAL %s') % self.name,
-            'invoice_line_ids': [(0, 0, {
-                'name': _('SAL %s — progress billing') % self.name,
-                'quantity': 1.0,
-                'price_unit': self.amount_net,
-                'account_id': account.id,
-                'tax_ids': [(6, 0, [])],
-            })],
-        })
+            'fiscal_position_id': fiscal_position.id if fiscal_position else False,
+            'invoice_line_ids': [fields.Command.create(line_vals)],
+        }
+        if 'project_id' in self.env['account.move']._fields:
+            move_vals['project_id'] = self.project_id.id
+
+        move = self.env['account.move'].with_company(self.company_id).create(move_vals)
         self.write({'invoice_id': move.id, 'state': 'invoiced'})
+
+        if self._sbu_sal_effective_invoice_post_mode() == 'posted':
+            move.action_post()
+
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'account.move',

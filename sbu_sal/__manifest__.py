@@ -1,7 +1,7 @@
 {
     'name': 'SBU SAL',
-    'version': '19.0.1.0.1',
-    'summary': 'SAL progress billing and payment certificates for Suburban SRL',
+    'version': '19.0.1.0.2',
+    'summary': 'SAL to accounting: draft/post policy, taxes, fiscal position, analytic to project (Phase 6.1)',
     'author': 'SBU Development',
     'category': 'Accounting',
     'depends': [
@@ -14,6 +14,7 @@
     'data': [
         'security/ir.model.access.csv',
         'data/sbu_sal_sequence.xml',
+        'views/res_company_views.xml',
         'views/sbu_sal_views.xml',
         'views/project_project_views.xml',
         'views/menu.xml',

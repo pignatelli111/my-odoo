@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_company_form_inherit_sbu_sal" model="ir.ui.view">
+        <field name="name">res.company.form.inherit.sbu.sal</field>
+        <field name="model">res.company</field>
+        <field name="inherit_id" ref="base.view_company_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/sheet" position="inside">
+                <group string="SBU SAL" name="sbu_sal_policy" groups="account.group_account_manager" colspan="2">
+                    <field name="sbu_sal_invoice_post_default"/>
+                    <field name="sbu_sal_default_tax_ids" widget="many2many_tags"
+                           options="{'no_create': True}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

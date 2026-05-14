@@ -23,7 +23,7 @@
             <form string="SAL sheet">
                 <header>
                     <button name="action_confirm" string="Confirm" type="object" class="btn-primary" invisible="state != 'draft'"/>
-                    <button name="action_create_draft_invoice" string="Draft invoice" type="object" class="btn-secondary" invisible="state != 'confirmed' or invoice_id"/>
+                    <button name="action_create_draft_invoice" string="Customer invoice" type="object" class="btn-secondary" invisible="state != 'confirmed' or invoice_id"/>
                     <button name="action_view_invoice" string="Open invoice" type="object" invisible="not invoice_id"/>
                     <button name="action_create_certificate" string="Payment certificate" type="object" invisible="state != 'confirmed'"/>
                     <button name="action_reset_draft" string="Reset to draft" type="object" invisible="state not in ('confirmed','cancelled')"/>
@@ -47,6 +47,10 @@
                             <field name="amount_retention"/>
                             <field name="amount_net"/>
                             <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group string="Accounting (Phase 6.1)" groups="account.group_account_invoice">
+                            <field name="invoice_post_override"/>
+                            <field name="invoice_tax_ids" widget="many2many_tags" options="{'no_create': True}"/>
                         </group>
                     </group>
                     <notebook>
