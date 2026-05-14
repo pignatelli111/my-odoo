@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sbu_logikal_import_batch_form" model="ir.ui.view">
+        <field name="name">sbu.logikal.import.batch.form</field>
+        <field name="model">sbu.logikal.import.batch</field>
+        <field name="arch" type="xml">
+            <form string="Logikal / ReynaPro import">
+                <header>
+                    <button name="action_parse_file" string="Parse file" type="object" class="btn-primary"
+                            invisible="source != 'file' or state == 'applied'"/>
+                    <button name="action_fetch_api" string="Fetch from API" type="object" class="btn-primary"
+                            invisible="source != 'api' or state == 'applied'"/>
+                    <button name="action_match_products" string="Match products" type="object" class="btn-secondary"
+                            invisible="state != 'parsed'"/>
+                    <button name="action_apply" string="Apply to BOM" type="object" class="btn-primary"
+                            invisible="state != 'parsed'"/>
+                    <button name="action_reset_lines" string="Reset lines" type="object" class="btn-secondary"
+                            invisible="state == 'draft' and not line_ids"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,parsed,applied"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_open_estimate_line" type="object" class="oe_stat_button" icon="fa-list-alt"
+                                invisible="apply_mode != 'estimate_bom' or not target_estimate_line_id">
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">Estimate line</span>
+                            </div>
+                        </button>
+                        <button name="action_open_mrp_bom" type="object" class="oe_stat_button" icon="fa-cogs"
+                                invisible="apply_mode != 'mrp_bom' or not mrp_finished_product_id">
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">MRP BoM</span>
+                            </div>
+                        </button>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="name" readonly="1"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="project_id"/>
+                            <field name="source"/>
+                        </group>
+                        <group>
+                            <field name="apply_mode"/>
+                            <field name="target_estimate_line_id"
+                                   invisible="apply_mode != 'estimate_bom'"
+                                   required="apply_mode == 'estimate_bom'"/>
+                            <field name="mrp_finished_product_id"
+                                   invisible="apply_mode != 'mrp_bom'"
+                                   required="apply_mode == 'mrp_bom'"/>
+                        </group>
+                    </group>
+                    <group string="File import" invisible="source != 'file'">
+                        <field name="export_filename" invisible="1"/>
+                        <field name="export_file" filename="export_filename"/>
+                    </group>
+                    <group string="API bridge" invisible="source != 'api'">
+                        <field name="remote_project_ref"/>
+                    </group>
+                    <group string="Summary" invisible="not line_ids">
+                        <label for="line_count"/>
+                        <div class="o_row">
+                            <field name="line_count" class="oe_inline"/> lines —
+                            <field name="unmapped_count" class="oe_inline"/> unmapped
+                        </div>
+                    </group>
+                    <field name="last_message" invisible="not last_message"/>
+                    <notebook>
+                        <page string="Lines" name="lines">
+                            <field name="line_ids" readonly="state == 'applied'">
+                                <list create="false" delete="false">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="external_pos"/>
+                                    <field name="profile_code"/>
+                                    <field name="description"/>
+                                    <field name="qty"/>
+                                    <field name="map_state" widget="badge"/>
+                                    <field name="product_id"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sbu_logikal_import_batch_list" model="ir.ui.view">
+        <field name="name">sbu.logikal.import.batch.list</field>
+        <field name="model">sbu.logikal.import.batch</field>
+        <field name="arch" type="xml">
+            <list string="Logikal imports">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="source"/>
+                <field name="state" widget="badge"/>
+                <field name="line_count"/>
+                <field name="unmapped_count"/>
+                <field name="company_id" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_sbu_logikal_import_batch" model="ir.actions.act_window">
+        <field name="name">Logikal / ReynaPro imports</field>
+        <field name="res_model">sbu.logikal.import.batch</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{}</field>
+    </record>
+
+    <menuitem id="menu_sbu_logikal_import_batch"
+              name="Imports"
+              parent="menu_sbu_logikal_root"
+              action="action_sbu_logikal_import_batch"
+              sequence="5"/>
+</odoo>

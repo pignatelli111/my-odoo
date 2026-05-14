@@ -11,7 +11,8 @@ Custom Odoo 19.0 modules for Suburban SRL a Socio Unico.
 | `sbu_project` | Project/job container |
 | `sbu_sal` | SAL + payment certificates + retention |
 | `sbu_documents` | OneDrive integration |
-| `sbu_integrations` | Qonto, Logikal, ReynaPro bridges |
+| `sbu_integrations` | Microsoft Graph, OneDrive, M365 settings |
+| `sbu_logikal` | Logikal / ReynaPro file or API bridge → products & BOM |
 
 ## ANACO Excel (reference)
 

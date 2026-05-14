@@ -51,7 +51,7 @@
                         <setting string="Qonto organisation" help="Placeholder for a future Qonto bridge.">
                             <field name="sbu_qonto_org"/>
                         </setting>
-                        <setting string="Logikal API base URL" help="Placeholder for a future Logikal bridge.">
+                        <setting string="Logikal API base URL" help="Middleware root URL for JSON imports (module sbu_logikal). Example: https://bridge.example.com">
                             <field name="sbu_logikal_base_url"/>
                         </setting>
                     </block>

@@ -70,6 +70,7 @@ class ResConfigSettings(models.TransientModel):
     sbu_logikal_base_url = fields.Char(
         string='Logikal API base URL',
         config_parameter='sbu.logikal_base_url',
+        help='Middleware base URL for the Logikal/ReynaPro bridge (see module sbu_logikal). Used with API path and bearer token.',
     )
     sbu_m365_collaboration_policy = fields.Text(
         string='Teams / Planner / Outlook policy (internal)',

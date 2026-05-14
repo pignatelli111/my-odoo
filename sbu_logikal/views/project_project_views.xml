@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_project_form_sbu_logikal" model="ir.ui.view">
+        <field name="name">project.project.form.sbu.logikal</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.edit_project"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_sbu_logikal_imports" type="object" class="oe_stat_button" icon="fa-exchange">
+                    <div class="o_stat_info">
+                        <span class="o_stat_value">
+                            <field name="sbu_logikal_import_count"/>
+                        </span>
+                        <span class="o_stat_text">Logikal</span>
+                    </div>
+                </button>
+            </xpath>
+        </field>
+    </record>
+</odoo>

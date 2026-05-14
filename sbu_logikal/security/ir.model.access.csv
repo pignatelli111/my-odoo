@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_sbu_logikal_product_map_user,sbu.logikal.product.map user,model_sbu_logikal_product_map,base.group_user,1,1,1,0
+access_sbu_logikal_product_map_system,sbu.logikal.product.map system,model_sbu_logikal_product_map,base.group_system,1,1,1,1
+access_sbu_logikal_import_batch_user,sbu.logikal.import.batch user,model_sbu_logikal_import_batch,base.group_user,1,1,1,0
+access_sbu_logikal_import_batch_system,sbu.logikal.import.batch system,model_sbu_logikal_import_batch,base.group_system,1,1,1,1
+access_sbu_logikal_import_line_user,sbu.logikal.import.line user,model_sbu_logikal_import_line,base.group_user,1,1,1,1

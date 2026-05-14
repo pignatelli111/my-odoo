@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sbu_logikal_product_map_list" model="ir.ui.view">
+        <field name="name">sbu.logikal.product.map.list</field>
+        <field name="model">sbu.logikal.product.map</field>
+        <field name="arch" type="xml">
+            <list string="Profile → product maps" editable="bottom">
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="profile_code"/>
+                <field name="product_id"/>
+                <field name="active"/>
+                <field name="note" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_sbu_logikal_product_map_form" model="ir.ui.view">
+        <field name="name">sbu.logikal.product.map.form</field>
+        <field name="model">sbu.logikal.product.map</field>
+        <field name="arch" type="xml">
+            <form string="Logikal profile map">
+                <sheet>
+                    <group>
+                        <field name="company_id" groups="base.group_multi_company"/>
+                        <field name="active"/>
+                        <field name="profile_code"/>
+                        <field name="product_id"/>
+                        <field name="note"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sbu_logikal_product_map" model="ir.actions.act_window">
+        <field name="name">Logikal / ReynaPro profile maps</field>
+        <field name="res_model">sbu.logikal.product.map</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_sbu_logikal_root"
+              name="Logikal / ReynaPro"
+              parent="sbu_estimate.menu_sbu_root"
+              sequence="45"/>
+
+    <menuitem id="menu_sbu_logikal_product_map"
+              name="Profile → product"
+              parent="menu_sbu_logikal_root"
+              action="action_sbu_logikal_product_map"
+              sequence="10"/>
+</odoo>
