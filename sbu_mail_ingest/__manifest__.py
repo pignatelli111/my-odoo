@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'SBU Mail / Attachment Ingest',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.0.1',
     'summary': 'Optional email aliases on RFQ/PO; supplier/project routes forward to purchase (Phase 7.2)',
     'author': 'SBU Development',
     'category': 'Discuss',
