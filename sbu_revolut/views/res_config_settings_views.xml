@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_inherit_sbu_revolut" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.sbu.revolut</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="sbu_integrations.res_config_settings_view_form_inherit_sbu"/>
+        <field name="arch" type="xml">
+            <xpath expr="//block[@name='sbu_integration_block_other']" position="inside">
+                <setting string="Revolut access token" help="Bearer token from Revolut Business API (short-lived; refresh in Revolut when expired).">
+                    <field name="sbu_revolut_access_token" password="True" groups="account.group_account_manager"/>
+                </setting>
+                <setting string="Revolut account id" help="UUID of the account (from Revolut /accounts).">
+                    <field name="sbu_revolut_account_id"/>
+                </setting>
+                <setting string="Revolut sandbox" help="Use sandbox-b2b.revolut.com for tests.">
+                    <field name="sbu_revolut_use_sandbox"/>
+                </setting>
+                <setting string="Revolut webhook token" help="Path segment for /revolut/webhook/&lt;token&gt;.">
+                    <field name="sbu_revolut_webhook_token" password="True"/>
+                </setting>
+                <setting string="Revolut import lookback (days)" help="How far back the first import page requests.">
+                    <field name="sbu_revolut_import_lookback_days"/>
+                </setting>
+                <setting string="Revolut import cron" help="Allow the scheduled action to pull recent transactions for this company.">
+                    <field name="sbu_revolut_import_enabled"/>
+                </setting>
+                <div class="mt-2">
+                    <button
+                        name="action_revolut_import_now"
+                        type="object"
+                        string="Import Revolut movements now"
+                        class="btn-secondary"
+                        groups="account.group_account_user"
+                    />
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>
