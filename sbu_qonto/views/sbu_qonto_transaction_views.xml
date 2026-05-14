@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sbu_qonto_transaction_list" model="ir.ui.view">
+        <field name="name">sbu.qonto.transaction.list</field>
+        <field name="model">sbu.qonto.transaction</field>
+        <field name="arch" type="xml">
+            <list string="Qonto movements">
+                <header>
+                    <button name="action_import_now" type="object" string="Import now" class="btn-secondary" display="always"/>
+                </header>
+                <field name="settled_at"/>
+                <field name="qonto_remote_id"/>
+                <field name="side"/>
+                <field name="amount_signed"/>
+                <field name="currency_id"/>
+                <field name="label"/>
+                <field name="reference"/>
+                <field name="state" widget="badge"/>
+                <field name="match_payment_id" optional="show"/>
+                <field name="match_invoice_id" optional="show"/>
+                <field name="source"/>
+                <field name="company_id" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_sbu_qonto_transaction_form" model="ir.ui.view">
+        <field name="name">sbu.qonto.transaction.form</field>
+        <field name="model">sbu.qonto.transaction</field>
+        <field name="arch" type="xml">
+            <form string="Qonto movement">
+                <header>
+                    <button name="action_match_odoo" string="Match in Odoo" type="object" class="btn-primary" invisible="state != 'imported'"/>
+                    <button name="action_ignore" string="Ignore" type="object" class="btn-secondary" invisible="state != 'imported'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="imported,matched,ignored"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="qonto_remote_id"/>
+                            <field name="source"/>
+                            <field name="side"/>
+                            <field name="operation_type"/>
+                            <field name="status"/>
+                        </group>
+                        <group>
+                            <field name="amount"/>
+                            <field name="amount_signed"/>
+                            <field name="currency_id"/>
+                            <field name="settled_at"/>
+                            <field name="emitted_at"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="label"/>
+                        <field name="reference"/>
+                        <field name="note"/>
+                    </group>
+                    <group string="Odoo links (reconciliation aid)">
+                        <field name="match_payment_id"/>
+                        <field name="match_invoice_id"/>
+                    </group>
+                    <notebook>
+                        <page string="Raw Qonto payload" name="raw">
+                            <field name="raw_json" widget="text" nolabel="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sbu_qonto_transaction" model="ir.actions.act_window">
+        <field name="name">Qonto movements</field>
+        <field name="res_model">sbu.qonto.transaction</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Import movements from Qonto (API or webhook). Qonto stays the bank of record; use Match in Odoo to link customer payments or invoices.
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="menu_sbu_qonto_movements"
+        name="Qonto movements"
+        parent="account.menu_finance"
+        action="action_sbu_qonto_transaction"
+        sequence="120"
+    />
+</odoo>
