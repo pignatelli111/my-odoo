@@ -6,21 +6,20 @@
         <field name="inherit_id" ref="base.view_company_form"/>
         <field name="arch" type="xml">
             <xpath expr="//notebook" position="inside">
-                <page string="Qonto (SBU)" name="sbu_qonto_company" groups="account.group_account_manager">
-                    <group string="API (bank of record stays in Qonto)">
+                <page string="Qonto (SBU)" name="sbu_qonto_company">
+                    <group string="API (bank of record stays in Qonto)" groups="account.group_account_manager">
                         <field name="sbu_qonto_login"/>
                         <field name="sbu_qonto_secret_key" password="True"/>
                         <field name="sbu_qonto_iban"/>
                         <field name="sbu_qonto_use_sandbox"/>
                         <field name="sbu_qonto_import_enabled"/>
                     </group>
-                    <group string="Webhook">
-                        <field name="sbu_qonto_webhook_token" password="True"/>
-                        <div class="text-muted" colspan="2">
-                            Configure Qonto to POST to
-                            <code>/qonto/webhook/&lt;token&gt;</code>
-                            using the same token as stored here.
-                        </div>
+                    <group string="Webhook" groups="account.group_account_manager">
+                        <field
+                            name="sbu_qonto_webhook_token"
+                            password="True"
+                            placeholder="Same value as the &lt;token&gt; segment in /qonto/webhook/&lt;token&gt;"
+                        />
                     </group>
                 </page>
             </xpath>

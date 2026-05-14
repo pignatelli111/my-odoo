@@ -5,9 +5,10 @@
         <field name="model">res.company</field>
         <field name="inherit_id" ref="base.view_company_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//sheet/notebook" position="inside">
-                <page string="SBU SAL" name="sbu_sal_company" groups="account.group_account_manager">
-                    <group>
+            <!-- After General Information: avoids RelaxNG issues with some sheet/notebook compositions on 19.0 -->
+            <xpath expr="//page[@name='general_info']" position="after">
+                <page string="SBU SAL" name="sbu_sal_company">
+                    <group groups="account.group_account_manager">
                         <field name="sbu_sal_invoice_post_default"/>
                         <field name="sbu_sal_default_tax_ids" widget="many2many_tags"
                                options="{'no_create': True}"/>

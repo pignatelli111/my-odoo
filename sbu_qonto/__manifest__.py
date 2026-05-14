@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'SBU Qonto',
-    'version': '19.0.1.0.2',
+    'version': '19.0.1.0.3',
     'summary': 'Qonto movements import and webhooks; match to Odoo payments/invoices (Phase 6.3)',
     'author': 'SBU Development',
     'category': 'Accounting',
