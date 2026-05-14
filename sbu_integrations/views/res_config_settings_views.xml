@@ -41,10 +41,10 @@
                             <field name="sbu_onedrive_root_url" widget="url"/>
                         </setting>
                         <setting string="Ownership policy" help="Internal rules: custodian role, M365 group, who may rename or archive folders.">
-                            <field name="sbu_onedrive_ownership_policy" placeholder="e.g. Folders owned by Engineering-Projects M365 group; PM sets custodian on each job."/>
+                            <field name="sbu_onedrive_ownership_policy" widget="text" placeholder="e.g. Folders owned by Engineering-Projects M365 group; PM sets custodian on each job."/>
                         </setting>
                         <setting string="Teams / Planner / Outlook policy" help="When to use Odoo tasks vs Planner; shared channel naming; deep links only (no duplicate task sync).">
-                            <field name="sbu_m365_collaboration_policy" placeholder="e.g. Execution in Planner; Odoo task optional with link to Planner item; Teams shared channel per job."/>
+                            <field name="sbu_m365_collaboration_policy" widget="text" placeholder="e.g. Execution in Planner; Odoo task optional with link to Planner item; Teams shared channel per job."/>
                         </setting>
                 </block>
                 <block title="Other integrations" name="sbu_integration_block_other">

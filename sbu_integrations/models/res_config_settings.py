@@ -58,7 +58,7 @@ class ResConfigSettings(models.TransientModel):
         config_parameter='sbu.onedrive_root_url',
         help='Optional link to the library or team site where job folders are created (for staff).',
     )
-    sbu_onedrive_ownership_policy = fields.Text(
+    sbu_onedrive_ownership_policy = fields.Char(
         string='OneDrive ownership policy (internal)',
         config_parameter='sbu.onedrive_ownership_policy',
         help='Short text shown on projects: who provisions folders, M365 group, break-glass rules.',
@@ -72,7 +72,7 @@ class ResConfigSettings(models.TransientModel):
         config_parameter='sbu.logikal_base_url',
         help='Middleware base URL for the Logikal/ReynaPro bridge (see module sbu_logikal). Used with API path and bearer token.',
     )
-    sbu_m365_collaboration_policy = fields.Text(
+    sbu_m365_collaboration_policy = fields.Char(
         string='Teams / Planner / Outlook policy (internal)',
         config_parameter='sbu.m365_collaboration_policy',
         help='How SBU uses Teams channels, Planner, and Outlook vs Odoo tasks (deep links, no duplicate workflows).',
