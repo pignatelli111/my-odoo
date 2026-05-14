@@ -75,13 +75,10 @@ class SbuQontoTransaction(models.Model):
         tracking=True,
     )
 
-    _sql_constraints = [
-        (
-            'sbu_qonto_remote_company_uniq',
-            'unique(company_id, qonto_remote_id)',
-            'This Qonto movement is already imported for this company.',
-        ),
-    ]
+    _sbu_qonto_remote_company_uniq = models.Constraint(
+        'unique(company_id, qonto_remote_id)',
+        'This Qonto movement is already imported for this company.',
+    )
 
     @api.model
     def _parse_qonto_amount(self, tx):
