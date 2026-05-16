@@ -142,9 +142,14 @@
                             <field name="total_price" widget="monetary"/>
                             <field name="client_price_per_sqm"/>
                             <field name="total_contract_sal" widget="monetary"/>
+                            <field name="sal_amount_billed" widget="monetary"/>
+                            <field name="sal_amount_remaining" widget="monetary"/>
                             <field name="currency_id" invisible="1"/>
                         </group>
                         <group>
+                            <field name="sal_retention_cap" widget="monetary"/>
+                            <field name="sal_retention_withheld" widget="monetary"/>
+                            <field name="sal_retention_remaining" widget="monetary"/>
                             <field name="total_cost" widget="monetary"/>
                             <field name="margin_amount" widget="monetary"/>
                             <field name="expected_margin_pct"/>
@@ -186,20 +191,66 @@
                         </page>
 
                         <page string="Voci Contrattuali SAL" name="sal_lines">
-                            <field name="sal_line_ids">
+                            <field name="sal_line_ids" context="{'default_estimate_id': id}">
                                 <list editable="bottom">
                                     <field name="sequence" widget="handle"/>
                                     <field name="item_ref"/>
-                                    <field name="description"/>
-                                    <field name="uom_type"/>
+                                    <field name="description" optional="show"/>
+                                    <field name="estimate_line_ids" widget="many2many_tags" optional="show"
+                                           string="Estimate lines"/>
+                                    <field name="uom_type" optional="hide"/>
                                     <field name="qty_contract"/>
                                     <field name="unit_price"/>
                                     <field name="total_contract" readonly="1"/>
-                                    <field name="sal_1_pct" string="SAL-1%"/>
-                                    <field name="sal_2_pct" string="SAL-2%"/>
-                                    <field name="sal_3_pct" string="SAL-3%"/>
+                                    <field name="billing_progress_pct" readonly="1" optional="show"/>
+                                    <field name="amount_billed" readonly="1"/>
+                                    <field name="amount_remaining" readonly="1"/>
+                                    <field name="retention_percent"/>
+                                    <field name="retention_amount" readonly="1" string="Retention amount"/>
+                                    <field name="retention_withheld_to_date" readonly="1"/>
+                                    <field name="retention_on_unbilled" readonly="1" optional="hide"/>
+                                    <field name="retention_remaining" readonly="1"/>
+                                    <field name="certificate_ref"/>
+                                    <field name="sal_status" widget="badge" optional="show"/>
+                                    <field name="sal_1_pct" string="SAL-1%" optional="hide"/>
+                                    <field name="sal_2_pct" string="SAL-2%" optional="hide"/>
+                                    <field name="sal_3_pct" string="SAL-3%" optional="hide"/>
                                     <field name="cumulative_pct" string="Cum.%" readonly="1"/>
                                 </list>
+                                <form string="SAL contractual item">
+                                    <sheet>
+                                        <group>
+                                            <group>
+                                                <field name="item_ref"/>
+                                                <field name="description"/>
+                                                <field name="uom_type"/>
+                                                <field name="sal_status" widget="badge"/>
+                                            </group>
+                                            <group>
+                                                <field name="qty_contract"/>
+                                                <field name="unit_price"/>
+                                                <field name="total_contract" readonly="1"/>
+                                            </group>
+                                        </group>
+                                        <group string="Progress billing">
+                                            <field name="billing_progress_pct" readonly="1"/>
+                                            <field name="amount_billed" readonly="1"/>
+                                            <field name="amount_remaining" readonly="1"/>
+                                        </group>
+                                        <group string="Retention (garanzia)">
+                                            <field name="retention_percent"/>
+                                            <field name="retention_amount" readonly="1"/>
+                                            <field name="retention_withheld_to_date" readonly="1"/>
+                                            <field name="retention_on_unbilled" readonly="1"/>
+                                            <field name="retention_remaining" readonly="1"/>
+                                        </group>
+                                        <group string="Estimate link and billing">
+                                            <field name="estimate_line_ids" widget="many2many_tags"
+                                                   options="{'no_create': True}"/>
+                                            <field name="certificate_ref"/>
+                                        </group>
+                                    </sheet>
+                                </form>
                             </field>
                         </page>
 

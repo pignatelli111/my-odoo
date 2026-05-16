@@ -1,6 +1,6 @@
 {
     'name': 'SBU SAL',
-    'version': '19.0.1.0.8',
+    'version': '19.0.1.0.12',
     'summary': 'SAL to accounting: retention on invoices, certificates and payment matching (Phase 6.1–6.2)',
     'author': 'SBU Development',
     'category': 'Accounting',
@@ -16,6 +16,7 @@
         'data/sbu_sal_sequence.xml',
         'views/res_company_views.xml',
         'views/sbu_sal_views.xml',
+        'views/sbu_estimate_sal_line_views.xml',
         'views/project_project_views.xml',
         'views/menu.xml',
     ],

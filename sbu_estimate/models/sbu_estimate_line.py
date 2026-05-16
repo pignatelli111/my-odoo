@@ -24,6 +24,13 @@ class SbuEstimateLine(models.Model):
         required=True,
         ondelete='cascade',
     )
+    sal_contract_line_ids = fields.Many2many(
+        'sbu.estimate.sal.line',
+        'sbu_estimate_sal_line_estimate_line_rel',
+        'estimate_line_id',
+        'sal_line_id',
+        string='SAL contractual items',
+    )
     sequence = fields.Integer(default=10)
 
     # ── Position / Identity ───────────────────────────────────────────────────

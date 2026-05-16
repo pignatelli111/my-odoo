@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sbu_estimate_sal_line_form" model="ir.ui.view">
+        <field name="name">sbu.estimate.sal.line.form</field>
+        <field name="model">sbu.estimate.sal.line</field>
+        <field name="arch" type="xml">
+            <form string="SAL contractual item">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_sal_sheet_lines"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-file-text-o"
+                                invisible="sal_sheet_line_count == 0">
+                            <field name="sal_sheet_line_count" widget="statinfo" string="SAL billing"/>
+                        </button>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="estimate_id" invisible="1"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="item_ref"/>
+                            <field name="description"/>
+                            <field name="uom_type"/>
+                            <field name="sal_status" widget="badge"/>
+                        </group>
+                        <group>
+                            <field name="qty_contract"/>
+                            <field name="unit_price"/>
+                            <field name="total_contract" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Progress billing">
+                        <field name="billing_progress_pct" readonly="1"/>
+                        <field name="amount_billed" readonly="1"/>
+                        <field name="amount_remaining" readonly="1"/>
+                    </group>
+                    <group string="Retention (garanzia)">
+                        <field name="retention_percent"/>
+                        <field name="retention_amount" readonly="1"/>
+                        <field name="retention_withheld_to_date" readonly="1"/>
+                        <field name="retention_on_unbilled" readonly="1"/>
+                        <field name="retention_remaining" readonly="1"/>
+                    </group>
+                    <group string="Estimate link and billing">
+                        <field name="estimate_line_ids" widget="many2many_tags"
+                               options="{'no_create': True}"
+                               context="{'default_estimate_id': estimate_id}"/>
+                        <field name="certificate_ref"/>
+                    </group>
+                    <group string="SAL progress (estimate)">
+                        <field name="cumulative_pct" readonly="1"/>
+                        <group>
+                            <field name="sal_1_pct"/>
+                            <field name="sal_2_pct"/>
+                            <field name="sal_3_pct"/>
+                            <field name="sal_4_pct"/>
+                            <field name="sal_5_pct"/>
+                            <field name="sal_6_pct"/>
+                            <field name="sal_7_pct"/>
+                            <field name="sal_8_pct"/>
+                            <field name="sal_9_pct"/>
+                            <field name="sal_10_pct"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

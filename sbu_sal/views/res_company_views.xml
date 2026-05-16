@@ -14,6 +14,7 @@
                     options='{"no_create": True}'
                     groups="account.group_account_manager"
                 />
+                <field name="sbu_sal_default_retention_percent" groups="account.group_account_manager"/>
                 <field name="sbu_sal_retention_account_id" groups="account.group_account_manager"/>
             </xpath>
         </field>

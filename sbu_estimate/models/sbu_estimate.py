@@ -221,6 +221,38 @@ class SbuEstimate(models.Model):
         currency_field='currency_id',
         help='Somma «Tot. € Contrattuali» delle voci SAL (foglio Voci Contrattuali).',
     )
+    sal_amount_billed = fields.Monetary(
+        string='SAL billed to date',
+        compute='_compute_totals',
+        store=True,
+        currency_field='currency_id',
+    )
+    sal_amount_remaining = fields.Monetary(
+        string='SAL remaining to bill',
+        compute='_compute_totals',
+        store=True,
+        currency_field='currency_id',
+    )
+    sal_retention_cap = fields.Monetary(
+        string='SAL retention amount (cap)',
+        compute='_compute_totals',
+        store=True,
+        currency_field='currency_id',
+        help='Sum of contractual retention amounts (garanzia pool on the estimate).',
+    )
+    sal_retention_withheld = fields.Monetary(
+        string='SAL retention withheld',
+        compute='_compute_totals',
+        store=True,
+        currency_field='currency_id',
+        help='Garanzia already withheld on progress billing (money held until release).',
+    )
+    sal_retention_remaining = fields.Monetary(
+        string='SAL retention remaining',
+        compute='_compute_totals',
+        store=True,
+        currency_field='currency_id',
+    )
     margin_amount = fields.Monetary(
         string='Margine €',
         compute='_compute_margin',
@@ -273,6 +305,11 @@ class SbuEstimate(models.Model):
         'line_ids.cost_total_tot',
         'line_ids.sqm',
         'sal_line_ids.total_contract',
+        'sal_line_ids.amount_billed',
+        'sal_line_ids.amount_remaining',
+        'sal_line_ids.retention_amount',
+        'sal_line_ids.retention_withheld_to_date',
+        'sal_line_ids.retention_remaining',
     )
     def _compute_totals(self):
         for rec in self:
@@ -280,6 +317,11 @@ class SbuEstimate(models.Model):
             rec.total_price = sum(rec.line_ids.mapped('price_total_tot'))
             rec.total_cost = sum(rec.line_ids.mapped('cost_total_tot'))
             rec.total_contract_sal = sum(rec.sal_line_ids.mapped('total_contract'))
+            rec.sal_amount_billed = sum(rec.sal_line_ids.mapped('amount_billed'))
+            rec.sal_amount_remaining = sum(rec.sal_line_ids.mapped('amount_remaining'))
+            rec.sal_retention_cap = sum(rec.sal_line_ids.mapped('retention_amount'))
+            rec.sal_retention_withheld = sum(rec.sal_line_ids.mapped('retention_withheld_to_date'))
+            rec.sal_retention_remaining = sum(rec.sal_line_ids.mapped('retention_remaining'))
             rec.client_price_per_sqm = (
                 rec.total_price / rec.total_sqm if rec.total_sqm else 0.0
             )

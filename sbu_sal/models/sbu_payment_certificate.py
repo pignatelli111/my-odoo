@@ -105,7 +105,22 @@ class SbuPaymentCertificate(models.Model):
                     self.env['ir.sequence'].with_company(company.id).next_by_code('sbu.payment.certificate')
                     or _('New')
                 )
-        return super().create(vals_list)
+        certs = super().create(vals_list)
+        certs._sbu_touch_linked_contractual_lines()
+        return certs
+
+    def write(self, vals):
+        res = super().write(vals)
+        self._sbu_touch_linked_contractual_lines()
+        return res
+
+    def _sbu_touch_linked_contractual_lines(self):
+        if 'sbu.estimate.sal.line' not in self.env:
+            return
+        for cert in self:
+            sal_lines = cert.sal_sheet_id.line_ids.mapped('estimate_sal_line_id')
+            if sal_lines:
+                sal_lines._sbu_recompute_billing_from_sheet_lines()
 
     @api.depends('amount_gross', 'retention_percent')
     def _compute_retention(self):

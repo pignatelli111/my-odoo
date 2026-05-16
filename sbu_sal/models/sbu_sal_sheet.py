@@ -139,6 +139,14 @@ class SbuSalSheet(models.Model):
             rec.amount_retention = gross * (rec.retention_percent or 0.0) / 100.0
             rec.amount_net = gross - rec.amount_retention
 
+    def write(self, vals):
+        res = super().write(vals)
+        if any(k in vals for k in ('state', 'retention_percent', 'invoice_id')):
+            sal_lines = self.line_ids.mapped('estimate_sal_line_id')
+            if sal_lines:
+                sal_lines._sbu_recompute_billing_from_sheet_lines()
+        return res
+
     def action_confirm(self):
         self.write({'state': 'confirmed'})
 

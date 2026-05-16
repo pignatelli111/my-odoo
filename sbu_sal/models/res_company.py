@@ -23,6 +23,12 @@ class ResCompany(models.Model):
         domain="[('type_tax_use', '=', 'sale'), ('company_id', 'parent_of', id)]",
         help='Applied to SAL-generated invoices when the SAL sheet has no tax override.',
     )
+    sbu_sal_default_retention_percent = fields.Float(
+        string='Default SAL retention %',
+        digits=(16, 2),
+        default=5.0,
+        help='Default garanzia / withholding % on new estimate contractual SAL items and SAL sheets.',
+    )
     sbu_sal_retention_account_id = fields.Many2one(
         'account.account',
         string='SAL retention account',

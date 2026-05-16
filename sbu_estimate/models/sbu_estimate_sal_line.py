@@ -3,6 +3,14 @@ from odoo.exceptions import ValidationError
 
 from .sbu_contract_uom import SBU_CONTRACT_UOM_SELECTION
 
+SAL_STATUS_SELECTION = [
+    ('open', 'Open'),
+    ('in_progress', 'In progress'),
+    ('in_billing', 'In billing'),
+    ('completed', 'Completed'),
+    ('closed', 'Closed'),
+]
+
 
 class SbuEstimateSalLine(models.Model):
     """
@@ -19,7 +27,27 @@ class SbuEstimateSalLine(models.Model):
         required=True,
         ondelete='cascade',
     )
+    company_id = fields.Many2one(
+        related='estimate_id.company_id',
+        store=True,
+        readonly=True,
+    )
+    currency_id = fields.Many2one(
+        related='estimate_id.currency_id',
+        store=True,
+        readonly=True,
+    )
     sequence = fields.Integer(default=10)
+
+    estimate_line_ids = fields.Many2many(
+        'sbu.estimate.line',
+        'sbu_estimate_sal_line_estimate_line_rel',
+        'sal_line_id',
+        'estimate_line_id',
+        string='Linked estimate lines',
+        domain="[('estimate_id', '=', estimate_id)]",
+        help='ANACO rows that support this contractual item (one, many, or none if manual).',
+    )
 
     # ── Item reference ────────────────────────────────────────────────────────
     item_ref = fields.Char(string='Item / Riferimento')
@@ -34,11 +62,85 @@ class SbuEstimateSalLine(models.Model):
 
     qty_contract = fields.Float(string='Q.tà Contrattuale', digits=(16, 3))
     unit_price = fields.Float(string='Importo Unitario', digits=(16, 2))
-    total_contract = fields.Float(
+    total_contract = fields.Monetary(
         string='Tot. € Contrattuali',
         compute='_compute_total',
         store=True,
+        currency_field='currency_id',
+    )
+
+    retention_percent = fields.Float(
+        string='Retention %',
         digits=(16, 2),
+        help='Contractual withholding % (garanzia). Defaults to the same rate as SBU SAL sheets. '
+             'Used for the retention cap and to interpret withheld amounts on progress billing.',
+    )
+    retention_amount = fields.Monetary(
+        string='Retention amount',
+        compute='_compute_retention_amount',
+        store=True,
+        currency_field='currency_id',
+        help='Total garanzia on this contract item (contract total × retention %). '
+             'This is the maximum holdback pool for the item.',
+    )
+    retention_withheld_to_date = fields.Monetary(
+        string='Retention withheld to date',
+        compute='_compute_billing_summary',
+        store=True,
+        currency_field='currency_id',
+        help='Garanzia already withheld on confirmed/invoiced SAL billing linked to this item. '
+             'This is real money held until release (tracked from SAL / CDP when SBU SAL is used).',
+    )
+    retention_on_unbilled = fields.Monetary(
+        string='Retention on unbilled balance',
+        compute='_compute_billing_summary',
+        store=True,
+        currency_field='currency_id',
+        help='Projected holdback if the remaining contract value is billed at the current retention %.',
+    )
+    retention_remaining = fields.Monetary(
+        string='Retention remaining (pool)',
+        compute='_compute_billing_summary',
+        store=True,
+        currency_field='currency_id',
+        help='Retention amount minus withheld to date (how much garanzia can still be held on this item).',
+    )
+
+    certificate_ref = fields.Char(
+        string='Invoice / CDP reference',
+        help='Links SAL progress to finance documents. '
+             'Filled automatically from linked SAL sheets (invoices and payment certificates) when SBU SAL is used; '
+             'you can still type a reference before billing exists.',
+    )
+
+    sal_status = fields.Selection(
+        selection=SAL_STATUS_SELECTION,
+        string='SAL status',
+        compute='_compute_sal_status',
+        store=True,
+        help='Derived from estimate progress % and billed amounts (SBU SAL billing).',
+    )
+
+    amount_billed = fields.Monetary(
+        string='Billed to date',
+        compute='_compute_billing_summary',
+        store=True,
+        currency_field='currency_id',
+        help='Gross progress billed on linked SBU SAL sheet lines (confirmed or invoiced sheets only).',
+    )
+    amount_remaining = fields.Monetary(
+        string='Remaining amount',
+        compute='_compute_billing_summary',
+        store=True,
+        currency_field='currency_id',
+        help='Contract total minus billed to date.',
+    )
+    billing_progress_pct = fields.Float(
+        string='% billed',
+        compute='_compute_billing_summary',
+        store=True,
+        digits=(16, 2),
+        help='Billed to date ÷ contract total.',
     )
 
     # ── Floor / orientation breakdown ─────────────────────────────────────────
@@ -71,10 +173,33 @@ class SbuEstimateSalLine(models.Model):
         digits=(16, 2),
     )
 
+    sal_sheet_line_count = fields.Integer(
+        compute='_compute_sal_sheet_line_count',
+        string='SAL sheet lines',
+    )
+
+    @api.model
+    def _sbu_default_retention_percent(self):
+        company = self.env.company
+        pct = getattr(company, 'sbu_sal_default_retention_percent', None)
+        return pct if pct is not None else 5.0
+
+    @api.model
+    def default_get(self, fields_list):
+        res = super().default_get(fields_list)
+        if 'retention_percent' in fields_list and not res.get('retention_percent'):
+            res['retention_percent'] = self._sbu_default_retention_percent()
+        return res
+
     @api.depends('qty_contract', 'unit_price')
     def _compute_total(self):
         for line in self:
             line.total_contract = line.qty_contract * line.unit_price
+
+    @api.depends('total_contract', 'retention_percent')
+    def _compute_retention_amount(self):
+        for line in self:
+            line.retention_amount = (line.total_contract or 0.0) * (line.retention_percent or 0.0) / 100.0
 
     @api.depends(
         'sal_1_pct', 'sal_2_pct', 'sal_3_pct', 'sal_4_pct', 'sal_5_pct',
@@ -88,6 +213,90 @@ class SbuEstimateSalLine(models.Model):
                 + line.sal_7_pct + line.sal_8_pct + line.sal_9_pct
                 + line.sal_10_pct
             )
+
+    @api.depends('total_contract', 'retention_percent', 'retention_amount')
+    def _compute_billing_summary(self):
+        has_sheet_lines = 'sbu.sal.sheet.line' in self.env
+        for line in self:
+            total = line.total_contract or 0.0
+            cap = line.retention_amount or 0.0
+            rp = line.retention_percent or 0.0
+            if not has_sheet_lines or not line.id:
+                line.amount_billed = 0.0
+                line.amount_remaining = total
+                line.retention_withheld_to_date = 0.0
+                line.retention_on_unbilled = total * rp / 100.0
+                line.retention_remaining = cap
+                line.billing_progress_pct = 0.0
+                continue
+            sheet_lines = self.env['sbu.sal.sheet.line'].search([
+                ('estimate_sal_line_id', '=', line.id),
+                ('sheet_id.state', 'in', ('confirmed', 'invoiced')),
+            ])
+            billed = sum(sheet_lines.mapped('amount_this_sal'))
+            withheld = sum(
+                line._sbu_retention_withheld_for_sheet_line(sl)
+                for sl in sheet_lines
+            )
+            remaining = max(total - billed, 0.0)
+            line.amount_billed = billed
+            line.amount_remaining = remaining
+            line.retention_withheld_to_date = withheld
+            line.retention_on_unbilled = remaining * rp / 100.0
+            line.retention_remaining = max(cap - withheld, 0.0)
+            line.billing_progress_pct = (billed / total * 100.0) if total else 0.0
+
+    def _sbu_retention_withheld_for_sheet_line(self, sheet_line):
+        """Retention € for one SAL sheet line (override in sbu_sal to use CDP / invoice amounts)."""
+        self.ensure_one()
+        sheet = sheet_line.sheet_id
+        progress = sheet_line.amount_this_sal or 0.0
+        if not progress:
+            return 0.0
+        rp = sheet.retention_percent if sheet.retention_percent else (self.retention_percent or 0.0)
+        return progress * rp / 100.0
+
+    @api.depends('amount_billed', 'amount_remaining', 'total_contract', 'cumulative_pct')
+    def _compute_sal_status(self):
+        for line in self:
+            total = line.total_contract or 0.0
+            remaining = line.amount_remaining or 0.0
+            billed = line.amount_billed or 0.0
+            if total > 0 and remaining <= 0.01:
+                line.sal_status = 'completed'
+            elif billed > 0:
+                line.sal_status = 'in_billing'
+            elif line.cumulative_pct > 0:
+                line.sal_status = 'in_progress'
+            else:
+                line.sal_status = 'open'
+
+    def _compute_sal_sheet_line_count(self):
+        if 'sbu.sal.sheet.line' not in self.env:
+            for line in self:
+                line.sal_sheet_line_count = 0
+            return
+        data = self.env['sbu.sal.sheet.line'].read_group(
+            [('estimate_sal_line_id', 'in', self.ids)],
+            ['estimate_sal_line_id'],
+            ['estimate_sal_line_id'],
+        )
+        counts = {row['estimate_sal_line_id'][0]: row['estimate_sal_line_id_count'] for row in data}
+        for line in self:
+            line.sal_sheet_line_count = counts.get(line.id, 0)
+
+    def action_view_sal_sheet_lines(self):
+        self.ensure_one()
+        if 'sbu.sal.sheet.line' not in self.env:
+            return False
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('SAL sheet lines'),
+            'res_model': 'sbu.sal.sheet.line',
+            'view_mode': 'list,form',
+            'domain': [('estimate_sal_line_id', '=', self.id)],
+            'context': {'default_estimate_sal_line_id': self.id},
+        }
 
     @api.constrains(
         'sal_1_pct', 'sal_2_pct', 'sal_3_pct', 'sal_4_pct', 'sal_5_pct',
@@ -106,3 +315,12 @@ class SbuEstimateSalLine(models.Model):
                     _('La somma SAL-1…SAL-10 non può superare il 100%% (riga: %s).')
                     % ((line.description or '')[:80] or line.item_ref or line.id)
                 )
+
+    @api.constrains('estimate_line_ids', 'estimate_id')
+    def _check_estimate_lines_same_estimate(self):
+        for sal in self:
+            for eline in sal.estimate_line_ids:
+                if eline.estimate_id != sal.estimate_id:
+                    raise ValidationError(
+                        _('Linked estimate lines must belong to the same estimate as this SAL item.')
+                    )

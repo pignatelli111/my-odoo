@@ -331,6 +331,7 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
                     'uom_type': uom,
                     'qty_contract': qty or 0.0,
                     'unit_price': unit or 0.0,
+                    'retention_percent': self.env['sbu.estimate.sal.line']._sbu_default_retention_percent(),
                 }
                 for (c0, c1), fname in zip(SAL_COL_FLOOR_BLOCKS, SAL_FLOOR_FIELDS):
                     block_sum = 0.0
