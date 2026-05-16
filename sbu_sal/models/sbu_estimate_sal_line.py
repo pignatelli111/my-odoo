@@ -148,7 +148,6 @@ class SbuEstimateSalLine(models.Model):
         'sal_sheet_line_ids.sheet_id.retention_percent',
         'sal_sheet_line_ids.sheet_id.certificate_ids.state',
         'sal_sheet_line_ids.sheet_id.certificate_ids.amount_retention',
-        'sal_sheet_line_ids.sheet_id.certificate_ids.amount_gross',
         'total_contract',
         'retention_percent',
         'retention_amount',
