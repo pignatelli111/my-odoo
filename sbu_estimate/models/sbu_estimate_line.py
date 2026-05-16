@@ -30,7 +30,10 @@ class SbuEstimateLine(models.Model):
     pos = fields.Char(string='Pos.', help='Posizione item (es. FTF, FT, LA01)')
     item_code = fields.Char(string='Codice Item')
     description = fields.Text(string='Descrizione', required=True)
-    note = fields.Text(string='Note')
+    note = fields.Text(
+        string='Note / assunzioni',
+        help='Ipotesi e condizioni specifiche della riga (es. tipo vetro da confermare, esclusioni, listino fornitore, revisione disegno).',
+    )
 
     # ── Dimensions (from ANACO: B, H, Mq) ────────────────────────────────────
     qty = fields.Float(string='Qt.', default=1.0, digits=(16, 2))

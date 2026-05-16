@@ -159,6 +159,7 @@
                                     <field name="sequence" widget="handle"/>
                                     <field name="pos"/>
                                     <field name="description"/>
+                                    <field name="note" string="Assunzioni" optional="show"/>
                                     <field name="calc_uom_type" string="U.M. calcolo"/>
                                     <field name="cost_family" string="Categoria"/>
                                     <field name="qty"/>

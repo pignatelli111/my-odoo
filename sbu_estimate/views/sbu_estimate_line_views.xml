@@ -12,6 +12,7 @@
                             <field name="pos"/>
                             <field name="item_code"/>
                             <field name="description"/>
+                            <field name="note" placeholder="es. vetro da confermare; escluso ponteggio; listino 2026…"/>
                             <field name="calc_uom_type"/>
                             <field name="cost_family"/>
                             <field name="qty"/>
