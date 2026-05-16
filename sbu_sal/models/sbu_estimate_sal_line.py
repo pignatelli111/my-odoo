@@ -187,6 +187,7 @@ class SbuEstimateSalLine(models.Model):
         self._compute_billing_summary()
         self._compute_sal_status()
         self._compute_finance_documents()
+        self._compute_finance_document_counts()
         self._sbu_sync_certificate_ref()
 
     def action_view_payment_certificates(self):
