@@ -159,6 +159,7 @@
                                     <field name="pos"/>
                                     <field name="description"/>
                                     <field name="calc_uom_type" string="U.M. calcolo"/>
+                                    <field name="cost_family" string="Categoria"/>
                                     <field name="qty"/>
                                     <field name="width_mm" string="B (mm)"/>
                                     <field name="height_mm" string="H (mm)"/>

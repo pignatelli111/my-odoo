@@ -13,6 +13,7 @@
                             <field name="item_code"/>
                             <field name="description"/>
                             <field name="calc_uom_type"/>
+                            <field name="cost_family"/>
                             <field name="qty"/>
                             <field name="width_mm"/>
                             <field name="height_mm"/>

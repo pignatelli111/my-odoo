@@ -11,6 +11,11 @@ try:
 except ImportError:  # pragma: no cover
     openpyxl = None
 
+from ..models.sbu_cost_family import (
+    infer_cost_family_from_pos,
+    infer_cost_family_from_price_cost_vals,
+)
+
 
 # Column indices (1-based) validated against ANACO_REV7_111122.xlsx layout.
 ANACO_ROW_PARAMS = 5  # sheet-level Sc multipliers K5:M5, cost % BM/BP, …
@@ -273,6 +278,10 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
                     note_parts.append(str(ntxt).strip())
                 if note_parts:
                     line_vals['note'] = '\n'.join(note_parts)
+
+                cost_family = infer_cost_family_from_pos(pos) or infer_cost_family_from_price_cost_vals(line_vals)
+                if cost_family:
+                    line_vals['cost_family'] = cost_family
 
                 self.env['sbu.estimate.line'].create(line_vals)
                 n_anaco += 1

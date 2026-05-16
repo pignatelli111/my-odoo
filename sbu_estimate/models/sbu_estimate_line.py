@@ -1,6 +1,7 @@
 from odoo import api, fields, models
 
 from .sbu_contract_uom import SBU_CONTRACT_UOM_SELECTION
+from .sbu_cost_family import SBU_COST_FAMILY_SELECTION
 
 
 def _successive_discount_factor(*percents):
@@ -56,6 +57,11 @@ class SbuEstimateLine(models.Model):
         required=True,
         help='Unità di misura / tipo calcolo per la riga (come U.M. contrattuale SAL): '
              'MQ (superficie), ML (lineare), Nr/Pz, A corpo (forfait).',
+    )
+    cost_family = fields.Selection(
+        selection=SBU_COST_FAMILY_SELECTION,
+        string='Categoria / famiglia costo',
+        help='Tipo voce per workflow a valle (es. vetro → VC/VS, staffe → ST, lamiera LA/LZ).',
     )
     uom_id = fields.Many2one(
         'uom.uom',
