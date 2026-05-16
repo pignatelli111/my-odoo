@@ -1,6 +1,6 @@
 {
     'name': 'SBU SAL',
-    'version': '19.0.1.0.12',
+    'version': '19.0.1.0.13',
     'summary': 'SAL to accounting: retention on invoices, certificates and payment matching (Phase 6.1–6.2)',
     'author': 'SBU Development',
     'category': 'Accounting',
@@ -23,4 +23,5 @@
     'installable': True,
     'application': False,
     'license': 'LGPL-3',
+    'pre_init_hook': 'pre_init_hook',
 }

@@ -1,8 +1,23 @@
+from datetime import date
+
 from odoo import api, fields, models, _
+
+_FALLBACK_SORT_DATE = date(1970, 1, 1)
 
 
 class SbuEstimateSalLine(models.Model):
     _inherit = 'sbu.estimate.sal.line'
+
+    sal_sheet_line_ids = fields.One2many(
+        'sbu.sal.sheet.line',
+        'estimate_sal_line_id',
+        string='SAL billing lines',
+    )
+    _sbu_certificate_ref_manual = fields.Char(
+        string='Manual invoice/CDP reference',
+        copy=False,
+        help='Used when no SAL invoice or CDP is linked yet.',
+    )
 
     invoice_id = fields.Many2one(
         'account.move',
@@ -48,6 +63,15 @@ class SbuEstimateSalLine(models.Model):
         compute='_compute_finance_documents',
     )
 
+    certificate_ref = fields.Char(
+        string='Invoice / CDP reference',
+        compute='_compute_certificate_ref',
+        inverse='_inverse_certificate_ref',
+        store=True,
+        readonly=False,
+        help='Links SAL progress to finance documents (auto from SAL billing, or manual before billing).',
+    )
+
     def _sbu_retention_withheld_for_sheet_line(self, sheet_line):
         """Use payment certificate retention when issued/paid; else sheet % × progress."""
         self.ensure_one()
@@ -66,17 +90,12 @@ class SbuEstimateSalLine(models.Model):
                 return (cert.amount_retention or 0.0) * (progress / gross)
         return super()._sbu_retention_withheld_for_sheet_line(sheet_line)
 
-    def _sbu_get_linked_sheet_lines(self):
-        return self.env['sbu.sal.sheet.line'].search([
-            ('estimate_sal_line_id', 'in', self.ids),
-        ])
-
     @api.model
     def _sbu_format_finance_reference(self, certificates, invoices):
         """Human-readable summary for administration (all CDPs and invoices)."""
         parts = []
         seen_invoice_ids = set()
-        cert_key = lambda c: (c.date or fields.Date.from_string('1970-01-01'), c.id)
+        cert_key = lambda c: (c.date or _FALLBACK_SORT_DATE, c.id)
         for cert in certificates.sorted(key=cert_key, reverse=True):
             label = cert.name or _('CDP')
             state_label = dict(cert._fields['state'].selection).get(cert.state, cert.state)
@@ -87,7 +106,7 @@ class SbuEstimateSalLine(models.Model):
                 label = f'{label} → {inv_name}'
                 seen_invoice_ids.add(cert.invoice_id.id)
             parts.append(label)
-        inv_key = lambda m: (m.invoice_date or m.date or fields.Date.from_string('1970-01-01'), m.id)
+        inv_key = lambda m: (m.invoice_date or m.date or _FALLBACK_SORT_DATE, m.id)
         for inv in invoices.sorted(key=inv_key, reverse=True):
             if inv.id in seen_invoice_ids:
                 continue
@@ -98,12 +117,18 @@ class SbuEstimateSalLine(models.Model):
             parts.append(inv_name)
         return '; '.join(parts) if parts else False
 
-    @api.depends('total_contract')
+    @api.depends(
+        'sal_sheet_line_ids.sheet_id.invoice_id',
+        'sal_sheet_line_ids.sheet_id.certificate_ids',
+        'sal_sheet_line_ids.sheet_id.certificate_ids.state',
+        'sal_sheet_line_ids.sheet_id.certificate_ids.invoice_id',
+        'sal_sheet_line_ids.sheet_id.certificate_ids.invoice_id.payment_state',
+        'sal_sheet_line_ids.sheet_id.certificate_ids.name',
+        'sal_sheet_line_ids.sheet_id.certificate_ids.date',
+    )
     def _compute_finance_documents(self):
-        SheetLine = self.env['sbu.sal.sheet.line']
         for line in self:
-            sheet_lines = SheetLine.search([('estimate_sal_line_id', '=', line.id)])
-            sheets = sheet_lines.mapped('sheet_id')
+            sheets = line.sal_sheet_line_ids.mapped('sheet_id')
             certs = sheets.mapped('certificate_ids')
             invoices = sheets.mapped('invoice_id').filtered('id')
             line.payment_certificate_ids = [(6, 0, certs.ids)]
@@ -111,22 +136,77 @@ class SbuEstimateSalLine(models.Model):
             line.certificate_count = len(certs)
             line.invoice_count = len(invoices)
             sorted_certs = certs.sorted(
-                key=lambda c: (c.date or fields.Date.from_string('1970-01-01'), c.id),
+                key=lambda c: (c.date or _FALLBACK_SORT_DATE, c.id),
                 reverse=True,
             )
             sorted_invoices = invoices.sorted(
-                key=lambda m: (m.invoice_date or m.date or fields.Date.from_string('1970-01-01'), m.id),
+                key=lambda m: (m.invoice_date or m.date or _FALLBACK_SORT_DATE, m.id),
                 reverse=True,
             )
             line.payment_certificate_id = sorted_certs[:1]
             line.invoice_id = sorted_invoices[:1]
-            if certs or invoices:
-                line.certificate_ref = line._sbu_format_finance_reference(certs, invoices)
+
+    @api.depends(
+        'payment_certificate_ids',
+        'invoice_ids',
+        'payment_certificate_ids.state',
+        'payment_certificate_ids.invoice_id',
+        'payment_certificate_ids.invoice_id.payment_state',
+        'invoice_ids.payment_state',
+        '_sbu_certificate_ref_manual',
+    )
+    def _compute_certificate_ref(self):
+        for line in self:
+            if line.payment_certificate_ids or line.invoice_ids:
+                line.certificate_ref = line._sbu_format_finance_reference(
+                    line.payment_certificate_ids,
+                    line.invoice_ids,
+                )
+            else:
+                line.certificate_ref = line._sbu_certificate_ref_manual
+
+    def _inverse_certificate_ref(self):
+        for line in self:
+            if not line.payment_certificate_ids and not line.invoice_ids:
+                line._sbu_certificate_ref_manual = line.certificate_ref
+
+    @api.depends(
+        'sal_sheet_line_ids.amount_this_sal',
+        'sal_sheet_line_ids.sheet_id.state',
+        'sal_sheet_line_ids.sheet_id.retention_percent',
+        'sal_sheet_line_ids.sheet_id.certificate_ids.state',
+        'sal_sheet_line_ids.sheet_id.certificate_ids.amount_retention',
+        'sal_sheet_line_ids.sheet_id.certificate_ids.amount_gross',
+        'total_contract',
+        'retention_percent',
+        'retention_amount',
+    )
+    def _compute_billing_summary(self):
+        for line in self:
+            total = line.total_contract or 0.0
+            cap = line.retention_amount or 0.0
+            rp = line.retention_percent or 0.0
+            sheet_lines = line.sal_sheet_line_ids.filtered(
+                lambda sl: sl.sheet_id.state in ('confirmed', 'invoiced')
+            )
+            billed = sum(sheet_lines.mapped('amount_this_sal'))
+            withheld = sum(
+                line._sbu_retention_withheld_for_sheet_line(sl)
+                for sl in sheet_lines
+            )
+            remaining = max(total - billed, 0.0)
+            line.amount_billed = billed
+            line.amount_remaining = remaining
+            line.retention_withheld_to_date = withheld
+            line.retention_on_unbilled = remaining * rp / 100.0
+            line.retention_remaining = max(cap - withheld, 0.0)
+            line.billing_progress_pct = (billed / total * 100.0) if total else 0.0
 
     def _sbu_recompute_billing_from_sheet_lines(self):
         self._compute_billing_summary()
         self._compute_sal_status()
         self._compute_finance_documents()
+        self._compute_certificate_ref()
 
     def action_view_payment_certificates(self):
         self.ensure_one()

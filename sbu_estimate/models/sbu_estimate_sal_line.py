@@ -216,35 +216,17 @@ class SbuEstimateSalLine(models.Model):
 
     @api.depends('total_contract', 'retention_percent', 'retention_amount')
     def _compute_billing_summary(self):
-        has_sheet_lines = 'sbu.sal.sheet.line' in self.env
+        """Defaults without sbu_sal; sbu_sal overrides with SAL sheet line depends."""
         for line in self:
             total = line.total_contract or 0.0
             cap = line.retention_amount or 0.0
             rp = line.retention_percent or 0.0
-            if not has_sheet_lines or not line.id:
-                line.amount_billed = 0.0
-                line.amount_remaining = total
-                line.retention_withheld_to_date = 0.0
-                line.retention_on_unbilled = total * rp / 100.0
-                line.retention_remaining = cap
-                line.billing_progress_pct = 0.0
-                continue
-            sheet_lines = self.env['sbu.sal.sheet.line'].search([
-                ('estimate_sal_line_id', '=', line.id),
-                ('sheet_id.state', 'in', ('confirmed', 'invoiced')),
-            ])
-            billed = sum(sheet_lines.mapped('amount_this_sal'))
-            withheld = sum(
-                line._sbu_retention_withheld_for_sheet_line(sl)
-                for sl in sheet_lines
-            )
-            remaining = max(total - billed, 0.0)
-            line.amount_billed = billed
-            line.amount_remaining = remaining
-            line.retention_withheld_to_date = withheld
-            line.retention_on_unbilled = remaining * rp / 100.0
-            line.retention_remaining = max(cap - withheld, 0.0)
-            line.billing_progress_pct = (billed / total * 100.0) if total else 0.0
+            line.amount_billed = 0.0
+            line.amount_remaining = total
+            line.retention_withheld_to_date = 0.0
+            line.retention_on_unbilled = total * rp / 100.0
+            line.retention_remaining = cap
+            line.billing_progress_pct = 0.0
 
     def _sbu_retention_withheld_for_sheet_line(self, sheet_line):
         """Retention € for one SAL sheet line (override in sbu_sal to use CDP / invoice amounts)."""
