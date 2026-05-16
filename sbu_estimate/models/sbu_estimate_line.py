@@ -70,10 +70,26 @@ class SbuEstimateLine(models.Model):
     )
 
     # ── Discount / commission ─────────────────────────────────────────────────
-    commission_pct = fields.Float(string='Comm. %', digits=(16, 2), help='Applicato dopo Sc1/Sc2/Sc3 sul listino componenti (moltiplicativo, come da ANACO).')
-    discount_sc1 = fields.Float(string='Sc 1 %', digits=(16, 2), help='Primo sconto successivo sul listino componenti.')
-    discount_sc2 = fields.Float(string='Sc 2 %', digits=(16, 2), help='Secondo sconto successivo (applicato dopo Sc1).')
-    discount_sc3 = fields.Float(string='Sc 3 %', digits=(16, 2), help='Terzo sconto successivo (applicato dopo Sc2).')
+    commission_pct = fields.Float(
+        string='Comm. %',
+        digits=(16, 2),
+        help='Applicato dopo i tre sconti successivi sul listino (moltiplicativo, come da ANACO).',
+    )
+    discount_sc1 = fields.Float(
+        string='Sconto 1 %',
+        digits=(16, 2),
+        help='Primo sconto successivo sul listino / base CAD.',
+    )
+    discount_sc2 = fields.Float(
+        string='Sconto 2 %',
+        digits=(16, 2),
+        help='Secondo sconto successivo (dopo Sconto 1).',
+    )
+    discount_sc3 = fields.Float(
+        string='Sconto 3 %',
+        digits=(16, 2),
+        help='Terzo sconto successivo (dopo Sconto 2).',
+    )
 
     # ── PRICE columns (selling side — from ANACO) ─────────────────────────────
     price_serramento_cad = fields.Float(string='Serramento Scontato CAD', digits=(16, 2))
@@ -97,23 +113,39 @@ class SbuEstimateLine(models.Model):
 
     # Computed price totals (ANACO: listino componenti → sconti successivi → comm %)
     price_gross_cad = fields.Float(
-        string='Listino Componenti CAD',
+        string='Listino / base CAD',
         compute='_compute_price_totals',
         store=True,
         digits=(16, 2),
-        help='Somma colonne prezzo Odoo (approssima il blocco BB… in ANACO; il totale certificato Excel è colonna BS).',
+        help='Somma componenti prezzo (listino / base prima degli sconti a catena).',
+    )
+    price_after_discounts_cad = fields.Float(
+        string='Prezzo dopo sconti CAD',
+        compute='_compute_price_totals',
+        store=True,
+        digits=(16, 2),
+        help='Listino / base CAD × (1−Sc1%) × (1−Sc2%) × (1−Sc3%). Prima della commissione %.',
+    )
+    price_after_discounts_tot = fields.Float(
+        string='Prezzo dopo sconti TOT',
+        compute='_compute_price_totals',
+        store=True,
+        digits=(16, 2),
+        help='Prezzo dopo sconti CAD × Qt.',
     )
     price_total_cad = fields.Float(
-        string='Prezzo Cliente CAD',
+        string='Prezzo cliente CAD',
         compute='_compute_price_totals',
         store=True,
         digits=(16, 2),
+        help='Dopo sconti e commissione %, oppure colonna BS ANACO se valorizzata.',
     )
     price_total_tot = fields.Float(
-        string='Prezzo Cliente TOT',
+        string='Prezzo cliente TOT',
         compute='_compute_price_totals',
         store=True,
         digits=(16, 2),
+        help='Prezzo cliente CAD × Qt.',
     )
     price_per_sqm = fields.Float(
         string='Prezzo cliente / MQ',
@@ -286,21 +318,23 @@ class SbuEstimateLine(models.Model):
                 + line.price_cassonetto_cad
             )
             line.price_gross_cad = gross
+            disc_factor = _successive_discount_factor(
+                line.discount_sc1,
+                line.discount_sc2,
+                line.discount_sc3,
+            )
+            after_discounts = gross * disc_factor
+            line.price_after_discounts_cad = after_discounts
+            qty = line.qty or 1
+            line.price_after_discounts_tot = after_discounts * qty
             if line.price_anaco_bs_cad:
                 net_unit = line.price_anaco_bs_cad
+            elif line.commission_pct:
+                net_unit = after_discounts * (1.0 - line.commission_pct / 100.0)
             else:
-                disc_factor = _successive_discount_factor(
-                    line.discount_sc1,
-                    line.discount_sc2,
-                    line.discount_sc3,
-                )
-                after_discounts = gross * disc_factor
-                if line.commission_pct:
-                    net_unit = after_discounts * (1.0 - line.commission_pct / 100.0)
-                else:
-                    net_unit = after_discounts
+                net_unit = after_discounts
             line.price_total_cad = net_unit
-            line.price_total_tot = net_unit * (line.qty or 1)
+            line.price_total_tot = net_unit * qty
             line.price_per_sqm = (line.price_total_tot / line.sqm) if line.sqm else 0.0
 
     @api.depends('bom_line_ids.total_cost')

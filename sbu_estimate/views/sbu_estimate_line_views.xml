@@ -21,23 +21,27 @@
                             <field name="sqm" readonly="1"/>
                             <field name="uom_id"/>
                         </group>
-                        <group>
-                            <field name="commission_pct"/>
+                        <group string="Sconti a catena (ANACO)">
+                            <field name="price_gross_cad" readonly="1"/>
                             <field name="discount_sc1"/>
                             <field name="discount_sc2"/>
                             <field name="discount_sc3"/>
+                            <field name="price_after_discounts_cad" readonly="1"/>
+                            <field name="price_after_discounts_tot" readonly="1"/>
+                            <field name="commission_pct"/>
                             <field name="price_anaco_bs_cad"
                                    string="Prezzo unit. ANACO (BS)"/>
-                            <field name="price_gross_cad" readonly="1"/>
+                            <field name="price_total_cad" readonly="1"/>
+                            <field name="price_total_tot" readonly="1"/>
+                            <field name="price_per_sqm" readonly="1"/>
+                        </group>
+                        <group string="Componenti prezzo (dettaglio)">
                             <field name="price_serramento_cad"/>
                             <field name="price_oscuramento_cad"/>
                             <field name="price_vetro_cad"/>
                             <field name="price_pannello_cad"/>
                             <field name="price_controtelaio_cad"/>
                             <field name="price_accessori_cad"/>
-                            <field name="price_total_cad" readonly="1"/>
-                            <field name="price_total_tot" readonly="1"/>
-                            <field name="price_per_sqm" readonly="1"/>
                         </group>
                     </group>
                     <group>
