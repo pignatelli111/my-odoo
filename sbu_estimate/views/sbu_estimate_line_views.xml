@@ -15,6 +15,7 @@
                             <field name="qty"/>
                             <field name="width_mm"/>
                             <field name="height_mm"/>
+                            <field name="sqm_per_piece" readonly="1"/>
                             <field name="sqm" readonly="1"/>
                             <field name="uom_id"/>
                         </group>

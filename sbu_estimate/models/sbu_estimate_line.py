@@ -33,12 +33,19 @@ class SbuEstimateLine(models.Model):
     qty = fields.Float(string='Qt.', default=1.0, digits=(16, 2))
     width_mm = fields.Float(string='B (mm)', digits=(16, 0))
     height_mm = fields.Float(string='H (mm)', digits=(16, 0))
-    sqm = fields.Float(
-        string='Mq.',
-        compute='_compute_sqm',
+    sqm_per_piece = fields.Float(
+        string='MQ/Cad.',
+        compute='_compute_sqm_dimensions',
         store=True,
         digits=(16, 3),
-        help='Equiv. ANACO colonna I (MQ TOTALI): (B×H/1.000.000) × Qt.',
+        help='Superficie di un solo pezzo: B (mm) × H (mm) / 1.000.000.',
+    )
+    sqm = fields.Float(
+        string='Mq tot.',
+        compute='_compute_sqm_dimensions',
+        store=True,
+        digits=(16, 3),
+        help='MQ totali riga: MQ/Cad. × Qt. (equiv. ANACO colonna I, MQ TOTALI).',
     )
     uom_id = fields.Many2one(
         'uom.uom',
@@ -206,15 +213,15 @@ class SbuEstimateLine(models.Model):
         string='Distinta Base (ITEM)',
     )
 
-    # ── Computed: sqm ─────────────────────────────────────────────────────────
+    # ── Computed: MQ/Cad. and Mq tot. ─────────────────────────────────────────
     @api.depends('width_mm', 'height_mm', 'qty')
-    def _compute_sqm(self):
+    def _compute_sqm_dimensions(self):
         for line in self:
             if line.width_mm and line.height_mm:
-                sqm_per_piece = (line.width_mm * line.height_mm) / 1_000_000
-                line.sqm = sqm_per_piece * (line.qty or 1)
+                line.sqm_per_piece = (line.width_mm * line.height_mm) / 1_000_000
             else:
-                line.sqm = 0.0
+                line.sqm_per_piece = 0.0
+            line.sqm = line.sqm_per_piece * (line.qty or 1)
 
     # ── Computed: price totals ────────────────────────────────────────────────
     @api.depends(

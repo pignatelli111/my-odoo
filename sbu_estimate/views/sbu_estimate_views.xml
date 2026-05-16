@@ -161,7 +161,8 @@
                                     <field name="qty"/>
                                     <field name="width_mm" string="B (mm)"/>
                                     <field name="height_mm" string="H (mm)"/>
-                                    <field name="sqm" string="Mq" readonly="1"/>
+                                    <field name="sqm_per_piece" string="MQ/Cad." readonly="1"/>
+                                    <field name="sqm" string="Mq tot." readonly="1"/>
                                     <field name="price_serramento_cad"/>
                                     <field name="price_vetro_cad"/>
                                     <field name="price_total_cad" string="Prezzo CAD" readonly="1"/>
