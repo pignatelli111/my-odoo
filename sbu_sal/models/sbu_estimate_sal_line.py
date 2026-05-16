@@ -18,6 +18,7 @@ class SbuEstimateSalLine(models.Model):
         'account.move',
         string='Latest customer invoice',
         compute='_compute_finance_documents',
+        compute_sudo=False,
         store=True,
         readonly=True,
         copy=False,
@@ -29,6 +30,7 @@ class SbuEstimateSalLine(models.Model):
         'invoice_id',
         string='Customer invoices',
         compute='_compute_finance_documents',
+        compute_sudo=False,
         store=True,
         readonly=True,
     )
@@ -39,6 +41,7 @@ class SbuEstimateSalLine(models.Model):
         'certificate_id',
         string='Payment certificates (CDP)',
         compute='_compute_finance_documents',
+        compute_sudo=False,
         store=True,
         readonly=True,
     )
@@ -46,16 +49,19 @@ class SbuEstimateSalLine(models.Model):
         'sbu.payment.certificate',
         string='Latest payment certificate',
         compute='_compute_finance_documents',
+        compute_sudo=False,
         store=True,
         readonly=True,
     )
     certificate_count = fields.Integer(
         string='CDP count',
-        compute='_compute_finance_documents',
+        compute='_compute_finance_document_counts',
+        compute_sudo=False,
     )
     invoice_count = fields.Integer(
         string='Invoice count',
-        compute='_compute_finance_documents',
+        compute='_compute_finance_document_counts',
+        compute_sudo=False,
     )
 
     def _sbu_retention_withheld_for_sheet_line(self, sheet_line):
@@ -118,8 +124,6 @@ class SbuEstimateSalLine(models.Model):
             invoices = sheets.mapped('invoice_id').filtered('id')
             line.payment_certificate_ids = [(6, 0, certs.ids)]
             line.invoice_ids = [(6, 0, invoices.ids)]
-            line.certificate_count = len(certs)
-            line.invoice_count = len(invoices)
             sorted_certs = certs.sorted(
                 key=lambda c: (c.date or _FALLBACK_SORT_DATE, c.id),
                 reverse=True,
@@ -130,6 +134,12 @@ class SbuEstimateSalLine(models.Model):
             )
             line.payment_certificate_id = sorted_certs[:1]
             line.invoice_id = sorted_invoices[:1]
+
+    @api.depends('payment_certificate_ids', 'invoice_ids')
+    def _compute_finance_document_counts(self):
+        for line in self:
+            line.certificate_count = len(line.payment_certificate_ids)
+            line.invoice_count = len(line.invoice_ids)
 
     def _sbu_sync_certificate_ref(self):
         """Update Char reference from linked finance docs (not inside a compute method)."""
