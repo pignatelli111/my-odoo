@@ -1,0 +1,28 @@
+REPORT CLIENTE — Come ottenere un file Word (.docx) o Google Docs
+================================================================
+
+File principale (italiano, diagrammi Mermaid):
+  docs/REPORT_CLIENTE_SBU_ODOO_IT.md
+
+Opzione A — Microsoft Word (consigliata)
+  1. Apri Word → File → Apri → seleziona REPORT_CLIENTE_SBU_ODOO_IT.md
+  2. Salva con nome → Documento Word (.docx)
+
+Opzione B — Pandoc (se installato)
+  cd my-odoo/docs
+  pandoc REPORT_CLIENTE_SBU_ODOO_IT.md -o REPORT_CLIENTE_SBU_ODOO_IT.docx
+
+Opzione C — Google Docs
+  1. Converti in .docx con Opzione A o B
+  2. Carica il .docx su Google Drive → Apri con Documenti Google
+
+Diagrammi Mermaid (per il cliente in PDF/Word con immagini)
+  1. Copia ogni blocco ```mermaid ... ``` da REPORT_CLIENTE_SBU_ODOO_IT.md
+  2. Incolla su https://mermaid.live → Export PNG o SVG
+  3. Inserisci le immagini nel Word al posto dei blocchi codice
+
+Diagrammi presenti nel report:
+  - Architettura moduli (sezione 3)
+  - Flusso end-to-end (sezione 4.1)
+  - Modello dati preventivo/SAL (sezione 4.2)
+  - Sequenza SAL → fattura → CDP (sezione 4.4)
