@@ -13,11 +13,6 @@ class SbuEstimateSalLine(models.Model):
         'estimate_sal_line_id',
         string='SAL billing lines',
     )
-    _sbu_certificate_ref_manual = fields.Char(
-        string='Manual invoice/CDP reference',
-        copy=False,
-        help='Used when no SAL invoice or CDP is linked yet.',
-    )
 
     invoice_id = fields.Many2one(
         'account.move',
@@ -61,15 +56,6 @@ class SbuEstimateSalLine(models.Model):
     invoice_count = fields.Integer(
         string='Invoice count',
         compute='_compute_finance_documents',
-    )
-
-    certificate_ref = fields.Char(
-        string='Invoice / CDP reference',
-        compute='_compute_certificate_ref',
-        inverse='_inverse_certificate_ref',
-        store=True,
-        readonly=False,
-        help='Links SAL progress to finance documents (auto from SAL billing, or manual before billing).',
     )
 
     def _sbu_retention_withheld_for_sheet_line(self, sheet_line):
@@ -122,7 +108,6 @@ class SbuEstimateSalLine(models.Model):
         'sal_sheet_line_ids.sheet_id.certificate_ids',
         'sal_sheet_line_ids.sheet_id.certificate_ids.state',
         'sal_sheet_line_ids.sheet_id.certificate_ids.invoice_id',
-        'sal_sheet_line_ids.sheet_id.certificate_ids.invoice_id.payment_state',
         'sal_sheet_line_ids.sheet_id.certificate_ids.name',
         'sal_sheet_line_ids.sheet_id.certificate_ids.date',
     )
@@ -146,29 +131,16 @@ class SbuEstimateSalLine(models.Model):
             line.payment_certificate_id = sorted_certs[:1]
             line.invoice_id = sorted_invoices[:1]
 
-    @api.depends(
-        'payment_certificate_ids',
-        'invoice_ids',
-        'payment_certificate_ids.state',
-        'payment_certificate_ids.invoice_id',
-        'payment_certificate_ids.invoice_id.payment_state',
-        'invoice_ids.payment_state',
-        '_sbu_certificate_ref_manual',
-    )
-    def _compute_certificate_ref(self):
+    def _sbu_sync_certificate_ref(self):
+        """Update Char reference from linked finance docs (not inside a compute method)."""
         for line in self:
             if line.payment_certificate_ids or line.invoice_ids:
-                line.certificate_ref = line._sbu_format_finance_reference(
+                ref = line._sbu_format_finance_reference(
                     line.payment_certificate_ids,
                     line.invoice_ids,
                 )
-            else:
-                line.certificate_ref = line._sbu_certificate_ref_manual
-
-    def _inverse_certificate_ref(self):
-        for line in self:
-            if not line.payment_certificate_ids and not line.invoice_ids:
-                line._sbu_certificate_ref_manual = line.certificate_ref
+                if ref and line.certificate_ref != ref:
+                    line.certificate_ref = ref
 
     @api.depends(
         'sal_sheet_line_ids.amount_this_sal',
@@ -206,7 +178,7 @@ class SbuEstimateSalLine(models.Model):
         self._compute_billing_summary()
         self._compute_sal_status()
         self._compute_finance_documents()
-        self._compute_certificate_ref()
+        self._sbu_sync_certificate_ref()
 
     def action_view_payment_certificates(self):
         self.ensure_one()
