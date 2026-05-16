@@ -169,7 +169,9 @@
                                     <field name="price_vetro_cad"/>
                                     <field name="price_total_cad" string="Prezzo CAD" readonly="1"/>
                                     <field name="price_total_tot" string="Prezzo TOT" readonly="1"/>
+                                    <field name="price_per_sqm" string="Prezzo / MQ" readonly="1" optional="show"/>
                                     <field name="cost_total_tot" string="Costo TOT" readonly="1"/>
+                                    <field name="cost_per_sqm" string="Costo / MQ" readonly="1" optional="show"/>
                                 </list>
                             </field>
                         </page>

@@ -116,10 +116,11 @@ class SbuEstimateLine(models.Model):
         digits=(16, 2),
     )
     price_per_sqm = fields.Float(
-        string='Prezzo Cliente MQ',
+        string='Prezzo / MQ',
         compute='_compute_price_totals',
         store=True,
         digits=(16, 2),
+        help='Prezzo cliente totale ÷ Mq tot. (€/m² sulla riga).',
     )
 
     # ── COST columns (buying side — from ANACO) ───────────────────────────────
@@ -177,10 +178,11 @@ class SbuEstimateLine(models.Model):
         digits=(16, 2),
     )
     cost_per_sqm = fields.Float(
-        string='Costo MQ',
+        string='Costo / MQ',
         compute='_compute_cost_totals',
         store=True,
         digits=(16, 2),
+        help='Costo materiale lavorato e posato TOT ÷ Mq tot. (€/m² sulla riga).',
     )
 
     # ── Budget tracking (per item — from ANACO budget columns) ────────────────
