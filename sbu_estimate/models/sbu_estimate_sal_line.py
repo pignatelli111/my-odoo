@@ -1,5 +1,7 @@
-from odoo import models, fields, api, _
+from odoo import api, fields, models, _
 from odoo.exceptions import ValidationError
+
+from .sbu_contract_uom import SBU_CONTRACT_UOM_SELECTION
 
 
 class SbuEstimateSalLine(models.Model):
@@ -24,12 +26,11 @@ class SbuEstimateSalLine(models.Model):
     description = fields.Text(string='Descrizione', required=True)
 
     # ── Contractual values ────────────────────────────────────────────────────
-    uom_type = fields.Selection([
-        ('mq', 'MQ'),
-        ('ml', 'ML'),
-        ('nr', 'Nr/Pz'),
-        ('corpo', 'A Corpo'),
-    ], string='U.M. Contrattuale', default='mq')
+    uom_type = fields.Selection(
+        selection=SBU_CONTRACT_UOM_SELECTION,
+        string='U.M. Contrattuale',
+        default='mq',
+    )
 
     qty_contract = fields.Float(string='Q.tà Contrattuale', digits=(16, 3))
     unit_price = fields.Float(string='Importo Unitario', digits=(16, 2))

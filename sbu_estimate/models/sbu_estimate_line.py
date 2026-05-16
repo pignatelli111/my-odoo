@@ -1,4 +1,6 @@
-from odoo import models, fields, api
+from odoo import api, fields, models
+
+from .sbu_contract_uom import SBU_CONTRACT_UOM_SELECTION
 
 
 def _successive_discount_factor(*percents):
@@ -47,9 +49,18 @@ class SbuEstimateLine(models.Model):
         digits=(16, 3),
         help='MQ totali riga: MQ/Cad. × Qt. (equiv. ANACO colonna I, MQ TOTALI).',
     )
+    calc_uom_type = fields.Selection(
+        selection=SBU_CONTRACT_UOM_SELECTION,
+        string='U.M. calcolo',
+        default='mq',
+        required=True,
+        help='Unità di misura / tipo calcolo per la riga (come U.M. contrattuale SAL): '
+             'MQ (superficie), ML (lineare), Nr/Pz, A corpo (forfait).',
+    )
     uom_id = fields.Many2one(
         'uom.uom',
-        string='U.M.',
+        string='U.M. Odoo',
+        help='Opzionale: unità di misura prodotto Odoo; la colonna «U.M. calcolo» guida preventivo e SAL.',
     )
 
     # ── Discount / commission ─────────────────────────────────────────────────

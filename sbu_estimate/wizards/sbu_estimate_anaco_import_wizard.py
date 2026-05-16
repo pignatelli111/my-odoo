@@ -222,15 +222,23 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
                 if not desc:
                     desc = pos or _('Riga importata')
 
+                b_mm = _cell_num(anaco_sh, r, ANACO_COL_B_MM) or 0.0
+                h_mm = _cell_num(anaco_sh, r, ANACO_COL_H_MM) or 0.0
+                if b_mm and h_mm:
+                    calc_uom = 'mq'
+                else:
+                    calc_uom = 'nr'
+
                 line_vals = {
                     'estimate_id': estimate.id,
                     'sequence': seq,
                     'pos': pos or False,
                     'item_code': pos or False,
                     'description': desc,
+                    'calc_uom_type': calc_uom,
                     'qty': _cell_num(anaco_sh, r, ANACO_COL_QTY) or 1.0,
-                    'width_mm': _cell_num(anaco_sh, r, ANACO_COL_B_MM) or 0.0,
-                    'height_mm': _cell_num(anaco_sh, r, ANACO_COL_H_MM) or 0.0,
+                    'width_mm': b_mm,
+                    'height_mm': h_mm,
                     'discount_sc1': sc1,
                     'discount_sc2': sc2,
                     'discount_sc3': sc3,
