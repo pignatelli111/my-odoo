@@ -173,6 +173,8 @@
                                     <field name="price_per_sqm" string="Prezzo cliente / MQ" readonly="1"/>
                                     <field name="cost_total_tot" string="Costo TOT" readonly="1"/>
                                     <field name="cost_per_sqm" string="Costo / MQ" readonly="1" optional="show"/>
+                                    <field name="margin_amount" string="Margine €" readonly="1" optional="show"/>
+                                    <field name="margin_pct" string="Margine %" readonly="1" optional="show"/>
                                 </list>
                             </field>
                         </page>

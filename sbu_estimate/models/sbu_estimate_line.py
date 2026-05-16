@@ -185,6 +185,21 @@ class SbuEstimateLine(models.Model):
         help='Costo materiale lavorato e posato TOT ÷ Mq tot. (€/m² sulla riga).',
     )
 
+    margin_amount = fields.Float(
+        string='Margine €',
+        compute='_compute_line_margin',
+        store=True,
+        digits=(16, 2),
+        help='Prezzo cliente TOT − costo materiale lavorato e posato TOT.',
+    )
+    margin_pct = fields.Float(
+        string='Margine %',
+        compute='_compute_line_margin',
+        store=True,
+        digits=(16, 2),
+        help='Margine € ÷ prezzo cliente TOT × 100.',
+    )
+
     # ── Budget tracking (per item — from ANACO budget columns) ────────────────
     budget_orders_issued = fields.Float(string='Ordini Emessi', digits=(16, 2))
     budget_costs_incurred = fields.Float(string='Costi Sostenuti', digits=(16, 2))
@@ -323,6 +338,16 @@ class SbuEstimateLine(models.Model):
             line.cost_total_cad = cad
             line.cost_total_tot = cad * (line.qty or 1)
             line.cost_per_sqm = (line.cost_total_tot / line.sqm) if line.sqm else 0.0
+
+    @api.depends('price_total_tot', 'cost_total_tot')
+    def _compute_line_margin(self):
+        for line in self:
+            margin = (line.price_total_tot or 0.0) - (line.cost_total_tot or 0.0)
+            line.margin_amount = margin
+            if line.price_total_tot:
+                line.margin_pct = (margin / line.price_total_tot) * 100.0
+            else:
+                line.margin_pct = 0.0
 
     # ── Computed: budget ──────────────────────────────────────────────────────
     @api.depends('cost_total_tot', 'budget_orders_issued', 'budget_costs_incurred')

@@ -57,6 +57,8 @@
                             <field name="cost_total_cad" readonly="1"/>
                             <field name="cost_total_tot" readonly="1"/>
                             <field name="cost_per_sqm" readonly="1"/>
+                            <field name="margin_amount" readonly="1"/>
+                            <field name="margin_pct" readonly="1"/>
                         </group>
                     </group>
                     <notebook>
