@@ -110,7 +110,7 @@
                         <group string="Intestazione">
                             <field name="company_id" groups="base.group_multi_company"/>
                             <field name="partner_id"/>
-                            <field name="opportunity_id"/>
+                            <field name="opportunity_id" groups="sales_team.group_sale_salesman"/>
                             <field name="job_site"/>
                             <field name="user_id"/>
                         </group>
