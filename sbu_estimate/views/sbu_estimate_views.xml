@@ -140,6 +140,7 @@
                         <group>
                             <field name="total_sqm"/>
                             <field name="total_price" widget="monetary"/>
+                            <field name="client_price_per_sqm"/>
                             <field name="total_contract_sal" widget="monetary"/>
                             <field name="currency_id" invisible="1"/>
                         </group>
@@ -169,7 +170,7 @@
                                     <field name="price_vetro_cad"/>
                                     <field name="price_total_cad" string="Prezzo CAD" readonly="1"/>
                                     <field name="price_total_tot" string="Prezzo TOT" readonly="1"/>
-                                    <field name="price_per_sqm" string="Prezzo / MQ" readonly="1" optional="show"/>
+                                    <field name="price_per_sqm" string="Prezzo cliente / MQ" readonly="1"/>
                                     <field name="cost_total_tot" string="Costo TOT" readonly="1"/>
                                     <field name="cost_per_sqm" string="Costo / MQ" readonly="1" optional="show"/>
                                 </list>

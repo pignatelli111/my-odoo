@@ -201,6 +201,13 @@ class SbuEstimate(models.Model):
         store=True,
         currency_field='currency_id',
     )
+    client_price_per_sqm = fields.Float(
+        string='Prezzo cliente / MQ',
+        compute='_compute_totals',
+        store=True,
+        digits=(16, 2),
+        help='Prezzo cliente totale del preventivo ÷ MQ totali (€/m² vendita).',
+    )
     total_cost = fields.Monetary(
         string='Costo Totale',
         compute='_compute_totals',
@@ -273,6 +280,9 @@ class SbuEstimate(models.Model):
             rec.total_price = sum(rec.line_ids.mapped('price_total_tot'))
             rec.total_cost = sum(rec.line_ids.mapped('cost_total_tot'))
             rec.total_contract_sal = sum(rec.sal_line_ids.mapped('total_contract'))
+            rec.client_price_per_sqm = (
+                rec.total_price / rec.total_sqm if rec.total_sqm else 0.0
+            )
 
     @api.depends('total_price', 'total_cost')
     def _compute_margin(self):

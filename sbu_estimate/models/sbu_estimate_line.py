@@ -116,11 +116,11 @@ class SbuEstimateLine(models.Model):
         digits=(16, 2),
     )
     price_per_sqm = fields.Float(
-        string='Prezzo / MQ',
+        string='Prezzo cliente / MQ',
         compute='_compute_price_totals',
         store=True,
         digits=(16, 2),
-        help='Prezzo cliente totale ÷ Mq tot. (€/m² sulla riga).',
+        help='Prezzo cliente TOT ÷ Mq tot. (€/m² vendita sulla riga).',
     )
 
     # ── COST columns (buying side — from ANACO) ───────────────────────────────
