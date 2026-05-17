@@ -1,7 +1,7 @@
 from odoo import api, fields, models
 
 from .sbu_contract_uom import SBU_CONTRACT_UOM_SELECTION
-from .sbu_cost_family import SBU_COST_FAMILY_SELECTION
+from .sbu_cost_family import COST_FAMILY_WORKFLOW_ROUTE, SBU_COST_FAMILY_SELECTION
 
 
 def _successive_discount_factor(*percents):
@@ -72,6 +72,12 @@ class SbuEstimateLine(models.Model):
         selection=SBU_COST_FAMILY_SELECTION,
         string='Categoria / famiglia costo',
         help='Tipo voce per workflow a valle (es. vetro → VC/VS, staffe → ST, lamiera LA/LZ).',
+    )
+    workflow_route = fields.Char(
+        string='Workflow route',
+        compute='_compute_workflow_route',
+        store=True,
+        help='Suggested downstream workflow code from cost family (VC/VS, ST, PAN, LA, LZ, …).',
     )
     uom_id = fields.Many2one(
         'uom.uom',
@@ -162,7 +168,19 @@ class SbuEstimateLine(models.Model):
         compute='_compute_price_totals',
         store=True,
         digits=(16, 2),
-        help='Prezzo cliente TOT ÷ Mq tot. (€/m² vendita sulla riga).',
+        help='Prezzo cliente TOT ÷ Mq tot. when U.M. calcolo is MQ; otherwise 0.',
+    )
+    price_unit_rate = fields.Float(
+        string='Client unit rate',
+        compute='_compute_unit_rates',
+        store=True,
+        digits=(16, 2),
+        help='Client price per calculation unit (€/m², €/pz, or lump sum per line).',
+    )
+    unit_rate_label = fields.Char(
+        string='Unit rate basis',
+        compute='_compute_unit_rates',
+        store=True,
     )
 
     # ── COST columns (buying side — from ANACO) ───────────────────────────────
@@ -184,6 +202,27 @@ class SbuEstimateLine(models.Model):
     cost_staffame_cad = fields.Float(string='ST/LZ Staffame CAD', digits=(16, 2))
     cost_extra_cad = fields.Float(string='Extra CAD', digits=(16, 2))
 
+    cost_gross_cad = fields.Float(
+        string='List cost / base CAD',
+        compute='_compute_cost_discount_chain',
+        store=True,
+        digits=(16, 2),
+        help='Sum of cost component columns before chained discounts (audit, like listino costo).',
+    )
+    cost_after_discounts_cad = fields.Float(
+        string='Cost after discounts CAD',
+        compute='_compute_cost_discount_chain',
+        store=True,
+        digits=(16, 2),
+        help='List cost CAD × (1−Sc1%) × (1−Sc2%) × (1−Sc3%), same chain as selling price.',
+    )
+    cost_after_discounts_tot = fields.Float(
+        string='Cost after discounts TOT',
+        compute='_compute_cost_discount_chain',
+        store=True,
+        digits=(16, 2),
+        help='Cost after discounts CAD × Qt.',
+    )
     cost_industrial_cad = fields.Float(
         string='Oneri Industriali CAD',
         compute='_compute_cost_totals',
@@ -224,7 +263,14 @@ class SbuEstimateLine(models.Model):
         compute='_compute_cost_totals',
         store=True,
         digits=(16, 2),
-        help='Costo materiale lavorato e posato TOT ÷ Mq tot. (€/m² sulla riga).',
+        help='Costo TOT ÷ Mq tot. when U.M. calcolo is MQ; otherwise 0.',
+    )
+    cost_unit_rate = fields.Float(
+        string='Cost unit rate',
+        compute='_compute_unit_rates',
+        store=True,
+        digits=(16, 2),
+        help='Cost per calculation unit (€/m², €/pz, or lump sum per line).',
     )
 
     margin_amount = fields.Float(
@@ -301,7 +347,7 @@ class SbuEstimateLine(models.Model):
 
     # ── Computed: price totals ────────────────────────────────────────────────
     @api.depends(
-        'qty', 'sqm',
+        'qty', 'sqm', 'calc_uom_type',
         'price_serramento_cad', 'price_oscuramento_cad', 'price_automatismo_cad',
         'price_zanzariera_cad', 'price_vetro_cad', 'price_pannello_cad',
         'price_controtelaio_cad', 'price_trasformazione_cad', 'price_accessori_cad',
@@ -345,7 +391,68 @@ class SbuEstimateLine(models.Model):
                 net_unit = after_discounts
             line.price_total_cad = net_unit
             line.price_total_tot = net_unit * qty
-            line.price_per_sqm = (line.price_total_tot / line.sqm) if line.sqm else 0.0
+            if line.calc_uom_type == 'mq' and line.sqm:
+                line.price_per_sqm = line.price_total_tot / line.sqm
+            else:
+                line.price_per_sqm = 0.0
+
+    @api.depends('cost_family')
+    def _compute_workflow_route(self):
+        for line in self:
+            line.workflow_route = (
+                COST_FAMILY_WORKFLOW_ROUTE.get(line.cost_family or '', '') or False
+            )
+
+    @api.depends(
+        'cost_coibentazione_cad', 'cost_posa_lamiera_lin_cad',
+        'cost_tech_pm_cad', 'cost_trasporto_cad', 'cost_cantiere_cad',
+        'cost_staffame_cad', 'cost_extra_cad',
+        'discount_sc1', 'discount_sc2', 'discount_sc3', 'qty',
+    )
+    def _compute_cost_discount_chain(self):
+        for line in self:
+            gross = (
+                (line.cost_coibentazione_cad or 0.0)
+                + (line.cost_posa_lamiera_lin_cad or 0.0)
+                + (line.cost_tech_pm_cad or 0.0)
+                + (line.cost_trasporto_cad or 0.0)
+                + (line.cost_cantiere_cad or 0.0)
+                + (line.cost_staffame_cad or 0.0)
+                + (line.cost_extra_cad or 0.0)
+            )
+            line.cost_gross_cad = gross
+            disc_factor = _successive_discount_factor(
+                line.discount_sc1,
+                line.discount_sc2,
+                line.discount_sc3,
+            )
+            after = gross * disc_factor
+            line.cost_after_discounts_cad = after
+            line.cost_after_discounts_tot = after * (line.qty or 1)
+
+    @api.depends(
+        'calc_uom_type', 'price_total_tot', 'cost_total_tot', 'sqm', 'qty',
+    )
+    def _compute_unit_rates(self):
+        for line in self:
+            qty = line.qty or 1.0
+            uom = line.calc_uom_type or 'mq'
+            if uom == 'mq' and line.sqm:
+                line.price_unit_rate = line.price_total_tot / line.sqm
+                line.cost_unit_rate = line.cost_total_tot / line.sqm
+                line.unit_rate_label = '€/m²'
+            elif uom == 'nr':
+                line.price_unit_rate = line.price_total_tot / qty
+                line.cost_unit_rate = line.cost_total_tot / qty
+                line.unit_rate_label = '€/pc'
+            elif uom == 'ml':
+                line.price_unit_rate = line.price_total_tot / qty
+                line.cost_unit_rate = line.cost_total_tot / qty
+                line.unit_rate_label = '€/m (per qty)'
+            else:  # corpo / lump sum
+                line.price_unit_rate = line.price_total_tot
+                line.cost_unit_rate = line.cost_total_tot
+                line.unit_rate_label = 'Lump sum'
 
     @api.depends('bom_line_ids.total_cost')
     def _compute_cost_bom_total(self):
@@ -354,7 +461,7 @@ class SbuEstimateLine(models.Model):
 
     # ── Computed: cost totals ─────────────────────────────────────────────────
     @api.depends(
-        'qty', 'sqm',
+        'qty', 'sqm', 'calc_uom_type',
         'cost_coibentazione_cad', 'cost_posa_lamiera_lin_cad',
         'cost_industrial_pct', 'cost_mol_pct',
         'cost_tech_pm_cad', 'cost_trasporto_cad', 'cost_cantiere_cad',
@@ -381,7 +488,10 @@ class SbuEstimateLine(models.Model):
             )
             line.cost_total_cad = cad
             line.cost_total_tot = cad * (line.qty or 1)
-            line.cost_per_sqm = (line.cost_total_tot / line.sqm) if line.sqm else 0.0
+            if line.calc_uom_type == 'mq' and line.sqm:
+                line.cost_per_sqm = line.cost_total_tot / line.sqm
+            else:
+                line.cost_per_sqm = 0.0
 
     @api.depends('price_total_tot', 'cost_total_tot')
     def _compute_line_margin(self):

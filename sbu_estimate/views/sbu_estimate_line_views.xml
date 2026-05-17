@@ -15,6 +15,7 @@
                             <field name="note" placeholder="es. vetro da confermare; escluso ponteggio; listino 2026…"/>
                             <field name="calc_uom_type"/>
                             <field name="cost_family"/>
+                            <field name="workflow_route" readonly="1"/>
                             <field name="qty"/>
                             <field name="width_mm"/>
                             <field name="height_mm"/>
@@ -35,6 +36,13 @@
                             <field name="price_total_cad" readonly="1"/>
                             <field name="price_total_tot" readonly="1"/>
                             <field name="price_per_sqm" readonly="1"/>
+                            <field name="unit_rate_label" readonly="1"/>
+                            <field name="price_unit_rate" readonly="1"/>
+                        </group>
+                        <group string="Sconti a catena costo (ANACO)">
+                            <field name="cost_gross_cad" readonly="1"/>
+                            <field name="cost_after_discounts_cad" readonly="1"/>
+                            <field name="cost_after_discounts_tot" readonly="1"/>
                         </group>
                         <group string="Componenti prezzo (dettaglio)">
                             <field name="price_serramento_cad"/>
@@ -62,6 +70,7 @@
                             <field name="cost_total_cad" readonly="1"/>
                             <field name="cost_total_tot" readonly="1"/>
                             <field name="cost_per_sqm" readonly="1"/>
+                            <field name="cost_unit_rate" readonly="1"/>
                             <field name="margin_amount" readonly="1"/>
                             <field name="margin_pct" readonly="1"/>
                         </group>

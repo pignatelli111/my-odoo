@@ -2,23 +2,43 @@
 """Cost family / category for ANACO estimate lines (downstream workflow routing)."""
 
 SBU_COST_FAMILY_SELECTION = [
-    ('serramento', 'Serramento / window system'),
-    ('glass', 'Glass'),
-    ('panel', 'Panel'),
-    ('bracket_st', 'Bracket / ST'),
-    ('profile', 'Profile / PF / PRF'),
-    ('accessory', 'Accessory'),
-    ('gasket', 'Gasket'),
-    ('aluminum_sheet', 'Aluminum sheet / LA'),
-    ('zinc_sheet', 'Zinc sheet / LZ'),
-    ('assembly', 'Assembly / ASS'),
-    ('frame_window', 'Frame / window / SE'),
-    ('transport', 'Transport'),
-    ('installation', 'Installation'),
-    ('technical_pm', 'Technical / PM'),
-    ('site_cost', 'Site cost'),
+    ('serramento', 'Serramento / infissi'),
+    ('glass', 'Vetro'),
+    ('panel', 'Pannello'),
+    ('bracket_st', 'Staffe / ST'),
+    ('profile', 'Profilo / PF / PRF'),
+    ('accessory', 'Accessorio'),
+    ('gasket', 'Guarnizione'),
+    ('aluminum_sheet', 'Lamiera alluminio / LA'),
+    ('zinc_sheet', 'Lamiera zincata / LZ'),
+    ('assembly', 'Montaggio / ASS'),
+    ('frame_window', 'Telaio / SE'),
+    ('transport', 'Trasporto'),
+    ('installation', 'Posa / installazione'),
+    ('technical_pm', 'Tecnico / PM'),
+    ('site_cost', 'Costi cantiere'),
     ('extra', 'Extra'),
 ]
+
+# Downstream procurement / document workflow codes (display on estimate line).
+COST_FAMILY_WORKFLOW_ROUTE = {
+    'glass': 'VC/VS',
+    'bracket_st': 'ST',
+    'panel': 'PAN',
+    'aluminum_sheet': 'LA',
+    'zinc_sheet': 'LZ',
+    'profile': 'PRF',
+    'serramento': 'FT/FTF',
+    'frame_window': 'SE',
+    'assembly': 'ASS',
+    'accessory': 'ACC',
+    'gasket': 'GUA',
+    'transport': 'TRN',
+    'installation': 'POS',
+    'technical_pm': 'PM',
+    'site_cost': 'CNT',
+    'extra': 'EXT',
+}
 
 # Longest prefixes first (position codes such as PAN, PRF, FTF).
 _POS_PREFIX_TO_COST_FAMILY = (

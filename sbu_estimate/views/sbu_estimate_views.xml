@@ -164,28 +164,31 @@
                                     <field name="sequence" widget="handle"/>
                                     <field name="pos"/>
                                     <field name="description"/>
-                                    <field name="note" string="Assunzioni" optional="show"/>
+                                    <field name="note" string="Assunzioni"/>
                                     <field name="calc_uom_type" string="U.M. calcolo"/>
                                     <field name="cost_family" string="Categoria"/>
+                                    <field name="workflow_route" string="Workflow" optional="hide"/>
                                     <field name="qty"/>
-                                    <field name="width_mm" string="B (mm)"/>
-                                    <field name="height_mm" string="H (mm)"/>
+                                    <field name="width_mm" string="B (mm)" optional="hide"/>
+                                    <field name="height_mm" string="H (mm)" optional="hide"/>
                                     <field name="sqm_per_piece" string="MQ/Cad." readonly="1"/>
                                     <field name="sqm" string="Mq tot." readonly="1"/>
-                                    <field name="price_gross_cad" string="Listino CAD" readonly="1" optional="show"/>
-                                    <field name="discount_sc1" string="Sc1 %" optional="show"/>
-                                    <field name="discount_sc2" string="Sc2 %" optional="show"/>
-                                    <field name="discount_sc3" string="Sc3 %" optional="show"/>
-                                    <field name="commission_pct" string="Comm %" optional="show"/>
-                                    <field name="price_after_discounts_cad" string="Dopo sconti CAD" readonly="1" optional="show"/>
-                                    <field name="price_after_discounts_tot" string="Dopo sconti TOT" readonly="1" optional="show"/>
-                                    <field name="price_total_cad" string="Prezzo CAD" readonly="1"/>
+                                    <field name="price_gross_cad" string="Listino CAD" readonly="1"/>
+                                    <field name="cost_gross_cad" string="Listino costo CAD" readonly="1"/>
+                                    <field name="discount_sc1" string="Sc1 %"/>
+                                    <field name="discount_sc2" string="Sc2 %"/>
+                                    <field name="discount_sc3" string="Sc3 %"/>
+                                    <field name="price_after_discounts_cad" string="Prezzo dopo sc." readonly="1"/>
+                                    <field name="cost_after_discounts_cad" string="Costo dopo sc." readonly="1"/>
                                     <field name="price_total_tot" string="Prezzo TOT" readonly="1"/>
-                                    <field name="price_per_sqm" string="Prezzo cliente / MQ" readonly="1"/>
                                     <field name="cost_total_tot" string="Costo TOT" readonly="1"/>
-                                    <field name="cost_per_sqm" string="Costo / MQ" readonly="1" optional="show"/>
-                                    <field name="margin_amount" string="Margine €" readonly="1" optional="show"/>
-                                    <field name="margin_pct" string="Margine %" readonly="1" optional="show"/>
+                                    <field name="unit_rate_label" string="U.M. rate" readonly="1" optional="hide"/>
+                                    <field name="price_unit_rate" string="Prezzo unit." readonly="1"/>
+                                    <field name="cost_unit_rate" string="Costo unit." readonly="1"/>
+                                    <field name="price_per_sqm" string="€/MQ vend." readonly="1" optional="hide"/>
+                                    <field name="cost_per_sqm" string="€/MQ costo" readonly="1" optional="hide"/>
+                                    <field name="margin_amount" string="Margine €" readonly="1"/>
+                                    <field name="margin_pct" string="Margine %" readonly="1"/>
                                 </list>
                             </field>
                         </page>
