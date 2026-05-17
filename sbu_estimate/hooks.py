@@ -7,6 +7,7 @@ def post_init_hook(env):
     if not group:
         return
     users = env['res.users'].search([('share', '=', False)])
-    to_add = users.filtered(lambda u: group not in u.groups_id)
+    # Odoo 19: groups_id → group_ids on res.users.
+    to_add = users.filtered(lambda u: group not in u.group_ids)
     if to_add:
-        to_add.write({'groups_id': [(4, group.id)]})
+        to_add.write({'group_ids': [(4, group.id)]})
