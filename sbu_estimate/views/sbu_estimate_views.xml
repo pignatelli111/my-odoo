@@ -199,8 +199,8 @@
                                     <field name="sequence" widget="handle"/>
                                     <field name="item_ref"/>
                                     <field name="description" optional="show"/>
-                                    <field name="estimate_line_ids" widget="many2many_tags" optional="show"
-                                           string="Estimate lines"/>
+                                    <field name="estimate_line_ids" widget="many2many_tags"
+                                           string="Linked estimate lines"/>
                                     <field name="uom_type" optional="hide"/>
                                     <field name="qty_contract"/>
                                     <field name="unit_price"/>
@@ -214,7 +214,7 @@
                                     <field name="retention_on_unbilled" readonly="1" optional="hide"/>
                                     <field name="retention_remaining" readonly="1"/>
                                     <field name="certificate_ref"/>
-                                    <field name="sal_status" widget="badge" optional="show"/>
+                                    <field name="sal_status" widget="badge"/>
                                     <field name="sal_1_pct" string="SAL-1%" optional="hide"/>
                                     <field name="sal_2_pct" string="SAL-2%" optional="hide"/>
                                     <field name="sal_3_pct" string="SAL-3%" optional="hide"/>

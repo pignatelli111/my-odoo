@@ -183,6 +183,42 @@ class SbuEstimateSalLine(models.Model):
             line.retention_remaining = max(cap - withheld, 0.0)
             line.billing_progress_pct = (billed / total * 100.0) if total else 0.0
 
+    @api.depends(
+        'sal_sheet_line_ids.sheet_id.state',
+        'sal_sheet_line_ids.sheet_id.invoice_id',
+        'sal_sheet_line_ids.sheet_id.invoice_id.payment_state',
+        'sal_sheet_line_ids.sheet_id.certificate_ids.state',
+        'payment_certificate_ids.state',
+        'invoice_ids.payment_state',
+        'estimate_line_ids',
+        'cumulative_pct',
+        'total_contract',
+        'qty_contract',
+        'unit_price',
+    )
+    def _compute_sal_status(self):
+        for line in self:
+            certs = line.payment_certificate_ids
+            invoices = line.invoice_ids
+            sheets = line.sal_sheet_line_ids.mapped('sheet_id')
+
+            if certs.filtered(lambda c: c.state == 'paid') or any(
+                inv.payment_state == 'paid' for inv in invoices
+            ):
+                line.sal_status = 'paid'
+            elif invoices or sheets.filtered(lambda s: s.state == 'invoiced'):
+                line.sal_status = 'invoiced'
+            elif sheets.filtered(lambda s: s.state == 'confirmed') or certs.filtered(
+                lambda c: c.state == 'issued'
+            ):
+                line.sal_status = 'approved'
+            elif sheets.filtered(lambda s: s.state == 'draft'):
+                line.sal_status = 'submitted'
+            elif line._sbu_sal_status_is_prepared(line):
+                line.sal_status = 'prepared'
+            else:
+                line.sal_status = 'draft'
+
     def _sbu_recompute_billing_from_sheet_lines(self):
         self._compute_billing_summary()
         self._compute_sal_status()

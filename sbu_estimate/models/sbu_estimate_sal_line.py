@@ -4,11 +4,12 @@ from odoo.exceptions import ValidationError
 from .sbu_contract_uom import SBU_CONTRACT_UOM_SELECTION
 
 SAL_STATUS_SELECTION = [
-    ('open', 'Open'),
-    ('in_progress', 'In progress'),
-    ('in_billing', 'In billing'),
-    ('completed', 'Completed'),
-    ('closed', 'Closed'),
+    ('draft', 'Draft'),
+    ('prepared', 'Prepared'),
+    ('submitted', 'Submitted'),
+    ('approved', 'Approved'),
+    ('invoiced', 'Invoiced'),
+    ('paid', 'Paid'),
 ]
 
 
@@ -118,7 +119,8 @@ class SbuEstimateSalLine(models.Model):
         string='SAL status',
         compute='_compute_sal_status',
         store=True,
-        help='Derived from estimate progress % and billed amounts (SBU SAL billing).',
+        help='Lifecycle: planned on estimate → SAL prepared/submitted → approved → invoiced → paid '
+             '(updated from linked SAL sheets, invoices and payment certificates when SBU SAL is used).',
     )
 
     amount_billed = fields.Monetary(
@@ -238,20 +240,28 @@ class SbuEstimateSalLine(models.Model):
         rp = sheet.retention_percent if sheet.retention_percent else (self.retention_percent or 0.0)
         return progress * rp / 100.0
 
-    @api.depends('amount_billed', 'amount_remaining', 'total_contract', 'cumulative_pct')
+    @api.depends(
+        'estimate_line_ids',
+        'cumulative_pct',
+        'total_contract',
+        'qty_contract',
+        'unit_price',
+    )
     def _compute_sal_status(self):
+        """Without sbu_sal: draft vs prepared from estimate data only."""
         for line in self:
-            total = line.total_contract or 0.0
-            remaining = line.amount_remaining or 0.0
-            billed = line.amount_billed or 0.0
-            if total > 0 and remaining <= 0.01:
-                line.sal_status = 'completed'
-            elif billed > 0:
-                line.sal_status = 'in_billing'
-            elif line.cumulative_pct > 0:
-                line.sal_status = 'in_progress'
+            if line._sbu_sal_status_is_prepared(line):
+                line.sal_status = 'prepared'
             else:
-                line.sal_status = 'open'
+                line.sal_status = 'draft'
+
+    def _sbu_sal_status_is_prepared(self, line):
+        return bool(
+            line.estimate_line_ids
+            or line.cumulative_pct
+            or (line.qty_contract and line.unit_price)
+            or line.total_contract
+        )
 
     def _compute_sal_sheet_line_count(self):
         if 'sbu.sal.sheet.line' not in self.env:
