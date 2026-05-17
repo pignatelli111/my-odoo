@@ -3,6 +3,8 @@ import math
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
+from .sbu_workflow_routing import workflow_route_to_request_type
+
 
 class SbuPurchaseRequest(models.Model):
     _name = 'sbu.purchase.request'
@@ -17,6 +19,11 @@ class SbuPurchaseRequest(models.Model):
         readonly=True,
         default=lambda self: _('New'),
         tracking=True,
+    )
+    workflow_route = fields.Char(
+        string='Workflow route',
+        index=True,
+        help='ANACO downstream route (VC/VS, ST, PAN, LA, …) when created from estimate lines.',
     )
     request_type = fields.Selection(
         selection=[
@@ -329,7 +336,7 @@ class SbuPurchaseRequest(models.Model):
             },
         }
 
-    def _load_lines_from_estimate_bom(self, clear=False):
+    def _load_lines_from_estimate_bom(self, clear=False, workflow_route=None):
         self.ensure_one()
         estimate = self.estimate_id
         if not estimate:
@@ -340,6 +347,8 @@ class SbuPurchaseRequest(models.Model):
         Line = self.env['sbu.purchase.request.line']
         created = 0
         for eline in estimate.line_ids:
+            if workflow_route and eline.workflow_route != workflow_route:
+                continue
             pos = eline.pos or ''
             for bom in eline.bom_line_ids:
                 if not bom.product_id:

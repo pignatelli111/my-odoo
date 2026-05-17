@@ -1,6 +1,8 @@
 from odoo import fields, models, _
 from odoo.exceptions import UserError
 
+from .sbu_workflow_routing import workflow_route_to_request_type
+
 
 class ProjectProject(models.Model):
     _inherit = 'project.project'
@@ -52,5 +54,52 @@ class ProjectProject(models.Model):
             'res_model': 'sbu.purchase.request',
             'res_id': pr.id,
             'view_mode': 'form',
+            'target': 'current',
+        }
+
+    def action_sbu_create_purchase_requests_by_workflow(self):
+        """One purchase request per workflow route on linked estimate ANACO lines."""
+        self.ensure_one()
+        est = self.sbu_estimate_id
+        if not est:
+            raise UserError(_('Set «Preventivo di Origine» on the project (won estimate) first.'))
+        if est.state != 'won':
+            raise UserError(
+                _('Workflow purchase requests need the source estimate in «Won» state (current: %s).')
+                % (est.state,)
+            )
+        routes = sorted({r for r in est.line_ids.mapped('workflow_route') if r})
+        if not routes:
+            raise UserError(
+                _('No workflow routes on estimate lines. Set «Categoria / famiglia costo» on ANACO rows first.')
+            )
+        PurchaseRequest = self.env['sbu.purchase.request']
+        created = PurchaseRequest
+        for route in routes:
+            pr = PurchaseRequest.create({
+                'project_id': self.id,
+                'request_type': workflow_route_to_request_type(route),
+                'workflow_route': route,
+                'company_id': self.company_id.id,
+                'demand_loss_pct': 3.0,
+                'need_by_date': est.validity_date,
+            })
+            pr._load_lines_from_estimate_bom(clear=True, workflow_route=route)
+            created |= pr
+        if len(created) == 1:
+            return {
+                'type': 'ir.actions.act_window',
+                'name': _('Purchase request'),
+                'res_model': 'sbu.purchase.request',
+                'res_id': created.id,
+                'view_mode': 'form',
+                'target': 'current',
+            }
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Purchase requests by workflow'),
+            'res_model': 'sbu.purchase.request',
+            'view_mode': 'list,form',
+            'domain': [('id', 'in', created.ids)],
             'target': 'current',
         }

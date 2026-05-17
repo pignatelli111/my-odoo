@@ -130,12 +130,26 @@ class SbuEstimateSalLine(models.Model):
         currency_field='currency_id',
         help='Gross progress billed on linked SBU SAL sheet lines (confirmed or invoiced sheets only).',
     )
+    amount_billed_planning = fields.Monetary(
+        string='Planned billing (SAL %)',
+        compute='_compute_billing_summary',
+        store=True,
+        currency_field='currency_id',
+        help='Contract total × cumulative SAL-1…SAL-10 % (planning until real SAL billing is posted).',
+    )
     amount_remaining = fields.Monetary(
         string='Remaining amount',
         compute='_compute_billing_summary',
         store=True,
         currency_field='currency_id',
         help='Contract total minus billed to date.',
+    )
+    amount_remaining_planning = fields.Monetary(
+        string='Remaining (vs SAL % plan)',
+        compute='_compute_billing_summary',
+        store=True,
+        currency_field='currency_id',
+        help='Contract total minus planned billing from SAL % columns.',
     )
     billing_progress_pct = fields.Float(
         string='% billed',
@@ -216,19 +230,27 @@ class SbuEstimateSalLine(models.Model):
                 + line.sal_10_pct
             )
 
-    @api.depends('total_contract', 'retention_percent', 'retention_amount')
+    @api.depends(
+        'total_contract',
+        'retention_percent',
+        'retention_amount',
+        'cumulative_pct',
+    )
     def _compute_billing_summary(self):
         """Defaults without sbu_sal; sbu_sal overrides with SAL sheet line depends."""
         for line in self:
             total = line.total_contract or 0.0
             cap = line.retention_amount or 0.0
             rp = line.retention_percent or 0.0
+            planned = total * (line.cumulative_pct or 0.0) / 100.0
             line.amount_billed = 0.0
+            line.amount_billed_planning = planned
             line.amount_remaining = total
+            line.amount_remaining_planning = max(total - planned, 0.0)
             line.retention_withheld_to_date = 0.0
             line.retention_on_unbilled = total * rp / 100.0
             line.retention_remaining = cap
-            line.billing_progress_pct = 0.0
+            line.billing_progress_pct = (planned / total * 100.0) if total else 0.0
 
     def _sbu_retention_withheld_for_sheet_line(self, sheet_line):
         """Retention € for one SAL sheet line (override in sbu_sal to use CDP / invoice amounts)."""
@@ -246,11 +268,18 @@ class SbuEstimateSalLine(models.Model):
         'total_contract',
         'qty_contract',
         'unit_price',
+        'sal_1_pct', 'sal_2_pct', 'sal_3_pct', 'sal_4_pct', 'sal_5_pct',
+        'sal_6_pct', 'sal_7_pct', 'sal_8_pct', 'sal_9_pct', 'sal_10_pct',
     )
     def _compute_sal_status(self):
-        """Without sbu_sal: draft vs prepared from estimate data only."""
+        """Without sbu_sal: lifecycle from contractual data and SAL % planning columns."""
         for line in self:
-            if line._sbu_sal_status_is_prepared(line):
+            pct = line.cumulative_pct or 0.0
+            if pct >= 100.0 and line.total_contract:
+                line.sal_status = 'approved'
+            elif pct > 0.0:
+                line.sal_status = 'submitted'
+            elif line._sbu_sal_status_is_prepared(line):
                 line.sal_status = 'prepared'
             else:
                 line.sal_status = 'draft'

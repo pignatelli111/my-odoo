@@ -11,6 +11,7 @@
                        decoration-warning="priority == '2'"
                        decoration-info="priority == '1'"/>
                 <field name="request_type"/>
+                <field name="workflow_route" optional="show"/>
                 <field name="need_by_date" optional="show"/>
                 <field name="site_required_date" optional="hide"/>
                 <field name="topic" optional="hide"/>
@@ -68,6 +69,7 @@
                         <group string="Request">
                             <field name="name" readonly="1"/>
                             <field name="request_type" readonly="state in ('done','cancelled')"/>
+                            <field name="workflow_route" readonly="1"/>
                             <field name="priority" readonly="state in ('done','cancelled')"/>
                             <field name="company_id" groups="base.group_multi_company"/>
                             <field name="project_id" readonly="state in ('done','cancelled')"/>

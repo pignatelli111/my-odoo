@@ -161,12 +161,14 @@ class SbuEstimateSalLine(models.Model):
         'total_contract',
         'retention_percent',
         'retention_amount',
+        'cumulative_pct',
     )
     def _compute_billing_summary(self):
         for line in self:
             total = line.total_contract or 0.0
             cap = line.retention_amount or 0.0
             rp = line.retention_percent or 0.0
+            planned = total * (line.cumulative_pct or 0.0) / 100.0
             sheet_lines = line.sal_sheet_line_ids.filtered(
                 lambda sl: sl.sheet_id.state in ('confirmed', 'invoiced')
             )
@@ -177,11 +179,14 @@ class SbuEstimateSalLine(models.Model):
             )
             remaining = max(total - billed, 0.0)
             line.amount_billed = billed
+            line.amount_billed_planning = planned
             line.amount_remaining = remaining
+            line.amount_remaining_planning = max(total - planned, 0.0)
             line.retention_withheld_to_date = withheld
             line.retention_on_unbilled = remaining * rp / 100.0
             line.retention_remaining = max(cap - withheld, 0.0)
-            line.billing_progress_pct = (billed / total * 100.0) if total else 0.0
+            progress = billed if billed else planned
+            line.billing_progress_pct = (progress / total * 100.0) if total else 0.0
 
     @api.depends(
         'sal_sheet_line_ids.sheet_id.state',
@@ -213,6 +218,10 @@ class SbuEstimateSalLine(models.Model):
             ):
                 line.sal_status = 'approved'
             elif sheets.filtered(lambda s: s.state == 'draft'):
+                line.sal_status = 'submitted'
+            elif (line.cumulative_pct or 0.0) >= 100.0 and line.total_contract:
+                line.sal_status = 'approved'
+            elif (line.cumulative_pct or 0.0) > 0.0:
                 line.sal_status = 'submitted'
             elif line._sbu_sal_status_is_prepared(line):
                 line.sal_status = 'prepared'

@@ -22,6 +22,14 @@
                         <span class="o_stat_text">Demand RDA</span>
                     </div>
                 </button>
+                <button name="action_sbu_create_purchase_requests_by_workflow" type="object"
+                        class="oe_stat_button" icon="fa-sitemap"
+                        invisible="not sbu_estimate_id or sbu_estimate_id.state != 'won'"
+                        title="Create one purchase request per ANACO workflow route (VC/VS, ST, PAN, LA, …).">
+                    <div class="o_stat_info">
+                        <span class="o_stat_text">By workflow</span>
+                    </div>
+                </button>
             </xpath>
         </field>
     </record>

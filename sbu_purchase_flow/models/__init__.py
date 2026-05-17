@@ -5,3 +5,4 @@ from . import purchase_order
 from . import project_project
 from . import sbu_estimate_bom_line_ext
 from . import sbu_estimate_line_ext
+from . import sbu_estimate_ext

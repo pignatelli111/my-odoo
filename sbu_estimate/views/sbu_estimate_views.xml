@@ -110,7 +110,7 @@
                         <group string="Intestazione">
                             <field name="company_id" groups="base.group_multi_company"/>
                             <field name="partner_id"/>
-                            <field name="opportunity_id" groups="sales_team.group_sale_salesman"/>
+                            <field name="opportunity_id" groups="sbu_estimate.group_sbu_estimate_user"/>
                             <field name="job_site"/>
                             <field name="user_id"/>
                         </group>
@@ -167,10 +167,10 @@
                                     <field name="note" string="Assunzioni"/>
                                     <field name="calc_uom_type" string="U.M. calcolo"/>
                                     <field name="cost_family" string="Categoria"/>
-                                    <field name="workflow_route" string="Workflow" optional="hide"/>
+                                    <field name="workflow_route" string="Workflow"/>
                                     <field name="qty"/>
-                                    <field name="width_mm" string="B (mm)" optional="hide"/>
-                                    <field name="height_mm" string="H (mm)" optional="hide"/>
+                                    <field name="width_mm" string="B (mm)"/>
+                                    <field name="height_mm" string="H (mm)"/>
                                     <field name="sqm_per_piece" string="MQ/Cad." readonly="1"/>
                                     <field name="sqm" string="Mq tot." readonly="1"/>
                                     <field name="price_gross_cad" string="Listino CAD" readonly="1"/>
@@ -185,8 +185,8 @@
                                     <field name="unit_rate_label" string="U.M. rate" readonly="1" optional="hide"/>
                                     <field name="price_unit_rate" string="Prezzo unit." readonly="1"/>
                                     <field name="cost_unit_rate" string="Costo unit." readonly="1"/>
-                                    <field name="price_per_sqm" string="€/MQ vend." readonly="1" optional="hide"/>
-                                    <field name="cost_per_sqm" string="€/MQ costo" readonly="1" optional="hide"/>
+                                    <field name="price_per_sqm" string="€/MQ vend." readonly="1"/>
+                                    <field name="cost_per_sqm" string="€/MQ costo" readonly="1"/>
                                     <field name="margin_amount" string="Margine €" readonly="1"/>
                                     <field name="margin_pct" string="Margine %" readonly="1"/>
                                 </list>
@@ -207,7 +207,9 @@
                                     <field name="total_contract" readonly="1"/>
                                     <field name="billing_progress_pct" readonly="1" optional="show"/>
                                     <field name="amount_billed" readonly="1"/>
+                                    <field name="amount_billed_planning" readonly="1" optional="show"/>
                                     <field name="amount_remaining" readonly="1"/>
+                                    <field name="amount_remaining_planning" readonly="1" optional="show"/>
                                     <field name="retention_percent"/>
                                     <field name="retention_amount" readonly="1" string="Retention amount"/>
                                     <field name="retention_withheld_to_date" readonly="1"/>
@@ -238,7 +240,9 @@
                                         <group string="Progress billing">
                                             <field name="billing_progress_pct" readonly="1"/>
                                             <field name="amount_billed" readonly="1"/>
+                                            <field name="amount_billed_planning" readonly="1"/>
                                             <field name="amount_remaining" readonly="1"/>
+                                            <field name="amount_remaining_planning" readonly="1"/>
                                         </group>
                                         <group string="Retention (garanzia)">
                                             <field name="retention_percent"/>

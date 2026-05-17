@@ -11,7 +11,7 @@ Custom **Odoo 19.0** addons for **Suburban SRL a Socio Unico**.
 - **Qonto / Revolut:** Use the **company form** tabs **Qonto (SBU)** / **Revolut (SBU)** and module **SBU Qonto** / **SBU Revolut**. Do **not** use Odoo’s **Accounting → Connect your bank → Qonto** flow unless you have a valid **Odoo Enterprise** subscription linked to the database — that path shows a subscription error for SBU-only setups.
 - **Logikal:** The **Logikal / ReynaPro** SQLite file (e.g. from Orgadata/Fonatto) is **not** read by Odoo. Use **Logikal → Imports** with **CSV/JSON** (column aliases documented in code) or an optional **HTTP API bridge** (`sbu.logikal_*` system parameters). **Logikal API base URL** in Settings is only required for API mode.
 - **Custom domains:** You control DNS only for hostnames under **zones you own**. A name like `*.odoo.com` is assigned by Odoo; use your Odoo.sh URL (e.g. `https://…-my-odoo.odoo.com`) or add a **CNAME** from **your** domain to that host per Odoo.sh Domains instructions.
-- **Estimates + CRM opportunities:** The optional **CRM Opportunity** field on a preventivo reads `crm.lead`. Users need **SBU Estimate User** (or **Sales / User** / **Sales / Administrator**) on their user record. Without that, Odoo shows *You are not allowed to access 'Lead' (crm.lead) records*.
+- **Estimates + CRM opportunities:** The **CRM Opportunity** field reads `crm.lead`. Internal users get **SBU Estimate User** on module install/upgrade (read opportunities via dedicated access rule). Users who also have **Sales / User** keep standard CRM record rules for their pipeline.
 
 ## Modules
 

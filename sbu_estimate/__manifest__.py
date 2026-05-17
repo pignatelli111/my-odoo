@@ -1,6 +1,6 @@
 {
     'name': 'SBU Estimate',
-    'version': '19.0.1.0.31',
+    'version': '19.0.1.0.32',
     'summary': 'Custom estimating engine for Suburban SRL (ANACO → Odoo)',
     'description': (
         'Translates the ANACO Excel estimating tool into Odoo. '
@@ -26,6 +26,7 @@
     ],
     'data': [
         'security/sbu_estimate_groups.xml',
+        'security/sbu_estimate_crm_access.xml',
         'security/ir.model.access.csv',
         'data/sbu_estimate_sequence.xml',
         # Wizard actions must load before views that reference %(…action…)d
@@ -43,4 +44,5 @@
     'external_dependencies': {
         'python': ['openpyxl'],
     },
+    'post_init_hook': 'post_init_hook',
 }

@@ -466,26 +466,34 @@ class SbuEstimateLine(models.Model):
         'cost_industrial_pct', 'cost_mol_pct',
         'cost_tech_pm_cad', 'cost_trasporto_cad', 'cost_cantiere_cad',
         'cost_staffame_cad', 'cost_extra_cad',
+        'discount_sc1', 'discount_sc2', 'discount_sc3',
     )
     def _compute_cost_totals(self):
+        """Total cost uses chained discounts on list cost, then industrial % on discounted material."""
         for line in self:
             material = (
                 (line.cost_coibentazione_cad or 0.0)
                 + (line.cost_posa_lamiera_lin_cad or 0.0)
             )
-            ind_pct = line.cost_industrial_pct or 0.0
-            line.cost_industrial_cad = material * (ind_pct / 100.0)
-            mol_pct = line.cost_mol_pct or 0.0
-            line.cost_mol_amount_cad = material * (mol_pct / 100.0)
-            cad = (
-                material
-                + line.cost_industrial_cad
-                + (line.cost_tech_pm_cad or 0.0)
+            other = (
+                (line.cost_tech_pm_cad or 0.0)
                 + (line.cost_trasporto_cad or 0.0)
                 + (line.cost_cantiere_cad or 0.0)
                 + (line.cost_staffame_cad or 0.0)
                 + (line.cost_extra_cad or 0.0)
             )
+            disc_factor = _successive_discount_factor(
+                line.discount_sc1,
+                line.discount_sc2,
+                line.discount_sc3,
+            )
+            material_net = material * disc_factor
+            other_net = other * disc_factor
+            ind_pct = line.cost_industrial_pct or 0.0
+            line.cost_industrial_cad = material_net * (ind_pct / 100.0)
+            mol_pct = line.cost_mol_pct or 0.0
+            line.cost_mol_amount_cad = material_net * (mol_pct / 100.0)
+            cad = material_net + other_net + line.cost_industrial_cad
             line.cost_total_cad = cad
             line.cost_total_tot = cad * (line.qty or 1)
             if line.calc_uom_type == 'mq' and line.sqm:

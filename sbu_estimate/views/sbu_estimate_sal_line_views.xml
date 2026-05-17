@@ -33,7 +33,9 @@
                     <group string="Progress billing">
                         <field name="billing_progress_pct" readonly="1"/>
                         <field name="amount_billed" readonly="1"/>
+                        <field name="amount_billed_planning" readonly="1"/>
                         <field name="amount_remaining" readonly="1"/>
+                        <field name="amount_remaining_planning" readonly="1"/>
                     </group>
                     <group string="Retention (garanzia)">
                         <field name="retention_percent"/>

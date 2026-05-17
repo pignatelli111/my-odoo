@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sbu_estimate_form_purchase_workflow" model="ir.ui.view">
+        <field name="name">sbu.estimate.form.purchase.workflow</field>
+        <field name="model">sbu.estimate</field>
+        <field name="inherit_id" ref="sbu_estimate.view_sbu_estimate_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_create_workflow_purchase_requests"
+                        string="Purchase requests by workflow"
+                        type="object"
+                        class="btn-secondary"
+                        invisible="state != 'won' or not project_id"
+                        title="Create RDA/VT/ST/… purchase requests from ANACO cost family workflow routes."/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
