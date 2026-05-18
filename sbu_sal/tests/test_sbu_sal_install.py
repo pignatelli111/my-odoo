@@ -22,6 +22,8 @@ class TestSbuSalInstall(TransactionCase):
         self.assertEqual(len(labels), len(set(labels)), labels)
 
     def test_finance_documents_compute_has_depends(self):
-        """Regression: _compute_finance_documents must declare @api.depends (Odoo.sh install)."""
-        method = self.env['sbu.estimate.sal.line']._compute_finance_documents
-        self.assertTrue(getattr(method, '_depends', None))
+        """Regression: finance link fields must declare @api.depends (Odoo.sh install)."""
+        sal_line = self.env['sbu.estimate.sal.line']
+        for fname in ('invoice_id', 'payment_certificate_id', 'invoice_cdp_summary'):
+            field = sal_line._fields[fname]
+            self.assertTrue(field.depends, f'{fname} has no @api.depends ({field.depends!r})')
