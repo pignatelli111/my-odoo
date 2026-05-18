@@ -8,8 +8,6 @@
         <field name="arch" type="xml">
             <list string="Preventivi"
                   delete="1"
-                  import="0"
-                  export="1"
                   decoration-success="state == 'won'"
                   decoration-danger="state == 'lost'"
                   decoration-muted="state == 'cancelled'">
@@ -46,9 +44,9 @@
                     <button name="action_delete_preventivo"
                             string="Elimina"
                             type="object"
-                            class="btn-secondary text-danger"
+                            class="btn-secondary"
                             invisible="not can_delete_preventivo"
-                            confirm="Eliminare questo preventivo? L'operazione non può essere annullata."/>
+                            title="Elimina questo preventivo (solo bozze senza commessa)"/>
                     <button name="action_send"
                             string="Invia"
                             type="object"
