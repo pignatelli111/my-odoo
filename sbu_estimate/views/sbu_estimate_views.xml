@@ -159,37 +159,71 @@
                     <notebook>
                         <page string="Righe Preventivo (ANACO)" name="anaco_lines">
                             <field name="line_ids"
+                                   mode="list,form"
                                    context="{'default_estimate_id': id}">
-                                <list editable="bottom">
+                                <list editable="bottom"
+                                      default_order="sequence, pos">
                                     <field name="sequence" widget="handle"/>
-                                    <field name="pos"/>
+                                    <field name="pos" optional="show"/>
                                     <field name="description"/>
-                                    <field name="note" string="Assunzioni"/>
                                     <field name="calc_uom_type" string="U.M. calcolo"/>
-                                    <field name="cost_family" string="Categoria"/>
-                                    <field name="workflow_route" string="Workflow"/>
+                                    <field name="cost_family" string="Categoria" optional="show"/>
                                     <field name="qty"/>
-                                    <field name="width_mm" string="B (mm)"/>
-                                    <field name="height_mm" string="H (mm)"/>
+                                    <field name="width_mm" string="B (mm)" optional="show"/>
+                                    <field name="height_mm" string="H (mm)" optional="show"/>
                                     <field name="sqm_per_piece" string="MQ/Cad." readonly="1"/>
                                     <field name="sqm" string="Mq tot." readonly="1"/>
-                                    <field name="price_gross_cad" string="Listino CAD" readonly="1"/>
-                                    <field name="cost_gross_cad" string="Listino costo CAD" readonly="1"/>
-                                    <field name="discount_sc1" string="Sc1 %"/>
-                                    <field name="discount_sc2" string="Sc2 %"/>
-                                    <field name="discount_sc3" string="Sc3 %"/>
-                                    <field name="price_after_discounts_cad" string="Prezzo dopo sc." readonly="1"/>
-                                    <field name="cost_after_discounts_cad" string="Costo dopo sc." readonly="1"/>
+                                    <field name="price_anaco_bs_cad" string="Prezzo unit. BS"/>
+                                    <field name="price_serramento_cad" string="Serramento CAD" optional="hide"/>
+                                    <field name="cost_coibentazione_cad" string="Coib. CAD" optional="show"/>
+                                    <field name="discount_sc1" string="Sc1 %" optional="show"/>
+                                    <field name="discount_sc2" string="Sc2 %" optional="hide"/>
+                                    <field name="discount_sc3" string="Sc3 %" optional="hide"/>
                                     <field name="price_total_tot" string="Prezzo TOT" readonly="1"/>
                                     <field name="cost_total_tot" string="Costo TOT" readonly="1"/>
-                                    <field name="unit_rate_label" string="U.M. rate" readonly="1" optional="hide"/>
-                                    <field name="price_unit_rate" string="Prezzo unit." readonly="1"/>
-                                    <field name="cost_unit_rate" string="Costo unit." readonly="1"/>
-                                    <field name="price_per_sqm" string="€/MQ vend." readonly="1"/>
-                                    <field name="cost_per_sqm" string="€/MQ costo" readonly="1"/>
-                                    <field name="margin_amount" string="Margine €" readonly="1"/>
                                     <field name="margin_pct" string="Margine %" readonly="1"/>
+                                    <field name="note" string="Assunzioni" optional="hide"/>
+                                    <field name="workflow_route" string="Workflow" optional="hide"/>
+                                    <field name="price_gross_cad" string="Listino CAD" readonly="1" optional="hide"/>
+                                    <field name="cost_gross_cad" string="Listino costo CAD" readonly="1" optional="hide"/>
+                                    <field name="price_after_discounts_cad" string="Prezzo dopo sc." readonly="1" optional="hide"/>
+                                    <field name="cost_after_discounts_cad" string="Costo dopo sc." readonly="1" optional="hide"/>
+                                    <field name="price_unit_rate" string="Prezzo unit." readonly="1" optional="hide"/>
+                                    <field name="cost_unit_rate" string="Costo unit." readonly="1" optional="hide"/>
+                                    <field name="price_per_sqm" string="€/MQ vend." readonly="1" optional="hide"/>
+                                    <field name="cost_per_sqm" string="€/MQ costo" readonly="1" optional="hide"/>
+                                    <field name="margin_amount" string="Margine €" readonly="1" optional="hide"/>
                                 </list>
+                                <form string="Riga preventivo">
+                                    <sheet>
+                                        <group>
+                                            <group>
+                                                <field name="description"/>
+                                                <field name="calc_uom_type"/>
+                                                <field name="cost_family"/>
+                                                <field name="qty"/>
+                                                <field name="width_mm"/>
+                                                <field name="height_mm"/>
+                                                <field name="sqm_per_piece" readonly="1"/>
+                                                <field name="sqm" readonly="1"/>
+                                            </group>
+                                            <group string="Prezzo">
+                                                <field name="price_anaco_bs_cad"/>
+                                                <field name="price_serramento_cad"/>
+                                                <field name="discount_sc1"/>
+                                                <field name="discount_sc2"/>
+                                                <field name="discount_sc3"/>
+                                                <field name="price_total_tot" readonly="1"/>
+                                                <field name="margin_pct" readonly="1"/>
+                                            </group>
+                                            <group string="Costo">
+                                                <field name="cost_coibentazione_cad"/>
+                                                <field name="cost_posa_lamiera_lin_cad"/>
+                                                <field name="cost_total_tot" readonly="1"/>
+                                            </group>
+                                        </group>
+                                    </sheet>
+                                </form>
                             </field>
                         </page>
 
