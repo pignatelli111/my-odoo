@@ -158,16 +158,6 @@ class SbuEstimateSalLine(models.Model):
 
     def action_refresh_sal_finance_links(self):
         """Rebuild invoice/CDP links and reference text from SAL sheets (e.g. after deleting duplicate CDPs)."""
-        self.invalidate_recordset(
-            fnames=[
-                'payment_certificate_ids',
-                'invoice_ids',
-                'payment_certificate_id',
-                'invoice_id',
-                'certificate_count',
-                'invoice_count',
-            ]
-        )
         self._sbu_recompute_billing_from_sheet_lines()
         return True
 
@@ -248,10 +238,25 @@ class SbuEstimateSalLine(models.Model):
                 line.sal_status = 'draft'
 
     def _sbu_recompute_billing_from_sheet_lines(self):
-        self._compute_billing_summary()
-        self._compute_sal_status()
-        self._compute_finance_documents()
-        self._compute_finance_document_counts()
+        """Refresh stored billing/finance fields (Odoo 19: do not call compute methods directly)."""
+        stored_fnames = [
+            'amount_billed',
+            'amount_billed_planning',
+            'amount_remaining',
+            'amount_remaining_planning',
+            'retention_withheld_to_date',
+            'retention_on_unbilled',
+            'retention_remaining',
+            'billing_progress_pct',
+            'sal_status',
+            'payment_certificate_ids',
+            'invoice_ids',
+            'payment_certificate_id',
+            'invoice_id',
+        ]
+        self.invalidate_recordset(stored_fnames)
+        self.flush_recordset(stored_fnames)
+        self.invalidate_recordset(['certificate_count', 'invoice_count'])
         self._sbu_sync_certificate_ref()
 
     def action_view_payment_certificates(self):

@@ -21,6 +21,7 @@
         <field name="model">sbu.sal.sheet</field>
         <field name="arch" type="xml">
             <form string="SAL sheet">
+                <field name="certificate_count" invisible="1"/>
                 <header>
                     <button name="action_confirm" string="Confirm" type="object" class="btn-primary" invisible="state != 'draft'"/>
                     <button name="action_create_draft_invoice" string="Customer invoice" type="object" class="btn-secondary" invisible="state != 'confirmed' or invoice_id"/>
@@ -30,18 +31,16 @@
                     <button name="action_view_certificates" string="Manage certificates" type="object"
                             class="btn-secondary" invisible="certificate_count == 0"/>
                     <button name="action_cleanup_duplicate_certificates" string="Remove duplicate CDPs" type="object"
-                            class="btn-secondary" invisible="certificate_count &lt;= 1"
-                            confirm="Delete all payment certificates on this SAL except one (keeps Paid, else Issued, else newest). Continue?"/>
+                            class="btn-secondary" invisible="certificate_count &lt;= 1"/>
                     <button name="action_reset_draft" string="Reset to draft" type="object" invisible="state not in ('confirmed','cancelled')"/>
                     <button name="action_cancel" string="Cancel" type="object" invisible="state == 'cancelled'"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,invoiced"/>
                 </header>
                 <sheet>
-                    <field name="certificate_count" invisible="1"/>
                     <div class="oe_button_box" name="button_box">
                         <button name="action_view_certificates" type="object" class="oe_stat_button" icon="fa-file-text-o"
                                 invisible="certificate_count == 0">
-                            <field name="certificate_count" widget="statinfo" string="Certificates"/>
+                            <field name="certificate_count" widget="statinfo" string="CDPs"/>
                         </button>
                     </div>
                     <group>
@@ -81,7 +80,7 @@
                         </page>
                         <page string="Certificates">
                             <field name="certificate_ids">
-                                <list create="false" delete="true" open_form_view="false">
+                                <list create="false" delete="true">
                                     <field name="name"/>
                                     <field name="date"/>
                                     <field name="amount_gross"/>
@@ -103,7 +102,7 @@
         <field name="name">sbu.payment.certificate.list</field>
         <field name="model">sbu.payment.certificate</field>
         <field name="arch" type="xml">
-            <list string="Payment certificates" create="false" delete="true" open_form_view="true">
+            <list string="Payment certificates" create="false" delete="true">
                 <field name="name"/>
                 <field name="sal_sheet_id"/>
                 <field name="project_id" optional="show"/>
