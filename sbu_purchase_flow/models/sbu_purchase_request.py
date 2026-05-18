@@ -168,7 +168,7 @@ class SbuPurchaseRequest(models.Model):
     line_ids = fields.One2many(
         'sbu.purchase.request.line',
         'request_id',
-        string='Lines',
+        string='Request lines',
     )
     purchase_order_ids = fields.Many2many(
         'purchase.order',

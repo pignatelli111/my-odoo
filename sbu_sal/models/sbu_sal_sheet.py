@@ -74,15 +74,15 @@ class SbuSalSheet(models.Model):
     line_ids = fields.One2many(
         'sbu.sal.sheet.line',
         'sheet_id',
-        string='Lines',
+        string='SAL lines',
     )
     certificate_ids = fields.One2many(
         'sbu.payment.certificate',
         'sal_sheet_id',
-        string='Payment certificates',
+        string='Payment certificates (CDP)',
     )
     certificate_count = fields.Integer(
-        string='Payment certificates',
+        string='CDP count',
         compute='_compute_certificate_count',
     )
     amount_gross = fields.Monetary(
