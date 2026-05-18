@@ -21,12 +21,6 @@
         <field name="model">sbu.sal.sheet</field>
         <field name="arch" type="xml">
             <form string="SAL sheet">
-                <div class="oe_button_box" name="button_box">
-                    <button name="action_view_certificates" type="object" class="oe_stat_button" icon="fa-file-text-o"
-                            invisible="certificate_count == 0">
-                        <field name="certificate_count" widget="statinfo" string="Certificates"/>
-                    </button>
-                </div>
                 <header>
                     <button name="action_confirm" string="Confirm" type="object" class="btn-primary" invisible="state != 'draft'"/>
                     <button name="action_create_draft_invoice" string="Customer invoice" type="object" class="btn-secondary" invisible="state != 'confirmed' or invoice_id"/>
@@ -44,6 +38,12 @@
                 </header>
                 <sheet>
                     <field name="certificate_count" invisible="1"/>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_certificates" type="object" class="oe_stat_button" icon="fa-file-text-o"
+                                invisible="certificate_count == 0">
+                            <field name="certificate_count" widget="statinfo" string="Certificates"/>
+                        </button>
+                    </div>
                     <group>
                         <group>
                             <field name="name"/>
