@@ -347,29 +347,56 @@ class SbuEstimate(models.Model):
                 vals['name'] = self.env['ir.sequence'].next_by_code('sbu.estimate') or _('New')
         return super().create(vals_list)
 
+    can_delete_preventivo = fields.Boolean(
+        string='Can delete',
+        compute='_compute_can_delete_preventivo',
+        help='Technical: whether this preventivo can be removed (see unlink rules).',
+    )
+
+    @api.depends('state', 'project_id', 'sal_line_ids')
+    def _compute_can_delete_preventivo(self):
+        for rec in self:
+            rec.can_delete_preventivo = not bool(rec._sbu_unlink_blocked_reason())
+
+    def _sbu_unlink_blocked_reason(self):
+        """Return a translated message if delete is blocked, else empty string."""
+        self.ensure_one()
+        if self.project_id:
+            return _(
+                'Cannot delete %s: a project/job is linked. Remove or reassign the project first.'
+            ) % self.display_name
+        if self.state == 'won':
+            return _(
+                'Cannot delete a won estimate (%s). Use «Perso» or «Annullato» instead.'
+            ) % self.display_name
+        if 'sbu.sal.sheet.line' in self.env and self.sal_line_ids:
+            billed = self.env['sbu.sal.sheet.line'].search_count([
+                ('estimate_sal_line_id', 'in', self.sal_line_ids.ids),
+                ('sheet_id.state', 'in', ('confirmed', 'invoiced')),
+            ])
+            if billed:
+                return _(
+                    'Cannot delete %s: SAL billing is already confirmed or invoiced.'
+                ) % self.display_name
+        return ''
+
     def unlink(self):
         for rec in self:
-            if rec.project_id:
-                raise UserError(
-                    _('Cannot delete %s: a project/job is linked. Remove or reassign the project first.')
-                    % rec.display_name
-                )
-            if rec.state == 'won':
-                raise UserError(
-                    _('Cannot delete a won estimate (%s). Use «Perso» or «Annullato» instead.')
-                    % rec.display_name
-                )
-            if 'sbu.sal.sheet.line' in self.env:
-                billed = self.env['sbu.sal.sheet.line'].search_count([
-                    ('estimate_sal_line_id', 'in', rec.sal_line_ids.ids),
-                    ('sheet_id.state', 'in', ('confirmed', 'invoiced')),
-                ])
-                if billed:
-                    raise UserError(
-                        _('Cannot delete %s: SAL billing is already confirmed or invoiced.')
-                        % rec.display_name
-                    )
+            reason = rec._sbu_unlink_blocked_reason()
+            if reason:
+                raise UserError(reason)
         return super().unlink()
+
+    def action_delete_preventivo(self):
+        """Explicit delete entry point (form button + server action)."""
+        self.unlink()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Preventivi'),
+            'res_model': 'sbu.estimate',
+            'view_mode': 'list,form',
+            'target': 'current',
+        }
 
     # ── State transitions ─────────────────────────────────────────────────────
     def action_open_anaco_import_wizard(self):

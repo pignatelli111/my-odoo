@@ -7,7 +7,9 @@
         <field name="model">sbu.estimate</field>
         <field name="arch" type="xml">
             <list string="Preventivi"
-                  delete="true"
+                  delete="1"
+                  import="0"
+                  export="1"
                   decoration-success="state == 'won'"
                   decoration-danger="state == 'lost'"
                   decoration-muted="state == 'cancelled'">
@@ -39,8 +41,14 @@
         <field name="name">sbu.estimate.form</field>
         <field name="model">sbu.estimate</field>
         <field name="arch" type="xml">
-            <form string="Preventivo">
+            <form string="Preventivo" delete="1">
                 <header>
+                    <button name="action_delete_preventivo"
+                            string="Elimina"
+                            type="object"
+                            class="btn-secondary text-danger"
+                            invisible="not can_delete_preventivo"
+                            confirm="Eliminare questo preventivo? L'operazione non può essere annullata."/>
                     <button name="action_send"
                             string="Invia"
                             type="object"
@@ -90,6 +98,7 @@
                 </header>
 
                 <sheet>
+                    <field name="can_delete_preventivo" invisible="1"/>
                     <div class="oe_button_box" name="button_box">
                         <button name="action_view_revision_chain"
                                 type="object"
