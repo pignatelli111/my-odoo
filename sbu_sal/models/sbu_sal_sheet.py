@@ -81,6 +81,10 @@ class SbuSalSheet(models.Model):
         'sal_sheet_id',
         string='Payment certificates',
     )
+    certificate_count = fields.Integer(
+        string='Payment certificates',
+        compute='_compute_certificate_count',
+    )
     amount_gross = fields.Monetary(
         string='Gross amount',
         compute='_compute_amounts',
@@ -156,10 +160,82 @@ class SbuSalSheet(models.Model):
     def action_reset_draft(self):
         self.write({'state': 'draft'})
 
+    @api.depends('certificate_ids')
+    def _compute_certificate_count(self):
+        for sheet in self:
+            sheet.certificate_count = len(sheet.certificate_ids)
+
+    def _sbu_certificate_to_keep(self):
+        """Prefer paid, then issued, else newest CDP on this sheet."""
+        self.ensure_one()
+        certs = self.certificate_ids
+        keep = certs.filtered(lambda c: c.state == 'paid')[:1]
+        if not keep:
+            keep = certs.filtered(lambda c: c.state == 'issued')[:1]
+        if not keep:
+            keep = certs.sorted(
+                key=lambda c: (c.date or fields.Date.today(), c.id),
+                reverse=True,
+            )[:1]
+        return keep
+
+    def action_cleanup_duplicate_certificates(self):
+        """Delete extra CDPs on this SAL (UAT cleanup). Keeps one: paid > issued > newest."""
+        self.ensure_one()
+        certs = self.certificate_ids
+        if len(certs) <= 1:
+            raise UserError(_('This SAL has only one payment certificate (nothing to remove).'))
+        keep = self._sbu_certificate_to_keep()
+        to_remove = certs - keep
+        removed_count = len(to_remove)
+        to_remove.with_context(sbu_force_certificate_unlink=True).unlink()
+        sal_lines = self.line_ids.mapped('estimate_sal_line_id')
+        if sal_lines:
+            sal_lines.action_refresh_sal_finance_links()
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('CDPs cleaned up'),
+                'message': _('Kept %s; removed %s duplicate certificate(s).') % (
+                    keep.name,
+                    removed_count,
+                ),
+                'type': 'success',
+                'sticky': False,
+            },
+        }
+
+    def action_view_certificates(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Payment certificates'),
+            'res_model': 'sbu.payment.certificate',
+            'view_mode': 'list,form',
+            'domain': [('sal_sheet_id', '=', self.id)],
+            'context': {
+                'default_sal_sheet_id': self.id,
+                'default_project_id': self.project_id.id,
+                'default_currency_id': self.currency_id.id,
+                'default_amount_gross': self.amount_gross,
+                'default_retention_percent': self.retention_percent,
+            },
+        }
+
     def action_create_certificate(self):
         self.ensure_one()
-        if self.state != 'confirmed':
+        if self.state not in ('confirmed', 'invoiced'):
             raise UserError(_('Confirm the SAL before creating a payment certificate.'))
+        existing_draft = self.certificate_ids.filtered(lambda c: c.state == 'draft')[:1]
+        if existing_draft:
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'sbu.payment.certificate',
+                'res_id': existing_draft.id,
+                'view_mode': 'form',
+                'target': 'current',
+            }
         cert = self.env['sbu.payment.certificate'].create({
             'sal_sheet_id': self.id,
             'project_id': self.project_id.id,

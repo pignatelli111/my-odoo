@@ -144,13 +144,32 @@ class SbuEstimateSalLine(models.Model):
     def _sbu_sync_certificate_ref(self):
         """Update Char reference from linked finance docs (not inside a compute method)."""
         for line in self:
-            if line.payment_certificate_ids or line.invoice_ids:
-                ref = line._sbu_format_finance_reference(
-                    line.payment_certificate_ids,
-                    line.invoice_ids,
-                )
-                if ref and line.certificate_ref != ref:
-                    line.certificate_ref = ref
+            if not (
+                line.sal_sheet_line_ids
+                or line.payment_certificate_ids
+                or line.invoice_ids
+            ):
+                continue
+            ref = line._sbu_format_finance_reference(
+                line.payment_certificate_ids,
+                line.invoice_ids,
+            )
+            line.certificate_ref = ref or False
+
+    def action_refresh_sal_finance_links(self):
+        """Rebuild invoice/CDP links and reference text from SAL sheets (e.g. after deleting duplicate CDPs)."""
+        self.invalidate_recordset(
+            fnames=[
+                'payment_certificate_ids',
+                'invoice_ids',
+                'payment_certificate_id',
+                'invoice_id',
+                'certificate_count',
+                'invoice_count',
+            ]
+        )
+        self._sbu_recompute_billing_from_sheet_lines()
+        return True
 
     @api.depends(
         'sal_sheet_line_ids.amount_this_sal',

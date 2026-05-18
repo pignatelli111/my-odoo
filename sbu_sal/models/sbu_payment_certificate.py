@@ -114,6 +114,24 @@ class SbuPaymentCertificate(models.Model):
         self._sbu_touch_linked_contractual_lines()
         return res
 
+    def unlink(self):
+        if not self.env.context.get('sbu_force_certificate_unlink'):
+            blocked = self.filtered(lambda c: c.state != 'draft')
+            if blocked and not self.env.user.has_group('base.group_system'):
+                raise UserError(
+                    _(
+                        'Only draft payment certificates can be deleted. '
+                        'Use "Remove duplicate CDPs" on the SAL sheet or ask an administrator.'
+                    )
+                )
+        sal_lines = self.env['sbu.estimate.sal.line']
+        if 'sbu.estimate.sal.line' in self.env:
+            sal_lines = self.mapped('sal_sheet_id.line_ids.estimate_sal_line_id')
+        res = super().unlink()
+        if sal_lines:
+            sal_lines._sbu_recompute_billing_from_sheet_lines()
+        return res
+
     def _sbu_touch_linked_contractual_lines(self):
         if 'sbu.estimate.sal.line' not in self.env:
             return
