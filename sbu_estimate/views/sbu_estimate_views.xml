@@ -7,6 +7,7 @@
         <field name="model">sbu.estimate</field>
         <field name="arch" type="xml">
             <list string="Preventivi"
+                  delete="true"
                   decoration-success="state == 'won'"
                   decoration-danger="state == 'lost'"
                   decoration-muted="state == 'cancelled'">
@@ -162,6 +163,7 @@
                                    mode="list,form"
                                    context="{'default_estimate_id': id}">
                                 <list editable="bottom"
+                                      delete="true"
                                       default_order="sequence, pos">
                                     <field name="sequence" widget="handle"/>
                                     <field name="pos" optional="show"/>
@@ -229,7 +231,7 @@
 
                         <page string="Voci Contrattuali SAL" name="sal_lines">
                             <field name="sal_line_ids" context="{'default_estimate_id': id}">
-                                <list editable="bottom">
+                                <list editable="bottom" delete="true">
                                     <field name="sequence" widget="handle"/>
                                     <field name="item_ref"/>
                                     <field name="description" optional="show"/>

@@ -347,6 +347,30 @@ class SbuEstimate(models.Model):
                 vals['name'] = self.env['ir.sequence'].next_by_code('sbu.estimate') or _('New')
         return super().create(vals_list)
 
+    def unlink(self):
+        for rec in self:
+            if rec.project_id:
+                raise UserError(
+                    _('Cannot delete %s: a project/job is linked. Remove or reassign the project first.')
+                    % rec.display_name
+                )
+            if rec.state == 'won':
+                raise UserError(
+                    _('Cannot delete a won estimate (%s). Use «Perso» or «Annullato» instead.')
+                    % rec.display_name
+                )
+            if 'sbu.sal.sheet.line' in self.env:
+                billed = self.env['sbu.sal.sheet.line'].search_count([
+                    ('estimate_sal_line_id', 'in', rec.sal_line_ids.ids),
+                    ('sheet_id.state', 'in', ('confirmed', 'invoiced')),
+                ])
+                if billed:
+                    raise UserError(
+                        _('Cannot delete %s: SAL billing is already confirmed or invoiced.')
+                        % rec.display_name
+                    )
+        return super().unlink()
+
     # ── State transitions ─────────────────────────────────────────────────────
     def action_open_anaco_import_wizard(self):
         self.ensure_one()
