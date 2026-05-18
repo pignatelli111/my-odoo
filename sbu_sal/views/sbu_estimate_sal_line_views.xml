@@ -53,8 +53,10 @@
                         invisible="not sal_line_ids"
                         title="Rebuild invoice/CDP links on contractual SAL lines"/>
             </xpath>
-            <xpath expr="//page[@name='sal_lines']//field[@name='certificate_ref']" position="after">
-                <field name="invoice_cdp_summary" readonly="1" optional="show"/>
+            <xpath expr="//field[@name='certificate_ref']" position="replace">
+                <field name="invoice_cdp_summary" optional="show"/>
+            </xpath>
+            <xpath expr="//page[@name='sal_lines']//field[@name='invoice_cdp_summary']" position="after">
                 <field name="payment_certificate_id" readonly="1" optional="show"/>
                 <field name="invoice_id" readonly="1" optional="show"
                        groups="account.group_account_invoice"/>

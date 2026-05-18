@@ -252,7 +252,6 @@
                                     <field name="retention_on_unbilled" readonly="1" optional="hide"/>
                                     <field name="retention_remaining" readonly="1"/>
                                     <field name="certificate_ref" optional="hide"/>
-                                    <field name="invoice_cdp_summary" optional="show"/>
                                     <field name="payment_certificate_id" optional="show"/>
                                     <field name="invoice_id" optional="show"
                                            groups="account.group_account_invoice"/>
