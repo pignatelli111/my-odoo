@@ -15,8 +15,8 @@ echo ""
 echo "=== Tracebacks / critical ==="
 grep -nE 'Traceback|CRITICAL|ParseError|ValidationError' "$LOG" | tail -30 || true
 echo ""
-echo "=== SBU UserWarnings (Odoo 19 ORM — often cause test: failed) ==="
-grep -nE 'UserWarning: sbu\.|sbu_estimate|sbu_sal' "$LOG" | tail -40 || true
+echo "=== SBU warnings (duplicate labels, ORM — cause test: warning/failed) ==="
+grep -nE 'UserWarning: sbu\.|have the same label.*sbu\.|sbu_estimate|sbu_sal' "$LOG" | tail -40 || true
 echo ""
 echo "=== End of install.log (test summary) ==="
 tail -25 "$LOG"
