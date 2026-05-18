@@ -80,9 +80,6 @@
                             </field>
                         </page>
                         <page string="Certificates">
-                            <div class="text-muted mb-2">
-                                Use <strong>Manage certificates</strong> to select and delete rows. Draft CDPs only (unless administrator).
-                            </div>
                             <field name="certificate_ids">
                                 <list create="false" delete="true" open_form_view="false">
                                     <field name="name"/>
