@@ -64,12 +64,11 @@ class SbuEstimateSalLine(models.Model):
         compute='_compute_finance_document_counts',
         compute_sudo=False,
     )
-    certificate_ref = fields.Char(
+    invoice_cdp_summary = fields.Char(
         string='Invoice / CDP reference',
-        compute='_compute_certificate_ref_auto',
+        compute='_compute_invoice_cdp_summary',
         store=True,
-        readonly=False,
-        help='Auto-filled from SAL sheets, invoices and payment certificates (SBU SAL).',
+        help='Summary of linked payment certificates and invoices (from SAL sheets).',
     )
 
     def _sbu_retention_withheld_for_sheet_line(self, sheet_line):
@@ -119,30 +118,34 @@ class SbuEstimateSalLine(models.Model):
 
     @api.depends(
         'sal_sheet_line_ids.sheet_id.invoice_id',
+        'sal_sheet_line_ids.sheet_id.invoice_id.payment_state',
         'sal_sheet_line_ids.sheet_id.certificate_ids',
         'sal_sheet_line_ids.sheet_id.certificate_ids.state',
         'sal_sheet_line_ids.sheet_id.certificate_ids.invoice_id',
         'sal_sheet_line_ids.sheet_id.certificate_ids.name',
         'sal_sheet_line_ids.sheet_id.certificate_ids.date',
     )
-    @api.depends(
-        'payment_certificate_ids',
-        'payment_certificate_ids.name',
-        'payment_certificate_ids.state',
-        'payment_certificate_ids.invoice_id',
-        'invoice_ids',
-        'invoice_ids.name',
-        'invoice_ids.payment_state',
-        'sal_sheet_line_ids',
-    )
-    def _compute_certificate_ref_auto(self):
+    def _compute_invoice_cdp_summary(self):
         for line in self:
-            if line.sal_sheet_line_ids or line.payment_certificate_ids or line.invoice_ids:
-                line.certificate_ref = line._sbu_format_finance_reference(
-                    line.payment_certificate_ids,
-                    line.invoice_ids,
-                ) or False
+            sheets = line.sal_sheet_line_ids.mapped('sheet_id')
+            if not sheets:
+                line.invoice_cdp_summary = False
+                continue
+            certs = sheets.mapped('certificate_ids').exists()
+            invoices = sheets.mapped('invoice_id').filtered('id')
+            line.invoice_cdp_summary = line._sbu_format_finance_reference(
+                certs,
+                invoices,
+            ) or False
 
+    @api.depends(
+        'sal_sheet_line_ids.sheet_id.invoice_id',
+        'sal_sheet_line_ids.sheet_id.certificate_ids',
+        'sal_sheet_line_ids.sheet_id.certificate_ids.state',
+        'sal_sheet_line_ids.sheet_id.certificate_ids.invoice_id',
+        'sal_sheet_line_ids.sheet_id.certificate_ids.name',
+        'sal_sheet_line_ids.sheet_id.certificate_ids.date',
+    )
     def _compute_finance_documents(self):
         for line in self:
             sheets = line.sal_sheet_line_ids.mapped('sheet_id')
@@ -160,6 +163,19 @@ class SbuEstimateSalLine(models.Model):
             )
             line.payment_certificate_id = sorted_certs[:1]
             line.invoice_id = sorted_invoices[:1]
+
+    def _sbu_sync_certificate_ref(self):
+        """Keep legacy certificate_ref Char in sync with SAL billing links."""
+        for line in self:
+            sheets = line.sal_sheet_line_ids.mapped('sheet_id')
+            if not sheets:
+                continue
+            ref = line._sbu_format_finance_reference(
+                sheets.mapped('certificate_ids').exists(),
+                sheets.mapped('invoice_id').filtered('id'),
+            )
+            if ref and line.certificate_ref != ref:
+                line.certificate_ref = ref
 
     @api.depends('payment_certificate_ids', 'invoice_ids')
     def _compute_finance_document_counts(self):
@@ -292,7 +308,10 @@ class SbuEstimateSalLine(models.Model):
         ]
         self.invalidate_recordset(stored_fnames)
         self.flush_recordset(stored_fnames)
-        self.invalidate_recordset(['certificate_count', 'invoice_count', 'certificate_ref'])
+        self.invalidate_recordset(
+            ['certificate_count', 'invoice_count', 'invoice_cdp_summary']
+        )
+        self._sbu_sync_certificate_ref()
 
     def action_view_payment_certificates(self):
         self.ensure_one()
