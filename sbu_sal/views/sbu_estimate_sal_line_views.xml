@@ -49,9 +49,9 @@
         <field name="arch" type="xml">
             <xpath expr="//header" position="inside">
                 <button name="action_refresh_sal_finance_links" type="object"
-                        string="Refresh SAL finance links" class="btn-secondary"
+                        string="Aggiorna CDP" class="btn-secondary"
                         invisible="not sal_line_ids"
-                        title="Rebuild invoice/CDP links on contractual SAL lines after CDP cleanup"/>
+                        title="Rebuild invoice/CDP links on contractual SAL lines"/>
             </xpath>
             <xpath expr="//page[@name='sal_lines']//field[@name='certificate_ref']" position="after">
                 <field name="payment_certificate_id" readonly="1" optional="show"/>

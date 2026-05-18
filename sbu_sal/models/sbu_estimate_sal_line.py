@@ -1,6 +1,7 @@
 from datetime import date
 
 from odoo import api, fields, models, _
+from odoo.exceptions import UserError
 
 _FALLBACK_SORT_DATE = date(1970, 1, 1)
 
@@ -63,6 +64,13 @@ class SbuEstimateSalLine(models.Model):
         compute='_compute_finance_document_counts',
         compute_sudo=False,
     )
+    certificate_ref = fields.Char(
+        string='Invoice / CDP reference',
+        compute='_compute_certificate_ref_auto',
+        store=True,
+        readonly=False,
+        help='Auto-filled from SAL sheets, invoices and payment certificates (SBU SAL).',
+    )
 
     def _sbu_retention_withheld_for_sheet_line(self, sheet_line):
         """Use payment certificate retention when issued/paid; else sheet % × progress."""
@@ -117,10 +125,28 @@ class SbuEstimateSalLine(models.Model):
         'sal_sheet_line_ids.sheet_id.certificate_ids.name',
         'sal_sheet_line_ids.sheet_id.certificate_ids.date',
     )
+    @api.depends(
+        'payment_certificate_ids',
+        'payment_certificate_ids.name',
+        'payment_certificate_ids.state',
+        'payment_certificate_ids.invoice_id',
+        'invoice_ids',
+        'invoice_ids.name',
+        'invoice_ids.payment_state',
+        'sal_sheet_line_ids',
+    )
+    def _compute_certificate_ref_auto(self):
+        for line in self:
+            if line.sal_sheet_line_ids or line.payment_certificate_ids or line.invoice_ids:
+                line.certificate_ref = line._sbu_format_finance_reference(
+                    line.payment_certificate_ids,
+                    line.invoice_ids,
+                ) or False
+
     def _compute_finance_documents(self):
         for line in self:
             sheets = line.sal_sheet_line_ids.mapped('sheet_id')
-            certs = sheets.mapped('certificate_ids')
+            certs = sheets.mapped('certificate_ids').exists()
             invoices = sheets.mapped('invoice_id').filtered('id')
             line.payment_certificate_ids = [(6, 0, certs.ids)]
             line.invoice_ids = [(6, 0, invoices.ids)]
@@ -141,25 +167,35 @@ class SbuEstimateSalLine(models.Model):
             line.certificate_count = len(line.payment_certificate_ids)
             line.invoice_count = len(line.invoice_ids)
 
-    def _sbu_sync_certificate_ref(self):
-        """Update Char reference from linked finance docs (not inside a compute method)."""
-        for line in self:
-            if not (
-                line.sal_sheet_line_ids
-                or line.payment_certificate_ids
-                or line.invoice_ids
-            ):
-                continue
-            ref = line._sbu_format_finance_reference(
-                line.payment_certificate_ids,
-                line.invoice_ids,
-            )
-            line.certificate_ref = ref or False
-
     def action_refresh_sal_finance_links(self):
         """Rebuild invoice/CDP links and reference text from SAL sheets (e.g. after deleting duplicate CDPs)."""
         self._sbu_recompute_billing_from_sheet_lines()
-        return True
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Finance links updated'),
+                'message': _('Invoice / CDP references were rebuilt from SAL sheets.'),
+                'type': 'success',
+                'sticky': False,
+            },
+        }
+
+    def unlink(self):
+        if 'sbu.sal.sheet.line' in self.env:
+            blocked = self.env['sbu.sal.sheet.line'].search([
+                ('estimate_sal_line_id', 'in', self.ids),
+                ('sheet_id.state', 'in', ('confirmed', 'invoiced')),
+            ]).mapped('estimate_sal_line_id')
+            if blocked:
+                raise UserError(
+                    _(
+                        'Cannot delete contractual SAL lines linked to a confirmed or invoiced SAL sheet. '
+                        'Remove or reset the SAL sheet first: %s'
+                    )
+                    % ', '.join(blocked.mapped('display_name'))
+                )
+        return super().unlink()
 
     @api.depends(
         'sal_sheet_line_ids.amount_this_sal',
@@ -256,8 +292,7 @@ class SbuEstimateSalLine(models.Model):
         ]
         self.invalidate_recordset(stored_fnames)
         self.flush_recordset(stored_fnames)
-        self.invalidate_recordset(['certificate_count', 'invoice_count'])
-        self._sbu_sync_certificate_ref()
+        self.invalidate_recordset(['certificate_count', 'invoice_count', 'certificate_ref'])
 
     def action_view_payment_certificates(self):
         self.ensure_one()
