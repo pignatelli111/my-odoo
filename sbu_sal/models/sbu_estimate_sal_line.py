@@ -65,10 +65,10 @@ class SbuEstimateSalLine(models.Model):
         compute_sudo=False,
     )
     invoice_cdp_summary = fields.Char(
-        string='Invoice / CDP reference',
+        string='Invoice / CDP from SAL',
         compute='_compute_invoice_cdp_summary',
         store=True,
-        help='Summary of linked payment certificates and invoices (from SAL sheets).',
+        help='Live summary of payment certificates and invoices linked via SAL sheets.',
     )
 
     def _sbu_retention_withheld_for_sheet_line(self, sheet_line):
