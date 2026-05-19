@@ -428,6 +428,18 @@ class SbuPurchaseRequest(models.Model):
                     pol_vals['price_unit'] = offer.unit_price
             Pol.create(pol_vals)
 
+    def _sbu_rfq_vendor_partners(self):
+        """Partners to receive draft RFQs (explicit PR choice wins over supplier_rank filter)."""
+        self.ensure_one()
+        vendors = (self.vendor_ids | self.vendor_id).filtered('id')
+        if vendors:
+            # Quick-created UAT contacts may lack supplier_rank; trust explicit PR selection.
+            to_fix = vendors.filtered(lambda p: not p.supplier_rank)
+            if to_fix:
+                to_fix.write({'supplier_rank': 1})
+            return vendors
+        return self.env['res.partner'].search([('supplier_rank', '>', 0)], limit=1)
+
     def action_create_rfq(self):
         """Create one draft purchase.order per RFQ vendor (multi-vendor RFQ)."""
         self.ensure_one()
@@ -436,16 +448,11 @@ class SbuPurchaseRequest(models.Model):
             raise UserError(_('Add at least one line before creating an RFQ.'))
         if not self.line_ids.filtered('product_id'):
             raise UserError(_('At least one line must have a product to generate purchase lines.'))
-        vendors = self.vendor_ids
-        if self.vendor_id:
-            vendors |= self.vendor_id
-        vendors = vendors.filtered(lambda p: p.supplier_rank)
-        if not vendors:
-            fallback = self.env['res.partner'].search([('supplier_rank', '>', 0)], limit=1)
-            vendors = fallback
+        vendors = self._sbu_rfq_vendor_partners()
         if not vendors:
             raise UserError(
-                _('Set «RFQ vendors» and/or a preferred vendor, or create at least one supplier contact before generating RFQs.')
+                _('Set «RFQ vendors» and/or a preferred vendor on this request, '
+                  'or create a supplier contact (Purchase tab: Vendor) before generating RFQs.')
             )
         Po = self.env['purchase.order']
         created = Po.browse()
