@@ -1,24 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo noupdate="1">
-    <!-- Demo materials for distinta / RDA UAT (storable/consumable, not POS/service lines). -->
-    <record id="product_uat_aluminum_profile" model="product.product">
+    <!-- Demo materials for distinta / RDA UAT (consumable, not POS/service lines). -->
+    <record id="product_tmpl_uat_aluminum_profile" model="product.template">
         <field name="name">UAT — Profilo alluminio test</field>
         <field name="default_code">UAT-PROF-01</field>
         <field name="type">consu</field>
         <field name="purchase_ok" eval="True"/>
         <field name="sale_ok" eval="False"/>
         <field name="uom_id" ref="uom.product_uom_unit"/>
-        <field name="uom_po_id" ref="uom.product_uom_unit"/>
         <field name="standard_price">25.0</field>
     </record>
-    <record id="product_uat_fastener" model="product.product">
+    <record id="product_uat_aluminum_profile" model="product.product">
+        <field name="product_tmpl_id" ref="product_tmpl_uat_aluminum_profile"/>
+    </record>
+    <record id="product_tmpl_uat_fastener" model="product.template">
         <field name="name">UAT — Vite / accessorio test</field>
         <field name="default_code">UAT-FAST-01</field>
         <field name="type">consu</field>
         <field name="purchase_ok" eval="True"/>
         <field name="sale_ok" eval="False"/>
         <field name="uom_id" ref="uom.product_uom_unit"/>
-        <field name="uom_po_id" ref="uom.product_uom_unit"/>
         <field name="standard_price">0.5</field>
+    </record>
+    <record id="product_uat_fastener" model="product.product">
+        <field name="product_tmpl_id" ref="product_tmpl_uat_fastener"/>
     </record>
 </odoo>
