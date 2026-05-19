@@ -79,6 +79,28 @@ SAL_FLOOR_FIELDS = (
 )
 SAL_COL_SAL_START = 98  # SAL-1 … SAL-10
 
+# OFFERTA sheet (client-facing offer grid) — fallback when ANACO B/C are empty
+OFFERTA_ROW_FIRST_DATA_DEFAULT = 24
+OFFERTA_COL_CODE = 2
+OFFERTA_COL_WIDTH = 3
+OFFERTA_COL_HEIGHT = 4
+OFFERTA_COL_DESC = 5
+OFFERTA_COL_UOM = 6
+OFFERTA_COL_QTY = 7
+OFFERTA_COL_PRICE = 8
+
+_ANACO_SKIP_B = frozenset({
+    'POS.', 'COD.', 'ITEMS', 'DATA', 'RIFERIMENTO', 'OGGETTO', 'CLIENTE',
+})
+_ANACO_NUMERIC_COLS = tuple(
+    set(ANACO_COL_PRICE.values())
+    | {
+        ANACO_COL_B_MM, ANACO_COL_H_MM, ANACO_COL_QTY, ANACO_COL_BS_UNIT,
+        ANACO_COL_COST_COIB, ANACO_COL_COST_POSA_LIN, ANACO_COL_COST_TRASPORTO,
+        ANACO_COL_COST_TECH_PM, ANACO_COL_COST_CANTIERE, ANACO_COL_COST_EXTRA,
+    }
+)
+
 
 def _sheet_by_aliases(wb, aliases):
     lower = {n.lower().replace(' ', '_'): n for n in wb.sheetnames}
@@ -92,6 +114,84 @@ def _sheet_by_aliases(wb, aliases):
 def _filter_model_fields(model, vals):
     allowed = set(model._fields)
     return {k: v for k, v in vals.items() if k in allowed}
+
+
+def _anaco_row_is_data(sh, row):
+    """True when the row has item content (not only blank / header labels)."""
+    pos = _cell_str(sh, row, ANACO_COL_POS).upper()
+    if pos and pos not in _ANACO_SKIP_B and not pos.startswith('CLIENTE'):
+        return True
+    desc = _cell_str(sh, row, ANACO_COL_DESC)
+    if desc and desc.upper() not in ("DESCRIZIONE D'OFFERTA", 'DESCRIZIONE'):
+        return True
+    b_mm = _cell_num(sh, row, ANACO_COL_B_MM)
+    h_mm = _cell_num(sh, row, ANACO_COL_H_MM)
+    if (b_mm and b_mm > 0) or (h_mm and h_mm > 0):
+        return True
+    qty = _cell_num(sh, row, ANACO_COL_QTY)
+    if qty and qty > 0:
+        return True
+    bs = _cell_num(sh, row, ANACO_COL_BS_UNIT)
+    if bs and bs > 0:
+        return True
+    for col in _ANACO_NUMERIC_COLS:
+        v = _cell_num(sh, row, col)
+        if v and v > 0:
+            return True
+    return False
+
+
+def _detect_anaco_first_row(sh, fallback):
+    for row in range(1, 81):
+        if _anaco_row_is_data(sh, row):
+            return row
+    return fallback
+
+
+def _get_workbook_sheet_pair(raw):
+    """Return (values_sheet, formula_sheet) for ANACO — merge literals from formula book."""
+    buf = io.BytesIO(raw)
+    wb_vals = openpyxl.load_workbook(buf, data_only=True, read_only=False)
+    buf.seek(0)
+    wb_form = openpyxl.load_workbook(buf, data_only=False, read_only=False)
+    return wb_vals, wb_form
+
+
+def _cell_num_merged(sh_vals, sh_form, row, col):
+    v = _cell_num(sh_vals, row, col)
+    if v is not None and v != 0:
+        return v
+    raw = sh_form.cell(row, col).value
+    if raw is None or raw == '':
+        return None
+    if isinstance(raw, str) and raw.strip().startswith('='):
+        return None
+    return _cell_num(sh_form, row, col)
+
+
+def _cell_str_merged(sh_vals, sh_form, row, col):
+    s = _cell_str(sh_vals, row, col)
+    if s:
+        return s
+    raw = sh_form.cell(row, col).value
+    if raw is None or raw == '':
+        return ''
+    if isinstance(raw, str) and raw.strip().startswith('='):
+        return ''
+    return _cell_str(sh_form, row, col)
+
+
+def _cell_str(sh, row, col):
+    v = sh.cell(row, col).value
+    if v is None:
+        return ''
+    if isinstance(v, (int, float)):
+        if v == 0:
+            return ''
+        if float(v).is_integer():
+            return str(int(v))
+        return str(v).strip()
+    return str(v).strip()
 
 
 def _cell_num(sh, row, col):
@@ -166,6 +266,18 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
         string='Prima riga dati ANACO (1-based)',
         default=ANACO_ROW_FIRST_DATA_DEFAULT,
         required=True,
+        help='Default 12 for REV7. If no rows are found, the wizard scans upward from row 1 '
+             'when auto-detect is enabled.',
+    )
+    auto_detect_first_row = fields.Boolean(
+        string='Rileva automaticamente prima riga ANACO',
+        default=True,
+    )
+    import_offerta_fallback = fields.Boolean(
+        string='Se ANACO vuoto, importa da foglio OFFERTA',
+        default=True,
+        help='Many workbooks only fill the OFFERTA grid (CODICE / DESCRIZIONE / PREZZO) '
+             'while ANACO columns B–C stay empty.',
     )
     sal_first_row = fields.Integer(
         string='Prima riga dati SAL (1-based)',
@@ -198,6 +310,191 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
                   name=self.data_filename)
             )
 
+    def _import_anaco_sheet_rows(self, estimate, anaco_sh, anaco_sh_form, Line, first_row):
+        """Import ANACO sheet rows; returns (count, optional chatter note)."""
+        sh_form = anaco_sh_form or anaco_sh
+
+        def _num(row, col):
+            return _cell_num_merged(anaco_sh, sh_form, row, col)
+
+        def _str(row, col):
+            return _cell_str_merged(anaco_sh, sh_form, row, col)
+
+        sc1 = _mult_to_discount_pct(_num(ANACO_ROW_PARAMS, ANACO_COL_SC_MULT[0]))
+        sc2 = _mult_to_discount_pct(_num(ANACO_ROW_PARAMS, ANACO_COL_SC_MULT[1]))
+        sc3 = _mult_to_discount_pct(_num(ANACO_ROW_PARAMS, ANACO_COL_SC_MULT[2]))
+        ind_pct = _norm_pct(_num(ANACO_ROW_PARAMS, ANACO_COL_COST_IND_PCT))
+        mol_pct = _norm_pct(_num(ANACO_ROW_PARAMS, ANACO_COL_COST_MOL_PCT))
+
+        seq = 10
+        empty_run = 0
+        count = 0
+        max_row = anaco_sh.max_row or first_row
+        note = False
+
+        for r in range(first_row, max_row + 1):
+            if not _anaco_row_is_data(anaco_sh, r) and not _anaco_row_is_data(sh_form, r):
+                empty_run += 1
+                if empty_run >= 8:
+                    break
+                continue
+            empty_run = 0
+
+            pos = _str(r, ANACO_COL_POS)
+            desc = _str(r, ANACO_COL_DESC)
+            if not desc:
+                if pos:
+                    desc = pos
+                else:
+                    b_mm = _num(r, ANACO_COL_B_MM) or 0.0
+                    h_mm = _num(r, ANACO_COL_H_MM) or 0.0
+                    if b_mm and h_mm:
+                        desc = _('Item %(w)s×%(h)s mm') % {'w': int(b_mm), 'h': int(h_mm)}
+                    else:
+                        desc = _('Riga Excel %(row)s') % {'row': r}
+
+            b_mm = _num(r, ANACO_COL_B_MM) or 0.0
+            h_mm = _num(r, ANACO_COL_H_MM) or 0.0
+            calc_uom = 'mq' if b_mm and h_mm else 'nr'
+
+            line_vals = {
+                'estimate_id': estimate.id,
+                'sequence': seq,
+                'pos': pos or False,
+                'item_code': pos or False,
+                'description': desc,
+                'calc_uom_type': calc_uom,
+                'qty': _num(r, ANACO_COL_QTY) or 1.0,
+                'width_mm': b_mm,
+                'height_mm': h_mm,
+                'discount_sc1': sc1,
+                'discount_sc2': sc2,
+                'discount_sc3': sc3,
+                'commission_pct': self.default_commission_pct or 0.0,
+                'cost_industrial_pct': ind_pct,
+                'cost_mol_pct': mol_pct,
+            }
+            note_parts = []
+            for fname, col in ANACO_COL_PRICE.items():
+                v = _num(r, col)
+                if v is not None:
+                    line_vals[fname] = v
+            for fname, col in (
+                ('cost_coibentazione_cad', ANACO_COL_COST_COIB),
+                ('cost_posa_lamiera_lin_cad', ANACO_COL_COST_POSA_LIN),
+                ('cost_trasporto_cad', ANACO_COL_COST_TRASPORTO),
+                ('cost_tech_pm_cad', ANACO_COL_COST_TECH_PM),
+                ('cost_cantiere_cad', ANACO_COL_COST_CANTIERE),
+                ('cost_extra_cad', ANACO_COL_COST_EXTRA),
+            ):
+                v = _num(r, col)
+                if v is not None:
+                    line_vals[fname] = v
+
+            bs = _num(r, ANACO_COL_BS_UNIT)
+            if bs is not None:
+                line_vals['price_anaco_bs_cad'] = bs
+
+            ntxt = _str(r, ANACO_COL_NOTE)
+            if ntxt:
+                note_parts.append(ntxt)
+            if note_parts:
+                line_vals['note'] = '\n'.join(note_parts)
+
+            cost_family = infer_cost_family_from_pos(pos) or infer_cost_family_from_price_cost_vals(line_vals)
+            if cost_family:
+                line_vals['cost_family'] = cost_family
+
+            try:
+                Line.create(_filter_model_fields(Line, line_vals))
+            except Exception as err:  # pylint: disable=broad-except
+                raise UserError(
+                    _('Errore import riga ANACO Excel %(row)s (pos. %(pos)s): %(err)s')
+                    % {'row': r, 'pos': pos or '—', 'err': err}
+                ) from err
+            count += 1
+            seq += 10
+
+        if count and first_row != self.anaco_first_row:
+            note = _('Import ANACO: prima riga dati rilevata alla riga %(row)s.', row=first_row)
+        return count, note
+
+    def _import_offerta_sheet_rows(self, estimate, offerta_sh, offerta_form, Line):
+        """Import client offer grid when ANACO identity columns are empty."""
+        sh_form = offerta_form or offerta_sh
+
+        def _num(row, col):
+            return _cell_num_merged(offerta_sh, sh_form, row, col)
+
+        def _str(row, col):
+            return _cell_str_merged(offerta_sh, sh_form, row, col)
+
+        first_row = OFFERTA_ROW_FIRST_DATA_DEFAULT
+        for row in range(20, 41):
+            if _str(row, OFFERTA_COL_CODE).upper() == 'CODICE':
+                first_row = row + 1
+                break
+
+        seq = 10
+        count = 0
+        empty_run = 0
+        max_row = offerta_sh.max_row or first_row
+
+        for r in range(first_row, max_row + 1):
+            code = _str(r, OFFERTA_COL_CODE)
+            desc = _str(r, OFFERTA_COL_DESC)
+            qty = _num(r, OFFERTA_COL_QTY)
+            price = _num(r, OFFERTA_COL_PRICE)
+            if code.upper() in ('CODICE', 'ITEM', '0'):
+                continue
+            if not code and not desc and not (qty and qty > 0) and not (price and price > 0):
+                empty_run += 1
+                if empty_run >= 8:
+                    break
+                continue
+            empty_run = 0
+
+            b_mm = _num(r, OFFERTA_COL_WIDTH) or 0.0
+            h_mm = _num(r, OFFERTA_COL_HEIGHT) or 0.0
+            uom_raw = (_str(r, OFFERTA_COL_UOM) or '').lower()
+            if 'mq' in uom_raw or 'm²' in uom_raw:
+                calc_uom = 'mq'
+            elif 'ml' in uom_raw or 'm.l' in uom_raw:
+                calc_uom = 'ml'
+            elif 'corpo' in uom_raw or 'a corpo' in uom_raw:
+                calc_uom = 'corpo'
+            elif b_mm and h_mm:
+                calc_uom = 'mq'
+            else:
+                calc_uom = 'nr'
+
+            if not desc:
+                desc = code or _('Voce OFFERTA riga %(row)s') % {'row': r}
+
+            line_vals = {
+                'estimate_id': estimate.id,
+                'sequence': seq,
+                'pos': code or False,
+                'item_code': code or False,
+                'description': desc,
+                'calc_uom_type': calc_uom,
+                'qty': qty or 1.0,
+                'width_mm': b_mm,
+                'height_mm': h_mm,
+                'commission_pct': self.default_commission_pct or 0.0,
+            }
+            if price and price > 0:
+                line_vals['price_anaco_bs_cad'] = price
+
+            cost_family = infer_cost_family_from_pos(code) or infer_cost_family_from_price_cost_vals(line_vals)
+            if cost_family:
+                line_vals['cost_family'] = cost_family
+
+            Line.create(_filter_model_fields(Line, line_vals))
+            count += 1
+            seq += 10
+        return count
+
     def action_import(self):
         if not openpyxl:
             raise UserError(_('Installare la libreria Python openpyxl sul server Odoo.'))
@@ -208,12 +505,13 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
 
         raw = base64.b64decode(self.data_file)
         try:
-            wb = openpyxl.load_workbook(io.BytesIO(raw), data_only=True, read_only=False)
+            wb_vals, wb_form = _get_workbook_sheet_pair(raw)
         except Exception as err:  # pylint: disable=broad-except
             raise UserError(_('Impossibile leggere il file Excel: %s') % (err,)) from err
 
-        anaco_sh = _sheet_by_aliases(wb, ('ANACO', 'Anaco'))
-        sal_sh = _sheet_by_aliases(wb, (
+        anaco_sh = _sheet_by_aliases(wb_vals, ('ANACO', 'Anaco'))
+        anaco_sh_form = _sheet_by_aliases(wb_form, ('ANACO', 'Anaco')) if wb_form else None
+        sal_sh = _sheet_by_aliases(wb_vals, (
             'Voci Contrattuali_SAL',
             'Voci Contrattuali SAL',
             'VOCI CONTRATTUALI_SAL',
@@ -230,113 +528,62 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
             if not anaco_sh:
                 raise UserError(
                     _('Foglio «ANACO» non trovato. Fogli presenti: %s')
-                    % ', '.join(wb.sheetnames)
+                    % ', '.join(wb_vals.sheetnames)
                 )
-            sc1 = _mult_to_discount_pct(_cell_num(anaco_sh, ANACO_ROW_PARAMS, ANACO_COL_SC_MULT[0]))
-            sc2 = _mult_to_discount_pct(_cell_num(anaco_sh, ANACO_ROW_PARAMS, ANACO_COL_SC_MULT[1]))
-            sc3 = _mult_to_discount_pct(_cell_num(anaco_sh, ANACO_ROW_PARAMS, ANACO_COL_SC_MULT[2]))
-            ind_pct = _norm_pct(_cell_num(anaco_sh, ANACO_ROW_PARAMS, ANACO_COL_COST_IND_PCT))
-            mol_pct = _norm_pct(_cell_num(anaco_sh, ANACO_ROW_PARAMS, ANACO_COL_COST_MOL_PCT))
-
             if self.replace_anaco_lines:
                 estimate.line_ids.unlink()
 
-            seq = 10
-            empty_run = 0
-            max_row = anaco_sh.max_row or self.anaco_first_row
-            for r in range(self.anaco_first_row, max_row + 1):
-                pos = (anaco_sh.cell(r, ANACO_COL_POS).value or '')
-                if isinstance(pos, (int, float)):
-                    pos = str(pos)
-                pos = str(pos).strip()
-                desc_cell = anaco_sh.cell(r, ANACO_COL_DESC).value
-                desc = str(desc_cell).strip() if desc_cell is not None else ''
-                if not pos and not desc:
-                    empty_run += 1
-                    if empty_run >= 5:
-                        break
-                    continue
-                empty_run = 0
-                if not desc:
-                    desc = pos or _('Riga importata')
+            first_row = self.anaco_first_row
+            if self.auto_detect_first_row:
+                detected = _detect_anaco_first_row(anaco_sh, first_row)
+                if detected != first_row:
+                    first_row = detected
 
-                b_mm = _cell_num(anaco_sh, r, ANACO_COL_B_MM) or 0.0
-                h_mm = _cell_num(anaco_sh, r, ANACO_COL_H_MM) or 0.0
-                if b_mm and h_mm:
-                    calc_uom = 'mq'
-                else:
-                    calc_uom = 'nr'
-
-                line_vals = {
-                    'estimate_id': estimate.id,
-                    'sequence': seq,
-                    'pos': pos or False,
-                    'item_code': pos or False,
-                    'description': desc,
-                    'calc_uom_type': calc_uom,
-                    'qty': _cell_num(anaco_sh, r, ANACO_COL_QTY) or 1.0,
-                    'width_mm': b_mm,
-                    'height_mm': h_mm,
-                    'discount_sc1': sc1,
-                    'discount_sc2': sc2,
-                    'discount_sc3': sc3,
-                    'commission_pct': self.default_commission_pct or 0.0,
-                    'cost_industrial_pct': ind_pct,
-                    'cost_mol_pct': mol_pct,
-                }
-                note_parts = []
-                for fname, col in ANACO_COL_PRICE.items():
-                    v = _cell_num(anaco_sh, r, col)
-                    if v is not None:
-                        line_vals[fname] = v
-                for fname, col in (
-                    ('cost_coibentazione_cad', ANACO_COL_COST_COIB),
-                    ('cost_posa_lamiera_lin_cad', ANACO_COL_COST_POSA_LIN),
-                    ('cost_trasporto_cad', ANACO_COL_COST_TRASPORTO),
-                    ('cost_tech_pm_cad', ANACO_COL_COST_TECH_PM),
-                    ('cost_cantiere_cad', ANACO_COL_COST_CANTIERE),
-                    ('cost_extra_cad', ANACO_COL_COST_EXTRA),
-                ):
-                    v = _cell_num(anaco_sh, r, col)
-                    if v is not None:
-                        line_vals[fname] = v
-
-                bs = _cell_num(anaco_sh, r, ANACO_COL_BS_UNIT)
-                if bs is not None:
-                    line_vals['price_anaco_bs_cad'] = bs
-
-                ntxt = anaco_sh.cell(r, ANACO_COL_NOTE).value
-                if ntxt:
-                    note_parts.append(str(ntxt).strip())
-                if note_parts:
-                    line_vals['note'] = '\n'.join(note_parts)
-
-                cost_family = infer_cost_family_from_pos(pos) or infer_cost_family_from_price_cost_vals(line_vals)
-                if cost_family:
-                    line_vals['cost_family'] = cost_family
-
-                try:
-                    Line.create(_filter_model_fields(Line, line_vals))
-                except Exception as err:  # pylint: disable=broad-except
-                    raise UserError(
-                        _('Errore import riga Excel %(row)s (pos. %(pos)s): %(err)s')
-                        % {'row': r, 'pos': pos or '—', 'err': err}
-                    ) from err
-                n_anaco += 1
-                seq += 10
-
-        if self.import_anaco and n_anaco == 0:
-            raise UserError(
-                _('Nessuna riga ANACO importata. Verificare: foglio ANACO, prima riga dati (%(row)s), '
-                  'e che il file sia salvato con valori calcolati (Apri in Excel → Salva).')
-                % {'row': self.anaco_first_row}
+            n_anaco, import_note = self._import_anaco_sheet_rows(
+                estimate, anaco_sh, anaco_sh_form, Line, first_row,
             )
+
+            if n_anaco == 0 and self.auto_detect_first_row and first_row != 1:
+                n_anaco, retry_note = self._import_anaco_sheet_rows(
+                    estimate, anaco_sh, anaco_sh_form, Line, 1,
+                )
+                if retry_note:
+                    import_note = retry_note
+
+            if n_anaco == 0 and self.import_offerta_fallback:
+                offerta_sh = _sheet_by_aliases(wb_vals, ('OFFERTA', 'Offerta'))
+                offerta_form = _sheet_by_aliases(wb_form, ('OFFERTA', 'Offerta'))
+                if offerta_sh:
+                    n_offerta = self._import_offerta_sheet_rows(
+                        estimate, offerta_sh, offerta_form, Line,
+                    )
+                    if n_offerta:
+                        n_anaco = n_offerta
+                        import_note = _('Importate %(n)d righe dal foglio OFFERTA.') % {'n': n_offerta}
+
+            if n_anaco == 0:
+                raise UserError(
+                    _('Nessuna riga importata dal file «%(file)s».\n\n'
+                      'Controllare:\n'
+                      '• Il foglio ANACO ha Pos./Descrizione (col. B–C) oppure dimensioni/prezzi (D, F, H, BS…)\n'
+                      '• Oppure compilare il foglio OFFERTA (CODICE / DESCRIZIONE / PREZZO)\n'
+                      '• Aprire il file in Excel e salvarlo di nuovo (valori calcolati)\n'
+                      '• Prima riga dati: provare %(row)s o attivare «Rileva automaticamente»\n\n'
+                      'Fogli trovati: %(sheets)s')
+                    % {
+                        'file': self.data_filename or 'xlsx',
+                        'row': self.anaco_first_row,
+                        'sheets': ', '.join(wb_vals.sheetnames),
+                    }
+                )
+            if import_note:
+                estimate.message_post(body=import_note)
 
         if self.import_sal:
             if not sal_sh:
                 raise UserError(
                     _('Foglio «Voci Contrattuali_SAL» non trovato. Fogli presenti: %s')
-                    % ', '.join(wb.sheetnames)
+                    % ', '.join(wb_vals.sheetnames)
                 )
             if self.replace_sal_lines:
                 estimate.sal_line_ids.unlink()
@@ -404,7 +651,8 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
                 n_sal += 1
                 seq += 10
 
-        wb.close()
+        wb_vals.close()
+        wb_form.close()
 
         body = _(
             'Import Excel completato: %(anaco)d righe ANACO, %(sal)d righe SAL.'

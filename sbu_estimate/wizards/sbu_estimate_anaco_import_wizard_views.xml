@@ -18,6 +18,8 @@
                     <field name="replace_sal_lines" invisible="not import_sal"/>
                 </group>
                 <group string="Parametri righe">
+                    <field name="auto_detect_first_row" invisible="not import_anaco"/>
+                    <field name="import_offerta_fallback" invisible="not import_anaco"/>
                     <field name="anaco_first_row" invisible="not import_anaco"/>
                     <field name="sal_first_row" invisible="not import_sal"/>
                     <field name="default_commission_pct" invisible="not import_anaco"/>
