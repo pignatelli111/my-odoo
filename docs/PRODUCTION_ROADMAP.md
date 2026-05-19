@@ -18,16 +18,18 @@ This document tracks work to reach **full production use** (not only demo).
 | Item | Module | Status |
 |------|--------|--------|
 | Project on receipts / deliveries | `sbu_stock_config` | Exists — UAT on real receipt |
-| Reception buffer route wired | `sbu_stock_config` | TODO |
-| DDT / delivery note report on picking | `sbu_stock_config` | TODO |
-| Site delivery visibility on project | `sbu_stock_config` | Partial (logistics tab) |
+| Reception buffer under Input (2-step) | `sbu_stock_config` | Implemented (`post_init_hook`) |
+| DDT report + sequence on validate | `sbu_stock_config` | Implemented — UAT: `docs/UAT_LOGISTICS_B.md` |
+| Site delivery + logistics tab | `sbu_stock_config` | Implemented (19.0.1.1.4) |
 
 ## Phase C — Banking (Chapter 6–8)
 
 | Item | Module | Status |
 |------|--------|--------|
-| Qonto / Revolut import | `sbu_qonto`, `sbu_revolut` | Exists — enable cron + credentials |
-| Match → `account.payment` / reconciliation | both | TODO |
+| Qonto import cron (sync with company flag) | `sbu_qonto` | Implemented — UAT: `docs/UAT_BANKING_C.md` |
+| Match suggestions + high-confidence link | `sbu_qonto` | Implemented (no bank reconcile) |
+| Revolut import cron | `sbu_revolut` | Exists — enable separately |
+| Bank journal reconciliation | both | TODO (full automation) |
 | Webhook signature verification | both | TODO |
 
 ## Phase D — M365 (Chapter 5 + 8)

@@ -7,6 +7,8 @@
             <list string="Qonto movements">
                 <header>
                     <button name="action_import_now" type="object" string="Import now" class="btn-secondary" display="always"/>
+                    <button name="action_suggest_match" type="object" string="Suggest match" class="btn-secondary"/>
+                    <button name="action_match_odoo" type="object" string="Match (high confidence)" class="btn-primary"/>
                 </header>
                 <field name="settled_at"/>
                 <field name="qonto_remote_id"/>
@@ -15,7 +17,10 @@
                 <field name="currency_id"/>
                 <field name="label"/>
                 <field name="reference"/>
+                <field name="sbu_match_confidence" widget="badge" optional="show"/>
                 <field name="state" widget="badge"/>
+                <field name="suggested_payment_id" optional="show"/>
+                <field name="suggested_invoice_id" optional="show"/>
                 <field name="match_payment_id" optional="show"/>
                 <field name="match_invoice_id" optional="show"/>
                 <field name="source"/>
@@ -30,7 +35,10 @@
         <field name="arch" type="xml">
             <form string="Qonto movement">
                 <header>
-                    <button name="action_match_odoo" string="Match in Odoo" type="object" class="btn-primary" invisible="state != 'imported'"/>
+                    <button name="action_suggest_match" string="Suggest match" type="object" class="btn-secondary" invisible="state != 'imported'"/>
+                    <button name="action_apply_suggestion" string="Apply suggestion" type="object" class="btn-primary"
+                            invisible="state != 'imported' or sbu_match_confidence == 'none'"/>
+                    <button name="action_match_odoo" string="Match (high confidence)" type="object" class="btn-primary" invisible="state != 'imported'"/>
                     <button name="action_ignore" string="Ignore" type="object" class="btn-secondary" invisible="state != 'imported'"/>
                     <field name="state" widget="statusbar" statusbar_visible="imported,matched,ignored"/>
                 </header>
@@ -57,7 +65,13 @@
                         <field name="reference"/>
                         <field name="note"/>
                     </group>
-                    <group string="Odoo links (reconciliation aid)">
+                    <group string="Match suggestion (review)">
+                        <field name="sbu_match_confidence" widget="badge"/>
+                        <field name="sbu_match_hint"/>
+                        <field name="suggested_payment_id"/>
+                        <field name="suggested_invoice_id"/>
+                    </group>
+                    <group string="Confirmed Odoo link (no bank reconciliation)">
                         <field name="match_payment_id"/>
                         <field name="match_invoice_id"/>
                     </group>
@@ -79,7 +93,8 @@
         <field name="context">{}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                Import movements from Qonto (API or webhook). Qonto stays the bank of record; use Match in Odoo to link customer payments or invoices.
+                Import movements from Qonto (scheduled import or manual). Use <b>Suggest match</b> to find payments/invoices;
+                <b>Match (high confidence)</b> links only when the heuristic is strong. This does not reconcile the bank journal yet.
             </p>
         </field>
     </record>

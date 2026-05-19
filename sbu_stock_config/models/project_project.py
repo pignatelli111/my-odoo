@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
+from collections import defaultdict
+
 from odoo import _, api, fields, models
+from odoo.exceptions import UserError
 
 
 class ProjectProject(models.Model):
@@ -17,12 +20,15 @@ class ProjectProject(models.Model):
         string='Purchase orders',
     )
     purchase_order_count = fields.Integer(compute='_compute_purchase_order_count')
+    sbu_incoming_picking_count = fields.Integer(compute='_compute_sbu_logistics_counts')
+    sbu_open_receipt_count = fields.Integer(compute='_compute_sbu_logistics_counts')
 
     sbu_logistics_state = fields.Selection(
         selection=[
             ('none', 'No material flow'),
             ('ordered', 'Ordered'),
             ('in_transit', 'In transit'),
+            ('received', 'Received in warehouse'),
             ('site', 'On site'),
         ],
         string='Logistics',
@@ -39,6 +45,17 @@ class ProjectProject(models.Model):
     def _compute_purchase_order_count(self):
         for project in self:
             project.purchase_order_count = len(project.purchase_order_ids)
+
+    @api.depends('picking_ids', 'picking_ids.state', 'picking_ids.picking_type_id')
+    def _compute_sbu_logistics_counts(self):
+        for project in self:
+            incoming = project.picking_ids.filtered(
+                lambda p: p.picking_type_id.code == 'incoming'
+            )
+            project.sbu_incoming_picking_count = len(incoming)
+            project.sbu_open_receipt_count = len(
+                incoming.filtered(lambda p: p.state not in ('done', 'cancel'))
+            )
 
     @api.depends(
         'picking_ids.state',
@@ -57,6 +74,7 @@ class ProjectProject(models.Model):
         for project in self:
             pickings = project.picking_ids
             has_site = False
+            has_received = False
             for p in pickings.filtered(lambda x: x.state == 'done'):
                 if p.picking_type_id.code == 'outgoing':
                     has_site = True
@@ -66,6 +84,8 @@ class ProjectProject(models.Model):
                         if move.location_dest_id.id in site_loc_ids:
                             has_site = True
                             break
+                if p.picking_type_id.code == 'incoming':
+                    has_received = True
                 if has_site:
                     break
 
@@ -81,6 +101,8 @@ class ProjectProject(models.Model):
 
             if has_site:
                 project.sbu_logistics_state = 'site'
+            elif has_received:
+                project.sbu_logistics_state = 'received'
             elif has_transit:
                 project.sbu_logistics_state = 'in_transit'
             elif has_ordered:
@@ -99,6 +121,20 @@ class ProjectProject(models.Model):
             'context': {'default_project_id': self.id},
         }
 
+    def action_sbu_view_incoming_pickings(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Receipts (incoming)'),
+            'res_model': 'stock.picking',
+            'view_mode': 'list,form',
+            'domain': [
+                ('project_id', '=', self.id),
+                ('picking_type_id.code', '=', 'incoming'),
+            ],
+            'context': {'default_project_id': self.id},
+        }
+
     def action_sbu_view_purchase_orders(self):
         self.ensure_one()
         return {
@@ -108,4 +144,67 @@ class ProjectProject(models.Model):
             'view_mode': 'list,form',
             'domain': [('project_id', '=', self.id)],
             'context': {'default_project_id': self.id},
+        }
+
+    def action_sbu_create_site_delivery(self, from_picking=None):
+        """Internal transfer warehouse stock → SBU / Site for this job."""
+        self.ensure_one()
+        wh = self.env['stock.warehouse'].search(
+            [('company_id', '=', self.company_id.id)], limit=1
+        )
+        if not wh:
+            raise UserError(_('No warehouse configured for company %s.') % self.company_id.display_name)
+        site_loc = self.env.ref('sbu_stock_config.stock_location_sbu_site', raise_if_not_found=False)
+        if not site_loc:
+            raise UserError(_('SBU site location is not configured.'))
+        stock_loc = wh.lot_stock_id
+        picking_type = wh.int_type_id
+
+        qty_by_product = defaultdict(float)
+        source_pickings = self.picking_ids.filtered(
+            lambda p: p.state == 'done' and p.picking_type_id.code == 'incoming'
+        )
+        if from_picking:
+            source_pickings = from_picking.filtered(lambda p: p.state == 'done')
+        for picking in source_pickings:
+            for move in picking.move_ids:
+                if move.product_id:
+                    qty_by_product[move.product_id.id] += move.product_uom_qty
+
+        if not qty_by_product:
+            raise UserError(
+                _('No received quantities on incoming transfers for this job. '
+                  'Confirm the purchase receipt first.')
+            )
+
+        move_vals = []
+        for product_id, qty in qty_by_product.items():
+            product = self.env['product.product'].browse(product_id)
+            move_vals.append((0, 0, {
+                'name': product.display_name,
+                'product_id': product.id,
+                'product_uom': product.uom_id.id,
+                'product_uom_qty': qty,
+                'location_id': stock_loc.id,
+                'location_dest_id': site_loc.id,
+            }))
+
+        picking = self.env['stock.picking'].create({
+            'picking_type_id': picking_type.id,
+            'location_id': stock_loc.id,
+            'location_dest_id': site_loc.id,
+            'project_id': self.id,
+            'origin': _('Site delivery %s') % (
+                self.sbu_project_code if 'sbu_project_code' in self._fields and self.sbu_project_code
+                else self.name
+            ),
+            'sbu_transport_reason': 'internal',
+            'move_ids': move_vals,
+        })
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'stock.picking',
+            'res_id': picking.id,
+            'view_mode': 'form',
+            'target': 'current',
         }

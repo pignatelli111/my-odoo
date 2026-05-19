@@ -26,7 +26,8 @@
                     <button name="action_import"
                             string="Importa"
                             type="object"
-                            class="btn-primary"/>
+                            class="btn-primary"
+                            data-hotkey="q"/>
                     <button string="Annulla" special="cancel" class="btn-secondary"/>
                 </footer>
             </form>

@@ -421,8 +421,12 @@ class SbuEstimate(models.Model):
             'name': _('Importa da Excel ANACO'),
             'res_model': 'sbu.estimate.anaco.import.wizard',
             'view_mode': 'form',
+            'view_id': self.env.ref('sbu_estimate.view_sbu_estimate_anaco_import_wizard_form').id,
             'target': 'new',
-            'context': {'default_estimate_id': self.id},
+            'context': {
+                'default_estimate_id': self.id,
+                'form_view_initial_mode': 'edit',
+            },
         }
 
     def action_send(self):

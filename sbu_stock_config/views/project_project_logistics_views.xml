@@ -15,6 +15,16 @@
                         <span class="o_stat_text">Transfers</span>
                     </div>
                 </button>
+                <button name="action_sbu_view_incoming_pickings" type="object" class="oe_stat_button" icon="fa-truck"
+                        groups="stock.group_stock_user"
+                        invisible="sbu_incoming_picking_count == 0">
+                    <div class="o_stat_info">
+                        <span class="o_stat_value">
+                            <field name="sbu_open_receipt_count"/> / <field name="sbu_incoming_picking_count"/>
+                        </span>
+                        <span class="o_stat_text">Receipts</span>
+                    </div>
+                </button>
                 <button name="action_sbu_view_purchase_orders" type="object" class="oe_stat_button" icon="fa-shopping-cart"
                         groups="purchase.group_purchase_user">
                     <div class="o_stat_info">
@@ -31,11 +41,29 @@
                         <field name="sbu_logistics_state" widget="badge"/>
                     </group>
                     <group>
-                        <button name="action_sbu_view_pickings" type="object" string="Pickings &amp; deliveries"
+                        <button name="action_sbu_view_incoming_pickings" type="object" string="Open receipts"
+                                class="btn-primary" groups="stock.group_stock_user"
+                                invisible="sbu_incoming_picking_count == 0"/>
+                        <button name="action_sbu_create_site_delivery" type="object" string="Deliver stock to site"
+                                class="btn-secondary" groups="stock.group_stock_user"
+                                invisible="sbu_logistics_state not in ('received', 'site')"/>
+                        <button name="action_sbu_view_pickings" type="object" string="All pickings &amp; deliveries"
                                 class="btn-secondary" groups="stock.group_stock_user"/>
                         <button name="action_sbu_view_purchase_orders" type="object" string="Purchase orders"
                                 class="btn-secondary" groups="purchase.group_purchase_user"/>
                     </group>
+                    <field name="picking_ids" nolabel="1" readonly="1"
+                           context="{'default_project_id': id}"
+                           groups="stock.group_stock_user">
+                        <list decoration-muted="state == 'cancel'" decoration-success="state == 'done'">
+                            <field name="name"/>
+                            <field name="picking_type_id"/>
+                            <field name="partner_id"/>
+                            <field name="scheduled_date"/>
+                            <field name="sbu_ddt_number" optional="show"/>
+                            <field name="state" widget="badge"/>
+                        </list>
+                    </field>
                 </page>
             </xpath>
         </field>

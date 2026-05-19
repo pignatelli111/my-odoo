@@ -8,6 +8,28 @@
             <xpath expr="//sheet//field[@name='partner_id'][@nolabel='1']" position="after">
                 <field name="project_id"/>
             </xpath>
+            <xpath expr="//header" position="inside">
+                <button name="action_sbu_print_ddt" type="object" string="Print DDT (SBU)"
+                        class="btn-secondary" groups="stock.group_stock_user"
+                        invisible="state == 'cancel'"/>
+                <button name="action_sbu_deliver_to_site" type="object" string="Deliver to site"
+                        class="btn-secondary" groups="stock.group_stock_user"
+                        invisible="state != 'done' or picking_type_code != 'incoming'"/>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="DDT / transport" name="sbu_ddt_page" groups="stock.group_stock_user">
+                    <group>
+                        <group>
+                            <field name="sbu_ddt_number" readonly="state == 'done'"/>
+                            <field name="sbu_transport_reason"/>
+                        </group>
+                        <group>
+                            <field name="sbu_carrier_name"/>
+                            <field name="sbu_vehicle_plate"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
         </field>
     </record>
 </odoo>

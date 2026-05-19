@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from odoo import api, fields, models
+from odoo import _, api, fields, models
+from odoo.exceptions import UserError
 
 
 class StockPicking(models.Model):
@@ -13,11 +14,31 @@ class StockPicking(models.Model):
         tracking=True,
         help='SBU job this transfer belongs to (incoming from PO, internal, or deliveries).',
     )
+    sbu_ddt_number = fields.Char(
+        string='DDT number',
+        copy=False,
+        tracking=True,
+        help='Transport document number (aligned with paper DDT from the carrier).',
+    )
+    sbu_carrier_name = fields.Char(string='Carrier / vettore')
+    sbu_vehicle_plate = fields.Char(string='Vehicle plate')
+    sbu_transport_reason = fields.Selection(
+        selection=[
+            ('purchase', 'Purchase / supply to warehouse'),
+            ('sale', 'Delivery to customer / site'),
+            ('internal', 'Internal transfer'),
+            ('return', 'Return'),
+            ('other', 'Other'),
+        ],
+        string='Transport reason',
+        default='purchase',
+    )
 
     @api.model_create_multi
     def create(self, vals_list):
         pickings = super().create(vals_list)
         pickings._sbu_sync_project_from_sources()
+        pickings._sbu_default_transport_reason()
         return pickings
 
     def write(self, vals):
@@ -25,6 +46,18 @@ class StockPicking(models.Model):
         if 'move_ids' in vals or 'move_line_ids' in vals:
             self._sbu_sync_project_from_sources()
         return res
+
+    def _sbu_default_transport_reason(self):
+        for picking in self:
+            if picking.sbu_transport_reason:
+                continue
+            code = picking.picking_type_id.code
+            if code == 'incoming':
+                picking.sbu_transport_reason = 'purchase'
+            elif code == 'outgoing':
+                picking.sbu_transport_reason = 'sale'
+            elif code == 'internal':
+                picking.sbu_transport_reason = 'internal'
 
     def _sbu_sync_project_from_sources(self):
         """Fill project_id on pickings when missing (service/subcontract/MRP paths)."""
@@ -49,3 +82,26 @@ class StockPicking(models.Model):
                 return mo.project_id
         return False
 
+    def _sbu_assign_ddt_number_if_missing(self):
+        seq = self.env['ir.sequence'].next_by_code
+        for picking in self:
+            if picking.sbu_ddt_number:
+                continue
+            if picking.picking_type_id.code not in ('incoming', 'outgoing', 'internal'):
+                continue
+            picking.sbu_ddt_number = seq('sbu.stock.ddt') or picking.name
+
+    def button_validate(self):
+        self._sbu_assign_ddt_number_if_missing()
+        return super().button_validate()
+
+    def action_sbu_print_ddt(self):
+        self.ensure_one()
+        return self.env.ref('sbu_stock_config.action_report_sbu_ddt').report_action(self)
+
+    def action_sbu_deliver_to_site(self):
+        """Create internal transfer Stock → Site cantiere for done incoming qty on this job."""
+        self.ensure_one()
+        if not self.project_id:
+            raise UserError(_('Set the job / project on this transfer first.'))
+        return self.project_id.action_sbu_create_site_delivery(from_picking=self)

@@ -13,6 +13,7 @@
                         <field name="sbu_qonto_iban"/>
                         <field name="sbu_qonto_use_sandbox"/>
                         <field name="sbu_qonto_import_enabled"/>
+                        <field name="sbu_qonto_suggest_after_import"/>
                     </group>
                     <group string="Webhook" groups="account.group_account_manager">
                         <field

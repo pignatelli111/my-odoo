@@ -37,3 +37,17 @@ def post_init_hook(env):
                 wh.display_name,
                 exc,
             )
+
+    # Place SBU reception buffer under the warehouse Input so 2-step receipts land there first
+    buffer = env.ref('sbu_stock_config.stock_location_sbu_reception_buffer', raise_if_not_found=False)
+    if wh and buffer:
+        input_loc = wh.wh_input_stock_loc_id if 'wh_input_stock_loc_id' in wh._fields else False
+        if input_loc and buffer.location_id != input_loc:
+            try:
+                buffer.sudo().write({'location_id': input_loc.id})
+            except Exception as exc:
+                _logger.warning(
+                    'SBU stock_config: could not reparent reception buffer under %s: %s',
+                    input_loc.display_name,
+                    exc,
+                )

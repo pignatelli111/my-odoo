@@ -3,7 +3,7 @@
 import base64
 import io
 import math
-from odoo import fields, models, _
+from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
 try:
@@ -44,7 +44,7 @@ ANACO_COL_PRICE = {
 }
 ANACO_COL_COST_COIB = 30
 ANACO_COL_COST_POSA_LIN = 50
-ANACO_COL_COST_NOLO = 52
+# Col 52 is price nolo (ANACO_COL_PRICE); no separate cost_nolo field on Odoo lines.
 ANACO_COL_COST_TRASPORTO = 57
 ANACO_COL_COST_TECH_PM = 59
 ANACO_COL_COST_CANTIERE = 61
@@ -81,11 +81,17 @@ SAL_COL_SAL_START = 98  # SAL-1 … SAL-10
 
 
 def _sheet_by_aliases(wb, aliases):
-    lower = {n.lower(): n for n in wb.sheetnames}
+    lower = {n.lower().replace(' ', '_'): n for n in wb.sheetnames}
     for a in aliases:
-        if a.lower() in lower:
-            return wb[lower[a.lower()]]
+        key = a.lower().replace(' ', '_')
+        if key in lower:
+            return wb[lower[key]]
     return None
+
+
+def _filter_model_fields(model, vals):
+    allowed = set(model._fields)
+    return {k: v for k, v in vals.items() if k in allowed}
 
 
 def _cell_num(sh, row, col):
@@ -142,7 +148,7 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
         required=True,
         ondelete='cascade',
     )
-    data_file = fields.Binary(string='File .xlsx', required=True)
+    data_file = fields.Binary(string='File .xlsx')
     data_filename = fields.Char(string='Nome file')
 
     import_anaco = fields.Boolean(string='Importa righe ANACO', default=True)
@@ -174,14 +180,31 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
              'impostare qui la commissione da applicare a tutte le righe importate, se serve.',
     )
 
+    @api.model
+    def default_get(self, fields_list):
+        res = super().default_get(fields_list)
+        if not res.get('estimate_id') and self.env.context.get('default_estimate_id'):
+            res['estimate_id'] = self.env.context['default_estimate_id']
+        return res
+
+    def _sbu_validate_upload(self):
+        self.ensure_one()
+        if not self.data_file:
+            raise UserError(_('Selezionare un file .xlsx.'))
+        name = (self.data_filename or '').lower()
+        if name and not name.endswith(('.xlsx', '.xlsm')):
+            raise UserError(
+                _('Formato non supportato: %(name)s. Salvare il file Excel come .xlsx (non .xls).',
+                  name=self.data_filename)
+            )
+
     def action_import(self):
         if not openpyxl:
             raise UserError(_('Installare la libreria Python openpyxl sul server Odoo.'))
         self.ensure_one()
         if not self.import_anaco and not self.import_sal:
             raise UserError(_('Selezionare almeno un tipo di import (ANACO e/o SAL).'))
-        if not self.data_file:
-            raise UserError(_('Selezionare un file .xlsx.'))
+        self._sbu_validate_upload()
 
         raw = base64.b64decode(self.data_file)
         try:
@@ -189,16 +212,26 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
         except Exception as err:  # pylint: disable=broad-except
             raise UserError(_('Impossibile leggere il file Excel: %s') % (err,)) from err
 
-        anaco_sh = _sheet_by_aliases(wb, ('ANACO',))
-        sal_sh = _sheet_by_aliases(wb, ('Voci Contrattuali_SAL',))
+        anaco_sh = _sheet_by_aliases(wb, ('ANACO', 'Anaco'))
+        sal_sh = _sheet_by_aliases(wb, (
+            'Voci Contrattuali_SAL',
+            'Voci Contrattuali SAL',
+            'VOCI CONTRATTUALI_SAL',
+        ))
 
         n_anaco = 0
         n_sal = 0
         estimate = self.estimate_id
 
+        Line = self.env['sbu.estimate.line']
+        SalLine = self.env['sbu.estimate.sal.line']
+
         if self.import_anaco:
             if not anaco_sh:
-                raise UserError(_('Foglio «ANACO» non trovato nel file.'))
+                raise UserError(
+                    _('Foglio «ANACO» non trovato. Fogli presenti: %s')
+                    % ', '.join(wb.sheetnames)
+                )
             sc1 = _mult_to_discount_pct(_cell_num(anaco_sh, ANACO_ROW_PARAMS, ANACO_COL_SC_MULT[0]))
             sc2 = _mult_to_discount_pct(_cell_num(anaco_sh, ANACO_ROW_PARAMS, ANACO_COL_SC_MULT[1]))
             sc3 = _mult_to_discount_pct(_cell_num(anaco_sh, ANACO_ROW_PARAMS, ANACO_COL_SC_MULT[2]))
@@ -259,7 +292,6 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
                 for fname, col in (
                     ('cost_coibentazione_cad', ANACO_COL_COST_COIB),
                     ('cost_posa_lamiera_lin_cad', ANACO_COL_COST_POSA_LIN),
-                    ('cost_nolo_cad', ANACO_COL_COST_NOLO),
                     ('cost_trasporto_cad', ANACO_COL_COST_TRASPORTO),
                     ('cost_tech_pm_cad', ANACO_COL_COST_TECH_PM),
                     ('cost_cantiere_cad', ANACO_COL_COST_CANTIERE),
@@ -283,13 +315,29 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
                 if cost_family:
                     line_vals['cost_family'] = cost_family
 
-                self.env['sbu.estimate.line'].create(line_vals)
+                try:
+                    Line.create(_filter_model_fields(Line, line_vals))
+                except Exception as err:  # pylint: disable=broad-except
+                    raise UserError(
+                        _('Errore import riga Excel %(row)s (pos. %(pos)s): %(err)s')
+                        % {'row': r, 'pos': pos or '—', 'err': err}
+                    ) from err
                 n_anaco += 1
                 seq += 10
 
+        if self.import_anaco and n_anaco == 0:
+            raise UserError(
+                _('Nessuna riga ANACO importata. Verificare: foglio ANACO, prima riga dati (%(row)s), '
+                  'e che il file sia salvato con valori calcolati (Apri in Excel → Salva).')
+                % {'row': self.anaco_first_row}
+            )
+
         if self.import_sal:
             if not sal_sh:
-                raise UserError(_('Foglio «Voci Contrattuali_SAL» non trovato nel file.'))
+                raise UserError(
+                    _('Foglio «Voci Contrattuali_SAL» non trovato. Fogli presenti: %s')
+                    % ', '.join(wb.sheetnames)
+                )
             if self.replace_sal_lines:
                 estimate.sal_line_ids.unlink()
 
@@ -347,7 +395,12 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
                     if v is not None:
                         sal_vals[f'sal_{i + 1}_pct'] = _norm_pct(v)
 
-                self.env['sbu.estimate.sal.line'].create(sal_vals)
+                try:
+                    SalLine.create(_filter_model_fields(SalLine, sal_vals))
+                except Exception as err:  # pylint: disable=broad-except
+                    raise UserError(
+                        _('Errore import riga SAL Excel %(row)s: %(err)s') % {'row': r, 'err': err}
+                    ) from err
                 n_sal += 1
                 seq += 10
 
@@ -359,8 +412,10 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
         estimate.message_post(body=body)
         return {
             'type': 'ir.actions.act_window',
+            'name': _('Preventivo'),
             'res_model': 'sbu.estimate',
             'res_id': estimate.id,
             'view_mode': 'form',
-            'target': 'current',
+            'views': [(False, 'form')],
+            'target': 'main',
         }
