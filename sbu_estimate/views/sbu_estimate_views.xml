@@ -239,7 +239,7 @@
                                                 <field name="bom_line_ids">
                                                     <list editable="bottom">
                                                         <field name="product_id"
-                                                               domain="[('purchase_ok', '=', True), ('type', 'in', ['consu', 'product'])]"/>
+                                                               domain="[('purchase_ok', '=', True), ('type', '=', 'consu')]"/>
                                                         <field name="description"/>
                                                         <field name="calc_type"/>
                                                         <field name="qty_formula_factor"/>
@@ -271,7 +271,7 @@
                                            domain="[('estimate_id', '=', parent.id)]"
                                            options="{'no_create': True}"/>
                                     <field name="product_id"
-                                           domain="[('purchase_ok', '=', True), ('type', 'in', ['consu', 'product'])]"/>
+                                           domain="[('purchase_ok', '=', True), ('type', '=', 'consu')]"/>
                                     <field name="description"/>
                                     <field name="calc_type"/>
                                     <field name="qty_formula_factor"/>

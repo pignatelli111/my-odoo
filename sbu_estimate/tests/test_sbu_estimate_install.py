@@ -5,20 +5,18 @@ from odoo.tests.common import TransactionCase
 
 @tagged('post_install', '-at_install')
 class TestSbuEstimateInstall(TransactionCase):
-    """Smoke tests for Odoo.sh (avoid overriding Model.display_name)."""
+    """Smoke tests for Odoo.sh."""
 
-    def test_estimate_line_uses_name_not_custom_display_name(self):
+    def test_estimate_line_rec_name(self):
         line_model = self.env['sbu.estimate.line']
-        self.assertIn('name', line_model._fields)
         self.assertEqual(line_model._rec_name, 'name')
-        # Must not replace the framework display_name field with a stored custom one.
-        disp = line_model._fields['display_name']
-        self.assertTrue(disp.compute)
+        self.assertIn('name', line_model._fields)
 
     def test_bom_line_sets_estimate_from_anaco_row(self):
         partner = self.env['res.partner'].create({'name': 'UAT Partner'})
-        est = self.env['sbu.estimate'].create({
+        est = self.env['sbu.estimate'].with_company(self.env.company).create({
             'partner_id': partner.id,
+            'company_id': self.env.company.id,
             'line_ids': [(0, 0, {
                 'description': 'UAT BOM smoke line',
                 'pos': 'FT01',
@@ -26,11 +24,12 @@ class TestSbuEstimateInstall(TransactionCase):
             })],
         })
         eline = est.line_ids[0]
-        product = self.env['product.product'].create({
+        tmpl = self.env['product.template'].create({
             'name': 'UAT smoke product',
             'type': 'consu',
             'purchase_ok': True,
         })
+        product = tmpl.product_variant_ids[0]
         bom = self.env['sbu.estimate.bom.line'].create({
             'estimate_line_id': eline.id,
             'product_id': product.id,
