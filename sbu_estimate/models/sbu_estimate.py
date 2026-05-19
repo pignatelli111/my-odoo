@@ -177,6 +177,16 @@ class SbuEstimate(models.Model):
         'estimate_id',
         string='Righe Preventivo (ANACO)',
     )
+    item_bom_line_ids = fields.One2many(
+        'sbu.estimate.bom.line',
+        'estimate_id',
+        string='Distinta Base (ITEM)',
+        help='Componenti distinta per tutte le righe ANACO del preventivo.',
+    )
+    item_bom_line_count = fields.Integer(
+        string='Righe distinta',
+        compute='_compute_item_bom_line_count',
+    )
     sal_line_ids = fields.One2many(
         'sbu.estimate.sal.line',
         'estimate_id',
@@ -299,6 +309,11 @@ class SbuEstimate(models.Model):
                 rec.revision_same_name_count = 0
             else:
                 rec.revision_same_name_count = Estimate.search_count([('name', '=', name)])
+
+    @api.depends('item_bom_line_ids')
+    def _compute_item_bom_line_count(self):
+        for rec in self:
+            rec.item_bom_line_count = len(rec.item_bom_line_ids)
 
     @api.depends(
         'line_ids.price_total_tot',

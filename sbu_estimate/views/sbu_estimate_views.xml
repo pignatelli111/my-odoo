@@ -207,9 +207,11 @@
                                     <sheet>
                                         <group>
                                             <group>
+                                                <field name="pos"/>
                                                 <field name="description"/>
                                                 <field name="calc_uom_type"/>
                                                 <field name="cost_family"/>
+                                                <field name="workflow_route" readonly="1"/>
                                                 <field name="qty"/>
                                                 <field name="width_mm"/>
                                                 <field name="height_mm"/>
@@ -228,11 +230,59 @@
                                             <group string="Costo">
                                                 <field name="cost_coibentazione_cad"/>
                                                 <field name="cost_posa_lamiera_lin_cad"/>
+                                                <field name="cost_bom_total" readonly="1"/>
                                                 <field name="cost_total_tot" readonly="1"/>
                                             </group>
                                         </group>
+                                        <notebook>
+                                            <page string="Distinta Base (ITEM)" name="bom_lines">
+                                                <field name="bom_line_ids">
+                                                    <list editable="bottom">
+                                                        <field name="product_id"/>
+                                                        <field name="description"/>
+                                                        <field name="calc_type"/>
+                                                        <field name="qty_formula_factor"/>
+                                                        <field name="pack_size"/>
+                                                        <field name="demand_loss_pct" optional="show"/>
+                                                        <field name="demand_moq" optional="show"/>
+                                                        <field name="qty_theoretical" readonly="1"/>
+                                                        <field name="qty_ordered" readonly="1"/>
+                                                        <field name="uom_id"/>
+                                                        <field name="unit_cost"/>
+                                                        <field name="total_cost" readonly="1"/>
+                                                        <field name="note"/>
+                                                    </list>
+                                                </field>
+                                            </page>
+                                        </notebook>
                                     </sheet>
                                 </form>
+                            </field>
+                        </page>
+
+                        <page string="Distinta Base (ITEM)" name="estimate_item_bom">
+                            <field name="item_bom_line_count" invisible="1"/>
+                            <field name="item_bom_line_ids"
+                                   context="{'default_estimate_id': id}">
+                                <list editable="bottom">
+                                    <field name="estimate_line_id"
+                                           string="Riga ANACO"
+                                           domain="[('estimate_id', '=', parent.id)]"
+                                           options="{'no_create': True}"/>
+                                    <field name="product_id"/>
+                                    <field name="description"/>
+                                    <field name="calc_type"/>
+                                    <field name="qty_formula_factor"/>
+                                    <field name="pack_size"/>
+                                    <field name="demand_loss_pct" optional="show"/>
+                                    <field name="demand_moq" optional="show"/>
+                                    <field name="qty_theoretical" readonly="1"/>
+                                    <field name="qty_ordered" readonly="1"/>
+                                    <field name="uom_id"/>
+                                    <field name="unit_cost"/>
+                                    <field name="total_cost" readonly="1"/>
+                                    <field name="note"/>
+                                </list>
                             </field>
                         </page>
 

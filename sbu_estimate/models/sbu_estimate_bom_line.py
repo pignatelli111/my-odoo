@@ -1,6 +1,7 @@
 import math
 
-from odoo import models, fields, api
+from odoo import _, api, fields, models
+from odoo.exceptions import ValidationError
 
 
 class SbuEstimateBomLine(models.Model):
@@ -18,6 +19,13 @@ class SbuEstimateBomLine(models.Model):
         string='Riga Preventivo',
         required=True,
         ondelete='cascade',
+    )
+    estimate_id = fields.Many2one(
+        'sbu.estimate',
+        string='Preventivo',
+        required=True,
+        ondelete='cascade',
+        index=True,
     )
     sequence = fields.Integer(default=10)
 
@@ -114,6 +122,40 @@ class SbuEstimateBomLine(models.Model):
 
     # ── Notes ─────────────────────────────────────────────────────────────────
     note = fields.Char(string='Note / Utilizzo')
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        Line = self.env['sbu.estimate.line']
+        for vals in vals_list:
+            eline = Line.browse(vals['estimate_line_id']) if vals.get('estimate_line_id') else Line
+            if vals.get('estimate_line_id') and not vals.get('estimate_id'):
+                vals['estimate_id'] = eline.estimate_id.id
+            elif vals.get('estimate_id') and not vals.get('estimate_line_id'):
+                est = self.env['sbu.estimate'].browse(vals['estimate_id'])
+                if len(est.line_ids) == 1:
+                    vals['estimate_line_id'] = est.line_ids.id
+                    vals['estimate_id'] = est.id
+        return super().create(vals_list)
+
+    def write(self, vals):
+        res = super().write(vals)
+        if 'estimate_line_id' in vals:
+            for bom in self:
+                if bom.estimate_line_id:
+                    bom.estimate_id = bom.estimate_line_id.estimate_id
+        return res
+
+    @api.constrains('estimate_line_id', 'estimate_id')
+    def _check_estimate_matches_line(self):
+        for bom in self:
+            if (
+                bom.estimate_line_id
+                and bom.estimate_id
+                and bom.estimate_line_id.estimate_id != bom.estimate_id
+            ):
+                raise ValidationError(
+                    _('BOM line must belong to the same preventivo as its ANACO row.')
+                )
 
     # ── Computed: description from product ───────────────────────────────────
     @api.depends('product_id')
