@@ -238,7 +238,8 @@
                                             <page string="Distinta Base (ITEM)" name="bom_lines">
                                                 <field name="bom_line_ids">
                                                     <list editable="bottom">
-                                                        <field name="product_id"/>
+                                                        <field name="product_id"
+                                                               domain="[('purchase_ok', '=', True)]"/>
                                                         <field name="description"/>
                                                         <field name="calc_type"/>
                                                         <field name="qty_formula_factor"/>
@@ -269,7 +270,8 @@
                                            string="Riga ANACO"
                                            domain="[('estimate_id', '=', parent.id)]"
                                            options="{'no_create': True}"/>
-                                    <field name="product_id"/>
+                                    <field name="product_id"
+                                           domain="[('purchase_ok', '=', True)]"/>
                                     <field name="description"/>
                                     <field name="calc_type"/>
                                     <field name="qty_formula_factor"/>

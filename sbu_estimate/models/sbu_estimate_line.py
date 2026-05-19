@@ -1,4 +1,4 @@
-from odoo import api, fields, models
+from odoo import _, api, fields, models
 
 from .sbu_contract_uom import SBU_CONTRACT_UOM_SELECTION
 from .sbu_cost_family import COST_FAMILY_WORKFLOW_ROUTE, SBU_COST_FAMILY_SELECTION
@@ -16,6 +16,7 @@ def _successive_discount_factor(*percents):
 class SbuEstimateLine(models.Model):
     _name = 'sbu.estimate.line'
     _description = 'SBU Estimate Line (ANACO row)'
+    _rec_name = 'display_name'
     _order = 'sequence, pos'
 
     estimate_id = fields.Many2one(
@@ -37,6 +38,12 @@ class SbuEstimateLine(models.Model):
     pos = fields.Char(string='Pos.', help='Posizione item (es. FTF, FT, LA01)')
     item_code = fields.Char(string='Codice Item')
     description = fields.Text(string='Descrizione', required=True)
+    display_name = fields.Char(
+        string='Riga ANACO',
+        compute='_compute_display_name',
+        store=True,
+        index=True,
+    )
     note = fields.Text(
         string='Note / assunzioni',
         help='Ipotesi e condizioni specifiche della riga (es. tipo vetro da confermare, esclusioni, listino fornitore, revisione disegno).',
@@ -453,6 +460,20 @@ class SbuEstimateLine(models.Model):
                 line.price_unit_rate = line.price_total_tot
                 line.cost_unit_rate = line.cost_total_tot
                 line.unit_rate_label = 'Lump sum'
+
+    @api.depends('pos', 'description')
+    def _compute_display_name(self):
+        for line in self:
+            pos = (line.pos or '').strip()
+            desc = (line.description or '').strip()
+            if pos and desc:
+                line.display_name = f'{pos} — {desc}'
+            elif desc:
+                line.display_name = desc
+            elif pos:
+                line.display_name = pos
+            else:
+                line.display_name = _('ANACO line %s') % line.id
 
     @api.depends('bom_line_ids.total_cost')
     def _compute_cost_bom_total(self):
