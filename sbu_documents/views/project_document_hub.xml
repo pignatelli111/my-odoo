@@ -22,7 +22,8 @@
                             <field name="sbu_onedrive_folder_name_effective" readonly="1"/>
                         </group>
                         <group string="Link &amp; custody">
-                            <field name="sbu_onedrive_url" widget="url" string="OneDrive folder URL"/>
+                            <field name="sbu_onedrive_url" string="OneDrive folder URL"
+                                   placeholder="https://… SharePoint / OneDrive folder link"/>
                             <field name="sbu_onedrive_custodian_id" widget="many2one_avatar_user"/>
                             <field name="sbu_onedrive_linked_at" readonly="1" groups="project.group_project_manager"/>
                         </group>
@@ -37,7 +38,7 @@
                                 invisible="not sbu_onedrive_drive_id or not sbu_onedrive_item_id"/>
                         <field name="sbu_graph_sync_state" readonly="1"/>
                         <field name="sbu_graph_folder_sync_at" readonly="1"/>
-                        <field name="sbu_graph_folder_web_url" widget="url" readonly="1"/>
+                        <field name="sbu_graph_folder_web_url" readonly="1"/>
                         <field name="sbu_graph_sync_message" readonly="1"/>
                     </group>
                     <field name="sbu_graph_drive_item_ids" nolabel="1" colspan="2"
@@ -48,7 +49,7 @@
                             <field name="mime_type" optional="show"/>
                             <field name="size" optional="hide"/>
                             <field name="graph_modified" optional="hide"/>
-                            <field name="web_url" widget="url"/>
+                            <field name="web_url"/>
                         </list>
                     </field>
                     <field name="sbu_external_document_ids">
@@ -56,7 +57,7 @@
                             <field name="sequence" widget="handle"/>
                             <field name="link_kind"/>
                             <field name="name"/>
-                            <field name="url" widget="url"/>
+                            <field name="url" placeholder="https://…"/>
                             <field name="custodian_id" widget="many2one_avatar_user" optional="show"/>
                             <field name="note" optional="hide"/>
                         </list>
