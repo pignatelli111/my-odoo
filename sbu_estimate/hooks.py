@@ -9,9 +9,30 @@ def _sbu_backfill_bom_estimate_id(env):
             bom.estimate_id = bom.estimate_line_id.estimate_id
 
 
+def _sbu_ensure_uat_products(env):
+    """Idempotent UAT goods for distinta / RDA testing (Odoo 19: type consu only)."""
+    Template = env['product.template'].sudo()
+    specs = (
+        ('UAT-PROF-01', 'UAT — Profilo alluminio test', 25.0),
+        ('UAT-FAST-01', 'UAT — Vite / accessorio test', 0.5),
+    )
+    for code, name, cost in specs:
+        if Template.search([('default_code', '=', code)], limit=1):
+            continue
+        Template.create({
+            'name': name,
+            'default_code': code,
+            'type': 'consu',
+            'purchase_ok': True,
+            'sale_ok': False,
+            'standard_price': cost,
+        })
+
+
 def post_init_hook(env):
     """Assign SBU Estimate User to internal users so CRM opportunity linking works out of the box."""
     _sbu_backfill_bom_estimate_id(env)
+    _sbu_ensure_uat_products(env)
     group = env.ref('sbu_estimate.group_sbu_estimate_user', raise_if_not_found=False)
     if not group:
         return

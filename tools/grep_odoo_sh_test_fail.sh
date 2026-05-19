@@ -11,8 +11,16 @@ fi
 echo "=== Commit on this build ==="
 git -C "$USER_REPO" log -1 --oneline 2>/dev/null || echo "(no git at $USER_REPO)"
 echo ""
-echo "=== Test failures ==="
+echo "=== Test failures (install.log) ==="
 grep -nE 'FAIL:|ERROR: test_|AssertionError|failures=[1-9]| errors=[1-9]' "$LOG" | tail -30 || echo "(none)"
+echo ""
+echo "=== Test failures (odoo.log — Odoo.sh often logs tests here) ==="
+ODOO_LOG="${2:-/home/odoo/logs/odoo.log}"
+if [[ -f "$ODOO_LOG" ]]; then
+  grep -nE 'FAIL:|ERROR: test_|AssertionError|Traceback \(most recent' "$ODOO_LOG" | tail -30 || echo "(none)"
+else
+  echo "(no $ODOO_LOG)"
+fi
 echo ""
 echo "=== Tracebacks / critical ==="
 grep -nE 'Traceback|CRITICAL|ParseError|ValidationError' "$LOG" | tail -20 || echo "(none)"
