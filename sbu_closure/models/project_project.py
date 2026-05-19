@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import _, api, fields, models
+from odoo.exceptions import UserError
 
 
 class ProjectProject(models.Model):
@@ -33,15 +34,14 @@ class ProjectProject(models.Model):
             project.sbu_closure_required_open = len(open_pending)
             project.sbu_closure_ready = not open_pending
 
-    def action_sbu_closure_init_checklist(self):
-        """Create missing checklist lines from active document types."""
+    def _sbu_closure_init_missing_lines(self):
+        """Create checklist lines from types marked «Add on init» (no UI notification)."""
         Type = self.env['sbu.closure.document.type'].sudo()
         Requirement = self.env['sbu.closure.requirement']
-        messages = []
+        created_total = 0
         for project in self:
             types = Type.search([('active', '=', True), ('init_on_project', '=', True)])
             existing_type_ids = set(project.sbu_closure_requirement_ids.mapped('document_type_id').ids)
-            created = 0
             for doc_type in types:
                 if doc_type.id in existing_type_ids:
                     continue
@@ -54,9 +54,38 @@ class ProjectProject(models.Model):
                         'sequence': doc_type.sequence,
                     }
                 )
-                created += 1
-            messages.append((project.id, created))
-        total = sum(m[1] for m in messages)
+                created_total += 1
+        return created_total
+
+    def write(self, vals):
+        if 'sbu_state' in vals:
+            target = vals['sbu_state']
+            if target == 'closing':
+                pre = self.filtered(lambda p: p.sbu_estimate_id)
+                if pre:
+                    pre._sbu_closure_init_missing_lines()
+            if target in ('closed', 'archived'):
+                for project in self.filtered(lambda p: p.sbu_estimate_id):
+                    if not project.sbu_closure_requirement_ids:
+                        project._sbu_closure_init_missing_lines()
+                    project.invalidate_recordset(['sbu_closure_ready', 'sbu_closure_required_open'])
+                    if not project.sbu_closure_ready:
+                        raise UserError(
+                            _(
+                                'Cannot set job «%(state)s» until the closure checklist is complete '
+                                '(%(n)s required item(s) still pending). Open tab «Chiusura / DOP» on %(job)s.'
+                            )
+                            % {
+                                'state': dict(project._fields['sbu_state'].selection).get(target, target),
+                                'n': project.sbu_closure_required_open,
+                                'job': project.display_name,
+                            }
+                        )
+        return super().write(vals)
+
+    def action_sbu_closure_init_checklist(self):
+        """Create missing checklist lines from active document types."""
+        total = self._sbu_closure_init_missing_lines()
         if not total:
             return {
                 'type': 'ir.actions.client',

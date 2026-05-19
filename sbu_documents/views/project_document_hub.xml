@@ -24,6 +24,8 @@
                         <group string="Link &amp; custody">
                             <field name="sbu_onedrive_url" string="OneDrive folder URL"
                                    placeholder="https://… SharePoint / OneDrive folder link"/>
+                            <field name="sbu_onedrive_access_note"
+                                   placeholder="e.g. Guest link password (internal), or «Use M365 login — folder under 10_ERP»"/>
                             <field name="sbu_onedrive_custodian_id" widget="many2one_avatar_user"/>
                             <field name="sbu_onedrive_linked_at" readonly="1" groups="project.group_project_manager"/>
                         </group>

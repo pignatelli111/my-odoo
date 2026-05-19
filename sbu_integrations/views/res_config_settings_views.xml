@@ -26,6 +26,11 @@
                         <setting string="PDF max size (bytes)" help="Hard limit per file when fetch mode is enabled.">
                             <field name="sbu_graph_pdf_max_bytes"/>
                         </setting>
+                        <div class="mt-2">
+                            <button name="action_sbu_test_graph_connection" type="object"
+                                    string="Test Graph connection" class="btn-secondary"
+                                    icon="fa-plug"/>
+                        </div>
                 </block>
                 <block title="OneDrive / SharePoint (SBU convention)" name="sbu_onedrive_block">
                         <setting string="Folder name prefix" help="Suggested job folder names use: prefix + Codice Commessa + separator + name slug (see project Document hub).">

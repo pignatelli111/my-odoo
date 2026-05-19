@@ -1,4 +1,5 @@
-from odoo import models, fields
+from odoo import _, models, fields
+from odoo.exceptions import UserError
 
 
 class ResConfigSettings(models.TransientModel):
@@ -77,3 +78,30 @@ class ResConfigSettings(models.TransientModel):
         config_parameter='sbu.m365_collaboration_policy',
         help='How SBU uses Teams channels, Planner, and Outlook vs Odoo tasks (deep links, no duplicate workflows).',
     )
+
+    def action_sbu_test_graph_connection(self):
+        """Obtain an app-only token to verify Azure app registration credentials."""
+        from odoo.addons.sbu_integrations.services.microsoft_graph import GraphHttpError, SbuMicrosoftGraphClient
+
+        client = SbuMicrosoftGraphClient(self.env)
+        if not client.is_configured():
+            raise UserError(
+                _('Set Microsoft Graph tenant ID, client ID, and client secret first.')
+            )
+        try:
+            client.get_app_access_token()
+        except GraphHttpError as err:
+            raise UserError(
+                _('Microsoft Graph connection failed (%(code)s): %(msg)s')
+                % {'code': err.status or '?', 'msg': str(err)}
+            ) from err
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Microsoft Graph'),
+                'message': _('Connection OK — app token obtained successfully.'),
+                'type': 'success',
+                'sticky': False,
+            },
+        }

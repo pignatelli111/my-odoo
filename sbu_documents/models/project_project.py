@@ -71,6 +71,12 @@ class ProjectProject(models.Model):
         copy=False,
         help='Set automatically when the OneDrive folder URL is updated.',
     )
+    sbu_onedrive_access_note = fields.Text(
+        string='OneDrive access instructions',
+        tracking=True,
+        help='Internal only: guest link password, who has M365 access, or how to open the folder '
+             '(Odoo does not store Microsoft passwords for auto-login).',
+    )
 
     sbu_teams_team_url = fields.Char(
         string='Teams team URL',
