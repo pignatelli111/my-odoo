@@ -46,6 +46,10 @@ Regenerate workbook previews: `python tools/dump_excel_workbooks.py` (writes `do
 
 After code changes that touch settings views or `ir.config_parameter` logic, upgrade **`sbu_integrations`** (and any other touched addon) on each database.
 
+## User guide (client)
+
+Italian step-by-step guide with UAT screenshots: [docs/guide/GUIDA_UTENTE_SBU_ODOO.md](docs/guide/GUIDA_UTENTE_SBU_ODOO.md)
+
 ## Company
 
 - Suburban SRL a Socio Unico  
