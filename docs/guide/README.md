@@ -2,6 +2,7 @@
 
 | Documento | Pubblico |
 |-----------|----------|
+| [GUIDA_TEST_AUTONOMO_COSIMO.md](GUIDA_TEST_AUTONOMO_COSIMO.md) | **Cosimo / UAT** — test passo-passo senza esperienza Odoo (con screenshot) |
 | [GUIDA_UTENTE_SBU_ODOO.md](GUIDA_UTENTE_SBU_ODOO.md) | Suburban SRL — utenti operativi |
 | [../REPORT_CLIENTE_SBU_ODOO_IT.md](../REPORT_CLIENTE_SBU_ODOO_IT.md) | Report tecnico / avanzamento |
 | [../UAT_LOGISTICS_B.md](../UAT_LOGISTICS_B.md) | Checklist UAT logistica |

@@ -48,7 +48,8 @@ After code changes that touch settings views or `ir.config_parameter` logic, upg
 
 ## User guide (client)
 
-Italian step-by-step guide with UAT screenshots: [docs/guide/GUIDA_UTENTE_SBU_ODOO.md](docs/guide/GUIDA_UTENTE_SBU_ODOO.md)
+- **Autonomous UAT (Cosimo):** [docs/guide/GUIDA_TEST_AUTONOMO_COSIMO.md](docs/guide/GUIDA_TEST_AUTONOMO_COSIMO.md)  
+- **User guide (IT):** [docs/guide/GUIDA_UTENTE_SBU_ODOO.md](docs/guide/GUIDA_UTENTE_SBU_ODOO.md) (with screenshots)
 
 ## Company
 
