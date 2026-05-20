@@ -3,16 +3,6 @@ from odoo.exceptions import ValidationError
 
 from .sbu_contract_uom import SBU_CONTRACT_UOM_SELECTION
 
-SAL_STATUS_SELECTION = [
-    ('draft', _('Draft')),
-    ('prepared', _('Prepared')),
-    ('planning', _('Planned (SAL % only)')),
-    ('submitted', _('Submitted')),
-    ('approved', _('Approved')),
-    ('invoiced', _('Invoiced')),
-    ('paid', _('Paid')),
-]
-
 
 class SbuEstimateSalLine(models.Model):
     """
@@ -22,6 +12,19 @@ class SbuEstimateSalLine(models.Model):
     _name = 'sbu.estimate.sal.line'
     _description = 'SBU Estimate SAL Contractual Line'
     _order = 'sequence'
+
+    @api.model
+    def _selection_sal_status(self):
+        """Callable selection so labels translate at runtime (not at import)."""
+        return [
+            ('draft', _('Draft')),
+            ('prepared', _('Prepared')),
+            ('planning', _('Planned (SAL % only)')),
+            ('submitted', _('Submitted')),
+            ('approved', _('Approved')),
+            ('invoiced', _('Invoiced')),
+            ('paid', _('Paid')),
+        ]
 
     estimate_id = fields.Many2one(
         'sbu.estimate',
@@ -116,7 +119,7 @@ class SbuEstimateSalLine(models.Model):
     )
 
     sal_status = fields.Selection(
-        selection=SAL_STATUS_SELECTION,
+        selection='_selection_sal_status',
         string='SAL status',
         compute='_compute_sal_status',
         store=True,
