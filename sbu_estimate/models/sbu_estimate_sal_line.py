@@ -12,6 +12,7 @@ class SbuEstimateSalLine(models.Model):
     _name = 'sbu.estimate.sal.line'
     _description = 'SBU Estimate SAL Contractual Line'
     _order = 'sequence'
+    _rec_name = 'name'
 
     @api.model
     def _selection_sal_status(self):
@@ -57,6 +58,13 @@ class SbuEstimateSalLine(models.Model):
     # ── Item reference ────────────────────────────────────────────────────────
     item_ref = fields.Char(string='Item / Riferimento')
     description = fields.Text(string='Descrizione', required=True)
+    name = fields.Char(
+        string='Voce SAL',
+        compute='_compute_name',
+        store=True,
+        index=True,
+        help='Label for dropdowns (item + description + contract total).',
+    )
 
     # ── Contractual values ────────────────────────────────────────────────────
     uom_type = fields.Selection(
@@ -293,6 +301,41 @@ class SbuEstimateSalLine(models.Model):
             or (line.qty_contract and line.unit_price)
             or line.total_contract
         )
+
+    @api.depends('item_ref', 'description', 'total_contract')
+    def _compute_name(self):
+        for line in self:
+            ref = (line.item_ref or '').strip()
+            desc = (line.description or '').strip().replace('\n', ' ')
+            if len(desc) > 55:
+                desc = desc[:52] + '...'
+            if ref and desc:
+                label = f'{ref} — {desc}'
+            elif ref:
+                label = ref
+            elif desc:
+                label = desc
+            else:
+                label = _('SAL line %s') % (line.id or _('new'))
+            total = line.total_contract or 0.0
+            if total:
+                label = f'{label} ({total:,.2f} €)'
+            line.name = label
+
+    @api.model
+    def name_search(self, name='', args=None, operator='ilike', limit=100):
+        """Allow picking F1 / description text on SAL sheet lines."""
+        args = list(args or [])
+        if name:
+            domain = [
+                '|', '|',
+                ('item_ref', operator, name.strip()),
+                ('description', operator, name.strip()),
+                ('name', operator, name.strip()),
+            ] + args
+            records = self.search(domain, limit=limit)
+            return [(rec.id, rec.display_name) for rec in records.sudo()]
+        return super().name_search(name, args, operator, limit)
 
     def _compute_sal_sheet_line_count(self):
         if 'sbu.sal.sheet.line' not in self.env:

@@ -70,7 +70,9 @@
                             <field name="line_ids">
                                 <list editable="bottom">
                                     <field name="sequence" widget="handle"/>
-                                    <field name="estimate_sal_line_id" optional="show"/>
+                                    <field name="estimate_sal_line_id"
+                                           options="{'no_create': True}"
+                                           placeholder="e.g. F1"/>
                                     <field name="description"/>
                                     <field name="contract_amount"/>
                                     <field name="percent_this_sal"/>
