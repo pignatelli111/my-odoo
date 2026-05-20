@@ -233,11 +233,12 @@ def _detect_sal_pct_start_column(sh_vals, sh_form=None, fallback=SAL_COL_SAL_STA
     if sh_form is not None and sh_form is not sh_vals:
         sheets.append(sh_form)
 
+    scan_from = max(SAL_PCT_SCAN_COL_MIN, SAL_COL_SAL_START - 15)
     for sh in sheets:
         max_col = min((sh.max_column or 150) + 1, 220)
         # Full sequence SAL-1 … SAL-10 on one header row
         for row in range(1, 40):
-            for start in range(1, max_col - 8):
+            for start in range(scan_from, max_col - 8):
                 if all(
                     _sal_header_is_sal_n(
                         _sal_header_normalize(_cell_str(sh, row, start + i))[0],
@@ -247,7 +248,7 @@ def _detect_sal_pct_start_column(sh_vals, sh_form=None, fallback=SAL_COL_SAL_STA
                 ):
                     return start
         for row in range(1, 40):
-            for col in range(1, max_col):
+            for col in range(scan_from, max_col):
                 compact, raw = _sal_header_normalize(_cell_str(sh, row, col))
                 is_sal1 = (
                     _sal_header_is_sal_n(compact, 1)
@@ -266,10 +267,42 @@ def _detect_sal_pct_start_column(sh_vals, sh_form=None, fallback=SAL_COL_SAL_STA
     return fallback
 
 
+# SAL % in REV7 sit to the right of the floor grid (~col 48+); avoid floor blocks 12–47.
+SAL_PCT_SCAN_COL_MIN = 85
+
+
+def _coerce_import_sal_pct(raw):
+    """Return a SAL period % in 0–100, or None if the cell looks like €/mq/etc."""
+    if raw is None:
+        return None
+    pct = _norm_pct(raw)
+    if pct <= 0.0 or pct > 100.0:
+        return None
+    return pct
+
+
+def _sal_pct_block_row_sum(sh_vals, sh_form, row, start_col):
+    """Sum of 10 coerced SAL % cells; None if block does not look like SAL planning."""
+    total = 0.0
+    any_pct = False
+    for i in range(10):
+        v = _cell_num_merged(sh_vals, sh_form, row, start_col + i)
+        pct = _coerce_import_sal_pct(v)
+        if pct is None:
+            continue
+        any_pct = True
+        total += pct
+    if not any_pct:
+        return None
+    if total > 100.0000001:
+        return None
+    return total
+
+
 def _detect_sal_pct_by_data_profile(sh_vals, sh_form, first_row, fallback):
     """
     If headers are missing/merged, pick the 10-column block where data rows
-    look most like SAL % (0–100, many non-zero on first data rows).
+    look like SAL period % (each 0–100, row sum <= 100).
     """
     sh_form = sh_form or sh_vals
     max_col = min((sh_vals.max_column or 150) + 1, 220)
@@ -279,24 +312,20 @@ def _detect_sal_pct_by_data_profile(sh_vals, sh_form, first_row, fallback):
     if not sample_rows:
         return fallback
 
-    for start in range(8, max_col - 9):
+    scan_from = max(SAL_PCT_SCAN_COL_MIN, SAL_COL_SAL_START - 15)
+    for start in range(scan_from, max_col - 9):
         score = 0
         for r in sample_rows:
             item = _cell_str_merged(sh_vals, sh_form, r, SAL_COL_ITEM)
             desc = _cell_str_merged(sh_vals, sh_form, r, SAL_COL_DESC)
             if not item and not desc:
                 continue
-            for i in range(10):
-                v = _cell_num_merged(sh_vals, sh_form, r, start + i)
-                if v is None:
-                    continue
-                pct = _norm_pct(v)
-                if 0 < pct <= 100:
-                    score += 1
+            if _sal_pct_block_row_sum(sh_vals, sh_form, r, start) is not None:
+                score += 1
         if score > best_score:
             best_score = score
             best_col = start
-    if best_score >= 3:
+    if best_score >= 2:
         return best_col
     return fallback
 
@@ -719,6 +748,7 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
             empty_run = 0
             max_row = sal_sh.max_row or self.sal_first_row
             sal_lines_with_pct = 0
+            sal_pct_skipped_rows = 0
             for r in range(self.sal_first_row, max_row + 1):
                 item = _sal_str(r, SAL_COL_ITEM)
                 desc = _sal_str(r, SAL_COL_DESC)
@@ -763,14 +793,17 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
                     if block_sum:
                         sal_vals[fname] = block_sum
 
-                pct_sum = 0.0
+                pct_by_field = {}
                 for i in range(10):
                     v = _sal_num(r, sal_pct_col + i)
-                    if v is not None:
-                        pct = _norm_pct(v)
-                        sal_vals[f'sal_{i + 1}_pct'] = pct
-                        pct_sum += pct
-                if pct_sum > 0:
+                    pct = _coerce_import_sal_pct(v)
+                    if pct is not None:
+                        pct_by_field[f'sal_{i + 1}_pct'] = pct
+                pct_sum = sum(pct_by_field.values())
+                if pct_sum > 100.0000001:
+                    sal_pct_skipped_rows += 1
+                elif pct_by_field:
+                    sal_vals.update(pct_by_field)
                     sal_lines_with_pct += 1
 
                 try:
@@ -782,6 +815,12 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
                 n_sal += 1
                 seq += 10
 
+            if sal_pct_skipped_rows:
+                estimate.message_post(body=_(
+                    'Import SAL: %(n)d righe con celle non interpretabili come %% SAL '
+                    '(somma > 100%% o importi al posto delle %% — colonna %(col)d). '
+                    'Verificare le colonne SAL-1…10 nel file Excel.'
+                ) % {'n': sal_pct_skipped_rows, 'col': sal_pct_col})
             if n_sal and not sal_lines_with_pct:
                 estimate.message_post(body=_(
                     'Import SAL: nessuna percentuale SAL-1…10 letta dal file '

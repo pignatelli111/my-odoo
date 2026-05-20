@@ -12,6 +12,7 @@ except ImportError:  # pragma: no cover
     openpyxl = None
 
 from odoo.addons.sbu_estimate.wizards.sbu_estimate_anaco_import_wizard import (
+    _coerce_import_sal_pct,
     _detect_sal_pct_start_column,
     _filter_model_fields,
     SAL_COL_SAL_START,
@@ -60,6 +61,11 @@ class TestSbuAnacoImport(TransactionCase):
         wizard.action_import()
         self.assertEqual(len(estimate.line_ids), 1)
         self.assertEqual(estimate.line_ids[0].pos, 'FT01')
+
+    def test_coerce_import_sal_pct_rejects_amounts(self):
+        self.assertIsNone(_coerce_import_sal_pct(44430.6))
+        self.assertAlmostEqual(_coerce_import_sal_pct(25.0), 25.0)
+        self.assertAlmostEqual(_coerce_import_sal_pct(0.25), 25.0)
 
     def test_detect_sal_pct_start_column_non_rev7(self):
         if not openpyxl:
