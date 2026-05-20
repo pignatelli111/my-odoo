@@ -27,12 +27,10 @@
             <search string="Contractual SAL items">
                 <field name="name" string="Voce"/>
                 <field name="item_ref" string="Item"/>
-                <field name="description"/>
                 <field name="estimate_id" string="Preventivo"/>
-                <separator/>
-                <group expand="0" string="Group By">
-                    <filter string="Preventivo" name="group_estimate" context="{'group_by': 'estimate_id'}"/>
-                </group>
+                <filter string="Group by preventivo"
+                        name="group_estimate"
+                        context="{'group_by': 'estimate_id'}"/>
             </search>
         </field>
     </record>
