@@ -71,7 +71,7 @@ class TestSbuAnacoImport(TransactionCase):
         sal.cell(10, 55, 'SAL-1')
         sal.cell(10, 56, 'SAL-2')
         self.assertEqual(_detect_sal_pct_start_column(sal), 55)
-        self.assertEqual(_detect_sal_pct_start_column(sal, SAL_COL_SAL_START), 55)
+        self.assertEqual(_detect_sal_pct_start_column(sal, None, SAL_COL_SAL_START), 55)
 
     def test_import_sal_pct_from_detected_column(self):
         if not openpyxl:

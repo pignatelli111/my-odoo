@@ -224,26 +224,80 @@ def _sal_header_is_sal_n(compact, n):
     return bool(re.fullmatch(rf'SAL0?{n}', compact))
 
 
-def _detect_sal_pct_start_column(sh, fallback=SAL_COL_SAL_START):
+def _detect_sal_pct_start_column(sh_vals, sh_form=None, fallback=SAL_COL_SAL_START):
     """
     Find 1-based column of SAL-1 % in the SAL sheet header row.
     REV7 uses column 98; client workbooks (e.g. P1002 REV03) often shift left.
     """
-    max_col = min((sh.max_column or 120) + 1, 160)
-    for row in range(1, 30):
-        for col in range(1, max_col):
-            compact, raw = _sal_header_normalize(_cell_str(sh, row, col))
-            is_sal1 = _sal_header_is_sal_n(compact, 1) or bool(
-                re.search(r'SAL\s*[-.]?\s*1\b', raw)
-            )
-            if not is_sal1:
-                continue
-            for off in range(1, 5):
-                c2, _raw2 = _sal_header_normalize(_cell_str(sh, row, col + off))
-                if _sal_header_is_sal_n(c2, 2):
+    sheets = [sh_vals]
+    if sh_form is not None and sh_form is not sh_vals:
+        sheets.append(sh_form)
+
+    for sh in sheets:
+        max_col = min((sh.max_column or 150) + 1, 220)
+        # Full sequence SAL-1 … SAL-10 on one header row
+        for row in range(1, 40):
+            for start in range(1, max_col - 8):
+                if all(
+                    _sal_header_is_sal_n(
+                        _sal_header_normalize(_cell_str(sh, row, start + i))[0],
+                        i + 1,
+                    )
+                    for i in range(10)
+                ):
+                    return start
+        for row in range(1, 40):
+            for col in range(1, max_col):
+                compact, raw = _sal_header_normalize(_cell_str(sh, row, col))
+                is_sal1 = (
+                    _sal_header_is_sal_n(compact, 1)
+                    or bool(re.search(r'SAL\s*[-.]?\s*0?1\b', raw))
+                    or bool(re.search(r'SAL.*\b1\b', raw))
+                    or compact in ('SAL1PCT', 'SAL1PERC', 'PERCSAL1')
+                )
+                if not is_sal1:
+                    continue
+                for off in range(1, 6):
+                    c2, _raw2 = _sal_header_normalize(_cell_str(sh, row, col + off))
+                    if _sal_header_is_sal_n(c2, 2):
+                        return col
+                if _sal_header_is_sal_n(compact, 1):
                     return col
-            if _sal_header_is_sal_n(compact, 1):
-                return col
+    return fallback
+
+
+def _detect_sal_pct_by_data_profile(sh_vals, sh_form, first_row, fallback):
+    """
+    If headers are missing/merged, pick the 10-column block where data rows
+    look most like SAL % (0–100, many non-zero on first data rows).
+    """
+    sh_form = sh_form or sh_vals
+    max_col = min((sh.max_column or 150) + 1, 220)
+    best_col = None
+    best_score = 0
+    sample_rows = list(range(first_row, min(first_row + 25, (sh_vals.max_row or first_row) + 1)))
+    if not sample_rows:
+        return fallback
+
+    for start in range(8, max_col - 9):
+        score = 0
+        for r in sample_rows:
+            item = _cell_str_merged(sh_vals, sh_form, r, SAL_COL_ITEM)
+            desc = _cell_str_merged(sh_vals, sh_form, r, SAL_COL_DESC)
+            if not item and not desc:
+                continue
+            for i in range(10):
+                v = _cell_num_merged(sh_vals, sh_form, r, start + i)
+                if v is None:
+                    continue
+                pct = _norm_pct(v)
+                if 0 < pct <= 100:
+                    score += 1
+        if score > best_score:
+            best_score = score
+            best_col = start
+    if best_score >= 3:
+        return best_col
     return fallback
 
 
@@ -562,6 +616,11 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
             'Voci Contrattuali SAL',
             'VOCI CONTRATTUALI_SAL',
         ))
+        sal_sh_form = _sheet_by_aliases(wb_form, (
+            'Voci Contrattuali_SAL',
+            'Voci Contrattuali SAL',
+            'VOCI CONTRATTUALI_SAL',
+        )) if wb_form else None
 
         n_anaco = 0
         n_sal = 0
@@ -635,9 +694,23 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
             if self.replace_sal_lines:
                 estimate.sal_line_ids.unlink()
 
+            sal_form = sal_sh_form or sal_sh
+
+            def _sal_num(row, col):
+                return _cell_num_merged(sal_sh, sal_form, row, col)
+
+            def _sal_str(row, col):
+                return _cell_str_merged(sal_sh, sal_form, row, col)
+
             sal_pct_col = SAL_COL_SAL_START
             if self.auto_detect_sal_columns:
-                sal_pct_col = _detect_sal_pct_start_column(sal_sh, SAL_COL_SAL_START)
+                sal_pct_col = _detect_sal_pct_start_column(
+                    sal_sh, sal_sh_form, SAL_COL_SAL_START,
+                )
+                if sal_pct_col == SAL_COL_SAL_START:
+                    sal_pct_col = _detect_sal_pct_by_data_profile(
+                        sal_sh, sal_form, self.sal_first_row, SAL_COL_SAL_START,
+                    )
             else:
                 sal_pct_col = self.sal_col_sal_start or SAL_COL_SAL_START
             sal_pct_col_used = sal_pct_col
@@ -645,11 +718,10 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
             seq = 10
             empty_run = 0
             max_row = sal_sh.max_row or self.sal_first_row
+            sal_lines_with_pct = 0
             for r in range(self.sal_first_row, max_row + 1):
-                item = sal_sh.cell(r, SAL_COL_ITEM).value
-                item = str(item).strip() if item is not None else ''
-                desc_cell = sal_sh.cell(r, SAL_COL_DESC).value
-                desc = str(desc_cell).strip() if desc_cell is not None else ''
+                item = _sal_str(r, SAL_COL_ITEM)
+                desc = _sal_str(r, SAL_COL_DESC)
                 if not item and not desc:
                     empty_run += 1
                     if empty_run >= 5:
@@ -659,11 +731,11 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
                 if not desc:
                     desc = item or _('Voce SAL importata')
 
-                qty = _cell_num(sal_sh, r, SAL_COL_QTY)
-                unit = _cell_num(sal_sh, r, SAL_COL_UNIT_PRICE)
-                tot_ml = _cell_num(sal_sh, r, SAL_COL_TOT_ML) or 0.0
-                mq = _cell_num(sal_sh, r, SAL_COL_MQ) or 0.0
-                tot_mq = _cell_num(sal_sh, r, SAL_COL_TOT_MQ) or 0.0
+                qty = _sal_num(r, SAL_COL_QTY)
+                unit = _sal_num(r, SAL_COL_UNIT_PRICE)
+                tot_ml = _sal_num(r, SAL_COL_TOT_ML) or 0.0
+                mq = _sal_num(r, SAL_COL_MQ) or 0.0
+                tot_mq = _sal_num(r, SAL_COL_TOT_MQ) or 0.0
 
                 if tot_ml and tot_ml > 0 and not (mq or tot_mq):
                     uom = 'ml'
@@ -685,16 +757,21 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
                 for (c0, c1), fname in zip(SAL_COL_FLOOR_BLOCKS, SAL_FLOOR_FIELDS):
                     block_sum = 0.0
                     for c in range(c0, c1 + 1):
-                        v = _cell_num(sal_sh, r, c)
+                        v = _sal_num(r, c)
                         if v is not None:
                             block_sum += v
                     if block_sum:
                         sal_vals[fname] = block_sum
 
+                pct_sum = 0.0
                 for i in range(10):
-                    v = _cell_num(sal_sh, r, sal_pct_col + i)
+                    v = _sal_num(r, sal_pct_col + i)
                     if v is not None:
-                        sal_vals[f'sal_{i + 1}_pct'] = _norm_pct(v)
+                        pct = _norm_pct(v)
+                        sal_vals[f'sal_{i + 1}_pct'] = pct
+                        pct_sum += pct
+                if pct_sum > 0:
+                    sal_lines_with_pct += 1
 
                 try:
                     SalLine.create(_filter_model_fields(SalLine, sal_vals))
@@ -705,16 +782,23 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
                 n_sal += 1
                 seq += 10
 
+            if n_sal and not sal_lines_with_pct:
+                estimate.message_post(body=_(
+                    'Import SAL: nessuna percentuale SAL-1…10 letta dal file '
+                    '(colonna %(col)d). Aprire il file in Excel, salvare come .xlsx '
+                    'per memorizzare i valori calcolati, poi reimportare; oppure '
+                    'impostare manualmente «Colonna SAL-1» nel wizard.'
+                ) % {'col': sal_pct_col})
+
         wb_vals.close()
         wb_form.close()
 
         body = _(
             'Import Excel completato: %(anaco)d righe ANACO, %(sal)d righe SAL.'
         ) % {'anaco': n_anaco, 'sal': n_sal}
-        if sal_pct_col_used and sal_pct_col_used != SAL_COL_SAL_START:
+        if self.import_sal and sal_pct_col_used:
             body += '<br/>' + _(
-                'Colonne SAL-1…10 lette dalla colonna Excel %(col)d '
-                '(REV7 predefinita: %(rev7)d).'
+                'Colonne SAL-1…10: colonna Excel %(col)d (REV7 predefinita: %(rev7)d).'
             ) % {'col': sal_pct_col_used, 'rev7': SAL_COL_SAL_START}
         estimate.message_post(body=body)
         return {
