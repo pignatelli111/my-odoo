@@ -72,6 +72,10 @@
                                     <field name="sequence" widget="handle"/>
                                     <field name="estimate_sal_line_id"
                                            options="{'no_create': True}"
+                                           context="{
+                                               'list_view_ref': 'sbu_estimate.view_sbu_estimate_sal_line_list',
+                                               'search_view_ref': 'sbu_estimate.view_sbu_estimate_sal_line_search',
+                                           }"
                                            placeholder="e.g. F1"/>
                                     <field name="description"/>
                                     <field name="contract_amount"/>

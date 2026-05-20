@@ -323,19 +323,22 @@ class SbuEstimateSalLine(models.Model):
             line.name = label
 
     @api.model
-    def name_search(self, name='', args=None, operator='ilike', limit=100):
-        """Allow picking F1 / description text on SAL sheet lines."""
-        args = list(args or [])
-        if name:
-            domain = [
+    def name_search(self, name='', domain=None, operator='ilike', limit=100, args=None):
+        """Allow picking F1 / description text on SAL sheet lines (Odoo 19: domain=)."""
+        if args is not None and domain is None:
+            domain = args
+        domain = list(domain or [])
+        term = (name or '').strip()
+        if term:
+            search_domain = [
                 '|', '|',
-                ('item_ref', operator, name.strip()),
-                ('description', operator, name.strip()),
-                ('name', operator, name.strip()),
-            ] + args
-            records = self.search(domain, limit=limit)
+                ('item_ref', operator, term),
+                ('description', operator, term),
+                ('name', operator, term),
+            ] + domain
+            records = self.search(search_domain, limit=limit)
             return [(rec.id, rec.display_name) for rec in records.sudo()]
-        return super().name_search(name, args, operator, limit)
+        return super().name_search(name, domain=domain, operator=operator, limit=limit)
 
     def _compute_sal_sheet_line_count(self):
         if 'sbu.sal.sheet.line' not in self.env:

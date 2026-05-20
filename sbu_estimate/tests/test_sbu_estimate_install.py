@@ -10,4 +10,5 @@ class TestSbuEstimateInstall(TransactionCase):
     def test_models_registered(self):
         self.assertEqual(self.env['sbu.estimate']._name, 'sbu.estimate')
         self.assertEqual(self.env['sbu.estimate.line']._rec_name, 'name')
+        self.assertEqual(self.env['sbu.estimate.sal.line']._rec_name, 'name')
         self.assertEqual(self.env['sbu.estimate.bom.line']._name, 'sbu.estimate.bom.line')

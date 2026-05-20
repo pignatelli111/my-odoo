@@ -9,14 +9,13 @@
         <field name="arch" type="xml">
             <list string="Contractual SAL items" default_order="sequence, item_ref, id">
                 <field name="name" string="Voce contrattuale"/>
-                <field name="item_ref" string="Item" optional="show"/>
-                <field name="description" optional="hide"/>
-                <field name="estimate_id" string="Preventivo" optional="show"/>
+                <field name="item_ref" string="Item"/>
+                <field name="estimate_id" string="Preventivo"/>
+                <field name="total_contract" string="Contract €"/>
                 <field name="qty_contract" string="Qty" optional="hide"/>
                 <field name="unit_price" string="Unit €" optional="hide"/>
-                <field name="total_contract" string="Contract €"/>
-                <field name="cumulative_pct" string="Cum.%" optional="show"/>
-                <field name="sal_status" widget="badge" optional="show"/>
+                <field name="cumulative_pct" string="Cum.%" optional="hide"/>
+                <field name="sal_status" widget="badge" optional="hide"/>
             </list>
         </field>
     </record>
@@ -26,8 +25,7 @@
         <field name="model">sbu.estimate.sal.line</field>
         <field name="arch" type="xml">
             <search string="Contractual SAL items">
-                <field name="name" string="Voce"
-                       filter_domain="['|', '|', ('name', 'ilike', self), ('item_ref', 'ilike', self), ('description', 'ilike', self)]"/>
+                <field name="name" string="Voce"/>
                 <field name="item_ref" string="Item"/>
                 <field name="description"/>
                 <field name="estimate_id" string="Preventivo"/>

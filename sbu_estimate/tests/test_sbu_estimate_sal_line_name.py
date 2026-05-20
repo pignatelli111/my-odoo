@@ -21,8 +21,14 @@ class TestSbuEstimateSalLineName(TransactionCase):
 
         found = self.env['sbu.estimate.sal.line'].name_search(
             'F1',
-            args=[('estimate_id', '=', estimate.id)],
+            domain=[('estimate_id', '=', estimate.id)],
         )
         self.assertTrue(found)
         self.assertEqual(found[0][0], sal.id)
         self.assertIn('F1', found[0][1])
+
+    def test_sal_line_list_view_for_search_more(self):
+        view = self.env.ref('sbu_estimate.view_sbu_estimate_sal_line_list')
+        arch = view.arch or ''
+        self.assertIn('name', arch)
+        self.assertIn('item_ref', arch)
