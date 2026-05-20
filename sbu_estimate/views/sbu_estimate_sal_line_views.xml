@@ -1,5 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+
+    <!-- Used by Many2one «Search more» on SAL sheets (not only inline on preventivo). -->
+    <record id="view_sbu_estimate_sal_line_list" model="ir.ui.view">
+        <field name="name">sbu.estimate.sal.line.list</field>
+        <field name="model">sbu.estimate.sal.line</field>
+        <field name="priority">1</field>
+        <field name="arch" type="xml">
+            <list string="Contractual SAL items" default_order="sequence, item_ref, id">
+                <field name="name" string="Voce contrattuale"/>
+                <field name="item_ref" string="Item" optional="show"/>
+                <field name="description" optional="hide"/>
+                <field name="estimate_id" string="Preventivo" optional="show"/>
+                <field name="qty_contract" string="Qty" optional="hide"/>
+                <field name="unit_price" string="Unit €" optional="hide"/>
+                <field name="total_contract" string="Contract €"/>
+                <field name="cumulative_pct" string="Cum.%" optional="show"/>
+                <field name="sal_status" widget="badge" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_sbu_estimate_sal_line_search" model="ir.ui.view">
+        <field name="name">sbu.estimate.sal.line.search</field>
+        <field name="model">sbu.estimate.sal.line</field>
+        <field name="arch" type="xml">
+            <search string="Contractual SAL items">
+                <field name="name" string="Voce"
+                       filter_domain="['|', '|', ('name', 'ilike', self), ('item_ref', 'ilike', self), ('description', 'ilike', self)]"/>
+                <field name="item_ref" string="Item"/>
+                <field name="description"/>
+                <field name="estimate_id" string="Preventivo"/>
+                <separator/>
+                <group expand="0" string="Group By">
+                    <filter string="Preventivo" name="group_estimate" context="{'group_by': 'estimate_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
     <record id="view_sbu_estimate_sal_line_form" model="ir.ui.view">
         <field name="name">sbu.estimate.sal.line.form</field>
         <field name="model">sbu.estimate.sal.line</field>
@@ -19,6 +58,7 @@
                         <group>
                             <field name="estimate_id" invisible="1"/>
                             <field name="currency_id" invisible="1"/>
+                            <field name="name" readonly="1"/>
                             <field name="item_ref"/>
                             <field name="description"/>
                             <field name="uom_type"/>
