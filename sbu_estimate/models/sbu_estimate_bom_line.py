@@ -163,9 +163,32 @@ class SbuEstimateBomLine(models.Model):
         for line in self:
             line.description = line.product_id.name or ''
 
+    @api.model
+    def _sbu_apply_demand_qty_rules(self, theoretical, loss_pct=0.0, moq=0.0, pack_size=0.0):
+        """ITEM demand: scrap %, then MOQ, then round up to pack size."""
+        qty = theoretical or 0.0
+        if loss_pct:
+            qty = qty * (1.0 + loss_pct / 100.0)
+        if moq > 0:
+            qty = max(qty, moq)
+        if pack_size > 0:
+            qty = math.ceil(qty / pack_size) * pack_size
+        return qty
+
+    def _sbu_qty_after_demand_rules(self, theoretical):
+        """Apply this BOM line's demand_loss_pct, demand_moq, and pack_size."""
+        self.ensure_one()
+        return self._sbu_apply_demand_qty_rules(
+            theoretical,
+            loss_pct=self.demand_loss_pct or 0.0,
+            moq=self.demand_moq or 0.0,
+            pack_size=self.pack_size or 0.0,
+        )
+
     # ── Computed: quantities ──────────────────────────────────────────────────
     @api.depends(
         'calc_type', 'dimension_source', 'qty_formula_factor', 'pack_size',
+        'demand_loss_pct', 'demand_moq',
         'estimate_line_id.width_mm', 'estimate_line_id.height_mm',
         'estimate_line_id.qty',
     )
@@ -207,19 +230,13 @@ class SbuEstimateBomLine(models.Model):
                 theoretical = sqm * factor * qty_items
 
             elif line.calc_type == 'pack':
-                # Calculate theoretical then round up to pack size
                 theoretical = factor * qty_items
 
             else:
                 theoretical = 0.0
 
             line.qty_theoretical = theoretical
-
-            # Round up to minimum pack size
-            if line.pack_size and line.pack_size > 0:
-                line.qty_ordered = math.ceil(theoretical / line.pack_size) * line.pack_size
-            else:
-                line.qty_ordered = theoretical
+            line.qty_ordered = line._sbu_qty_after_demand_rules(theoretical)
 
     # ── Computed: total cost ──────────────────────────────────────────────────
     @api.depends('qty_ordered', 'unit_cost')

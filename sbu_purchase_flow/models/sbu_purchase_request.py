@@ -1,5 +1,3 @@
-import math
-
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
@@ -233,22 +231,19 @@ class SbuPurchaseRequest(models.Model):
         return max(sellers.mapped('min_qty'))
 
     def _sbu_demand_qty_from_bom(self, bom):
-        """BOM pack-rounded qty × (1 + loss%%), re-pack, then MOQ (BOM override or supplier)."""
+        """Same ITEM rules as distinta; request loss %% when BOM line loss is 0."""
         self.ensure_one()
-        base = bom.qty_ordered
+        BomLine = self.env['sbu.estimate.bom.line']
         loss_pct = self._sbu_loss_pct_for_bom_line(bom)
-        qty = base * (1.0 + (loss_pct / 100.0))
-        pack = bom.pack_size or 0.0
-        if pack > 0:
-            qty = math.ceil(qty / pack) * pack
         moq = bom.demand_moq or 0.0
         if moq <= 0:
-            moq = self._sbu_supplier_moq(bom.product_id)
-        if moq > 0:
-            qty = max(qty, moq)
-            if pack > 0:
-                qty = math.ceil(qty / pack) * pack
-        return qty
+            moq = self._sbu_supplier_moq(bom.product_id) or 0.0
+        return BomLine._sbu_apply_demand_qty_rules(
+            bom.qty_theoretical,
+            loss_pct=loss_pct,
+            moq=moq,
+            pack_size=bom.pack_size or 0.0,
+        )
 
     @api.model_create_multi
     def create(self, vals_list):
