@@ -224,6 +224,11 @@ def _sal_header_is_sal_n(compact, n):
     return bool(re.fullmatch(rf'SAL0?{n}', compact))
 
 
+# Floor grid ~cols 12–47; SAL % headers may start ~48 (client) or 98 (REV7).
+SAL_PCT_HEADER_SCAN_MIN = 48
+SAL_PCT_DATA_SCAN_MIN = 85
+
+
 def _detect_sal_pct_start_column(sh_vals, sh_form=None, fallback=SAL_COL_SAL_START):
     """
     Find 1-based column of SAL-1 % in the SAL sheet header row.
@@ -233,7 +238,7 @@ def _detect_sal_pct_start_column(sh_vals, sh_form=None, fallback=SAL_COL_SAL_STA
     if sh_form is not None and sh_form is not sh_vals:
         sheets.append(sh_form)
 
-    scan_from = max(SAL_PCT_SCAN_COL_MIN, SAL_COL_SAL_START - 15)
+    scan_from = SAL_PCT_HEADER_SCAN_MIN
     for sh in sheets:
         max_col = min((sh.max_column or 150) + 1, 220)
         # Full sequence SAL-1 … SAL-10 on one header row
@@ -265,10 +270,6 @@ def _detect_sal_pct_start_column(sh_vals, sh_form=None, fallback=SAL_COL_SAL_STA
                 if _sal_header_is_sal_n(compact, 1):
                     return col
     return fallback
-
-
-# SAL % in REV7 sit to the right of the floor grid (~col 48+); avoid floor blocks 12–47.
-SAL_PCT_SCAN_COL_MIN = 85
 
 
 def _coerce_import_sal_pct(raw):
@@ -325,7 +326,7 @@ def _detect_sal_pct_by_data_profile(sh_vals, sh_form, first_row, fallback):
     if not sample_rows:
         return fallback
 
-    scan_from = max(SAL_PCT_SCAN_COL_MIN, SAL_COL_SAL_START - 15)
+    scan_from = max(SAL_PCT_DATA_SCAN_MIN, SAL_COL_SAL_START - 15)
     for start in range(scan_from, max_col - 9):
         score = 0
         for r in sample_rows:
