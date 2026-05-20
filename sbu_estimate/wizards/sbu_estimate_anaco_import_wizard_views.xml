@@ -21,6 +21,7 @@
                     <field name="auto_detect_first_row" invisible="not import_anaco"/>
                     <field name="import_offerta_fallback" invisible="not import_anaco"/>
                     <field name="anaco_first_row" invisible="not import_anaco"/>
+                    <field name="auto_detect_sal_first_row" invisible="not import_sal"/>
                     <field name="sal_first_row" invisible="not import_sal"/>
                     <field name="auto_detect_sal_columns" invisible="not import_sal"/>
                     <field name="sal_col_sal_start" invisible="not import_sal or auto_detect_sal_columns"/>

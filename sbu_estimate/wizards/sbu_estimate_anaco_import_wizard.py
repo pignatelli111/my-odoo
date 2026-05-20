@@ -93,6 +93,13 @@ OFFERTA_COL_PRICE = 8
 _ANACO_SKIP_B = frozenset({
     'POS.', 'COD.', 'ITEMS', 'DATA', 'RIFERIMENTO', 'OGGETTO', 'CLIENTE',
 })
+_SAL_SKIP_ITEM = frozenset({
+    'ITEM', 'CODICE', 'COD.', 'POS.', 'DATA', '0', '0.0',
+})
+_ANACO_PRODUCT_POS_RE = re.compile(
+    r'^[A-Z]{1,6}\d',  # F1, F3a, LA01, ACC1, …
+    re.IGNORECASE,
+)
 _ANACO_NUMERIC_COLS = tuple(
     set(ANACO_COL_PRICE.values())
     | {
@@ -117,34 +124,63 @@ def _filter_model_fields(model, vals):
     return {k: v for k, v in vals.items() if k in allowed}
 
 
+def _anaco_pos_looks_like_product(pos_raw):
+    """P1002 / REV7: F1, F3a, LA01 — not COD., ITEMS, or section titles without code."""
+    pos = (pos_raw or '').strip()
+    if not pos:
+        return False
+    pos_up = pos.upper()
+    if pos_up in _ANACO_SKIP_B or pos_up.startswith('CLIENTE'):
+        return False
+    first_line = pos.split('\n')[0].strip()
+    return bool(_ANACO_PRODUCT_POS_RE.match(first_line))
+
+
 def _anaco_row_is_data(sh, row):
-    """True when the row has item content (not only blank / header labels)."""
-    pos = _cell_str(sh, row, ANACO_COL_POS).upper()
-    if pos and pos not in _ANACO_SKIP_B and not pos.startswith('CLIENTE'):
-        return True
-    desc = _cell_str(sh, row, ANACO_COL_DESC)
-    if desc and desc.upper() not in ("DESCRIZIONE D'OFFERTA", 'DESCRIZIONE'):
+    """True for product rows (qty/BS/dimensions), not testata or section titles."""
+    pos = _cell_str(sh, row, ANACO_COL_POS)
+    if _anaco_pos_looks_like_product(pos):
         return True
     b_mm = _cell_num(sh, row, ANACO_COL_B_MM)
     h_mm = _cell_num(sh, row, ANACO_COL_H_MM)
-    if (b_mm and b_mm > 0) or (h_mm and h_mm > 0):
+    if (b_mm and b_mm > 0) and (h_mm and h_mm > 0):
         return True
-    qty = _cell_num(sh, row, ANACO_COL_QTY)
-    if qty and qty > 0:
+    qty = _cell_num(sh, row, ANACO_COL_QTY) or 0.0
+    bs = _cell_num(sh, row, ANACO_COL_BS_UNIT) or 0.0
+    if qty > 0 and bs > 0:
         return True
-    bs = _cell_num(sh, row, ANACO_COL_BS_UNIT)
-    if bs and bs > 0:
+    if _anaco_pos_looks_like_product(pos) and (qty > 0 or bs > 0):
         return True
-    for col in _ANACO_NUMERIC_COLS:
-        v = _cell_num(sh, row, col)
-        if v and v > 0:
-            return True
     return False
 
 
 def _detect_anaco_first_row(sh, fallback):
     for row in range(1, 81):
         if _anaco_row_is_data(sh, row):
+            return row
+    return fallback
+
+
+def _sal_row_is_importable(sh_vals, sh_form, row):
+    """Contractual SAL line with item code and billable amount (P1002: from row 17)."""
+    item = _cell_str_merged(sh_vals, sh_form, row, SAL_COL_ITEM).strip()
+    desc = _cell_str_merged(sh_vals, sh_form, row, SAL_COL_DESC).strip()
+    if item.upper() in _SAL_SKIP_ITEM:
+        return False
+    if desc.upper() in ("DESCRIZIONE D'OFFERTA", 'DESCRIZIONE'):
+        return False
+    unit = _cell_num_merged(sh_vals, sh_form, row, SAL_COL_UNIT_PRICE) or 0.0
+    qty = _cell_num_merged(sh_vals, sh_form, row, SAL_COL_QTY) or 0.0
+    tot_mq = _cell_num_merged(sh_vals, sh_form, row, SAL_COL_TOT_MQ) or 0.0
+    if not item or item in ('0', '0.0'):
+        return False
+    return unit > 0 or qty > 0 or tot_mq > 0
+
+
+def _detect_sal_first_row(sh_vals, sh_form, fallback):
+    sh_form = sh_form or sh_vals
+    for row in range(1, 81):
+        if _sal_row_is_importable(sh_vals, sh_form, row):
             return row
     return fallback
 
@@ -414,6 +450,11 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
         string='Prima riga dati SAL (1-based)',
         default=SAL_ROW_FIRST_DATA_DEFAULT,
         required=True,
+        help='REV7 default 16; P1002 REV03 often starts at 17 (after section title row).',
+    )
+    auto_detect_sal_first_row = fields.Boolean(
+        string='Rileva automaticamente prima riga SAL',
+        default=True,
     )
     auto_detect_sal_columns = fields.Boolean(
         string='Rileva colonna SAL-1 automaticamente',
@@ -744,6 +785,12 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
             def _sal_str(row, col):
                 return _cell_str_merged(sal_sh, sal_form, row, col)
 
+            sal_first_row = self.sal_first_row
+            if self.auto_detect_sal_first_row:
+                detected_sal_row = _detect_sal_first_row(sal_sh, sal_form, sal_first_row)
+                if detected_sal_row != sal_first_row:
+                    sal_first_row = detected_sal_row
+
             sal_pct_col = SAL_COL_SAL_START
             if self.auto_detect_sal_columns:
                 sal_pct_col = _detect_sal_pct_start_column(
@@ -751,7 +798,7 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
                 )
                 if sal_pct_col == SAL_COL_SAL_START:
                     sal_pct_col = _detect_sal_pct_by_data_profile(
-                        sal_sh, sal_form, self.sal_first_row, SAL_COL_SAL_START,
+                        sal_sh, sal_form, sal_first_row, SAL_COL_SAL_START,
                     )
             else:
                 sal_pct_col = self.sal_col_sal_start or SAL_COL_SAL_START
@@ -759,18 +806,18 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
 
             seq = 10
             empty_run = 0
-            max_row = sal_sh.max_row or self.sal_first_row
+            max_row = sal_sh.max_row or sal_first_row
             sal_lines_with_pct = 0
             sal_pct_skipped_rows = 0
-            for r in range(self.sal_first_row, max_row + 1):
-                item = _sal_str(r, SAL_COL_ITEM)
-                desc = _sal_str(r, SAL_COL_DESC)
-                if not item and not desc:
+            for r in range(sal_first_row, max_row + 1):
+                if not _sal_row_is_importable(sal_sh, sal_form, r):
                     empty_run += 1
                     if empty_run >= 5:
                         break
                     continue
                 empty_run = 0
+                item = _sal_str(r, SAL_COL_ITEM)
+                desc = _sal_str(r, SAL_COL_DESC)
                 if not desc:
                     desc = item or _('Voce SAL importata')
 
@@ -847,11 +894,16 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
                     ))
             if n_sal and not sal_lines_with_pct:
                 estimate.message_post(body=_(
-                    'Import SAL: nessuna percentuale SAL-1…10 letta dal file '
-                    '(colonna %(col)d). Aprire il file in Excel, salvare come .xlsx '
-                    'per memorizzare i valori calcolati, poi reimportare; oppure '
-                    'impostare manualmente «Colonna SAL-1» nel wizard.'
-                ) % {'col': sal_pct_col})
+                    'Import SAL: nessuna percentuale SAL-1…10 nel file '
+                    '(colonna %(col)d; in P1002 REV03 le celle SAL-1…10 sono spesso '
+                    'vuote — compilare le %% in Odoo o nel foglio prima del re-import). '
+                    'Prima riga dati SAL usata: %(row)d.'
+                ) % {'col': sal_pct_col, 'row': sal_first_row})
+            elif sal_first_row != self.sal_first_row:
+                estimate.message_post(body=_(
+                    'Import SAL: prima riga dati rilevata alla riga Excel %(row)d '
+                    '(default %(def)s; es. titolo sezione «SERRAMENTI SERIE F» alla riga 16).'
+                ) % {'row': sal_first_row, 'def': self.sal_first_row})
 
         wb_vals.close()
         wb_form.close()
