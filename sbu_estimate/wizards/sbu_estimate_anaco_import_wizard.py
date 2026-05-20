@@ -3,6 +3,7 @@
 import base64
 import io
 import math
+import re
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
@@ -212,6 +213,40 @@ def _cell_num(sh, row, col):
     return x
 
 
+def _sal_header_normalize(text):
+    """Compact + raw upper labels for SAL-n header detection."""
+    raw = (text or '').strip().upper()
+    compact = re.sub(r'[\s._\-/]+', '', raw)
+    return compact, raw
+
+
+def _sal_header_is_sal_n(compact, n):
+    return bool(re.fullmatch(rf'SAL0?{n}', compact))
+
+
+def _detect_sal_pct_start_column(sh, fallback=SAL_COL_SAL_START):
+    """
+    Find 1-based column of SAL-1 % in the SAL sheet header row.
+    REV7 uses column 98; client workbooks (e.g. P1002 REV03) often shift left.
+    """
+    max_col = min((sh.max_column or 120) + 1, 160)
+    for row in range(1, 30):
+        for col in range(1, max_col):
+            compact, raw = _sal_header_normalize(_cell_str(sh, row, col))
+            is_sal1 = _sal_header_is_sal_n(compact, 1) or bool(
+                re.search(r'SAL\s*[-.]?\s*1\b', raw)
+            )
+            if not is_sal1:
+                continue
+            for off in range(1, 5):
+                c2, _raw2 = _sal_header_normalize(_cell_str(sh, row, col + off))
+                if _sal_header_is_sal_n(c2, 2):
+                    return col
+            if _sal_header_is_sal_n(compact, 1):
+                return col
+    return fallback
+
+
 def _norm_pct(val):
     """Excel may store 5 as 5% or 0.05 as 5%."""
     if val is None:
@@ -283,6 +318,17 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
         string='Prima riga dati SAL (1-based)',
         default=SAL_ROW_FIRST_DATA_DEFAULT,
         required=True,
+    )
+    auto_detect_sal_columns = fields.Boolean(
+        string='Rileva colonna SAL-1 automaticamente',
+        default=True,
+        help='Cerca l’intestazione SAL-1 nel foglio SAL (REV7 = colonna 98; '
+             'file cliente possono usare colonne diverse).',
+    )
+    sal_col_sal_start = fields.Integer(
+        string='Colonna SAL-1 (1-based)',
+        default=SAL_COL_SAL_START,
+        help='Usata solo se «Rileva colonna SAL-1» è disattivato. REV7 = 98.',
     )
     default_commission_pct = fields.Float(
         string='Comm. % default (righe ANACO)',
@@ -519,6 +565,7 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
 
         n_anaco = 0
         n_sal = 0
+        sal_pct_col_used = None
         estimate = self.estimate_id
 
         Line = self.env['sbu.estimate.line']
@@ -588,6 +635,13 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
             if self.replace_sal_lines:
                 estimate.sal_line_ids.unlink()
 
+            sal_pct_col = SAL_COL_SAL_START
+            if self.auto_detect_sal_columns:
+                sal_pct_col = _detect_sal_pct_start_column(sal_sh, SAL_COL_SAL_START)
+            else:
+                sal_pct_col = self.sal_col_sal_start or SAL_COL_SAL_START
+            sal_pct_col_used = sal_pct_col
+
             seq = 10
             empty_run = 0
             max_row = sal_sh.max_row or self.sal_first_row
@@ -638,7 +692,7 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
                         sal_vals[fname] = block_sum
 
                 for i in range(10):
-                    v = _cell_num(sal_sh, r, SAL_COL_SAL_START + i)
+                    v = _cell_num(sal_sh, r, sal_pct_col + i)
                     if v is not None:
                         sal_vals[f'sal_{i + 1}_pct'] = _norm_pct(v)
 
@@ -657,6 +711,11 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
         body = _(
             'Import Excel completato: %(anaco)d righe ANACO, %(sal)d righe SAL.'
         ) % {'anaco': n_anaco, 'sal': n_sal}
+        if sal_pct_col_used and sal_pct_col_used != SAL_COL_SAL_START:
+            body += '<br/>' + _(
+                'Colonne SAL-1…10 lette dalla colonna Excel %(col)d '
+                '(REV7 predefinita: %(rev7)d).'
+            ) % {'col': sal_pct_col_used, 'rev7': SAL_COL_SAL_START}
         estimate.message_post(body=body)
         return {
             'type': 'ir.actions.act_window',
