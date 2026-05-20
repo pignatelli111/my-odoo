@@ -281,22 +281,35 @@ def _coerce_import_sal_pct(raw):
     return pct
 
 
-def _sal_pct_block_row_sum(sh_vals, sh_form, row, start_col):
-    """Sum of 10 coerced SAL % cells; None if block does not look like SAL planning."""
-    total = 0.0
-    any_pct = False
+def _sal_pct_block_row_pcts(sh_vals, sh_form, row, start_col):
+    """List of coerced SAL period % (0–100) for 10 consecutive columns."""
+    pcts = []
     for i in range(10):
         v = _cell_num_merged(sh_vals, sh_form, row, start_col + i)
         pct = _coerce_import_sal_pct(v)
-        if pct is None:
-            continue
-        any_pct = True
-        total += pct
-    if not any_pct:
+        if pct is not None:
+            pcts.append(pct)
+    return pcts
+
+
+def _sal_pct_plan_looks_incremental(pcts):
+    """
+    True when cells look like SAL-1…10 planning quotas (not one «100%» cumulative cell).
+    A single 100 in one column is usually «avanzamento cumulativo», not period split.
+    """
+    if not pcts:
+        return False
+    if len(pcts) == 1 and pcts[0] >= 99.9:
+        return False
+    return sum(pcts) <= 100.0000001
+
+
+def _sal_pct_block_row_sum(sh_vals, sh_form, row, start_col):
+    """Sum of incremental SAL period %; None if block does not look like SAL planning."""
+    pcts = _sal_pct_block_row_pcts(sh_vals, sh_form, row, start_col)
+    if not _sal_pct_plan_looks_incremental(pcts):
         return None
-    if total > 100.0000001:
-        return None
-    return total
+    return sum(pcts)
 
 
 def _detect_sal_pct_by_data_profile(sh_vals, sh_form, first_row, fallback):
@@ -799,10 +812,10 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
                     pct = _coerce_import_sal_pct(v)
                     if pct is not None:
                         pct_by_field[f'sal_{i + 1}_pct'] = pct
-                pct_sum = sum(pct_by_field.values())
-                if pct_sum > 100.0000001:
+                pct_values = list(pct_by_field.values())
+                if not _sal_pct_plan_looks_incremental(pct_values):
                     sal_pct_skipped_rows += 1
-                elif pct_by_field:
+                else:
                     sal_vals.update(pct_by_field)
                     sal_lines_with_pct += 1
 
@@ -817,10 +830,21 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
 
             if sal_pct_skipped_rows:
                 estimate.message_post(body=_(
-                    'Import SAL: %(n)d righe con celle non interpretabili come %% SAL '
-                    '(somma > 100%% o importi al posto delle %% — colonna %(col)d). '
-                    'Verificare le colonne SAL-1…10 nel file Excel.'
+                    'Import SAL: %(n)d righe senza %% SAL-1…10 importate '
+                    '(colonna %(col)d: spesso «100%%» cumulativo o importi al posto '
+                    'delle quote per periodo). Controllare in Excel le colonne SAL-1…10 '
+                    'e, se serve, disattivare «Rileva colonna SAL-1» e indicare la colonna corretta.'
                 ) % {'n': sal_pct_skipped_rows, 'col': sal_pct_col})
+            elif n_sal and sal_lines_with_pct:
+                pct_100 = estimate.sal_line_ids.filtered(
+                    lambda l: (l.cumulative_pct or 0) >= 99.9
+                )
+                if len(pct_100) > len(estimate.sal_line_ids) * 0.8:
+                    estimate.message_post(body=_(
+                        'Import SAL: molte voci hanno Cum.%% ≈ 100%%. '
+                        'Verificare che le colonne SAL-1…10 in Excel siano le quote '
+                        'per ogni SAL (es. 20+30+50), non la colonna «avanzamento cumulativo».'
+                    ))
             if n_sal and not sal_lines_with_pct:
                 estimate.message_post(body=_(
                     'Import SAL: nessuna percentuale SAL-1…10 letta dal file '

@@ -15,6 +15,7 @@ from odoo.addons.sbu_estimate.wizards.sbu_estimate_anaco_import_wizard import (
     _coerce_import_sal_pct,
     _detect_sal_pct_start_column,
     _filter_model_fields,
+    _sal_pct_plan_looks_incremental,
     SAL_COL_SAL_START,
 )
 
@@ -66,6 +67,10 @@ class TestSbuAnacoImport(TransactionCase):
         self.assertIsNone(_coerce_import_sal_pct(44430.6))
         self.assertAlmostEqual(_coerce_import_sal_pct(25.0), 25.0)
         self.assertAlmostEqual(_coerce_import_sal_pct(0.25), 25.0)
+
+    def test_sal_pct_plan_incremental_vs_single_100(self):
+        self.assertFalse(_sal_pct_plan_looks_incremental([100.0]))
+        self.assertTrue(_sal_pct_plan_looks_incremental([20.0, 30.0, 50.0]))
 
     def test_detect_sal_pct_start_column_non_rev7(self):
         if not openpyxl:
