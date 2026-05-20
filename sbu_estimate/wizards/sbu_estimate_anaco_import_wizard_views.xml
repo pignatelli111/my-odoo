@@ -13,6 +13,7 @@
                 </group>
                 <group string="Cosa importare">
                     <field name="import_anaco"/>
+                    <field name="import_distinta_bom" invisible="not import_anaco"/>
                     <field name="replace_anaco_lines" invisible="not import_anaco"/>
                     <field name="import_sal"/>
                     <field name="replace_sal_lines" invisible="not import_sal"/>

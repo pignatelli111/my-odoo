@@ -34,7 +34,8 @@ Due righe dati (solo se l’import ANACO non trova righe — drill fallback): `F
 ### Import in Odoo
 
 1. **Nuovo preventivo** → Salva → Cliente.  
-2. **Importa Excel ANACO** → allega `SBU_ANACO_SAMPLE_UAT.xlsx`.  
+2. **Importa Excel ANACO** → allega `SBU_ANACO_SAMPLE_UAT.xlsx` (opzione **Genera distinta da costi ANACO** attiva per default).
+3. Oppure su preventivo già importato: **Genera distinta da ANACO** (pulsante in testata).  
 3. Spunte: **Importa righe ANACO** + **Importa Voci Contrattuali SAL**, **Sostituisci** entrambe, **Rileva prima riga**, **Fallback OFFERTA**.  
 4. **Prima riga SAL:** **16**.
 
@@ -51,3 +52,31 @@ La **distinta ITEM** resta da compilare in Odoo (il wizard non importa il foglio
 ### Nota
 
 Il file di cantiere reale resta il vostro ANACO REV7; questo è per **test ripetibili** e formazione.
+
+---
+
+## File cliente `ANACO_P1002_25_CON_REV03_EIALL+ALL_P1.xlsx`
+
+1. Copiare il file ricevuto dal cliente in:
+
+   `docs/samples/client/ANACO_P1002_25_CON_REV03_EIALL+ALL_P1.xlsx`
+
+   (la cartella `client/` è in `.gitignore` — non va su GitHub se contiene dati reali).
+
+2. Analisi locale (stesse regole del wizard Odoo):
+
+```powershell
+cd "f:\TASK\20 . Odoo\my-odoo"
+pip install openpyxl
+python tools/probe_anaco_workbook.py
+```
+
+   Oppure con percorso esplicito:
+
+```powershell
+python tools/probe_anaco_workbook.py "C:\path\to\ANACO_P1002_25_CON_REV03_EIALL+ALL_P1.xlsx"
+```
+
+3. **Odoo.sh / dev:** nuovo preventivo → **Importa Excel ANACO** → carica il file → opzioni come in tabella sopra → verificare righe ANACO, SAL, totali costo/margine, badge SAL **Planned (SAL % only)** se ci sono solo %.
+
+4. Se il probe segnala **0 righe ANACO** ma righe **OFFERTA**, lasciare attivo **Fallback OFFERTA** nel wizard.

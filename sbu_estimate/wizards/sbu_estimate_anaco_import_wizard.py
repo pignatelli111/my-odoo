@@ -420,6 +420,11 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
 
     import_anaco = fields.Boolean(string='Importa righe ANACO', default=True)
     import_sal = fields.Boolean(string='Importa Voci Contrattuali SAL', default=True)
+    import_distinta_bom = fields.Boolean(
+        string='Genera distinta da costi ANACO',
+        default=True,
+        help='Crea righe Distinta Base (ITEM) dai valori CAD costo/prezzo su ogni riga ANACO importata.',
+    )
     replace_anaco_lines = fields.Boolean(
         string='Sostituisci righe preventivo esistenti',
         default=True,
@@ -767,6 +772,17 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
                 )
             if import_note:
                 estimate.message_post(body=import_note)
+            if self.import_distinta_bom and n_anaco:
+                if self.replace_anaco_lines:
+                    estimate.line_ids.mapped('bom_line_ids').unlink()
+                n_bom = estimate._sbu_create_bom_from_anaco_lines()
+                estimate.message_post(
+                    body=_(
+                        'Distinta: %(n)d componenti da costi/prezzi ANACO '
+                        '(catalogo SBU-*).'
+                    )
+                    % {'n': n_bom},
+                )
 
         if self.import_sal:
             if not sal_sh:

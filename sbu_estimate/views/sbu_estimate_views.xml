@@ -90,6 +90,12 @@
                             string="Importa Excel ANACO"
                             type="object"
                             class="btn-secondary"/>
+                    <button name="action_generate_bom_from_anaco_costs"
+                            string="Genera distinta da ANACO"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="not line_ids"
+                            title="Crea righe Distinta Base dai costi/prezzi CAD sulle righe ANACO"/>
                     <field name="state"
                            widget="statusbar"
                            statusbar_visible="draft,sent,won"/>
