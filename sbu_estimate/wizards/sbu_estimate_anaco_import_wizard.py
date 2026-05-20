@@ -257,8 +257,7 @@ def _detect_sal_pct_start_column(sh_vals, sh_form=None, fallback=SAL_COL_SAL_STA
                 compact, raw = _sal_header_normalize(_cell_str(sh, row, col))
                 is_sal1 = (
                     _sal_header_is_sal_n(compact, 1)
-                    or bool(re.search(r'SAL\s*[-.]?\s*0?1\b', raw))
-                    or bool(re.search(r'SAL.*\b1\b', raw))
+                    or bool(re.search(r'SAL\s*[-.]?\s*1(?!\d)', raw))
                     or compact in ('SAL1PCT', 'SAL1PERC', 'PERCSAL1')
                 )
                 if not is_sal1:

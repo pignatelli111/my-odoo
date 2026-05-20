@@ -21,18 +21,25 @@ class TestSbuSalInstall(TransactionCase):
         ]
         self.assertEqual(len(labels), len(set(labels)), labels)
 
+    @staticmethod
+    def _field_compute_name(field):
+        compute = field.compute
+        if isinstance(compute, str):
+            return compute
+        return getattr(compute, '__name__', None)
+
     def test_finance_fields_are_computed(self):
         """Smoke: finance link fields exist and use dedicated compute methods."""
         sal_line = self.env['sbu.estimate.sal.line']
         self.assertEqual(
-            sal_line._fields['invoice_id'].compute,
+            self._field_compute_name(sal_line._fields['invoice_id']),
             '_compute_finance_documents',
         )
         self.assertEqual(
-            sal_line._fields['certificate_count'].compute,
+            self._field_compute_name(sal_line._fields['certificate_count']),
             '_compute_finance_document_counts',
         )
         self.assertEqual(
-            sal_line._fields['invoice_cdp_summary'].compute,
+            self._field_compute_name(sal_line._fields['invoice_cdp_summary']),
             '_compute_invoice_cdp_summary',
         )

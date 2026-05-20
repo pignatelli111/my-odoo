@@ -81,8 +81,20 @@ class TestSbuAnacoImport(TransactionCase):
         sal = wb.create_sheet('Voci Contrattuali_SAL')
         sal.cell(10, 55, 'SAL-1')
         sal.cell(10, 56, 'SAL-2')
+        sal.cell(10, 64, 'SAL-10')
         self.assertEqual(_detect_sal_pct_start_column(sal), 55)
         self.assertEqual(_detect_sal_pct_start_column(sal, None, SAL_COL_SAL_START), 55)
+
+    def test_detect_sal_pct_does_not_treat_sal10_header_as_sal1(self):
+        if not openpyxl:
+            self.skipTest('openpyxl not installed')
+        wb = openpyxl.Workbook()
+        wb.remove(wb.active)
+        sal = wb.create_sheet('Voci Contrattuali_SAL')
+        sal.cell(8, 90, 'SAL-10')
+        sal.cell(8, 91, 'SAL-11')
+        col = _detect_sal_pct_start_column(sal, None, SAL_COL_SAL_START)
+        self.assertEqual(col, SAL_COL_SAL_START)
 
     def test_import_sal_pct_from_detected_column(self):
         if not openpyxl:
@@ -111,6 +123,7 @@ class TestSbuAnacoImport(TransactionCase):
             'import_sal': True,
             'replace_sal_lines': True,
             'auto_detect_sal_columns': True,
+            'sal_first_row': 16,
         })
         wizard.action_import()
         self.assertEqual(len(estimate.sal_line_ids), 1)

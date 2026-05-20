@@ -70,7 +70,7 @@ def _detect_sal_pct_start_column(sh, fallback=SAL_COL_SAL_START):
         for col in range(1, max_col):
             compact, raw = _sal_header_normalize(_cell_str(sh, row, col))
             is_sal1 = _sal_header_is_sal_n(compact, 1) or bool(
-                re.search(r'SAL\s*[-.]?\s*1\b', raw)
+                re.search(r'SAL\s*[-.]?\s*1(?!\d)', raw)
             )
             if not is_sal1:
                 continue

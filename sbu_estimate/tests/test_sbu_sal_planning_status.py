@@ -13,9 +13,12 @@ class TestSbuSalPlanningStatus(TransactionCase):
             'description': 'Voce con solo % SAL (nessun foglio SAL)',
             'qty_contract': 1.0,
             'unit_price': 1000.0,
-            'sal_1_pct': 100.0,
+            'sal_1_pct': 40.0,
+            'sal_2_pct': 35.0,
+            'sal_3_pct': 25.0,
         })
         self.assertEqual(sal.sal_status, 'planning')
+        self.assertAlmostEqual(sal.cumulative_pct, 100.0)
 
     def test_sal_status_prepared_when_contract_but_no_sal_pct(self):
         partner = self.env['res.partner'].create({'name': 'SAL prepared partner'})
