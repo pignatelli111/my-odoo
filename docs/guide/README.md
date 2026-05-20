@@ -10,7 +10,17 @@
 
 ## Screenshot
 
-Le immagini in `screenshots/` provengono dalle sessioni di sviluppo e UAT (maggio 2026).  
+Le immagini in `screenshots/` provengono dalle sessioni di sviluppo e UAT (maggio 2026).
+
+### Bot automatico (Playwright)
+
+Tool in repo: [`tools/screenshot_bot/README.md`](../../tools/screenshot_bot/README.md)
+
+- `capture.py login` — salva sessione Odoo
+- `capture.py watch` — **screenshot ad ogni cambio URL** mentre navighi
+- `capture.py manual` — screenshot su richiesta (nome file da tastiera)
+- `capture.py run` — elenco URL da `capture_plan.json`
+
 Per un PDF da consegnare al cliente: aprire la guida in VS Code / Cursor → anteprima Markdown → **Stampa / Esporta PDF**, oppure usare Pandoc.
 
 ```bash

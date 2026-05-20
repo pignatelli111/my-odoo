@@ -4,12 +4,13 @@ from odoo.exceptions import ValidationError
 from .sbu_contract_uom import SBU_CONTRACT_UOM_SELECTION
 
 SAL_STATUS_SELECTION = [
-    ('draft', 'Draft'),
-    ('prepared', 'Prepared'),
-    ('submitted', 'Submitted'),
-    ('approved', 'Approved'),
-    ('invoiced', 'Invoiced'),
-    ('paid', 'Paid'),
+    ('draft', _('Draft')),
+    ('prepared', _('Prepared')),
+    ('planning', _('Planned (SAL % only)')),
+    ('submitted', _('Submitted')),
+    ('approved', _('Approved')),
+    ('invoiced', _('Invoiced')),
+    ('paid', _('Paid')),
 ]
 
 
@@ -119,8 +120,8 @@ class SbuEstimateSalLine(models.Model):
         string='SAL status',
         compute='_compute_sal_status',
         store=True,
-        help='Lifecycle: planned on estimate → SAL prepared/submitted → approved → invoiced → paid '
-             '(updated from linked SAL sheets, invoices and payment certificates when SBU SAL is used).',
+        help='Lifecycle: draft/prepared → planned when only SAL-1…10 % are set on the estimate; '
+             'then submitted/approved/invoiced/paid from SBU SAL sheets, invoices and certificates.',
     )
 
     amount_billed = fields.Monetary(
@@ -272,13 +273,11 @@ class SbuEstimateSalLine(models.Model):
         'sal_6_pct', 'sal_7_pct', 'sal_8_pct', 'sal_9_pct', 'sal_10_pct',
     )
     def _compute_sal_status(self):
-        """Without sbu_sal: lifecycle from contractual data and SAL % planning columns."""
+        """Planning-only SAL % on estimate — do not reuse Approved/Submitted (real SAL workflow)."""
         for line in self:
             pct = line.cumulative_pct or 0.0
-            if pct >= 100.0 and line.total_contract:
-                line.sal_status = 'approved'
-            elif pct > 0.0:
-                line.sal_status = 'submitted'
+            if pct > 0.0:
+                line.sal_status = 'planning'
             elif line._sbu_sal_status_is_prepared(line):
                 line.sal_status = 'prepared'
             else:

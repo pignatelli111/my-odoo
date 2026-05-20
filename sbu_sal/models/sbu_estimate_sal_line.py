@@ -280,10 +280,9 @@ class SbuEstimateSalLine(models.Model):
                 line.sal_status = 'approved'
             elif sheets.filtered(lambda s: s.state == 'draft'):
                 line.sal_status = 'submitted'
-            elif (line.cumulative_pct or 0.0) >= 100.0 and line.total_contract:
-                line.sal_status = 'approved'
             elif (line.cumulative_pct or 0.0) > 0.0:
-                line.sal_status = 'submitted'
+                # Only SAL-1…10 % on estimate — not a submitted SAL document yet
+                line.sal_status = 'planning'
             elif line._sbu_sal_status_is_prepared(line):
                 line.sal_status = 'prepared'
             else:

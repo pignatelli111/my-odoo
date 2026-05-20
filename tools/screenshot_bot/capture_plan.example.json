@@ -1,0 +1,32 @@
+{
+  "base_url": "https://pignatelli111-my-odoo.odoo.com",
+  "output_dir": "docs/guide/screenshots",
+  "viewport": { "width": 1440, "height": 900 },
+  "default_wait_ms": 2500,
+  "shots": [
+    {
+      "file": "11-login-pagina-accesso.png",
+      "path": "/web/login",
+      "full_page": true,
+      "auth": false,
+      "comment": "No saved session — login page only"
+    },
+    {
+      "file": "14-menu-sbu-laterale-espanso.png",
+      "path": "/odoo",
+      "wait_ms": 4000,
+      "comment": "After login: open SBU app from home if needed"
+    },
+    {
+      "file": "15-lista-preventivi-nuovo.png",
+      "path": "/odoo/action-REPLACE_WITH_SBU_ESTIMATE_ACTION",
+      "comment": "Replace path: in Odoo enable debug mode, open Preventivi list, copy URL after /odoo/"
+    },
+    {
+      "file": "02-preventivo-pulsante-import-anaco.png",
+      "path": "/odoo/REPLACE_WITH_ESTIMATE_FORM_PATH",
+      "wait_ms": 3000,
+      "comment": "Open one estimate form, copy browser path (id=...)"
+    }
+  ]
+}
