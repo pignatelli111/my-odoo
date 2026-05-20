@@ -272,7 +272,7 @@ def _detect_sal_pct_by_data_profile(sh_vals, sh_form, first_row, fallback):
     look most like SAL % (0–100, many non-zero on first data rows).
     """
     sh_form = sh_form or sh_vals
-    max_col = min((sh.max_column or 150) + 1, 220)
+    max_col = min((sh_vals.max_column or 150) + 1, 220)
     best_col = None
     best_score = 0
     sample_rows = list(range(first_row, min(first_row + 25, (sh_vals.max_row or first_row) + 1)))
