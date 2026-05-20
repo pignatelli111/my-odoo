@@ -102,6 +102,7 @@
                 </header>
 
                 <sheet>
+                    <field name="line_ids" invisible="1"/>
                     <field name="can_delete_preventivo" invisible="1"/>
                     <div class="oe_button_box" name="button_box">
                         <button name="action_view_revision_chain"
@@ -268,6 +269,14 @@
                         </page>
 
                         <page string="Distinta Base (ITEM)" name="estimate_item_bom">
+                            <div class="mb-2">
+                                <button name="action_generate_bom_from_anaco_costs"
+                                        type="object"
+                                        string="Genera distinta da ANACO"
+                                        class="btn-secondary"
+                                        invisible="not line_ids"
+                                        title="Crea componenti distinta dai costi/prezzi CAD sulle righe ANACO"/>
+                            </div>
                             <field name="item_bom_line_count" invisible="1"/>
                             <field name="item_bom_line_ids"
                                    context="{'default_estimate_id': id}">
