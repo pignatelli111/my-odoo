@@ -5,7 +5,6 @@ Rules when generating distinta from ANACO cost columns (Cosimo: stima → tecnic
 - Vetro (SBU-VETRO): mq = 90% of position B×H (stima; Logikal/tecnico can override).
 - Zanzariere / oscuranti: effective height = position H + 300 mm (typical rule).
 """
-from odoo import _
 
 # product.template default_code → BOM generation profile
 ANACO_BOM_GENERATION_RULES = {
@@ -15,7 +14,7 @@ ANACO_BOM_GENERATION_RULES = {
         'sqm_coverage_factor': 0.9,
         'height_adjust_mm': 0.0,
         'needs_technical_confirm': True,
-        'note': _('Vetro: stima 90%% mq posizione (B×H); confermare da disegno/Logikal.'),
+        'note': 'Vetro: stima 90% mq posizione (BxH); confermare da disegno/Logikal.',
     },
     'SBU-ZANZ': {
         'calc_type': 'surface',
@@ -23,7 +22,7 @@ ANACO_BOM_GENERATION_RULES = {
         'sqm_coverage_factor': 1.0,
         'height_adjust_mm': 300.0,
         'needs_technical_confirm': True,
-        'note': _('Zanzariere: altezza effettiva = H posizione + 300 mm.'),
+        'note': 'Zanzariere: altezza effettiva = H posizione + 300 mm.',
     },
     'SBU-OSC': {
         'calc_type': 'surface',
@@ -31,7 +30,7 @@ ANACO_BOM_GENERATION_RULES = {
         'sqm_coverage_factor': 1.0,
         'height_adjust_mm': 300.0,
         'needs_technical_confirm': True,
-        'note': _('Oscurante: altezza effettiva = H posizione + 300 mm.'),
+        'note': 'Oscurante: altezza effettiva = H posizione + 300 mm.',
     },
 }
 

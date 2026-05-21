@@ -9,6 +9,14 @@
         <field name="comment">Create and edit SBU estimates; read CRM opportunities for linking on preventivi.</field>
     </record>
 
+    <record id="group_sbu_estimate_uat_cleanup" model="res.groups">
+        <field name="name">SBU UAT cleanup</field>
+        <field name="sequence">30</field>
+        <field name="privilege_id" ref="sales_team.res_groups_privilege_sales"/>
+        <field name="implied_ids" eval="[(4, ref('group_sbu_estimate_user'))]"/>
+        <field name="comment">Elimina preventivi di test anche se Vinti, con commessa, SAL e fatture (solo UAT).</field>
+    </record>
+
     <record id="group_sbu_estimate_approver" model="res.groups">
         <field name="name">Approvatore Preventivi SBU</field>
         <field name="sequence">25</field>
@@ -18,13 +26,5 @@
             (4, ref('group_sbu_estimate_uat_cleanup')),
         ]"/>
         <field name="comment">Può approvare o rifiutare preventivi in approvazione interna.</field>
-    </record>
-
-    <record id="group_sbu_estimate_uat_cleanup" model="res.groups">
-        <field name="name">SBU UAT cleanup</field>
-        <field name="sequence">30</field>
-        <field name="privilege_id" ref="sales_team.res_groups_privilege_sales"/>
-        <field name="implied_ids" eval="[(4, ref('group_sbu_estimate_user'))]"/>
-        <field name="comment">Elimina preventivi di test anche se Vinti, con commessa, SAL e fatture (solo UAT).</field>
     </record>
 </odoo>
