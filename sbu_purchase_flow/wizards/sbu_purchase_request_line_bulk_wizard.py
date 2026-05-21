@@ -113,21 +113,6 @@ class SbuPurchaseRequestLineBulkWizard(models.TransientModel):
             updated = len(lines)
 
         if self.apply_need_by_header:
-            requests = lines.mapped('request_id')
-            requests.write({'need_by_date': self.need_by_date})
+            lines.mapped('request_id').write({'need_by_date': self.need_by_date})
 
-        msg = _('Updated %(n)s line(s).', n=updated)
-        if self.apply_need_by_header:
-            msg += ' ' + _('Header need-by set on %(r)s request(s).', r=len(requests))
-
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': _('Bulk update'),
-                'message': msg,
-                'type': 'success',
-                'sticky': False,
-                'next': {'type': 'ir.actions.act_window_close'},
-            },
-        }
+        return True

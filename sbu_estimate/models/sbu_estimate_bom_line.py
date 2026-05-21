@@ -261,9 +261,6 @@ class SbuEstimateBomLine(models.Model):
             'sqm_per_piece': self.sqm_per_piece_effective,
             'sqm_total': sqm_tot,
             'dimension_mm': self.dimension_display,
-            'needs_technical_confirm': self.needs_technical_confirm,
-            'technical_confirmed': self.technical_confirmed,
-            'data_phase': self.data_phase,
         }
 
     @api.model

@@ -41,17 +41,17 @@ class SbuPurchaseRequestLine(models.Model):
     data_phase = fields.Selection(
         related='source_bom_line_id.data_phase',
         string='Fase dati',
-        readonly=False,
-        store=True,
+        readonly=True,
     )
     needs_technical_confirm = fields.Boolean(
         related='source_bom_line_id.needs_technical_confirm',
+        string='Needs technical confirm',
         readonly=True,
     )
     technical_confirmed = fields.Boolean(
         related='source_bom_line_id.technical_confirmed',
-        readonly=False,
-        store=True,
+        string='Confirmed for PO',
+        readonly=True,
     )
     utilization = fields.Char(
         string='Utilizzo',
@@ -197,7 +197,7 @@ class SbuPurchaseRequestLine(models.Model):
         if not bom or not hasattr(bom, '_sbu_purchase_line_dimension_vals'):
             return
         for key, val in bom._sbu_purchase_line_dimension_vals().items():
-            if key in self._fields and key not in ('needs_technical_confirm',):
+            if key in self._fields:
                 self[key] = val
 
     @api.constrains('request_id', 'source_bom_line_id')

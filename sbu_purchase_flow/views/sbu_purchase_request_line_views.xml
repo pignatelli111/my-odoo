@@ -4,7 +4,7 @@
         <field name="name">sbu.purchase.request.line.list</field>
         <field name="model">sbu.purchase.request.line</field>
         <field name="arch" type="xml">
-            <list string="Purchase request lines" multi_edit="1">
+            <list string="Purchase request lines">
                 <field name="request_id"/>
                 <field name="request_type" optional="show"/>
                 <field name="workflow_route" optional="show"/>
