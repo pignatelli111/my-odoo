@@ -4,6 +4,10 @@ REPORT CLIENTE — Come ottenere un file Word (.docx) o Google Docs
 File principale (italiano, diagrammi Mermaid):
   docs/REPORT_CLIENTE_SBU_ODOO_IT.md
 
+Presentazione cliente con screenshot e script da dire in riunione:
+  docs/presentazione-cliente/REPORT_PRESENTAZIONE_CLIENTE_IT.md
+  (immagini in docs/presentazione-cliente/screenshots/)
+
 Opzione A — Microsoft Word (consigliata)
   1. Apri Word → File → Apri → seleziona REPORT_CLIENTE_SBU_ODOO_IT.md
   2. Salva con nome → Documento Word (.docx)

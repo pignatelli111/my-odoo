@@ -4,7 +4,8 @@
 **Oggetto:** Sviluppo personalizzato Odoo (preventivi ANACO, commesse, SAL, acquisti, integrazioni)  
 **Versione documento:** 1.0 — maggio 2026  
 **Repository:** `pignatelli111/my-odoo` (rami `main` sviluppo, `production` produzione)  
-**Ambiente:** Odoo.sh — Odoo **19.0**
+**Ambiente:** Odoo.sh — Odoo **19.0**  
+**Presentazione con screenshot (italiano):** [presentazione-cliente/REPORT_PRESENTAZIONE_CLIENTE_IT.md](presentazione-cliente/REPORT_PRESENTAZIONE_CLIENTE_IT.md)
 
 ---
 
