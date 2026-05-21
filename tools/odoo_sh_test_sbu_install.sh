@@ -31,6 +31,17 @@ python3 "$ODOO" \
   2>&1 | tee "$LOG"
 
 echo ""
+echo "=== Module state AFTER ==="
+python3 "$ODOO" shell -d "$DB" --addons-path="$ADDONS" --stop-after-init <<'PY' 2>/dev/null | tail -20 || true
+mods = ['sbu_estimate', 'sbu_purchase_flow', 'sbu_sal', 'sbu_stock_config']
+imm = env['ir.module.module'].search([('name', 'in', mods)])
+for m in mods:
+    rec = imm.filtered(lambda r: r.name == m)[:1]
+    print(m, rec.state if rec else 'missing')
+PY
+
 echo "=== Summary ==="
 grep -nE 'FAIL:|ERROR: test_|AssertionError|ParseError|failures=[1-9]| errors=[1-9]|have the same label' "$LOG" | tail -40 || echo "(no failure patterns)"
-grep -E 'odoo.tests.result:|odoo.tests.stats: sbu_' "$LOG" | tail -20
+grep -E 'odoo.tests.result:|odoo.tests.stats: sbu_' "$LOG" | tail -30
+echo ""
+echo "If purchase_flow/sal stats are missing above, those modules did not install or had no tests."

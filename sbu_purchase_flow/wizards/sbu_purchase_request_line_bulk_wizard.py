@@ -17,7 +17,7 @@ class SbuPurchaseRequestLineBulkWizard(models.TransientModel):
         string='Lines to update',
         help='Filled from list selection (use filters, then select all matching).',
     )
-    line_count = fields.Integer(compute='_compute_line_count')
+    line_count = fields.Integer(string='Selected lines', compute='_compute_line_count')
 
     apply_date_required = fields.Boolean(string='Apply delivery date')
     date_required = fields.Date(string='Delivery date')

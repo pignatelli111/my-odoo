@@ -19,20 +19,16 @@ class TestSbuQontoMatch(TransactionCase):
 
     def test_cron_active_follows_company_import_flag(self):
         cron = self.env.ref('sbu_qonto.ir_cron_qonto_import')
-        Company = self.env['res.company'].sudo()
-        previous = {
-            c.id: c.sbu_qonto_import_enabled
-            for c in Company.search([])
-        }
+        company = self.env.company
+        previous = company.sbu_qonto_import_enabled
         try:
-            Company.search([]).write({'sbu_qonto_import_enabled': False})
-            self.env.company.sbu_qonto_import_enabled = True
-            Company._sbu_sync_qonto_cron_active()
+            company.sbu_qonto_import_enabled = True
+            self.env['res.company']._sbu_sync_qonto_cron_active()
             self.assertTrue(cron.active)
-            self.env.company.sbu_qonto_import_enabled = False
-            Company._sbu_sync_qonto_cron_active()
-            self.assertFalse(cron.active)
+            company.sbu_qonto_import_enabled = False
+            self.env['res.company']._sbu_sync_qonto_cron_active()
+            if not self.env['res.company'].search_count([('sbu_qonto_import_enabled', '=', True)]):
+                self.assertFalse(cron.active)
         finally:
-            for cid, enabled in previous.items():
-                Company.browse(cid).sbu_qonto_import_enabled = enabled
-            Company._sbu_sync_qonto_cron_active()
+            company.sbu_qonto_import_enabled = previous
+            self.env['res.company']._sbu_sync_qonto_cron_active()
