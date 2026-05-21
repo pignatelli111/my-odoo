@@ -52,7 +52,7 @@
                             type="object"
                             class="btn-danger"
                             invisible="can_delete_preventivo"
-                            groups="sbu_estimate.group_sbu_estimate_uat_cleanup"
+                            groups="sbu_estimate.group_sbu_estimate_uat_cleanup,base.group_system"
                             title="UAT: rimuove preventivo, commessa, SAL, fatture collegate"/>
                     <button name="action_send"
                             string="Invia"

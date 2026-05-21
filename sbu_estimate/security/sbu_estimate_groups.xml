@@ -13,7 +13,10 @@
         <field name="name">Approvatore Preventivi SBU</field>
         <field name="sequence">25</field>
         <field name="privilege_id" ref="sales_team.res_groups_privilege_sales"/>
-        <field name="implied_ids" eval="[(4, ref('group_sbu_estimate_user'))]"/>
+        <field name="implied_ids" eval="[
+            (4, ref('group_sbu_estimate_user')),
+            (4, ref('group_sbu_estimate_uat_cleanup')),
+        ]"/>
         <field name="comment">Può approvare o rifiutare preventivi in approvazione interna.</field>
     </record>
 
@@ -21,7 +24,7 @@
         <field name="name">SBU UAT cleanup</field>
         <field name="sequence">30</field>
         <field name="privilege_id" ref="sales_team.res_groups_privilege_sales"/>
-        <field name="implied_ids" eval="[(4, ref('group_sbu_estimate_approver'))]"/>
+        <field name="implied_ids" eval="[(4, ref('group_sbu_estimate_user'))]"/>
         <field name="comment">Elimina preventivi di test anche se Vinti, con commessa, SAL e fatture (solo UAT).</field>
     </record>
 </odoo>

@@ -8,4 +8,17 @@
         <field name="state">code</field>
         <field name="code">action = records.unlink()</field>
     </record>
+
+    <record id="action_sbu_estimate_force_delete_server" model="ir.actions.server">
+        <field name="name">Elimina test (completo)</field>
+        <field name="model_id" ref="model_sbu_estimate"/>
+        <field name="binding_model_id" ref="model_sbu_estimate"/>
+        <field name="binding_view_types">list,form</field>
+        <field name="group_ids" eval="[
+            (4, ref('sbu_estimate.group_sbu_estimate_uat_cleanup')),
+            (4, ref('base.group_system')),
+        ]"/>
+        <field name="state">code</field>
+        <field name="code">action = records.action_open_force_delete_wizard()</field>
+    </record>
 </odoo>
