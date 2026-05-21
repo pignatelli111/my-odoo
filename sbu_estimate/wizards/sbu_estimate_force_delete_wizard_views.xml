@@ -29,6 +29,6 @@
         <field name="target">new</field>
         <field name="binding_model_id" ref="model_sbu_estimate"/>
         <field name="binding_view_types">list,form</field>
-        <field name="groups_id" eval="[(4, ref('sbu_estimate.group_sbu_estimate_uat_cleanup'))]"/>
+        <field name="group_ids" eval="[(4, ref('sbu_estimate.group_sbu_estimate_uat_cleanup'))]"/>
     </record>
 </odoo>

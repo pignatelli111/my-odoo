@@ -23,7 +23,10 @@ else
 fi
 echo ""
 echo "=== Tracebacks / critical ==="
-grep -nE 'Traceback|CRITICAL|ParseError|ValidationError' "$LOG" | tail -20 || echo "(none)"
+grep -nE 'Traceback|CRITICAL|ParseError|ValidationError|Invalid field' "$LOG" | tail -20 || echo "(none)"
+echo ""
+echo "=== Odoo 19 invalid XML fields (e.g. groups_id on act_window) ==="
+grep -nE "Invalid field 'groups_id'|Invalid field .groups_id" "$LOG" "$ODOO_LOG" 2>/dev/null | tail -10 || echo "(none)"
 echo ""
 echo "=== SBU duplicate field labels (fix these for green build) ==="
 grep -n 'have the same label' "$LOG" | grep -E 'sbu\.|Modules: sbu_' | tail -20 || echo "(none)"
