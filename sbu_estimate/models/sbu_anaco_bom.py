@@ -2,6 +2,8 @@
 """Map ANACO estimate line cost/price columns → catalog products → BOM lines."""
 from odoo import _, models
 
+from .sbu_bom_dimension_rules import bom_rule_for_product_and_line
+
 # estimate.line field → product.template default_code
 ANACO_LINE_FIELD_TO_PRODUCT_CODE = {
     'price_serramento_cad': 'SBU-SERR',
@@ -61,16 +63,24 @@ class SbuEstimate(models.Model):
                 product = products_by_code.get(code)
                 if not product:
                     continue
-                Bom.create({
+                rule = bom_rule_for_product_and_line(product, eline)
+                vals = {
                     'estimate_id': self.id,
                     'estimate_line_id': eline.id,
                     'sequence': seq,
                     'product_id': product.id,
-                    'calc_type': 'per_piece',
-                    'dimension_source': 'manual',
+                    'calc_type': rule.get('calc_type', 'per_piece'),
+                    'dimension_source': rule.get('dimension_source', 'manual'),
+                    'qty_formula_factor': rule.get('sqm_coverage_factor', 1.0),
+                    'sqm_coverage_factor': rule.get('sqm_coverage_factor', 1.0),
+                    'height_adjust_mm': rule.get('height_adjust_mm', 0.0),
+                    'needs_technical_confirm': rule.get('needs_technical_confirm', False),
+                    'data_phase': 'estimate',
                     'unit_cost': amount,
                     'uom_id': product.uom_id.id,
-                })
+                    'note': rule.get('note') or False,
+                }
+                Bom.create(vals)
                 seq += 10
                 created += 1
         return created

@@ -1,5 +1,6 @@
 from . import sbu_purchase_request
 from . import sbu_purchase_request_line
+from . import sbu_purchase_request_line_bulk
 from . import sbu_purchase_request_offer
 from . import purchase_order
 from . import project_project

@@ -87,3 +87,13 @@ class PurchaseOrderLine(models.Model):
         copy=False,
         help='Supplier quote row selected for this purchase line (traceability).',
     )
+    sbu_width_mm = fields.Float(string='L (mm)', digits=(16, 0), copy=False)
+    sbu_height_mm = fields.Float(string='H (mm)', digits=(16, 0), copy=False)
+    sbu_depth_mm = fields.Float(string='P (mm)', digits=(16, 0), copy=False)
+    sbu_sqm_per_piece = fields.Float(string='MQ/cad', digits=(16, 4), copy=False)
+    sbu_sqm_total = fields.Float(string='MQ tot.', digits=(16, 4), copy=False)
+    sbu_dimension_summary = fields.Char(
+        string='Dimensioni',
+        copy=False,
+        help='L×H×P e mq copiati dalla RDA (Cosimo: visibili su RFQ/PO).',
+    )

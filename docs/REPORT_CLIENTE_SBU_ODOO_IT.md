@@ -285,6 +285,7 @@ sequenceDiagram
 
 | Documento | Contenuto |
 |-----------|-----------|
+| [FEEDBACK_COSIMO_ROADMAP_IT.md](FEEDBACK_COSIMO_ROADMAP_IT.md) | Feedback operativo Cosimo: analisi 18 punti + roadmap P0–P3 |
 | `README.md` | Stato deploy, Qonto, Logikal, domini |
 | `docs/PHASE2_STEP2_1_anaco_field_formula_parity.txt` | Parità formule ANACO |
 | `docs/PHASE2_STEP2_4_optional_excel_import.txt` | Import Excel |

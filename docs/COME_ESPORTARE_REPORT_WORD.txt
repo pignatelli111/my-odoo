@@ -8,6 +8,11 @@ Presentazione cliente con screenshot e script da dire in riunione:
   docs/presentazione-cliente/REPORT_PRESENTAZIONE_CLIENTE_IT.md
   (immagini in docs/presentazione-cliente/screenshots/)
 
+Feedback operativo Cosimo (analisi + roadmap) — Word già pronto:
+  docs/FEEDBACK_COSIMO_ROADMAP_IT.docx
+  (sorgente aggiornabile: docs/FEEDBACK_COSIMO_ROADMAP_IT.md → rigenerare con:
+   python tools/md_to_docx.py docs/FEEDBACK_COSIMO_ROADMAP_IT.md docs/FEEDBACK_COSIMO_ROADMAP_IT.docx)
+
 Opzione A — Microsoft Word (consigliata)
   1. Apri Word → File → Apri → seleziona REPORT_CLIENTE_SBU_ODOO_IT.md
   2. Salva con nome → Documento Word (.docx)

@@ -52,6 +52,12 @@
                             type="object"
                             class="btn-secondary"
                             invisible="state == 'cancelled'"/>
+                    <button name="action_start_technical_review" string="Avvia revisione tecnica" type="object" class="btn-secondary"
+                            invisible="state == 'cancelled' or technical_data_state != 'estimate_bom'"/>
+                    <button name="action_mark_ready_for_po" string="Pronto per RFQ/PO" type="object" class="btn-primary"
+                            invisible="state == 'cancelled' or technical_data_state == 'ready_for_po'"/>
+                    <button name="action_bulk_update_lines" string="Apply to all lines" type="object" class="btn-secondary"
+                            invisible="state == 'cancelled' or not line_ids"/>
                     <button name="action_create_rfq" string="Create draft RFQ(s)" type="object" class="btn-secondary" invisible="state == 'cancelled'"/>
                     <button name="action_open_offer_comparison_matrix" string="Comparison matrix" type="object" class="btn-secondary" invisible="state == 'cancelled'"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,submitted,approved,done,cancelled"/>
@@ -82,6 +88,10 @@
                             <field name="comparison_margin_buffer_pct" readonly="state in ('done','cancelled')"/>
                             <field name="excel_item"/>
                             <field name="topic"/>
+                            <field name="technical_data_state" widget="badge"
+                                   decoration-warning="technical_data_state == 'estimate_bom'"
+                                   decoration-info="technical_data_state == 'technical_review'"
+                                   decoration-success="technical_data_state == 'ready_for_po'"/>
                         </group>
                         <group string="People &amp; dates">
                             <field name="user_id" widget="many2one_avatar_user"/>
@@ -118,7 +128,17 @@
                                     <field name="source_bom_line_id" optional="show"/>
                                     <field name="bom_qty_sync" optional="show"/>
                                     <field name="bom_qty_ordered_ref" optional="hide"/>
-                                    <field name="dimension_mm" optional="hide"/>
+                                    <field name="width_mm" optional="show"/>
+                                    <field name="height_mm" optional="show"/>
+                                    <field name="depth_mm" optional="show"/>
+                                    <field name="sqm_per_piece" optional="show"/>
+                                    <field name="sqm_total" optional="show"/>
+                                    <field name="dimension_mm" optional="show" readonly="1"/>
+                                    <field name="needs_technical_confirm" column_invisible="1"/>
+                                    <field name="technical_confirmed"
+                                           decoration-warning="needs_technical_confirm and not technical_confirmed"
+                                           decoration-success="needs_technical_confirm and technical_confirmed"/>
+                                    <field name="data_phase" optional="hide"/>
                                     <field name="utilization" optional="hide"/>
                                     <field name="weight_kg" optional="hide"/>
                                     <!-- Do not use source_bom_line_id in modifiers: Many2one is not a safe boolean in list views. -->
@@ -199,9 +219,20 @@
                 <filter name="type_acp" string="ACP" domain="[('request_type','=','acp')]"/>
                 <filter name="type_aco" string="ACO" domain="[('request_type','=','aco')]"/>
                 <filter name="type_lds" string="LDS" domain="[('request_type','=','lds')]"/>
+                <filter name="type_vt" string="VT / Glass" domain="[('request_type','=','vt')]"/>
+                <filter name="type_st" string="ST" domain="[('request_type','=','st')]"/>
+                <filter name="type_fe" string="FE" domain="[('request_type','=','fe')]"/>
+                <separator/>
+                <filter name="tech_estimate" string="Data: estimate BOM"
+                        domain="[('technical_data_state','=','estimate_bom')]"/>
+                <filter name="tech_review" string="Data: technical review"
+                        domain="[('technical_data_state','=','technical_review')]"/>
+                <filter name="tech_ready" string="Data: ready for PO"
+                        domain="[('technical_data_state','=','ready_for_po')]"/>
                 <separator/>
                 <filter name="prio_high" string="High / critical" domain="[('priority','in', ('2','3'))]"/>
                 <filter name="need_by_set" string="Need-by set" domain="[('need_by_date','!=', False)]"/>
+                <filter name="workflow_route_set" string="Route set" domain="[('workflow_route','!=', False)]"/>
                 <separator/>
                 <filter string="Group by type" name="grp_type" context="{'group_by': 'request_type'}"/>
                 <filter string="Group by priority" name="grp_prio" context="{'group_by': 'priority'}"/>

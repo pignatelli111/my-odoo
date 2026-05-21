@@ -82,7 +82,19 @@
                                     <field name="product_id"/>
                                     <field name="description"/>
                                     <field name="calc_type"/>
+                                    <field name="dimension_display" optional="show"/>
+                                    <field name="width_mm_effective" optional="hide"/>
+                                    <field name="height_mm_effective" optional="hide"/>
+                                    <field name="depth_mm" optional="hide"/>
+                                    <field name="sqm_per_piece_effective" optional="show"/>
+                                    <field name="sqm_coverage_factor" optional="hide"/>
+                                    <field name="height_adjust_mm" optional="hide"/>
                                     <field name="qty_formula_factor"/>
+                                    <field name="needs_technical_confirm" column_invisible="1"/>
+                                    <field name="technical_confirmed"
+                                           decoration-warning="needs_technical_confirm and not technical_confirmed"
+                                           decoration-success="needs_technical_confirm and technical_confirmed"/>
+                                    <field name="data_phase" optional="show"/>
                                     <field name="pack_size"/>
                                     <field name="demand_loss_pct" optional="show"/>
                                     <field name="demand_moq" optional="show"/>

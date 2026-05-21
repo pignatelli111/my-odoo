@@ -206,6 +206,17 @@ class SbuPurchaseRequest(models.Model):
         copy=False,
         help='Reason when cancelling or rolling back (operational audit).',
     )
+    technical_data_state = fields.Selection(
+        [
+            ('estimate_bom', 'Stima da distinta ANACO'),
+            ('technical_review', 'Revisione documento tecnico'),
+            ('ready_for_po', 'Pronto per RFQ/PO'),
+        ],
+        string='Dati tecnici',
+        default='estimate_bom',
+        tracking=True,
+        help='ANACO/distinta = stima; dopo documento consulente (RDA/ACO/ACP…) → pronto per ordine.',
+    )
 
     def _sbu_loss_pct_for_bom_line(self, bom):
         """Per-component loss overrides request default when > 0."""
@@ -284,6 +295,48 @@ class SbuPurchaseRequest(models.Model):
             'cancel_reason': False,
         })
 
+    def action_start_technical_review(self):
+        self.write({'technical_data_state': 'technical_review'})
+        self.message_post(
+            body=_(
+                'Revisione tecnica avviata: aggiornare misure/costi da documento consulente '
+                '(Excel RDA/ACO/ACP o DWG/DF) e confermare le righe distinta collegate.'
+            ),
+        )
+
+    def action_mark_ready_for_po(self):
+        for req in self:
+            pending = req.line_ids.filtered(
+                lambda l: l.source_bom_line_id
+                and l.source_bom_line_id.needs_technical_confirm
+                and not l.source_bom_line_id.technical_confirmed
+            )
+            if pending:
+                names = ', '.join(pending.mapped('display_name')[:5])
+                raise UserError(
+                    _(
+                        'Confermare le righe distinta prima del PO. '
+                        'Righe in attesa: %(names)s',
+                        names=names,
+                    )
+                )
+            req.write({'technical_data_state': 'ready_for_po'})
+            req.message_post(
+                body=_('Dati tecnici confermati: si possono creare RFQ/PO con misure finali.'),
+            )
+
+    def _sbu_check_ready_for_po(self):
+        self.ensure_one()
+        if self.technical_data_state == 'ready_for_po':
+            return
+        raise UserError(
+            _(
+                'I documenti tecnici (RDA/ACO/ACP/VT…) devono essere applicati prima del PO. '
+                'Usare «Avvia revisione tecnica», aggiornare misure sulle righe distinta, '
+                'spuntare «Confermato per PO», poi «Pronto per RFQ/PO».'
+            )
+        )
+
     def action_view_project(self):
         self.ensure_one()
         return {
@@ -303,13 +356,29 @@ class SbuPurchaseRequest(models.Model):
 
     def action_refresh_all_bom_quantities(self):
         self.line_ids.action_refresh_qty_from_bom()
-        self.message_post(body=_('Quantities refreshed from estimate BOM lines.'))
+        self.line_ids._sbu_propagate_dimensions_to_po_lines()
+        self.message_post(body=_('Quantities and dimensions refreshed from estimate BOM / RDA lines.'))
         return {
             'type': 'ir.actions.act_window',
             'res_model': self._name,
             'res_id': self.id,
             'view_mode': 'form',
             'target': 'current',
+        }
+
+    def action_bulk_update_lines(self):
+        """Open bulk wizard for all lines on this request."""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Apply to selected lines'),
+            'res_model': 'sbu.purchase.request.line.bulk.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_request_id': self.id,
+                'default_line_ids': [(6, 0, self.line_ids.ids)],
+            },
         }
 
     def action_open_offer_comparison_matrix(self):
@@ -351,7 +420,7 @@ class SbuPurchaseRequest(models.Model):
                 if bom.id in existing_bom:
                     continue
                 existing_bom.add(bom.id)
-                Line.create({
+                line_vals = {
                     'request_id': self.id,
                     'source_bom_line_id': bom.id,
                     'bom_qty_sync': True,
@@ -363,7 +432,10 @@ class SbuPurchaseRequest(models.Model):
                     'article_code': bom.product_id.default_code or '',
                     'procurement_mode': 'purchase',
                     'line_priority': self.priority,
-                })
+                }
+                if hasattr(bom, '_sbu_purchase_line_dimension_vals'):
+                    line_vals.update(bom._sbu_purchase_line_dimension_vals())
+                Line.create(line_vals)
                 created += 1
         self.message_post(
             body=_('Loaded %(n)d demand line(s) from estimate BOM (loss %%, packs, MOQ).') % {'n': created}
@@ -421,6 +493,7 @@ class SbuPurchaseRequest(models.Model):
                 pol_vals['sbu_offer_id'] = offer.id
                 if offer.unit_price:
                     pol_vals['price_unit'] = offer.unit_price
+            pol_vals.update(line._sbu_po_line_dimension_vals())
             Pol.create(pol_vals)
 
     def _sbu_rfq_vendor_partners(self):
@@ -438,6 +511,7 @@ class SbuPurchaseRequest(models.Model):
     def action_create_rfq(self):
         """Create one draft purchase.order per RFQ vendor (multi-vendor RFQ)."""
         self.ensure_one()
+        self._sbu_check_ready_for_po()
         self.line_ids.action_refresh_qty_from_bom()
         if not self.line_ids:
             raise UserError(_('Add at least one line before creating an RFQ.'))

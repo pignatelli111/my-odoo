@@ -10,4 +10,10 @@
               parent="menu_sbu_purchase_root"
               action="action_sbu_purchase_request"
               sequence="10"/>
+
+    <menuitem id="menu_sbu_purchase_request_line"
+              name="Request lines (bulk edit)"
+              parent="menu_sbu_purchase_root"
+              action="action_sbu_purchase_request_line"
+              sequence="15"/>
 </odoo>

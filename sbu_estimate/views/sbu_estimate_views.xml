@@ -249,7 +249,14 @@
                                                                domain="[('purchase_ok', '=', True), ('type', '=', 'consu')]"/>
                                                         <field name="description"/>
                                                         <field name="calc_type"/>
+                                                        <field name="dimension_display" optional="show"/>
+                                                        <field name="sqm_per_piece_effective" optional="show"/>
                                                         <field name="qty_formula_factor"/>
+                                                        <field name="needs_technical_confirm" column_invisible="1"/>
+                                                        <field name="technical_confirmed"
+                                                               decoration-warning="needs_technical_confirm and not technical_confirmed"
+                                                               decoration-success="needs_technical_confirm and technical_confirmed"/>
+                                                        <field name="data_phase" optional="show"/>
                                                         <field name="pack_size"/>
                                                         <field name="demand_loss_pct" optional="show"/>
                                                         <field name="demand_moq" optional="show"/>
@@ -289,7 +296,14 @@
                                            domain="[('purchase_ok', '=', True), ('type', '=', 'consu')]"/>
                                     <field name="description"/>
                                     <field name="calc_type"/>
+                                    <field name="dimension_display" optional="show"/>
+                                    <field name="sqm_per_piece_effective" optional="show"/>
                                     <field name="qty_formula_factor"/>
+                                    <field name="needs_technical_confirm" column_invisible="1"/>
+                                    <field name="technical_confirmed"
+                                           decoration-warning="needs_technical_confirm and not technical_confirmed"
+                                           decoration-success="needs_technical_confirm and technical_confirmed"/>
+                                    <field name="data_phase" optional="show"/>
                                     <field name="pack_size"/>
                                     <field name="demand_loss_pct" optional="show"/>
                                     <field name="demand_moq" optional="show"/>

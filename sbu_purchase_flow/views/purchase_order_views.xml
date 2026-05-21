@@ -20,6 +20,14 @@
                 <field name="sbu_budget_reference" invisible="1"/>
                 <field name="sbu_budget_variance_pct" invisible="1"/>
             </xpath>
+            <xpath expr="//field[@name='order_line']/list/field[@name='product_qty']" position="after">
+                <field name="sbu_width_mm" string="L mm" optional="show"/>
+                <field name="sbu_height_mm" string="H mm" optional="show"/>
+                <field name="sbu_depth_mm" string="P mm" optional="show"/>
+                <field name="sbu_sqm_per_piece" optional="show"/>
+                <field name="sbu_sqm_total" optional="show"/>
+                <field name="sbu_dimension_summary" optional="show"/>
+            </xpath>
             <xpath expr="//field[@name='order_line']/list/field[@name='price_unit']" position="after">
                 <field name="sbu_offer_id" optional="show"/>
                 <field name="sbu_pr_line_id" optional="hide"/>

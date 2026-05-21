@@ -23,9 +23,35 @@ class SbuPurchaseRequestLine(models.Model):
         string='Cod. articolo',
         help='COD. ARTICOLO (Excel); se vuoto si può usare il codice prodotto Odoo.',
     )
+    width_mm = fields.Float(string='Larghezza L (mm)', digits=(16, 0))
+    height_mm = fields.Float(string='Altezza H (mm)', digits=(16, 0))
+    depth_mm = fields.Float(
+        string='Profondità P (mm)',
+        digits=(16, 0),
+        help='Profondità non unitaria (spessore / pacco / vetro stratificato, ecc.).',
+    )
+    sqm_per_piece = fields.Float(string='MQ/cad', digits=(16, 4))
+    sqm_total = fields.Float(string='MQ tot.', digits=(16, 4))
     dimension_mm = fields.Char(
-        string='Dimensione mm',
-        help='Es. L=6000 come nel template RDA.',
+        string='Dimensioni',
+        compute='_compute_dimension_mm',
+        store=True,
+        help='Riepilogo L×H×P + mq/cad + mq tot.',
+    )
+    data_phase = fields.Selection(
+        related='source_bom_line_id.data_phase',
+        string='Fase dati',
+        readonly=False,
+        store=True,
+    )
+    needs_technical_confirm = fields.Boolean(
+        related='source_bom_line_id.needs_technical_confirm',
+        readonly=True,
+    )
+    technical_confirmed = fields.Boolean(
+        related='source_bom_line_id.technical_confirmed',
+        readonly=False,
+        store=True,
     )
     utilization = fields.Char(
         string='Utilizzo',
@@ -103,6 +129,46 @@ class SbuPurchaseRequestLine(models.Model):
         for line in self:
             line.offer_count = len(line.offer_ids)
 
+    @api.depends('width_mm', 'height_mm', 'depth_mm', 'sqm_per_piece', 'sqm_total')
+    def _compute_dimension_mm(self):
+        from odoo.addons.sbu_estimate.models.sbu_dimension_format import format_sbu_dimensions
+        for line in self:
+            line.dimension_mm = format_sbu_dimensions(
+                width_mm=line.width_mm,
+                height_mm=line.height_mm,
+                depth_mm=line.depth_mm,
+                sqm_per_piece=line.sqm_per_piece,
+                sqm_total=line.sqm_total,
+            )
+
+    def _sbu_po_line_dimension_vals(self):
+        self.ensure_one()
+        return {
+            'sbu_width_mm': self.width_mm,
+            'sbu_height_mm': self.height_mm,
+            'sbu_depth_mm': self.depth_mm,
+            'sbu_sqm_per_piece': self.sqm_per_piece,
+            'sbu_sqm_total': self.sqm_total,
+            'sbu_dimension_summary': self.dimension_mm,
+        }
+
+    def _sbu_propagate_dimensions_to_po_lines(self):
+        Pol = self.env['purchase.order.line']
+        for pr_line in self:
+            po_lines = Pol.search([
+                ('sbu_pr_line_id', '=', pr_line.id),
+                ('order_id.state', 'in', ('draft', 'sent', 'to approve')),
+            ])
+            if po_lines:
+                po_lines.write(pr_line._sbu_po_line_dimension_vals())
+
+    def write(self, vals):
+        res = super().write(vals)
+        dim_keys = {'width_mm', 'height_mm', 'depth_mm', 'sqm_per_piece', 'sqm_total'}
+        if dim_keys & set(vals.keys()):
+            self._sbu_propagate_dimensions_to_po_lines()
+        return res
+
     @api.onchange('product_id')
     def _onchange_product_id_article(self):
         for line in self:
@@ -125,6 +191,14 @@ class SbuPurchaseRequestLine(models.Model):
                 line.pos = eline.pos
             if bom.product_id and not line.article_code:
                 line.article_code = bom.product_id.default_code or ''
+            line._sbu_apply_dimension_vals_from_bom(bom)
+
+    def _sbu_apply_dimension_vals_from_bom(self, bom):
+        if not bom or not hasattr(bom, '_sbu_purchase_line_dimension_vals'):
+            return
+        for key, val in bom._sbu_purchase_line_dimension_vals().items():
+            if key in self._fields and key not in ('needs_technical_confirm',):
+                self[key] = val
 
     @api.constrains('request_id', 'source_bom_line_id')
     def _check_bom_link_constraints(self):
@@ -152,4 +226,6 @@ class SbuPurchaseRequestLine(models.Model):
     def action_refresh_qty_from_bom(self):
         for line in self:
             if line.bom_qty_sync and line.source_bom_line_id and line.request_id:
-                line.product_qty = line.request_id._sbu_demand_qty_from_bom(line.source_bom_line_id)
+                bom = line.source_bom_line_id
+                line.product_qty = line.request_id._sbu_demand_qty_from_bom(bom)
+                line._sbu_apply_dimension_vals_from_bom(bom)

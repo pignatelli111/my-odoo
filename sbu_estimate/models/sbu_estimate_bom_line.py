@@ -70,7 +70,69 @@ class SbuEstimateBomLine(models.Model):
         string='Fattore Formula',
         default=1.0,
         digits=(16, 4),
-        help='Moltiplicatore applicato alla dimensione calcolata',
+        help='Moltiplicatore applicato alla dimensione calcolata (es. 0,9 = 90%% mq vetro su posizione).',
+    )
+    sqm_coverage_factor = fields.Float(
+        string='Fattore mq posizione',
+        default=1.0,
+        digits=(16, 4),
+        help='Per vetro: tipicamente 0,9 (90%% dei mq totali della posizione).',
+    )
+    height_adjust_mm = fields.Float(
+        string='Aggiunta H (mm)',
+        default=0.0,
+        digits=(16, 0),
+        help='Sommata all\'altezza posizione (es. +300 mm zanzariere/oscuranti).',
+    )
+    depth_mm = fields.Float(
+        string='Profondità (mm)',
+        digits=(16, 0),
+        help='Profondità non unitaria (P), da documento tecnico o manuale.',
+    )
+    width_mm_effective = fields.Float(
+        string='Larghezza eff. (mm)',
+        compute='_compute_effective_dimensions',
+        store=True,
+        digits=(16, 0),
+    )
+    height_mm_effective = fields.Float(
+        string='Altezza eff. (mm)',
+        compute='_compute_effective_dimensions',
+        store=True,
+        digits=(16, 0),
+    )
+    sqm_per_piece_effective = fields.Float(
+        string='MQ/cad eff.',
+        compute='_compute_effective_dimensions',
+        store=True,
+        digits=(16, 4),
+    )
+    dimension_display = fields.Char(
+        string='Dimensioni',
+        compute='_compute_effective_dimensions',
+        store=True,
+        help='L×H effettivi e mq/cad per RDA/RFQ.',
+    )
+    data_phase = fields.Selection(
+        [
+            ('estimate', 'Stima ANACO'),
+            ('logikal', 'Bozza Logikal'),
+            ('technical', 'Documento tecnico'),
+        ],
+        string='Fase dati',
+        default='estimate',
+        required=True,
+        help='Stima preventivo → bozza Logikal → misure finali da consulente (RDA/ACO/ACP…).',
+    )
+    needs_technical_confirm = fields.Boolean(
+        string='Richiede conferma tecnica',
+        default=False,
+        help='Se attivo, la RDA non può passare a «Pronto per PO» finché non è confermato.',
+    )
+    technical_confirmed = fields.Boolean(
+        string='Confermato per PO',
+        default=False,
+        help='Spunta dopo revisione disegni / documento tecnico del consulente.',
     )
     qty_theoretical = fields.Float(
         string='Quantità Teorica',
@@ -163,6 +225,47 @@ class SbuEstimateBomLine(models.Model):
         for line in self:
             line.description = line.product_id.name or ''
 
+    @api.onchange('product_id', 'estimate_line_id')
+    def _onchange_product_id_apply_dimension_rule(self):
+        for line in self:
+            if not line.product_id:
+                continue
+            rule = line._sbu_rule_for_product()
+            if not rule:
+                continue
+            line.calc_type = rule.get('calc_type', line.calc_type)
+            line.dimension_source = rule.get('dimension_source', line.dimension_source)
+            cov = rule.get('sqm_coverage_factor', 1.0)
+            line.sqm_coverage_factor = cov
+            line.qty_formula_factor = cov
+            line.height_adjust_mm = rule.get('height_adjust_mm', 0.0)
+            line.needs_technical_confirm = rule.get('needs_technical_confirm', False)
+            if rule.get('note'):
+                line.note = rule['note']
+
+    def _sbu_rule_for_product(self):
+        self.ensure_one()
+        from .sbu_bom_dimension_rules import bom_rule_for_product_and_line
+        return bom_rule_for_product_and_line(self.product_id, self.estimate_line_id)
+
+    def _sbu_purchase_line_dimension_vals(self):
+        """Values to copy onto sbu.purchase.request.line from this BOM line."""
+        self.ensure_one()
+        parent = self.estimate_line_id
+        qty_pos = parent.qty if parent else 1.0
+        sqm_tot = (self.sqm_per_piece_effective or 0.0) * qty_pos
+        return {
+            'width_mm': self.width_mm_effective,
+            'height_mm': self.height_mm_effective,
+            'depth_mm': self.depth_mm or 0.0,
+            'sqm_per_piece': self.sqm_per_piece_effective,
+            'sqm_total': sqm_tot,
+            'dimension_mm': self.dimension_display,
+            'needs_technical_confirm': self.needs_technical_confirm,
+            'technical_confirmed': self.technical_confirmed,
+            'data_phase': self.data_phase,
+        }
+
     @api.model
     def _sbu_apply_demand_qty_rules(self, theoretical, loss_pct=0.0, moq=0.0, pack_size=0.0):
         """ITEM demand: scrap %, then MOQ, then round up to pack size."""
@@ -185,9 +288,58 @@ class SbuEstimateBomLine(models.Model):
             pack_size=self.pack_size or 0.0,
         )
 
+    @api.depends(
+        'estimate_line_id.width_mm',
+        'estimate_line_id.height_mm',
+        'height_adjust_mm',
+        'depth_mm',
+        'sqm_coverage_factor',
+        'calc_type',
+        'estimate_line_id.qty',
+    )
+    def _compute_effective_dimensions(self):
+        for line in self:
+            parent = line.estimate_line_id
+            if not parent:
+                line.width_mm_effective = 0.0
+                line.height_mm_effective = 0.0
+                line.sqm_per_piece_effective = 0.0
+                line.dimension_display = ''
+                continue
+            b_mm = parent.width_mm or 0.0
+            h_mm = (parent.height_mm or 0.0) + (line.height_adjust_mm or 0.0)
+            p_mm = line.depth_mm or 0.0
+            line.width_mm_effective = b_mm
+            line.height_mm_effective = h_mm
+            if b_mm and h_mm:
+                sqm_raw = (b_mm * h_mm) / 1_000_000.0
+                cov = line.sqm_coverage_factor or 1.0
+                line.sqm_per_piece_effective = sqm_raw * cov
+            else:
+                line.sqm_per_piece_effective = 0.0
+            line.dimension_display = line._sbu_format_dimension_display(b_mm, h_mm, p_mm)
+
+    def _sbu_format_dimension_display(self, b_mm, h_mm, p_mm):
+        from .sbu_dimension_format import format_sbu_dimensions
+        qty_pos = self.estimate_line_id.qty if self.estimate_line_id else 1.0
+        sqm_tot = (self.sqm_per_piece_effective or 0.0) * qty_pos
+        text = format_sbu_dimensions(
+            width_mm=b_mm,
+            height_mm=h_mm,
+            depth_mm=p_mm,
+            sqm_per_piece=self.sqm_per_piece_effective,
+            sqm_total=sqm_tot,
+        )
+        if text:
+            return text
+        if self.height_adjust_mm and self.estimate_line_id.height_mm:
+            return _('H %(h0).0f+%(adj).0f mm (completare B/H posizione)', h0=self.estimate_line_id.height_mm, adj=self.height_adjust_mm)
+        return _('Misure posizione da completare (B/H ANACO)')
+
     # ── Computed: quantities ──────────────────────────────────────────────────
     @api.depends(
-        'calc_type', 'dimension_source', 'qty_formula_factor', 'pack_size',
+        'calc_type', 'dimension_source', 'qty_formula_factor', 'sqm_coverage_factor',
+        'height_adjust_mm', 'pack_size',
         'demand_loss_pct', 'demand_moq',
         'estimate_line_id.width_mm', 'estimate_line_id.height_mm',
         'estimate_line_id.qty',
@@ -201,9 +353,9 @@ class SbuEstimateBomLine(models.Model):
                 continue
 
             b_mm = parent.width_mm or 0.0
-            h_mm = parent.height_mm or 0.0
+            h_mm = (parent.height_mm or 0.0) + (line.height_adjust_mm or 0.0)
             qty_items = parent.qty or 1.0
-            factor = line.qty_formula_factor or 1.0
+            factor = line.qty_formula_factor or line.sqm_coverage_factor or 1.0
 
             if line.calc_type == 'lump_sum':
                 # Fixed quantity regardless of dimensions
@@ -225,9 +377,12 @@ class SbuEstimateBomLine(models.Model):
                 theoretical = dim_m * factor * qty_items
 
             elif line.calc_type == 'surface':
-                # Convert mm² to m²
-                sqm = (b_mm * h_mm) / 1_000_000.0
-                theoretical = sqm * factor * qty_items
+                # mm² → m²; factor = coverage (e.g. 0.9 glass) on position
+                if b_mm and h_mm:
+                    sqm = (b_mm * h_mm) / 1_000_000.0
+                    theoretical = sqm * factor * qty_items
+                else:
+                    theoretical = factor * qty_items
 
             elif line.calc_type == 'pack':
                 theoretical = factor * qty_items
