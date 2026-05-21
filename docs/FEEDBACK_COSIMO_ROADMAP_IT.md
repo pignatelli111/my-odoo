@@ -62,7 +62,7 @@ Questo documento mappa i **18 punti** di Cosimo su: stato attuale, gap, priorit�
 |---|------------------|-------------|-----------------|----------|
 | 1 | Ordini interni vs ANACO; quando dati reali PO; vetro/zanzariere/Logikal | **Corretto** | Distinta da ANACO sì; fase «tecnico finale» no | **P0** |
 | 2 | Dimensioni perse su RFQ (L×H×P + mq/cad, mq/tot) | **Corretto** | `dimension_mm` su RDA (spesso nascosto); RFQ/PO incompleto | **P0** |
-| 3 | Filtri a tendina + applica scelta a tutto il filtrato | Utile | Filtri lista standard; bulk edit SBU no | **P1** |
+| 3 | Filtri a tendina + applica scelta a tutto il filtrato | Utile | Searchpanel + wizard «risultato filtrato» su righe RDA | **P1** ✅ base |
 | 4 | Item / Topic / Area su purchase requests | Da chiarire UX | Campi `excel_item`, `topic`; route = `workflow_route` / `request_type` | **P2** |
 | 5 | Mancano LA/LZ/ST/PAN/OSC; creazione guidata tipi | **Corretto** | Routing parziale (`LZ→FE`, `ST→ST`, `PAN→RDA`…); non tutti i tipi | **P1** |
 | 6 | SAL passivo (posa, subappalto) | **Corretto** | SAL attivo cliente sì; fatture passive fornitore no | **P0** |

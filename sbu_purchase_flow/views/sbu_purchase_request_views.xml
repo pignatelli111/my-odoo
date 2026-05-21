@@ -232,12 +232,20 @@
                 <separator/>
                 <filter name="prio_high" string="High / critical" domain="[('priority','in', ('2','3'))]"/>
                 <filter name="need_by_set" string="Need-by set" domain="[('need_by_date','!=', False)]"/>
+                <filter name="need_by_period" string="Need-by date" date="need_by_date"/>
                 <filter name="workflow_route_set" string="Route set" domain="[('workflow_route','!=', False)]"/>
                 <separator/>
                 <filter string="Group by type" name="grp_type" context="{'group_by': 'request_type'}"/>
                 <filter string="Group by priority" name="grp_prio" context="{'group_by': 'priority'}"/>
                 <filter string="Group by project" name="grp_project" context="{'group_by': 'project_id'}"/>
                 <filter string="Group by status" name="grp_state" context="{'group_by': 'state'}"/>
+                <searchpanel>
+                    <field name="request_type" string="Tipo" enable_counters="1"/>
+                    <field name="state" string="Stato" enable_counters="1"/>
+                    <field name="priority" string="Priorità" enable_counters="1"/>
+                    <field name="technical_data_state" string="Dati tecnici" enable_counters="1"/>
+                    <field name="project_id" string="Commessa" enable_counters="1" limit="40"/>
+                </searchpanel>
             </search>
         </field>
     </record>

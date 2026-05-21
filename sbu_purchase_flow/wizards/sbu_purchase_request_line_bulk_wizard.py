@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import ast
+
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
@@ -18,9 +20,23 @@ class SbuPurchaseRequestLineBulkWizard(models.TransientModel):
         'wizard_id',
         'line_id',
         string='Lines to update',
-        help='Filled from list selection (use filters, then select all matching).',
+        help='Filled when scope is «Selected lines only».',
     )
-    line_count = fields.Integer(string='Selected lines', compute='_compute_line_count')
+    apply_scope = fields.Selection(
+        [
+            ('selection', 'Selected lines only'),
+            ('filtered', 'All lines matching list filters'),
+        ],
+        string='Apply to',
+        required=True,
+        default='selection',
+        help='Use «All lines matching list filters» after setting filters in the list '
+             '(no need to tick every row — same idea as Purchase area bulk edit).',
+    )
+    target_count = fields.Integer(
+        string='Lines affected',
+        compute='_compute_target_count',
+    )
 
     apply_date_required = fields.Boolean(string='Apply delivery date')
     date_required = fields.Date(string='Delivery date')
@@ -52,18 +68,25 @@ class SbuPurchaseRequestLineBulkWizard(models.TransientModel):
     )
     need_by_date = fields.Date(string='Header need-by date')
 
-    @api.depends('line_ids')
-    def _compute_line_count(self):
+    @api.depends('apply_scope', 'line_ids', 'request_id')
+    def _compute_target_count(self):
         for wiz in self:
-            wiz.line_count = len(wiz.line_ids)
+            try:
+                wiz.target_count = len(wiz._resolve_target_lines(raise_if_empty=False))
+            except Exception:
+                wiz.target_count = 0
 
     @api.model
     def default_get(self, fields_list):
         res = super().default_get(fields_list)
         active_model = self.env.context.get('active_model')
         active_ids = self.env.context.get('active_ids') or []
+        active_domain = self.env.context.get('active_domain')
+
         if active_model == 'sbu.purchase.request.line' and active_ids:
             res['line_ids'] = [(6, 0, active_ids)]
+            if active_domain and len(active_ids) > 20:
+                res['apply_scope'] = 'filtered'
         elif active_model == 'sbu.purchase.request' and active_ids:
             req = self.env['sbu.purchase.request'].browse(active_ids[:1])
             res['request_id'] = req.id
@@ -74,23 +97,55 @@ class SbuPurchaseRequestLineBulkWizard(models.TransientModel):
             )
             res['request_id'] = req.id
             res['line_ids'] = [(6, 0, req.line_ids.ids)]
+
+        if active_domain and res.get('apply_scope') != 'selection':
+            res.setdefault('apply_scope', 'filtered')
         return res
 
-    def _target_lines(self):
+    def _domain_from_context(self):
+        """Domain of the list view when the wizard was opened (filtered rows)."""
+        raw = self.env.context.get('active_domain')
+        if raw is None:
+            return []
+        if isinstance(raw, (list, tuple)):
+            return list(raw)
+        if isinstance(raw, str) and raw.strip():
+            try:
+                parsed = ast.literal_eval(raw)
+            except (SyntaxError, ValueError):
+                return []
+            return list(parsed) if isinstance(parsed, (list, tuple)) else []
+        return []
+
+    def _resolve_target_lines(self, raise_if_empty=True):
         self.ensure_one()
+        Line = self.env['sbu.purchase.request.line']
+        if self.apply_scope == 'filtered':
+            domain = self._domain_from_context()
+            if not domain and self.request_id:
+                domain = [('request_id', '=', self.request_id.id)]
+            if not domain:
+                if raise_if_empty:
+                    raise UserError(
+                        _('Open this wizard from the request lines list with at least one '
+                          'filter active, or choose «Selected lines only» and tick rows.'),
+                    )
+                return Line.browse()
+            return Line.search(domain)
+
         lines = self.line_ids
         if not lines and self.request_id:
             lines = self.request_id.line_ids
-        if not lines:
+        if not lines and raise_if_empty:
             raise UserError(
-                _('Select at least one line in the list (filter → tick rows or «Select all»), '
-                  'then run «Apply to selected lines» again.'),
+                _('Select at least one line in the list (or use filters + '
+                  '«All lines matching list filters»).'),
             )
         return lines
 
     def action_apply(self):
         self.ensure_one()
-        lines = self._target_lines()
+        lines = self._resolve_target_lines()
         if not any([
             self.apply_date_required,
             self.apply_destination,
@@ -118,4 +173,13 @@ class SbuPurchaseRequestLineBulkWizard(models.TransientModel):
         if self.apply_need_by_header:
             lines.mapped('request_id').write({'need_by_date': self.need_by_date})
 
-        return True
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Bulk update'),
+                'message': _('Updated %(n)s line(s).', n=updated),
+                'type': 'success',
+                'sticky': False,
+            },
+        }

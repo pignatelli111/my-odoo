@@ -12,7 +12,7 @@
               sequence="10"/>
 
     <menuitem id="menu_sbu_purchase_request_line"
-              name="Request lines (bulk edit)"
+              name="Righe richiesta (modifica massiva)"
               parent="menu_sbu_purchase_root"
               action="action_sbu_purchase_request_line"
               sequence="15"/>

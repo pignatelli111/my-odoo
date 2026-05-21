@@ -44,35 +44,50 @@
                 <field name="article_code"/>
                 <field name="request_type"/>
                 <field name="workflow_route"/>
+                <field name="destination"/>
                 <separator/>
-                <filter name="no_delivery_date" string="No delivery date"
+                <filter name="no_delivery_date" string="Senza data consegna"
                         domain="[('date_required', '=', False)]"/>
-                <filter name="has_delivery_date" string="Delivery date set"
+                <filter name="has_delivery_date" string="Con data consegna"
                         domain="[('date_required', '!=', False)]"/>
-                <filter name="pending_technical" string="Pending technical confirm"
+                <filter name="date_required_period" string="Data consegna" date="date_required"/>
+                <separator/>
+                <filter name="pending_technical" string="In attesa conferma tecnica"
                         domain="[('needs_technical_confirm', '=', True), ('technical_confirmed', '=', False)]"/>
-                <filter name="procurement_purchase" string="Procurement: purchase"
+                <filter name="procurement_purchase" string="Approvv.: acquisto"
                         domain="[('procurement_mode', '=', 'purchase')]"/>
-                <filter name="procurement_wh" string="Procurement: warehouse"
+                <filter name="procurement_wh" string="Approvv.: magazzino"
                         domain="[('procurement_mode', '=', 'warehouse')]"/>
+                <filter name="prio_high" string="Priorità alta/critica"
+                        domain="[('line_priority', 'in', ('2', '3'))]"/>
                 <separator/>
                 <filter name="type_rda" string="RDA" domain="[('request_type', '=', 'rda')]"/>
                 <filter name="type_aco" string="ACO" domain="[('request_type', '=', 'aco')]"/>
                 <filter name="type_acp" string="ACP" domain="[('request_type', '=', 'acp')]"/>
-                <filter name="type_vt" string="VT / Glass" domain="[('request_type', '=', 'vt')]"/>
+                <filter name="type_vt" string="VT / Vetro" domain="[('request_type', '=', 'vt')]"/>
                 <filter name="type_st" string="ST" domain="[('request_type', '=', 'st')]"/>
-                <filter name="type_fe" string="FE / LZ steel" domain="[('request_type', '=', 'fe')]"/>
+                <filter name="type_fe" string="FE / Carpenteria" domain="[('request_type', '=', 'fe')]"/>
                 <separator/>
-                <filter name="tech_estimate" string="Data: estimate BOM"
+                <filter name="tech_estimate" string="Dati: stima distinta"
                         domain="[('technical_data_state', '=', 'estimate_bom')]"/>
-                <filter name="tech_ready" string="Data: ready for PO"
+                <filter name="tech_review" string="Dati: revisione tecnica"
+                        domain="[('technical_data_state', '=', 'technical_review')]"/>
+                <filter name="tech_ready" string="Dati: pronto per PO"
                         domain="[('technical_data_state', '=', 'ready_for_po')]"/>
                 <separator/>
-                <filter string="Group by request" name="grp_request" context="{'group_by': 'request_id'}"/>
-                <filter string="Group by project" name="grp_project" context="{'group_by': 'project_id'}"/>
-                <filter string="Group by type" name="grp_type" context="{'group_by': 'request_type'}"/>
-                <filter string="Group by product" name="grp_product" context="{'group_by': 'product_id'}"/>
-                <filter string="Group by delivery date" name="grp_date" context="{'group_by': 'date_required'}"/>
+                <filter string="Raggruppa per RDA" name="grp_request" context="{'group_by': 'request_id'}"/>
+                <filter string="Raggruppa per commessa" name="grp_project" context="{'group_by': 'project_id'}"/>
+                <filter string="Raggruppa per tipo" name="grp_type" context="{'group_by': 'request_type'}"/>
+                <filter string="Raggruppa per prodotto" name="grp_product" context="{'group_by': 'product_id'}"/>
+                <filter string="Raggruppa per data consegna" name="grp_date" context="{'group_by': 'date_required'}"/>
+                <filter string="Raggruppa per priorità" name="grp_prio" context="{'group_by': 'line_priority'}"/>
+                <searchpanel>
+                    <field name="request_type" string="Tipo documento" enable_counters="1"/>
+                    <field name="procurement_mode" string="Approvvigionamento" enable_counters="1"/>
+                    <field name="line_priority" string="Priorità riga" enable_counters="1"/>
+                    <field name="technical_data_state" string="Dati tecnici" enable_counters="1"/>
+                    <field name="project_id" string="Commessa" enable_counters="1" limit="40"/>
+                </searchpanel>
             </search>
         </field>
     </record>
@@ -83,8 +98,9 @@
         <field name="view_mode">list</field>
         <field name="search_view_id" ref="view_sbu_purchase_request_line_search"/>
         <field name="help" type="html">
-            <p>Filter by document type, route, or missing delivery date, select rows (or all matching),
-               then <b>Action → Apply to selected lines</b> to set dates, destination, priority in bulk.</p>
+            <p>Usa i <b>filtri a sinistra</b> (tipo RDA, priorità, data consegna, …), poi
+               <b>Azione → Applica al risultato filtrato</b> per impostare data, destinazione,
+               magazzino/acquisto e priorità su tutte le righe del filtro (senza selezionarle una a una).</p>
         </field>
     </record>
 </odoo>

@@ -52,13 +52,23 @@ Copiate automaticamente alla **Create draft RFQ(s)**. Se aggiorni misure sulla R
 
 ---
 
-## Punto 3 — Filtri e modifica massiva
+## Punto 3 — Filtri a tendina + applica a tutto il filtrato
 
-**Menu:** SBU → Purchasing → **Request lines (bulk edit)**
+**Menu:** SBU → Acquisti → **Righe richiesta (modifica massiva)**
 
-1. Usa **Filtri** (tipo RDA/ACO/VT, route, data consegna vuota, conferma tecnica, …).  
-2. Seleziona righe o **Select all matching search**.  
-3. **Action → Apply to selected lines** (o da RDA: **Apply to all lines**).  
-4. Spunta i campi da applicare (checkbox): data consegna, destinazione, magazzino/acquisto, priorità, need-by testata.
+### Filtri sezionabili (pannello sinistro)
 
-Moduli: `sbu_estimate` **19.0.1.0.75+**, `sbu_purchase_flow` **19.0.1.0.22+**.
+Come in area Acquisti Odoo: clic su **Tipo documento**, **Approvvigionamento**, **Priorità**, **Dati tecnici**, **Commessa** — con contatori.
+
+In alto: filtri rapidi (senza data, data consegna per periodo, RDA/VT/ST, priorità alta, …) e raggruppamenti.
+
+### Applicare un valore a tutto il filtrato
+
+1. Imposta i filtri (es. solo **RDA**, solo righe **senza data consegna**).  
+2. **Azione → Applica al risultato filtrato** (non serve selezionare ogni riga).  
+3. Nel wizard scegli **Tutto il risultato filtrato** (oppure solo righe selezionate).  
+4. Spunta i campi: **data consegna**, **destinazione**, **magazzino/acquisto**, **priorità**, **need-by testata RDA**.
+
+Alternativa: seleziona righe → **Applica alle righe selezionate**. Da testata RDA: **Applica a tutte le righe RDA**.
+
+Moduli: `sbu_purchase_flow` **19.0.1.0.28+**.
