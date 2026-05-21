@@ -2,19 +2,22 @@
 """Related stored fields on PR lines for search / filters (Cosimo point 3)."""
 from odoo import fields, models
 
+from .sbu_workflow_routing import SBU_WORKFLOW_ROUTE_SELECTION
+
 
 class SbuPurchaseRequestLine(models.Model):
     _inherit = 'sbu.purchase.request.line'
 
     request_type = fields.Selection(
         related='request_id.request_type',
-        string='Document type',
+        string='Tipo Odoo',
         store=True,
         readonly=True,
     )
-    workflow_route = fields.Char(
+    workflow_route = fields.Selection(
+        selection=SBU_WORKFLOW_ROUTE_SELECTION,
         related='request_id.workflow_route',
-        string='Workflow route',
+        string='Route ANACO',
         store=True,
         readonly=True,
     )

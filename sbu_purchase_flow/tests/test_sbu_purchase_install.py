@@ -13,6 +13,14 @@ class TestSbuPurchaseInstall(TransactionCase):
             self.env['sbu.purchase.request.line.bulk.wizard']._name,
             'sbu.purchase.request.line.bulk.wizard',
         )
+        self.assertEqual(
+            self.env['sbu.purchase.request.create.wizard']._name,
+            'sbu.purchase.request.create.wizard',
+        )
+        pr = self.env['sbu.purchase.request']
+        self.assertEqual(pr._fields['workflow_route'].type, 'selection')
+        line = self.env['sbu.purchase.request.line']
+        self.assertEqual(line._fields['workflow_route'].type, 'selection')
         po_line = self.env['purchase.order.line']
         for fname in (
             'sbu_pr_line_id',

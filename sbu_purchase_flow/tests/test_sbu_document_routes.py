@@ -58,15 +58,21 @@ class TestSbuDocumentRoutes(TransactionCase):
         })
         osc = self.env['product.product'].search(
             [('default_code', '=', 'SBU-OSC')], limit=1,
-        ) or self.env['product.product'].create({
-            'name': 'Oscurante test',
-            'default_code': 'SBU-OSC',
-            'type': 'consu',
-        })
+        )
+        if not osc:
+            self.env['product.template'].create({
+                'name': 'Oscurante test',
+                'default_code': 'SBU-OSC',
+                'type': 'consu',
+            })
+            osc = self.env['product.product'].search(
+                [('default_code', '=', 'SBU-OSC')], limit=1,
+            )
         self.env['sbu.estimate.bom.line'].create({
             'estimate_id': estimate.id,
             'estimate_line_id': eline.id,
             'product_id': osc.id,
+            'calc_type': 'surface',
             'qty_theoretical': 1,
             'uom_id': osc.uom_id.id,
         })
