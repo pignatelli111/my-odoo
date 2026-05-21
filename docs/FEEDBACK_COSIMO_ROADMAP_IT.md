@@ -64,7 +64,7 @@ Questo documento mappa i **18 punti** di Cosimo su: stato attuale, gap, priorit�
 | 2 | Dimensioni perse su RFQ (L×H×P + mq/cad, mq/tot) | **Corretto** | `dimension_mm` su RDA (spesso nascosto); RFQ/PO incompleto | **P0** |
 | 3 | Filtri a tendina + applica scelta a tutto il filtrato | Utile | Searchpanel + wizard «risultato filtrato» su righe RDA | **P1** ✅ base |
 | 4 | Item / Topic / Area su purchase requests | Da chiarire UX | Campi `excel_item`, `topic`; route = `workflow_route` / `request_type` | **P2** |
-| 5 | Mancano LA/LZ/ST/PAN/OSC; creazione guidata tipi | **Corretto** | Routing parziale (`LZ→FE`, `ST→ST`, `PAN→RDA`…); non tutti i tipi | **P1** |
+| 5 | Mancano LA/LZ/ST/PAN/OSC; creazione guidata tipi | **Corretto** | Filtri/searchpanel route + wizard «Nuovo documento» | **P1** ✅ base |
 | 6 | SAL passivo (posa, subappalto) | **Corretto** | SAL attivo cliente sì; fatture passive fornitore no | **P0** |
 | 7 | Celle verdi = compilazione manuale | Ottima UX | Non implementato | **P2** |
 | 8 | Planner Microsoft ↔ Odoo | Realistico | Solo deep link / processo; sync bidirezionale fragile | **P3** |
@@ -168,8 +168,8 @@ Negli elenchi mancano alcuni tipi; serve creazione guidata per evitare dati spor
 | POS | ACP |
 | TRN | LDS |
 
-**Proposta**  
-Wizard «Nuovo documento acquisto» con elenco **chiuso** dei tipi + campi obbligatori per tipo; aggiungere OSC e LA come tipi dedicati se richiesto da Cosimo.
+**Implementato (base)**  
+Wizard «Nuovo documento acquisto», route `LA/LZ/ST/PAN/OSC` in filtri e searchpanel, split OSC/ZANZ da distinta vetro, blocco duplicati aperti per commessa+route.
 
 ---
 

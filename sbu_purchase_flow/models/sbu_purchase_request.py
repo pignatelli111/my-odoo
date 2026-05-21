@@ -1,7 +1,12 @@
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
-from .sbu_workflow_routing import workflow_route_to_request_type
+from .sbu_workflow_routing import (
+    SBU_WORKFLOW_ROUTE_SELECTION,
+    bom_product_workflow_route,
+    estimate_line_matches_route,
+    workflow_route_to_request_type,
+)
 
 
 class SbuPurchaseRequest(models.Model):
@@ -18,10 +23,13 @@ class SbuPurchaseRequest(models.Model):
         default=lambda self: _('New'),
         tracking=True,
     )
-    workflow_route = fields.Char(
-        string='Workflow route',
+    workflow_route = fields.Selection(
+        selection=SBU_WORKFLOW_ROUTE_SELECTION,
+        string='Percorso / route',
         index=True,
-        help='ANACO downstream route (VC/VS, ST, PAN, LA, …) when created from estimate lines.',
+        tracking=True,
+        help='Codice ANACO (LA, LZ, ST, PAN, OSC, VC/VS, …). Usare il wizard «Nuovo documento» '
+             'per evitare tipi incoerenti.',
     )
     request_type = fields.Selection(
         selection=[
@@ -256,11 +264,19 @@ class SbuPurchaseRequest(models.Model):
             pack_size=bom.pack_size or 0.0,
         )
 
+    @api.onchange('workflow_route')
+    def _onchange_workflow_route(self):
+        if self.workflow_route:
+            self.request_type = workflow_route_to_request_type(self.workflow_route)
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
             if vals.get('name', _('New')) == _('New'):
                 vals['name'] = self.env['ir.sequence'].next_by_code('sbu.purchase.request') or _('New')
+            route = vals.get('workflow_route')
+            if route and not vals.get('request_type'):
+                vals['request_type'] = workflow_route_to_request_type(route)
         return super().create(vals_list)
 
     def action_submit(self):
@@ -410,13 +426,20 @@ class SbuPurchaseRequest(models.Model):
         existing_bom = {bid for bid in self.line_ids.mapped('source_bom_line_id').ids if bid}
         Line = self.env['sbu.purchase.request.line']
         created = 0
+        route_filter = workflow_route or self.workflow_route
         for eline in estimate.line_ids:
-            if workflow_route and eline.workflow_route != workflow_route:
+            if route_filter and not estimate_line_matches_route(eline, route_filter):
                 continue
             pos = eline.pos or ''
             for bom in eline.bom_line_ids:
                 if not bom.product_id:
                     continue
+                if route_filter in ('OSC', 'ZANZ', 'VC/VS'):
+                    bom_route = bom_product_workflow_route(bom)
+                    if bom_route and bom_route != route_filter:
+                        continue
+                    if route_filter == 'VC/VS' and bom_route in ('OSC', 'ZANZ'):
+                        continue
                 if bom.id in existing_bom:
                     continue
                 existing_bom.add(bom.id)

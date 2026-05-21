@@ -5,8 +5,14 @@
               parent="sbu_estimate.menu_sbu_root"
               sequence="30"/>
 
+    <menuitem id="menu_sbu_purchase_request_create"
+              name="Nuovo documento acquisto"
+              parent="menu_sbu_purchase_root"
+              action="action_sbu_purchase_request_create_wizard"
+              sequence="5"/>
+
     <menuitem id="menu_sbu_purchase_request"
-              name="Purchase requests"
+              name="Richieste acquisto"
               parent="menu_sbu_purchase_root"
               action="action_sbu_purchase_request"
               sequence="10"/>

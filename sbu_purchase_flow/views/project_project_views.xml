@@ -22,6 +22,14 @@
                         <span class="o_stat_text">Demand RDA</span>
                     </div>
                 </button>
+                <button name="action_sbu_open_purchase_request_create_wizard" type="object"
+                        class="oe_stat_button" icon="fa-file-text-o"
+                        invisible="not sbu_estimate_id"
+                        title="Wizard guidato: LA, LZ, ST, PAN, OSC, VT, ACO, ACP, LDS (un documento per route).">
+                    <div class="o_stat_info">
+                        <span class="o_stat_text">Nuovo doc.</span>
+                    </div>
+                </button>
                 <button name="action_sbu_create_purchase_requests_by_workflow" type="object"
                         class="oe_stat_button" icon="fa-sitemap"
                         invisible="not sbu_estimate_id or sbu_estimate_id.state != 'won'"

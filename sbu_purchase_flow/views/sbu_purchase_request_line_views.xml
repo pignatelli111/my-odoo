@@ -68,6 +68,14 @@
                 <filter name="type_st" string="ST" domain="[('request_type', '=', 'st')]"/>
                 <filter name="type_fe" string="FE / Carpenteria" domain="[('request_type', '=', 'fe')]"/>
                 <separator/>
+                <filter name="route_la" string="LA" domain="[('workflow_route', '=', 'LA')]"/>
+                <filter name="route_lz" string="LZ" domain="[('workflow_route', '=', 'LZ')]"/>
+                <filter name="route_st" string="ST" domain="[('workflow_route', '=', 'ST')]"/>
+                <filter name="route_pan" string="PAN" domain="[('workflow_route', '=', 'PAN')]"/>
+                <filter name="route_osc" string="OSC" domain="[('workflow_route', '=', 'OSC')]"/>
+                <filter name="route_zanz" string="Zanzariere" domain="[('workflow_route', '=', 'ZANZ')]"/>
+                <filter name="route_vt" string="VT / VC-VS" domain="[('workflow_route', '=', 'VC/VS')]"/>
+                <separator/>
                 <filter name="tech_estimate" string="Dati: stima distinta"
                         domain="[('technical_data_state', '=', 'estimate_bom')]"/>
                 <filter name="tech_review" string="Dati: revisione tecnica"
@@ -82,7 +90,8 @@
                 <filter string="Raggruppa per data consegna" name="grp_date" context="{'group_by': 'date_required'}"/>
                 <filter string="Raggruppa per priorità" name="grp_prio" context="{'group_by': 'line_priority'}"/>
                 <searchpanel>
-                    <field name="request_type" string="Tipo documento" enable_counters="1"/>
+                    <field name="workflow_route" string="Route (LA/LZ/ST/PAN/OSC)" enable_counters="1"/>
+                    <field name="request_type" string="Tipo Odoo" enable_counters="1"/>
                     <field name="procurement_mode" string="Approvvigionamento" enable_counters="1"/>
                     <field name="line_priority" string="Priorità riga" enable_counters="1"/>
                     <field name="technical_data_state" string="Dati tecnici" enable_counters="1"/>

@@ -72,3 +72,32 @@ In alto: filtri rapidi (senza data, data consegna per periodo, RDA/VT/ST, priori
 Alternativa: seleziona righe → **Applica alle righe selezionate**. Da testata RDA: **Applica a tutte le righe RDA**.
 
 Moduli: `sbu_purchase_flow` **19.0.1.0.28+**.
+
+---
+
+## Punto 5 — Route LA / LZ / ST / PAN / OSC negli elenchi
+
+**Menu:** SBU → Acquisti → **Nuovo documento acquisto** (wizard guidato)
+
+### Elenchi (filtri + pannello sinistro)
+
+Su **Richieste acquisto** e **Righe richiesta** compaiono filtri rapidi e facet **Route** per:
+
+| Route | Significato | Tipo Odoo |
+|-------|-------------|-----------|
+| LA | Lamiera alluminio | RDA |
+| LZ | Lamiera zincata / carpenteria | FE |
+| ST | Staffe | ST |
+| PAN | Pannelli | RDA |
+| OSC | Oscuranti (distinta SBU-OSC) | VT |
+| VC/VS | Vetro | VT |
+
+### Creazione guidata (anti-immondizia)
+
+1. Scegli commessa e **route** dall’elenco chiuso (no testo libero).  
+2. Campi obbligatori per route (es. **Topic** su LA/PAN, **data fabbisogno** su LA/LZ/ST/PAN/OSC).  
+3. Blocco se esiste già un documento **aperto** con stessa commessa + route.  
+4. Opzione **Carica righe da distinta** (preventivo vinto).  
+5. Da commessa: **By workflow** crea un documento per ogni route del preventivo (incluso OSC/ZANZ se in distinta).
+
+Moduli: `sbu_purchase_flow` **19.0.1.0.29+**.

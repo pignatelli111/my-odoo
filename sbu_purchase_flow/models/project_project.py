@@ -1,7 +1,10 @@
 from odoo import fields, models, _
 from odoo.exceptions import UserError
 
-from .sbu_workflow_routing import workflow_route_to_request_type
+from .sbu_workflow_routing import (
+    collect_workflow_routes_from_estimate,
+    workflow_route_to_request_type,
+)
 
 
 class ProjectProject(models.Model):
@@ -26,6 +29,20 @@ class ProjectProject(models.Model):
             'view_mode': 'list,form',
             'domain': [('project_id', '=', self.id)],
             'context': {'default_project_id': self.id, 'default_company_id': self.company_id.id},
+        }
+
+    def action_sbu_open_purchase_request_create_wizard(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Nuovo documento acquisto'),
+            'res_model': 'sbu.purchase.request.create.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_project_id': self.id,
+                'default_company_id': self.company_id.id,
+            },
         }
 
     def action_sbu_create_demand_rda_from_estimate(self):
@@ -68,7 +85,7 @@ class ProjectProject(models.Model):
                 _('Workflow purchase requests need the source estimate in «Won» state (current: %s).')
                 % (est.state,)
             )
-        routes = sorted({r for r in est.line_ids.mapped('workflow_route') if r})
+        routes = collect_workflow_routes_from_estimate(est)
         if not routes:
             raise UserError(
                 _('No workflow routes on estimate lines. Set «Categoria / famiglia costo» on ANACO rows first.')
