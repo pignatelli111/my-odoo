@@ -39,4 +39,6 @@ class TestSbuBulkWizard(TransactionCase):
             'date_required': target,
         })
         wiz.action_apply()
+        self.env.flush_all()
+        lines.invalidate_recordset(['date_required'])
         self.assertEqual(set(lines.mapped('date_required')), {target})

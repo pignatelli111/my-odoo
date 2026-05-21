@@ -61,6 +61,8 @@ class TestSbuBomDimensionRules(TransactionCase):
     def test_glass_90pct_sqm(self):
         eline = self._line_with_dims(2000, 2500, qty=10.0)
         bom = self._bom_for_code(eline, 'SBU-VETRO')
+        self.env.flush_all()
+        bom.invalidate_recordset()
         self.assertAlmostEqual(bom.sqm_per_piece_effective, 4.5, places=3)
         self.assertAlmostEqual(bom.qty_theoretical, 45.0, places=3)
         self.assertIn('2000', bom.dimension_display)
@@ -69,6 +71,8 @@ class TestSbuBomDimensionRules(TransactionCase):
     def test_zanzariere_height_plus_300(self):
         eline = self._line_with_dims(1500, 2000, qty=5.0)
         bom = self._bom_for_code(eline, 'SBU-ZANZ')
+        self.env.flush_all()
+        bom.invalidate_recordset()
         self.assertEqual(bom.height_mm_effective, 2300.0)
         self.assertAlmostEqual(bom.sqm_per_piece_effective, 3.45, places=3)
         self.assertAlmostEqual(bom.qty_theoretical, 17.25, places=3)
@@ -78,9 +82,10 @@ class TestSbuBomDimensionRules(TransactionCase):
         eline = self._line_with_dims(1000, 1000, qty=1.0, price_vetro_cad=500.0)
         estimate = eline.estimate_id
         n = estimate._sbu_create_bom_from_anaco_lines()
+        self.env.flush_all()
         self.assertGreater(n, 0)
         vetro = estimate.item_bom_line_ids.filtered(
-            lambda b: b.product_id.default_code == 'SBU-VETRO',
+            lambda b: (b.product_id.default_code or '').upper() == 'SBU-VETRO',
         )
         self.assertEqual(len(vetro), 1)
         self.assertAlmostEqual(vetro.sqm_coverage_factor, 0.9, places=4)

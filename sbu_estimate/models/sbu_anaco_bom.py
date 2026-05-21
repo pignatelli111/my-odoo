@@ -47,10 +47,11 @@ class SbuEstimate(models.Model):
         Product = self.env['product.product']
         Bom = self.env['sbu.estimate.bom.line']
         codes = list(ANACO_LINE_FIELD_TO_PRODUCT_CODE.values())
-        products_by_code = {
-            p.default_code: p
-            for p in Product.search([('default_code', 'in', codes)])
-        }
+        products_by_code = {}
+        for product in Product.search([('default_code', 'in', codes)]):
+            key = (product.default_code or '').strip().upper()
+            if key:
+                products_by_code[key] = product
         seq = 10
         created = 0
         for eline in self.line_ids:
@@ -60,7 +61,7 @@ class SbuEstimate(models.Model):
                 amount = eline[fname] or 0.0
                 if amount <= 0:
                     continue
-                product = products_by_code.get(code)
+                product = products_by_code.get(code.upper())
                 if not product:
                     continue
                 rule = bom_rule_for_product_and_line(product, eline)

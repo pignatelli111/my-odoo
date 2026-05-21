@@ -23,6 +23,7 @@ class TestSbuPoLineDimensions(TransactionCase):
         self.assertIn('mq tot', text)
 
     def test_pr_line_po_line_dimension_copy(self):
+        uom = self.env.ref('uom.product_uom_unit')
         partner = self.env['res.partner'].create({
             'name': 'PO dim vendor',
             'supplier_rank': 1,
@@ -44,6 +45,7 @@ class TestSbuPoLineDimensions(TransactionCase):
             'request_id': pr.id,
             'name': 'Profilo test',
             'product_id': product.id,
+            'product_uom': uom.id,
             'product_qty': 10.3,
             'width_mm': 1500,
             'height_mm': 2300,
@@ -52,6 +54,7 @@ class TestSbuPoLineDimensions(TransactionCase):
             'sqm_total': 34.5,
         })
         self.env.flush_all()
+        pr_line.invalidate_recordset(['dimension_mm'])
         self.assertIn('L 1500', pr_line.dimension_mm or '')
         po = self.env['purchase.order'].create({
             'partner_id': partner.id,
@@ -60,7 +63,7 @@ class TestSbuPoLineDimensions(TransactionCase):
         })
         pr._sbu_create_rfq_po_lines(po, pr_line)
         self.env.flush_all()
-        pol = po.order_line.filtered(lambda l: l.sbu_pr_line_id == pr_line)
+        pol = po.order_line.filtered(lambda l: l.sbu_pr_line_id.id == pr_line.id)
         self.assertEqual(len(pol), 1, po.order_line.mapped('name'))
         self.assertEqual(pol.sbu_width_mm, 1500)
         self.assertEqual(pol.sbu_height_mm, 2300)

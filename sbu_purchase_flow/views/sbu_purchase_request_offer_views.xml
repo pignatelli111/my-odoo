@@ -23,7 +23,7 @@
         <field name="model">sbu.purchase.request.offer</field>
         <field name="priority">32</field>
         <field name="arch" type="xml">
-            <list string="Supplier offers" editable="bottom" multi_edit="1">
+            <list string="Supplier offers" editable="bottom">
                 <field name="request_id" column_invisible="1"/>
                 <field name="request_line_id"/>
                 <field name="vendor_id"/>
