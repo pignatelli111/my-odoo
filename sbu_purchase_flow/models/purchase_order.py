@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from odoo import api, fields, models
+from odoo import _, api, fields, models
 
 
 class PurchaseOrder(models.Model):
@@ -66,6 +66,26 @@ class PurchaseOrder(models.Model):
                 if 'project_id' in self._fields and pr.project_id:
                     vals['project_id'] = pr.project_id.id
         return super().create(vals_list)
+
+    def action_sbu_refresh_dimensions_from_pr(self):
+        """Copy L/H/P + mq from linked RDA lines onto RFQ/PO lines."""
+        updated = 0
+        for po in self:
+            if not po.sbu_purchase_request_id:
+                continue
+            for pol in po.order_line.filtered('sbu_pr_line_id'):
+                pol.write(pol.sbu_pr_line_id._sbu_po_line_dimension_vals())
+                updated += 1
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Dimensions updated'),
+                'message': _('Updated %(n)s purchase line(s) from the RDA.') % {'n': updated},
+                'type': 'success',
+                'sticky': False,
+            },
+        }
 
 
 class PurchaseOrderLine(models.Model):

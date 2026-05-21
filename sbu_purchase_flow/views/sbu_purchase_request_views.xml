@@ -125,15 +125,15 @@
                                     <field name="name"/>
                                     <field name="article_code" optional="show"/>
                                     <field name="product_id"/>
+                                    <field name="width_mm" string="L (mm)"/>
+                                    <field name="height_mm" string="H (mm)"/>
+                                    <field name="depth_mm" string="P (mm)"/>
+                                    <field name="sqm_per_piece" string="MQ/cad"/>
+                                    <field name="sqm_total" string="MQ tot."/>
+                                    <field name="dimension_mm" string="Dimensioni" readonly="1"/>
                                     <field name="source_bom_line_id" optional="show"/>
                                     <field name="bom_qty_sync" optional="show"/>
                                     <field name="bom_qty_ordered_ref" optional="hide"/>
-                                    <field name="width_mm" optional="show"/>
-                                    <field name="height_mm" optional="show"/>
-                                    <field name="depth_mm" optional="show"/>
-                                    <field name="sqm_per_piece" optional="show"/>
-                                    <field name="sqm_total" optional="show"/>
-                                    <field name="dimension_mm" optional="show" readonly="1"/>
                                     <field name="needs_technical_confirm" column_invisible="1"/>
                                     <field name="technical_confirmed"
                                            decoration-warning="needs_technical_confirm and not technical_confirmed"

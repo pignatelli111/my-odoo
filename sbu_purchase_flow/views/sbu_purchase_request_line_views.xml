@@ -13,12 +13,12 @@
                 <field name="name"/>
                 <field name="article_code" optional="show"/>
                 <field name="product_id"/>
-                <field name="width_mm" optional="show"/>
-                <field name="height_mm" optional="show"/>
-                <field name="depth_mm" optional="hide"/>
-                <field name="sqm_per_piece" optional="show"/>
-                <field name="sqm_total" optional="hide"/>
-                <field name="dimension_mm" optional="show"/>
+                <field name="width_mm" string="L (mm)"/>
+                <field name="height_mm" string="H (mm)"/>
+                <field name="depth_mm" string="P (mm)"/>
+                <field name="sqm_per_piece" string="MQ/cad"/>
+                <field name="sqm_total" string="MQ tot."/>
+                <field name="dimension_mm" string="Dimensioni"/>
                 <field name="product_qty"/>
                 <field name="date_required" optional="show"/>
                 <field name="destination" optional="show"/>
