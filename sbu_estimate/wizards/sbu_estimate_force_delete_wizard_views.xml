@@ -28,7 +28,7 @@
         <field name="view_mode">form</field>
         <field name="target">new</field>
         <field name="binding_model_id" ref="model_sbu_estimate"/>
-        <field name="binding_view_types">list,form</field>
+        <field name="binding_view_types">list</field>
         <field name="group_ids" eval="[
             (4, ref('sbu_estimate.group_sbu_estimate_uat_cleanup')),
             (4, ref('base.group_system')),
