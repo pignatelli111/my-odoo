@@ -47,6 +47,13 @@
                             class="btn-secondary"
                             invisible="not can_delete_preventivo"
                             title="Elimina questo preventivo (solo bozze senza commessa)"/>
+                    <button name="action_open_force_delete_wizard"
+                            string="Elimina test (completo)"
+                            type="object"
+                            class="btn-danger"
+                            invisible="can_delete_preventivo"
+                            groups="sbu_estimate.group_sbu_estimate_uat_cleanup"
+                            title="UAT: rimuove preventivo, commessa, SAL, fatture collegate"/>
                     <button name="action_send"
                             string="Invia"
                             type="object"

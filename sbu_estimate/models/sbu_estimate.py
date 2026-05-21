@@ -396,10 +396,13 @@ class SbuEstimate(models.Model):
         return ''
 
     def unlink(self):
-        for rec in self:
-            reason = rec._sbu_unlink_blocked_reason()
-            if reason:
-                raise UserError(reason)
+        if not self.env.context.get('sbu_force_estimate_unlink'):
+            for rec in self:
+                reason = rec._sbu_unlink_blocked_reason()
+                if reason:
+                    raise UserError(reason)
+        else:
+            self._sbu_check_uat_force_delete_access()
         return super().unlink()
 
     def action_delete_preventivo(self):

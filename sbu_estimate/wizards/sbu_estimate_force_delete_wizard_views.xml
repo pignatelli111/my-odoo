@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sbu_estimate_force_delete_wizard_form" model="ir.ui.view">
+        <field name="name">sbu.estimate.force.delete.wizard.form</field>
+        <field name="model">sbu.estimate.force.delete.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Elimina test (completo)">
+                <group>
+                    <field name="estimate_ids" widget="many2many_tags" readonly="1"/>
+                    <field name="summary" nolabel="1" colspan="2"/>
+                    <field name="confirm"/>
+                </group>
+                <footer>
+                    <button name="action_force_delete"
+                            string="Elimina definitivamente"
+                            type="object"
+                            class="btn-danger"
+                            data-hotkey="q"/>
+                    <button string="Annulla" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sbu_estimate_force_delete_wizard" model="ir.actions.act_window">
+        <field name="name">Elimina test (completo)</field>
+        <field name="res_model">sbu.estimate.force.delete.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="model_sbu_estimate"/>
+        <field name="binding_view_types">list,form</field>
+        <field name="groups_id" eval="[(4, ref('sbu_estimate.group_sbu_estimate_uat_cleanup'))]"/>
+    </record>
+</odoo>
