@@ -14,6 +14,9 @@ class SbuPurchaseRequestLineBulkWizard(models.TransientModel):
     )
     line_ids = fields.Many2many(
         'sbu.purchase.request.line',
+        'sbu_pr_line_bulk_wiz_rel',
+        'wizard_id',
+        'line_id',
         string='Lines to update',
         help='Filled from list selection (use filters, then select all matching).',
     )

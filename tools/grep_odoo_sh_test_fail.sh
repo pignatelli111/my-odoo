@@ -23,7 +23,7 @@ else
 fi
 echo ""
 echo "=== Tracebacks / critical ==="
-grep -nE 'Traceback|CRITICAL|ParseError|ValidationError|Invalid field' "$LOG" | tail -20 || echo "(none)"
+grep -nE 'Traceback|CRITICAL|ParseError|ValidationError|Invalid field|Table name .{60,} is too long' "$LOG" | tail -20 || echo "(none)"
 echo ""
 echo "=== Odoo 19 invalid XML fields (e.g. groups_id on act_window) ==="
 grep -nE "Invalid field 'groups_id'|Invalid field .groups_id" "$LOG" "$ODOO_LOG" 2>/dev/null | tail -10 || echo "(none)"
