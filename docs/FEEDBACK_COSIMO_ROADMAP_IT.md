@@ -75,7 +75,7 @@ Questo documento mappa i **18 punti** di Cosimo su: stato attuale, gap, priorit�
 | 13 | Stampa fattura per voce contratto + SAL/CDP; dashboard | **Corretto** | Tracciabilità SAL/fattura/CDP sì; PDF = 1–2 righe aggregate; report dettaglio da fare | **P1** |
 | 14 | Qonto → fornitori/clienti automatici | Opzionale | Non implementato | **P2** |
 | 15 | Cambio qty RDA/RFQ: residuo aperto; qty 1,03 | Spiegabile | 1,03 = perdita%/confezione distinta; residuo da confermare | **P1** |
-| 16 | Stampa offerta: flag verdi/rossi + pagamenti/ritenute | Gap | Condizioni spesso testo scollegato | **P1** |
+| 16 | Stampa offerta: flag verdi/rossi + pagamenti/ritenute | Implementato | Condizioni strutturate + PDF offerta | **P1** ✅ |
 | 17 | Delivery standard (sistemista → terzista → cantiere; vetro) | **Corretto** | Campo `destination` su riga RDA; regole no | **P1** |
 | 18 | Revisioni: label job/SAL/doc con REV + data | **Corretto** | REV su preventivo; confusione su commessa/SAL | **P0** |
 

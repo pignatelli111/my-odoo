@@ -1,6 +1,6 @@
 {
     'name': 'SBU Estimate',
-    'version': '19.0.1.0.81',
+    'version': '19.0.1.0.82',
     'summary': 'Custom estimating engine for Suburban SRL (ANACO → Odoo)',
     'description': (
         'Translates the ANACO Excel estimating tool into Odoo. '
@@ -41,6 +41,7 @@
         'views/sbu_estimate_sal_line_views.xml',
         'views/sbu_estimate_bom_views.xml',
         'views/sbu_estimate_menu.xml',
+        'report/sbu_estimate_offer_report.xml',
     ],
     'installable': True,
     'application': True,

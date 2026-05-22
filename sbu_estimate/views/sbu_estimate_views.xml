@@ -96,6 +96,11 @@
                             class="btn-secondary"
                             invisible="not line_ids"
                             title="Crea righe Distinta Base dai costi/prezzi CAD sulle righe ANACO"/>
+                    <button name="action_print_offer"
+                            string="Stampa offerta"
+                            type="object"
+                            class="btn-secondary"
+                            title="PDF offerta con righe e condizioni commerciali (flag verde/rosso)"/>
                     <field name="state"
                            widget="statusbar"
                            statusbar_visible="draft,sent,won"/>
@@ -414,15 +419,46 @@
 
                         <page string="Condizioni di Fornitura" name="conditions">
                             <group>
-                                <group string="Condizioni Commerciali">
+                                <button name="action_load_default_commercial_terms"
+                                        string="Carica condizioni standard"
+                                        type="object"
+                                        class="btn-secondary"
+                                        invisible="state in ('won', 'cancelled')"/>
+                                <button name="action_sync_conditions_from_terms"
+                                        string="Aggiorna testi da righe"
+                                        type="object"
+                                        class="btn-secondary"
+                                        invisible="not commercial_term_ids"/>
+                            </group>
+                            <group>
+                                <group string="Riepilogo offerta">
+                                    <field name="offer_retention_percent"/>
                                     <field name="delivery_terms"/>
                                     <field name="delivery_timing"/>
-                                    <field name="payment_terms_text"/>
+                                    <field name="validity_days"/>
                                 </group>
-                                <group string="Validita e Note">
-                                    <field name="inclusions"/>
-                                    <field name="exclusions"/>
+                                <group string="Testo legacy (sincronizzato)">
+                                    <field name="payment_terms_synced" readonly="1" nolabel="1"/>
+                                    <field name="payment_terms_text" invisible="1"/>
                                 </group>
+                            </group>
+                            <field name="commercial_term_ids"
+                                   readonly="state in ('won', 'cancelled')">
+                                <list editable="bottom" string="Condizioni commerciali">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="term_category"/>
+                                    <field name="choice" widget="badge"
+                                           decoration-success="choice == 'included'"
+                                           decoration-danger="choice == 'excluded'"
+                                           decoration-muted="choice == 'note'"/>
+                                    <field name="name"/>
+                                    <field name="percent_value" optional="show"/>
+                                    <field name="detail" optional="hide"/>
+                                </list>
+                            </field>
+                            <group string="Inclusioni / esclusioni (testo)">
+                                <field name="inclusions" nolabel="1" placeholder="Bullet inclusioni…"/>
+                                <field name="exclusions" nolabel="1" placeholder="Bullet esclusioni…"/>
                             </group>
                             <group string="Specifiche Particolari">
                                 <field name="special_notes" nolabel="1"/>

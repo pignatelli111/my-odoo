@@ -11,6 +11,9 @@ access_sbu_estimate_bom_line_manager,sbu.estimate.bom.line manager,model_sbu_est
 access_sbu_estimate_sal_line_user,sbu.estimate.sal.line user,model_sbu_estimate_sal_line,base.group_user,1,1,1,1
 access_sbu_estimate_sal_line_sbu_user,sbu.estimate.sal.line sbu user,model_sbu_estimate_sal_line,sbu_estimate.group_sbu_estimate_user,1,1,1,1
 access_sbu_estimate_sal_line_manager,sbu.estimate.sal.line manager,model_sbu_estimate_sal_line,base.group_system,1,1,1,1
+access_sbu_estimate_commercial_term_user,sbu.estimate.commercial.term user,model_sbu_estimate_commercial_term,base.group_user,1,1,1,1
+access_sbu_estimate_commercial_term_sbu_user,sbu.estimate.commercial.term sbu user,model_sbu_estimate_commercial_term,sbu_estimate.group_sbu_estimate_user,1,1,1,1
+access_sbu_estimate_commercial_term_manager,sbu.estimate.commercial.term manager,model_sbu_estimate_commercial_term,base.group_system,1,1,1,1
 access_sbu_estimate_reference_user,sbu.estimate.reference user,model_sbu_estimate_reference,base.group_user,1,1,1,1
 access_sbu_estimate_reference_sbu_user,sbu.estimate.reference sbu user,model_sbu_estimate_reference,sbu_estimate.group_sbu_estimate_user,1,1,1,1
 access_sbu_estimate_reference_manager,sbu.estimate.reference manager,model_sbu_estimate_reference,base.group_system,1,1,1,1
