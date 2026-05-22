@@ -25,8 +25,19 @@ grep -nE 'odoo\.tests\.stats: sbu_|addons\.sbu_.*tests' \
 
 echo ""
 echo "=== 4) Tracebacks / CRITICAL / ParseError / ValidationError ==="
-grep -nE 'Traceback \(most recent|CRITICAL|ParseError|ValidationError|Table name .{60,} is too long|Failed to initialize database' \
+grep -nE 'Traceback \(most recent|CRITICAL|ParseError|ValidationError|Table name .{60,} is too long|Failed to initialize database|Couldn.t load module' \
   "$INSTALL_LOG" "$ODOO_LOG" 2>/dev/null | tail -25 || echo "(none)"
+echo ""
+echo "=== 4b) Full traceback after «Couldn't load module sbu_purchase_flow» ==="
+LINE=$(grep -n "Couldn't load module sbu_purchase_flow" "$INSTALL_LOG" 2>/dev/null | tail -1 | cut -d: -f1)
+if [[ -n "${LINE:-}" ]]; then
+  START=$((LINE - 2))
+  [[ "$START" -lt 1 ]] && START=1
+  END=$((LINE + 45))
+  sed -n "${START},${END}p" "$INSTALL_LOG"
+else
+  echo "(no sbu_purchase_flow load error in install.log)"
+fi
 
 echo ""
 echo "=== 5) SBU-related ERROR lines (not only test_) ==="
