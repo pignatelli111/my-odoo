@@ -16,6 +16,12 @@ grep -nE 'FAIL:|ERROR: test_|AssertionError|failures=[1-9]| errors=[1-9]|failed,
 echo ""
 echo "=== Test summary (install.log — any module) ==="
 grep -nE 'odoo\.tests\.result:' "$LOG" | tail -10 || echo "(none)"
+ZERO_TESTS=$(grep -c '0 failed, 0 error(s) of 0 tests' "$LOG" 2>/dev/null || echo 0)
+if [[ "$ZERO_TESTS" -gt 0 ]]; then
+  echo ""
+  echo ">>> NOT GREEN: 0 tests executed (SBU modules likely uninstalled — -u alone does nothing)."
+  echo ">>> Run: bash $USER_REPO/tools/odoo_sh_test_sbu_install.sh"
+fi
 echo ""
 echo "=== Test failures (odoo.log — Odoo.sh often logs tests here) ==="
 ODOO_LOG="${2:-/home/odoo/logs/odoo.log}"
@@ -46,8 +52,9 @@ echo ""
 echo "=== SBU test stats (look for failures=N errors=N) ==="
 grep -E 'odoo\.addons\.sbu_.*tests|odoo\.tests\.stats: sbu_|failures=[1-9]| errors=[1-9]' "$LOG" | tail -15 || echo "(none)"
 echo ""
-echo "=== Re-run SBU tests only (SSH) ==="
-echo "python3 /home/odoo/src/odoo/odoo-bin -d \"\$PGDATABASE\" --addons-path=/home/odoo/src/user,/home/odoo/src/odoo/addons,/home/odoo/src/odoo/odoo/addons -u sbu_estimate,sbu_purchase_flow,sbu_sal --test-enable --stop-after-init --log-level=test --test-tags /sbu_estimate,/sbu_purchase_flow,/sbu_sal 2>&1 | tail -80"
+echo "=== Re-run SBU install+tests (SSH — auto -i or -u) ==="
+echo "bash \$USER_REPO/tools/odoo_sh_test_sbu_install.sh /tmp/sbu-test.log"
+echo "grep -E 'odoo.tests.result:|sbu_sal|FAIL:' /tmp/sbu-test.log | tail -20"
 echo ""
 echo "=== Total WARNING count in install.log (Odoo.sh may flag any) ==="
 grep -c WARNING "$LOG" 2>/dev/null || echo 0
