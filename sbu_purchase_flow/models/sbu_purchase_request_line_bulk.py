@@ -2,9 +2,6 @@
 """Related stored fields on PR lines for search / filters (Cosimo point 3)."""
 from odoo import fields, models
 
-from .sbu_workflow_routing import SBU_WORKFLOW_ROUTE_SELECTION
-
-
 class SbuPurchaseRequestLine(models.Model):
     _inherit = 'sbu.purchase.request.line'
 

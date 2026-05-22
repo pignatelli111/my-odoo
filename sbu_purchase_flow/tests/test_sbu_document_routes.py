@@ -47,18 +47,21 @@ class TestSbuDocumentRoutes(TransactionCase):
             'topic': 'Facciata sud',
         })
         action = wiz.action_create()
+        self.assertEqual(action.get('res_model'), 'sbu.purchase.request')
         pr = self.env['sbu.purchase.request'].browse(action['res_id'])
+        self.assertTrue(pr.exists())
         self.assertEqual(pr.workflow_route, 'LA')
         self.assertEqual(pr.request_type, 'rda')
         self.assertEqual(pr.topic, 'Facciata sud')
+        self.assertEqual(pr.company_id, self.env.company)
 
     def test_collect_routes_splits_osc_from_glass(self):
         partner = self.env['res.partner'].create({'name': 'Route C'})
         estimate = self.env['sbu.estimate'].create({'partner_id': partner.id})
-        estimate.write({'state': 'won'})
         eline = self.env['sbu.estimate.line'].create({
             'estimate_id': estimate.id,
             'pos': 'P01',
+            'description': 'Glass position with oscurante',
             'cost_family': 'glass',
             'qty': 1,
         })
