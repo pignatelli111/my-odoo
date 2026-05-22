@@ -179,8 +179,9 @@ class SbuPurchaseRequest(models.Model):
         'request_id',
         string='Request lines',
     )
-    purchase_order_ids = fields.Many2many(
+    purchase_order_ids = fields.One2many(
         'purchase.order',
+        'sbu_purchase_request_id',
         string='Related RFQs / POs',
     )
     attachment_ids = fields.Many2many(
@@ -567,8 +568,6 @@ class SbuPurchaseRequest(models.Model):
             po = self._sbu_find_or_create_draft_po(vendor)
             self._sbu_create_rfq_po_lines(po, lines_to_order)
             created |= po
-        for po in created:
-            self.purchase_order_ids = [(4, po.id)]
         if len(created) == 1:
             return {
                 'type': 'ir.actions.act_window',

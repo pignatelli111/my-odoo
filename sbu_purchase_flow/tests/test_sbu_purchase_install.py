@@ -31,3 +31,10 @@ class TestSbuPurchaseInstall(TransactionCase):
             'sbu_dimension_summary',
         ):
             self.assertIn(fname, po_line._fields, fname)
+        pr_line = self.env['sbu.purchase.request.line']
+        for fname in ('qty_ordered', 'qty_remaining', 'qty_fully_ordered'):
+            self.assertIn(fname, pr_line._fields, fname)
+        self.assertEqual(
+            self.env['sbu.purchase.request']._fields['purchase_order_ids'].type,
+            'one2many',
+        )

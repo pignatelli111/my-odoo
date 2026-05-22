@@ -241,6 +241,8 @@ class SbuPurchaseRequestLine(models.Model):
 
     @api.constrains('product_qty', 'qty_ordered', 'product_uom')
     def _check_product_qty_not_below_ordered(self):
+        if self.env.context.get('sbu_skip_pr_qty_check'):
+            return
         for line in self:
             rounding = line.product_uom.rounding if line.product_uom else 0.01
             if float_compare(
@@ -403,9 +405,11 @@ class SbuPurchaseRequestLine(models.Model):
                 )
 
     def action_refresh_qty_from_bom(self):
-        for line in self:
+        for line in self.with_context(sbu_skip_pr_qty_check=True):
             if line.bom_qty_sync and line.source_bom_line_id and line.request_id:
                 bom = line.source_bom_line_id
+                self.env.flush_all()
+                bom.invalidate_recordset(['qty_theoretical', 'qty_ordered'])
                 line.product_qty = line.request_id._sbu_demand_qty_from_bom(bom)
                 line._sbu_apply_dimension_vals_from_bom(bom)
 

@@ -146,9 +146,7 @@
                                     <field name="weight_kg" optional="hide"/>
                                     <!-- Do not use source_bom_line_id in modifiers: Many2one is not a safe boolean in list views. -->
                                     <field name="qty_ordered" readonly="1" optional="show"/>
-                                    <field name="qty_remaining" readonly="1" optional="show"
-                                           decoration-warning="qty_remaining &gt; 0 and qty_ordered &gt; 0"
-                                           decoration-success="qty_fully_ordered"/>
+                                    <field name="qty_remaining" readonly="1" optional="show"/>
                                     <field name="qty_fully_ordered" column_invisible="1"/>
                                     <field name="qty_demand_hint" optional="hide" readonly="1"/>
                                     <field name="product_qty" readonly="bom_qty_sync" string="Qtà richiesta"/>
@@ -201,7 +199,14 @@
                             </group>
                         </page>
                         <page string="Purchase orders">
-                            <field name="purchase_order_ids" widget="many2many_tags"/>
+                            <field name="purchase_order_ids" nolabel="1">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="partner_id"/>
+                                    <field name="state"/>
+                                    <field name="amount_total"/>
+                                </list>
+                            </field>
                         </page>
                     </notebook>
                 </sheet>

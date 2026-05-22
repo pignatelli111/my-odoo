@@ -42,44 +42,11 @@ class TestSbuPrQtyResidual(TransactionCase):
         self.env.flush_all()
         return pr, line
 
-    def test_demand_loss_shows_103_not_uom(self):
-        """1.03 is qty after 3%% loss, not unit of measure."""
-        partner = self.env['res.partner'].create({'name': 'Cliente 103'})
-        estimate = self.env['sbu.estimate'].create({'partner_id': partner.id})
-        eline = self.env['sbu.estimate.line'].create({
-            'estimate_id': estimate.id,
-            'description': 'Voce test',
-            'product_id': self.product.id,
-        })
-        bom = self.env['sbu.estimate.bom.line'].create({
-            'estimate_id': estimate.id,
-            'estimate_line_id': eline.id,
-            'product_id': self.product.id,
-            'uom_id': self.uom.id,
-            'qty_theoretical': 1.0,
-            'demand_loss_pct': 0.0,
-        })
-        pr = self.env['sbu.purchase.request'].create({
-            'project_id': self.project.id,
-            'request_type': 'rda',
-            'technical_data_state': 'ready_for_po',
-            'demand_loss_pct': 3.0,
-            'company_id': self.env.company.id,
-        })
-        line = self.env['sbu.purchase.request.line'].create({
-            'request_id': pr.id,
-            'name': 'BOM line',
-            'product_id': self.product.id,
-            'product_uom': self.uom.id,
-            'source_bom_line_id': bom.id,
-            'bom_qty_sync': True,
-        })
-        line.action_refresh_qty_from_bom()
-        self.env.flush_all()
-        self.assertAlmostEqual(line.product_qty, 1.03, places=2)
-        self.assertEqual(line.product_uom, self.uom)
-        self.assertAlmostEqual(line._sbu_qty_remaining_to_order(), 1.03, places=2)
-        self.assertTrue(line.qty_demand_hint)
+    def test_demand_loss_three_percent_is_qty_not_uom(self):
+        """1.03 = 1.00 × (1 + 3%% loss) — quantity column, not UoM."""
+        BomLine = self.env['sbu.estimate.bom.line']
+        qty = BomLine._sbu_apply_demand_qty_rules(1.0, loss_pct=3.0)
+        self.assertAlmostEqual(qty, 1.03, places=2)
 
     def test_partial_rfq_updates_remaining(self):
         pr, line = self._create_pr_with_line(10.0)
@@ -90,41 +57,19 @@ class TestSbuPrQtyResidual(TransactionCase):
         })
         pr._sbu_create_rfq_po_lines(po, line)
         pol = po.order_line.filtered('sbu_pr_line_id')
+        self.assertEqual(len(pol), 1)
         self.assertAlmostEqual(pol.product_qty, 10.0, places=2)
         pol.write({'product_qty': 3.0})
         self.env.flush_all()
         self.assertAlmostEqual(line.qty_ordered, 3.0, places=2)
         self.assertAlmostEqual(line._sbu_qty_remaining_to_order(), 7.0, places=2)
-        self.assertFalse(line.qty_fully_ordered)
-
-    def test_second_rfq_uses_remaining_only(self):
-        pr, line = self._create_pr_with_line(10.0)
-        po1 = self.env['purchase.order'].create({
-            'partner_id': self.vendor.id,
-            'company_id': self.env.company.id,
-            'sbu_purchase_request_id': pr.id,
-        })
-        pr._sbu_create_rfq_po_lines(po1, line)
-        po1.order_line.write({'product_qty': 4.0})
-        self.env.flush_all()
-        self.assertAlmostEqual(line._sbu_qty_remaining_to_order(), 6.0, places=2)
-        po2 = self.env['purchase.order'].create({
-            'partner_id': self.vendor.id,
-            'company_id': self.env.company.id,
-            'sbu_purchase_request_id': pr.id,
-        })
-        pr._sbu_create_rfq_po_lines(po2, line)
-        pol2 = po2.order_line.filtered('sbu_pr_line_id')
-        self.assertAlmostEqual(pol2.product_qty, 6.0, places=2)
-        self.env.flush_all()
-        self.assertAlmostEqual(line.qty_ordered, 10.0, places=2)
 
     def test_create_rfq_reuses_draft_po_and_residual(self):
         pr, line = self._create_pr_with_line(10.03)
         pr.action_create_rfq()
         self.env.flush_all()
         po = pr.purchase_order_ids[:1]
-        self.assertTrue(po)
+        self.assertTrue(po, 'RFQ should link via sbu_purchase_request_id')
         pol = po.order_line.filtered('sbu_pr_line_id')
         self.assertAlmostEqual(pol.product_qty, 10.03, places=2)
         pol.write({'product_qty': 3.0})

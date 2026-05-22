@@ -24,8 +24,7 @@
                 <field name="sqm_total" string="MQ tot."/>
                 <field name="dimension_mm" string="Dimensioni"/>
                 <field name="qty_ordered" optional="show"/>
-                <field name="qty_remaining" optional="show"
-                       decoration-warning="qty_remaining &gt; 0 and qty_ordered &gt; 0"/>
+                <field name="qty_remaining" optional="show"/>
                 <field name="product_qty" string="Qtà richiesta"/>
                 <field name="product_uom" string="U.M." optional="show"/>
                 <field name="date_required" optional="show"/>
