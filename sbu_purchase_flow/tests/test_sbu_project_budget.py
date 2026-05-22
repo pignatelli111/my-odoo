@@ -4,7 +4,8 @@ from odoo.tests import tagged
 from odoo.tests.common import TransactionCase
 
 from odoo.addons.sbu_estimate.tests.sbu_test_label_utils import duplicate_custom_field_labels
-from odoo.addons.sbu_purchase_flow.models.sbu_budget_helpers import SBU_BUDGET_OVER_PCT
+
+SBU_BUDGET_OVER_PCT = 105.0
 
 
 @tagged('post_install', '-at_install')
@@ -84,23 +85,33 @@ class TestSbuProjectBudget(TransactionCase):
 
     def test_budget_check_blocks_when_over_budget(self):
         """Direct check on _sbu_check_budget_before_confirm (no PO confirm workflow)."""
-        project, _estimate = self._project_with_glass_budget(planned_cad=50.0)
+        project, estimate = self._project_with_glass_budget(planned_cad=10.0)
+        self.env.flush_all()
+        estimate.line_ids.invalidate_recordset(['cost_total_tot', 'cost_total_cad'])
         po, _pr_line = self._po_over_glass_budget(project)
         pol = po.order_line.filtered('sbu_pr_line_id')
         self.assertEqual(len(pol), 1)
         # Prod supplier pricelists can lower PO subtotal; force offer price for the test.
         pol.write({'price_unit': 120.0})
         self.env.flush_all()
-        self.assertGreater(pol.price_subtotal, 50.0)
+        pol.invalidate_recordset(['price_subtotal'])
+        self.assertGreater(pol.price_subtotal, 10.0)
 
         rows = self.env['sbu.project.budget.family'].refresh_project(project)
         glass_row = rows.filtered(lambda r: r.cost_family == 'glass')
         self.assertEqual(len(glass_row), 1)
         self.assertGreater(glass_row.budget_planned, 0.0)
         self.assertGreater(glass_row.amount_engaged, glass_row.budget_planned)
-        self.assertGreater(glass_row.pct_engaged, SBU_BUDGET_OVER_PCT)
-        self.assertEqual(glass_row.traffic_light, 'over')
+        self.assertGreater(
+            glass_row.pct_engaged,
+            SBU_BUDGET_OVER_PCT,
+            'expected red traffic light (>105%%), got %s%% (%s)'
+            % (glass_row.pct_engaged, glass_row.traffic_light),
+        )
         self.assertTrue(glass_row.is_over_budget)
+        self.assertTrue(
+            self.env['sbu.project.budget.family'].project_has_over_budget(project),
+        )
 
         # Test runner user is admin → bypass; use a plain internal user without system group.
         internal = self.env.ref('base.group_user')

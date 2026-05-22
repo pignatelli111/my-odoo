@@ -30,7 +30,16 @@ class TestSbuOfferReport(TransactionCase):
         report = self.env.ref('sbu_estimate.action_report_sbu_estimate_offer', raise_if_not_found=False)
         self.assertTrue(report)
         action = estimate.action_print_offer()
-        self.assertEqual(action.get('type'), 'ir.actions.report', action)
+        self.assertIn(
+            action.get('type'),
+            ('ir.actions.report', 'ir.actions.act_window'),
+            action,
+        )
+        if action.get('type') == 'ir.actions.act_window':
+            self.fail(
+                'Offer print opened layout wizard; set company external layout '
+                'or use discard_logo_check in action_print_offer.'
+            )
         self.assertEqual(
             action.get('report_name'),
             'sbu_estimate.report_sbu_estimate_offer_document',

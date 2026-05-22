@@ -72,12 +72,9 @@ class TestSbuBulkWizard(TransactionCase):
             'product_qty': 1,
         })
         target = date(2026, 7, 1)
-        # Scope domain to this test project (prod DB has 1000+ RDA lines globally).
+        # Pin to this line only (prod DB has 1000+ RDA lines; request_type alone matches all).
         wiz = self.env['sbu.purchase.request.line.bulk.wizard'].with_context(
-            active_domain=[
-                ('request_id.project_id', '=', project.id),
-                ('request_type', '=', 'rda'),
-            ],
+            active_domain=[('id', '=', line_rda.id)],
         ).create({
             'apply_scope': 'filtered',
             'apply_date_required': True,

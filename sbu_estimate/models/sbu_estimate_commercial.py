@@ -154,7 +154,10 @@ class SbuEstimateCommercial(models.Model):
         )
         if not report:
             raise UserError(_('Report offerta SBU non trovato.'))
-        return report.with_context(discard_logo_check=True).report_action(self)
+        return report.with_context(discard_logo_check=True).report_action(
+            self,
+            config=False,
+        )
 
     def _sbu_offer_lines_for_report(self):
         """Client-facing rows (OFFERTA-style)."""
