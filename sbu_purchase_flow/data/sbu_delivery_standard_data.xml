@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- Cosimo punto 17: default delivery patterns (editable in Purchasing → Delivery standards). -->
+
+    <record id="delivery_std_aco" model="sbu.delivery.standard">
+        <field name="name">ACO — accessori officina</field>
+        <field name="sequence">5</field>
+        <field name="request_type">aco</field>
+        <field name="delivery_pattern">via_sistemista_terzista</field>
+        <field name="intermediate_stops">5</field>
+    </record>
+
+    <record id="delivery_std_la" model="sbu.delivery.standard">
+        <field name="name">LA — lamiera alluminio</field>
+        <field name="sequence">10</field>
+        <field name="workflow_route">LA</field>
+        <field name="cost_family">aluminum_sheet</field>
+        <field name="delivery_pattern">via_sistemista_terzista</field>
+        <field name="intermediate_stops">5</field>
+    </record>
+
+    <record id="delivery_std_lz" model="sbu.delivery.standard">
+        <field name="name">LZ — lamiera zincata</field>
+        <field name="sequence">11</field>
+        <field name="workflow_route">LZ</field>
+        <field name="cost_family">zinc_sheet</field>
+        <field name="delivery_pattern">via_sistemista_terzista</field>
+        <field name="intermediate_stops">5</field>
+    </record>
+
+    <record id="delivery_std_st" model="sbu.delivery.standard">
+        <field name="name">ST — staffe</field>
+        <field name="sequence">12</field>
+        <field name="workflow_route">ST</field>
+        <field name="cost_family">bracket_st</field>
+        <field name="delivery_pattern">via_sistemista_terzista</field>
+        <field name="intermediate_stops">5</field>
+    </record>
+
+    <record id="delivery_std_pan" model="sbu.delivery.standard">
+        <field name="name">PAN — pannelli</field>
+        <field name="sequence">13</field>
+        <field name="workflow_route">PAN</field>
+        <field name="cost_family">panel</field>
+        <field name="delivery_pattern">via_sistemista_terzista</field>
+        <field name="intermediate_stops">5</field>
+    </record>
+
+    <record id="delivery_std_prf" model="sbu.delivery.standard">
+        <field name="name">PRF — profili</field>
+        <field name="sequence">14</field>
+        <field name="workflow_route">PRF</field>
+        <field name="cost_family">profile</field>
+        <field name="delivery_pattern">via_sistemista_terzista</field>
+        <field name="intermediate_stops">5</field>
+    </record>
+
+    <record id="delivery_std_ft" model="sbu.delivery.standard">
+        <field name="name">FT — serramenti</field>
+        <field name="sequence">15</field>
+        <field name="workflow_route">FT/FTF</field>
+        <field name="cost_family">serramento</field>
+        <field name="delivery_pattern">via_sistemista_terzista</field>
+        <field name="intermediate_stops">5</field>
+    </record>
+
+    <record id="delivery_std_ass" model="sbu.delivery.standard">
+        <field name="name">ASS — montaggio / accessori sistema</field>
+        <field name="sequence">16</field>
+        <field name="workflow_route">ASS</field>
+        <field name="cost_family">assembly</field>
+        <field name="delivery_pattern">via_sistemista_terzista</field>
+        <field name="intermediate_stops">5</field>
+    </record>
+
+    <record id="delivery_std_acc" model="sbu.delivery.standard">
+        <field name="name">ACC — accessori</field>
+        <field name="sequence">17</field>
+        <field name="workflow_route">ACC</field>
+        <field name="cost_family">accessory</field>
+        <field name="delivery_pattern">via_sistemista_terzista</field>
+        <field name="intermediate_stops">5</field>
+    </record>
+
+    <record id="delivery_std_gua" model="sbu.delivery.standard">
+        <field name="name">GUA — guarnizioni</field>
+        <field name="sequence">18</field>
+        <field name="workflow_route">GUA</field>
+        <field name="cost_family">gasket</field>
+        <field name="delivery_pattern">via_sistemista_terzista</field>
+        <field name="intermediate_stops">5</field>
+    </record>
+
+    <record id="delivery_std_glass_direct" model="sbu.delivery.standard">
+        <field name="name">Vetro — vetraio diretto in cantiere</field>
+        <field name="sequence">20</field>
+        <field name="cost_family">glass</field>
+        <field name="request_type">vt</field>
+        <field name="glass_mode">direct</field>
+        <field name="delivery_pattern">direct_site</field>
+    </record>
+
+    <record id="delivery_std_glass_via_terzista" model="sbu.delivery.standard">
+        <field name="name">Vetro — via terzista cantiere</field>
+        <field name="sequence">21</field>
+        <field name="cost_family">glass</field>
+        <field name="request_type">vt</field>
+        <field name="glass_mode">via_terzista</field>
+        <field name="delivery_pattern">via_terzista</field>
+    </record>
+
+    <record id="delivery_std_vc_vs_direct" model="sbu.delivery.standard">
+        <field name="name">VC/VS — vetraio diretto</field>
+        <field name="sequence">22</field>
+        <field name="workflow_route">VC/VS</field>
+        <field name="cost_family">glass</field>
+        <field name="glass_mode">direct</field>
+        <field name="delivery_pattern">direct_site</field>
+    </record>
+
+    <record id="delivery_std_vc_vs_via_terzista" model="sbu.delivery.standard">
+        <field name="name">VC/VS — via terzista</field>
+        <field name="sequence">23</field>
+        <field name="workflow_route">VC/VS</field>
+        <field name="cost_family">glass</field>
+        <field name="glass_mode">via_terzista</field>
+        <field name="delivery_pattern">via_terzista</field>
+    </record>
+</odoo>

@@ -25,6 +25,28 @@ class ProjectProject(models.Model):
         string='Purchase requests',
         compute='_compute_sbu_purchase_request_count',
     )
+    sbu_site_subcontractor_id = fields.Many2one(
+        'res.partner',
+        string='Site subcontractor (terzista)',
+        domain="[('is_company', '=', True)]",
+        help='Default intermediate delivery point for aluminum, ACO, and glass '
+             '(when «via terzista» is selected).',
+    )
+    sbu_system_supplier_id = fields.Many2one(
+        'res.partner',
+        string='System supplier (sistemista)',
+        domain="[('supplier_rank', '>', 0)]",
+        help='Your default system supplier (aluminum / workshop paths).',
+    )
+    sbu_glass_delivery_mode = fields.Selection(
+        [
+            ('direct', 'Glass supplier → site'),
+            ('via_terzista', 'Glass supplier → site subcontractor → site'),
+        ],
+        string='Glass delivery',
+        default='via_terzista',
+        help='Per-job choice: direct to site or via the same site subcontractor as aluminum.',
+    )
 
     def _compute_sbu_purchase_request_count(self):
         pr = self.env['sbu.purchase.request'].sudo()
@@ -35,6 +57,16 @@ class ProjectProject(models.Model):
         """Rebuild budget vs engaged rows from estimate + PR/PO (Cosimo point 11)."""
         self.ensure_one()
         self.env['sbu.project.budget.family'].refresh_project(self)
+        return True
+
+    def action_sbu_apply_delivery_on_all_prs(self):
+        """Re-apply delivery standard rules on all open PR lines of this job."""
+        self.ensure_one()
+        lines = self.env['sbu.purchase.request.line'].search([
+            ('request_id.project_id', '=', self.id),
+            ('request_id.state', '!=', 'cancelled'),
+        ])
+        lines._sbu_apply_delivery_standard(overwrite=True)
         return True
 
     def action_sbu_open_budget_dashboard(self):

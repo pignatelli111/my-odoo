@@ -389,6 +389,15 @@ class SbuPurchaseRequest(models.Model):
             'target': 'current',
         }
 
+    def action_apply_delivery_standards(self):
+        """Apply default delivery routes to all lines (overwrite existing destinations)."""
+        self.ensure_one()
+        count = self.line_ids._sbu_apply_delivery_standard(overwrite=True)
+        self.message_post(
+            body=_('Applied delivery standard rules to %(n)d line(s).') % {'n': count},
+        )
+        return True
+
     def action_bulk_update_lines(self):
         """Open bulk wizard for all lines on this request."""
         self.ensure_one()

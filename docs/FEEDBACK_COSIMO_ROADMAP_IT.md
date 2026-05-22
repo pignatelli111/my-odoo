@@ -76,7 +76,7 @@ Questo documento mappa i **18 punti** di Cosimo su: stato attuale, gap, priorit�
 | 14 | Qonto → fornitori/clienti automatici | Opzionale | Non implementato | **P2** |
 | 15 | Cambio qty RDA/RFQ: residuo aperto; qty 1,03 | Spiegabile | 1,03 = perdita%/confezione distinta; residuo da confermare | **P1** |
 | 16 | Stampa offerta: flag verdi/rossi + pagamenti/ritenute | Implementato | Condizioni strutturate + PDF offerta | **P1** ✅ |
-| 17 | Delivery standard (sistemista → terzista → cantiere; vetro) | **Corretto** | Campo `destination` su riga RDA; regole no | **P1** |
+| 17 | Delivery standard (sistemista → terzista → cantiere; vetro) | **Corretto** | Regole `sbu.delivery.standard` + tab commessa + auto DESTINAZIONE | **P1** ✅ base |
 | 18 | Revisioni: label job/SAL/doc con REV + data | **Corretto** | REV su preventivo; confusione su commessa/SAL | **P0** |
 
 **Legenda priorità:** P0 = produzione / fiducia dati · P1 = flusso acquisti/fatture completo · P2 = UX · P3 = integrazioni opzionali  
@@ -323,12 +323,14 @@ Tab condizioni strutturate + report **Offerta / Preventivo (SBU)** con flag verd
 
 ### Punto 17 — Delivery standard
 
+**Stato:** implementato (`sbu_purchase_flow` 19.0.1.0.53). Dettaglio: [COSIMO_PUNTO17_DELIVERY_STANDARD_IT.md](COSIMO_PUNTO17_DELIVERY_STANDARD_IT.md).
+
 **Esempi Cosimo**  
 - Alluminio + ACO: sistemista → terzista cantiere (4–5 fermate) → cantiere.  
 - Vetro: vetraio → cantiere **oppure** vetraio → stesso terzista alluminio → cantiere.
 
-**Proposta**  
-Tabella regole: `famiglia_costo` × `request_type` → destinazione default, percorso magazzino (2 step), partner tipo «terzista cantiere».
+**Odoo oggi**  
+Regole `sbu.delivery.standard`, terzista/sistemista e modalità vetro su commessa, DESTINAZIONE auto su righe RDA + pulsanti di ricalcolo.
 
 ---
 
@@ -355,7 +357,7 @@ su commessa, preventivo, foglio SAL, RDA, fattura (campo related). Filtro «solo
 
 - [ ] Stati RDA «revisione tecnica» + import Excel tecnico  
 - [ ] Wizard tipi documento (LA, LZ, OSC, …)  
-- [ ] Regole delivery standard  
+- [x] Regole delivery standard (`sbu_purchase_flow` 19.0.1.0.53)  
 - [x] Stampa offerta con flag/condizioni strutturate (`sbu_estimate` 19.0.1.0.82)  
 - [ ] Stampa fattura per voce contratto + SAL  
 - [x] Residuo qty su RDA dopo PO parziale (`sbu_purchase_flow` 19.0.1.0.44)  

@@ -28,4 +28,11 @@
               parent="menu_sbu_purchase_root"
               action="action_sbu_project_budget_family"
               sequence="20"/>
+
+    <menuitem id="menu_sbu_delivery_standard"
+              name="Delivery standard"
+              parent="menu_sbu_purchase_root"
+              action="action_sbu_delivery_standard"
+              sequence="25"
+              groups="base.group_system"/>
 </odoo>

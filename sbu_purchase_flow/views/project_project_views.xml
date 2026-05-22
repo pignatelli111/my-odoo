@@ -48,6 +48,27 @@
                 </button>
             </xpath>
             <xpath expr="//notebook" position="inside">
+                <page string="Logistica / delivery" name="sbu_delivery_logistics">
+                    <group>
+                        <group string="Cantiere">
+                            <field name="sbu_site_subcontractor_id"/>
+                            <field name="sbu_system_supplier_id"/>
+                        </group>
+                        <group string="Vetro">
+                            <field name="sbu_glass_delivery_mode" widget="radio"/>
+                        </group>
+                    </group>
+                    <div class="mb-2">
+                        <button name="action_sbu_apply_delivery_on_all_prs" type="object"
+                                string="Applica delivery standard su tutte le RDA"
+                                class="btn-secondary"
+                                title="Ricalcola DESTINAZIONE su tutte le righe delle richieste acquisto della commessa."/>
+                    </div>
+                    <p class="text-muted">
+                        Alluminio e ACO: percorso tipico sistemista → terzista cantiere (4–5 fermate) → cantiere.
+                        Vetro: scegli diretto in cantiere oppure stesso terzista dell’alluminio.
+                    </p>
+                </page>
                 <page string="Budget acquisti" name="sbu_budget_families"
                       invisible="not sbu_estimate_id">
                     <group>

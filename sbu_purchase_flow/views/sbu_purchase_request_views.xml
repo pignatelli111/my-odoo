@@ -56,6 +56,10 @@
                             invisible="state == 'cancelled' or technical_data_state != 'estimate_bom'"/>
                     <button name="action_mark_ready_for_po" string="Pronto per RFQ/PO" type="object" class="btn-primary"
                             invisible="state == 'cancelled' or technical_data_state == 'ready_for_po'"/>
+                    <button name="action_apply_delivery_standards" string="Applica delivery standard" type="object"
+                            class="btn-secondary"
+                            invisible="state == 'cancelled' or not line_ids"
+                            title="Fill DESTINAZIONE from company rules and job logistics (terzista, vetro)."/>
                     <button name="action_bulk_update_lines" string="Apply to all lines" type="object" class="btn-secondary"
                             invisible="state == 'cancelled' or not line_ids"/>
                     <button name="action_create_rfq" string="Create draft RFQ(s)" type="object" class="btn-secondary" invisible="state == 'cancelled'"/>

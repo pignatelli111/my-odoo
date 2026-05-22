@@ -4,6 +4,8 @@ from odoo.tools.float_utils import float_compare, float_is_zero
 
 from odoo.addons.sbu_estimate.models.sbu_manual_input import SBU_MANUAL_INPUT_STATE
 
+from .sbu_delivery_helpers import sbu_delivery_destination_for_line
+
 SBU_PO_ACTIVE_STATES = ('draft', 'sent', 'to approve', 'purchase', 'done')
 SBU_PO_DRAFT_STATES = ('draft', 'sent', 'to approve')
 
@@ -177,6 +179,26 @@ class SbuPurchaseRequestLine(models.Model):
         string='# Offers',
         compute='_compute_offer_count',
     )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        lines = super().create(vals_list)
+        to_fill = lines.filtered(lambda ln: not ln.destination)
+        if to_fill:
+            to_fill._sbu_apply_delivery_standard(overwrite=False)
+        return lines
+
+    def _sbu_apply_delivery_standard(self, overwrite=False):
+        """Fill DESTINAZIONE from company rules + job logistics (Cosimo point 17)."""
+        updated = 0
+        for line in self:
+            dest = sbu_delivery_destination_for_line(
+                self.env, line, overwrite=overwrite,
+            )
+            if dest:
+                line.destination = dest
+                updated += 1
+        return updated
 
     @api.depends('offer_ids')
     def _compute_offer_count(self):

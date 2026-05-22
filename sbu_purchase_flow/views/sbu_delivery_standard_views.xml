@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sbu_delivery_standard_list" model="ir.ui.view">
+        <field name="name">sbu.delivery.standard.list</field>
+        <field name="model">sbu.delivery.standard</field>
+        <field name="arch" type="xml">
+            <list string="Delivery standards" editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="cost_family" optional="show"/>
+                <field name="workflow_route" optional="show"/>
+                <field name="request_type" optional="show"/>
+                <field name="glass_mode" optional="show"/>
+                <field name="delivery_pattern"/>
+                <field name="intermediate_stops" optional="hide"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+                <field name="active" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_sbu_delivery_standard_form" model="ir.ui.view">
+        <field name="name">sbu.delivery.standard.form</field>
+        <field name="model">sbu.delivery.standard</field>
+        <field name="arch" type="xml">
+            <form string="Delivery standard">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="sequence"/>
+                            <field name="active"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                        <group string="Match when">
+                            <field name="cost_family"/>
+                            <field name="workflow_route" placeholder="LA, VC/VS, …"/>
+                            <field name="request_type"/>
+                            <field name="glass_mode"/>
+                        </group>
+                    </group>
+                    <group string="Destination pattern">
+                        <field name="delivery_pattern"/>
+                        <field name="intermediate_stops"
+                               invisible="delivery_pattern != 'via_sistemista_terzista'"/>
+                        <field name="note"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sbu_delivery_standard" model="ir.actions.act_window">
+        <field name="name">Delivery standards</field>
+        <field name="res_model">sbu.delivery.standard</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Configure default delivery routes (system supplier → site subcontractor → site).
+            </p>
+            <p>
+                Rules apply when loading RDA lines from the estimate BOM and via
+                «Apply delivery standards» on purchase requests. Glass uses the
+                per-job setting on the project.
+            </p>
+        </field>
+    </record>
+</odoo>
