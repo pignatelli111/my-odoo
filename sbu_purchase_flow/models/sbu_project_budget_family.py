@@ -2,7 +2,6 @@
 from odoo import api, fields, models, _
 
 from .sbu_budget_helpers import (
-    SBU_BUDGET_OVER_PCT,
     sbu_collect_project_budget,
     sbu_cost_family_label,
     sbu_traffic_light_from_pct,

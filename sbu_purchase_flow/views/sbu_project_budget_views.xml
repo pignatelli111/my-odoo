@@ -18,7 +18,7 @@
                 <field name="amount_po_confirmed" string="PO confermati" sum="Total"/>
                 <field name="amount_engaged" string="Impegnato" sum="Total"/>
                 <field name="amount_residual" string="Residuo" sum="Total"/>
-                <field name="pct_engaged" string="Impegnato %" widget="progressbar"/>
+                <field name="pct_engaged" string="Impegnato %"/>
                 <field name="pct_residual" string="Residuo %"/>
                 <field name="traffic_light" string="Semaforo" widget="badge"
                        decoration-success="traffic_light == 'ok'"

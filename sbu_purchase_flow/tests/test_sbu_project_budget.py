@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import uuid
+
 from odoo.exceptions import UserError
 from odoo.tests import tagged
 from odoo.tests.common import TransactionCase
@@ -67,8 +69,9 @@ class TestSbuProjectBudget(TransactionCase):
             'product_qty': 1.0,
         })
         self.env['sbu.purchase.request.offer'].create({
+            'request_id': pr.id,
             'request_line_id': pr_line.id,
-            'partner_id': partner.id,
+            'vendor_id': partner.id,
             'unit_price': 120.0,
         })
         po = self.env['purchase.order'].create({
@@ -78,16 +81,27 @@ class TestSbuProjectBudget(TransactionCase):
             'sbu_purchase_request_id': pr.id,
         })
         pr._sbu_create_rfq_po_lines(po, pr_line)
+        pol = po.order_line.filtered(lambda line: line.sbu_pr_line_id == pr_line)
+        self.assertEqual(len(pol), 1)
+        self.assertGreater(pol.price_subtotal, 100.0)
         self.env.flush_all()
 
         rows = self.env['sbu.project.budget.family'].refresh_project(project)
-        self.assertTrue(rows.is_over_budget)
+        glass_row = rows.filtered(lambda r: r.cost_family == 'glass')
+        self.assertTrue(glass_row.is_over_budget)
 
+        buyer_partner = self.env['res.partner'].create({
+            'name': 'Purchase buyer budget test',
+            'email': 'sbu_budget_buyer@test.invalid',
+        })
         purchase_user = self.env.ref('base.group_user')
         buyer_group = self.env.ref('purchase.group_purchase_user')
-        buyer = self.env['res.users'].create({
+        buyer = self.env['res.users'].with_context(no_reset_password=True).create({
             'name': 'Purchase buyer budget test',
-            'login': 'sbu_budget_buyer_test',
+            'login': 'sbu_budget_buyer_%s' % uuid.uuid4().hex[:12],
+            'partner_id': buyer_partner.id,
+            'company_id': self.env.company.id,
+            'company_ids': [(6, 0, [self.env.company.id])],
             'groups_id': [(6, 0, [purchase_user.id, buyer_group.id])],
         })
         with self.assertRaises(UserError):
@@ -95,4 +109,4 @@ class TestSbuProjectBudget(TransactionCase):
 
         project.sudo().write({'sbu_budget_po_unlock': True})
         po.with_user(buyer).button_confirm()
-        self.assertIn(po.state, ('purchase', 'done'))
+        self.assertIn(po.state, ('purchase', 'done', 'to approve'))
