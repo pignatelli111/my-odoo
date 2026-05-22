@@ -126,28 +126,22 @@ class TestSbuProjectBudget(TransactionCase):
             self.env['sbu.project.budget.family'].project_has_over_budget(project),
         )
 
-        # Test runner user is admin → bypass; use a plain internal user without system group.
+        # Dedicated buyer (no system group) — do not reuse prod users from search().
         internal = self.env.ref('base.group_user')
         purchase = self.env.ref('purchase.group_purchase_user')
-        system_users = self.env.ref('base.group_system').user_ids
-        plain = self.env['res.users'].search([
-            ('share', '=', False),
-            ('group_ids', 'in', purchase.ids),
-            ('id', 'not in', system_users.ids),
-        ], limit=1)
-        if not plain:
-            partner = self.env['res.partner'].create({
-                'name': 'Budget plain buyer',
-                'email': 'sbu_budget_plain_buyer@test.invalid',
-            })
-            plain = self.env['res.users'].with_context(no_reset_password=True).create({
-                'name': 'Budget plain buyer',
-                'login': 'sbu_budget_plain_%s' % partner.id,
-                'partner_id': partner.id,
-                'company_id': self.env.company.id,
-                'company_ids': [(6, 0, [self.env.company.id])],
-                'group_ids': [(6, 0, [internal.id, purchase.id])],
-            })
+        partner = self.env['res.partner'].create({
+            'name': 'Budget plain buyer',
+            'email': 'sbu_budget_plain_buyer@test.invalid',
+        })
+        plain = self.env['res.users'].with_context(no_reset_password=True).create({
+            'name': 'Budget plain buyer',
+            'login': 'sbu_budget_plain_%s' % partner.id,
+            'partner_id': partner.id,
+            'company_id': self.env.company.id,
+            'company_ids': [(6, 0, [self.env.company.id])],
+            'group_ids': [(6, 0, [internal.id, purchase.id])],
+        })
+        self.assertFalse(plain.has_group('base.group_system'))
 
         with self.assertRaises(UserError):
             po.with_user(plain)._sbu_check_budget_before_confirm()

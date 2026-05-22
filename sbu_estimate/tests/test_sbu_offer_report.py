@@ -17,6 +17,8 @@ class TestSbuOfferReport(TransactionCase):
         partner = self.env['res.partner'].create({'name': 'Offer print client'})
         estimate = self.env['sbu.estimate'].create({'partner_id': partner.id})
         self.env.flush_all()
+        if not estimate.commercial_term_ids:
+            estimate.action_load_default_commercial_terms()
         self.assertGreaterEqual(len(estimate.commercial_term_ids), 5)
         pay = estimate.commercial_term_ids.filtered(
             lambda t: t.term_category == 'payment' and t.choice == 'included'

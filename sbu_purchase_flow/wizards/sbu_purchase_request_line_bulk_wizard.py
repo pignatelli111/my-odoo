@@ -131,7 +131,18 @@ class SbuPurchaseRequestLineBulkWizard(models.TransientModel):
                           'filter active, or choose «Selected lines only» and tick rows.'),
                     )
                 return Line.browse()
-            return Line.search(domain)
+            lines = Line.search(domain)
+            # Safety on large DBs: require project or explicit line ids in domain.
+            if len(lines) > 500 and not any(
+                term[0] in ('id', 'request_id', 'request_id.project_id')
+                for term in domain
+                if isinstance(term, (list, tuple)) and len(term) >= 3
+            ):
+                raise UserError(
+                    _('Filter is too broad (%(n)s lines). Add a project or line filter '
+                      'before applying bulk changes.', n=len(lines)),
+                )
+            return lines
 
         lines = self.line_ids
         if not lines and self.request_id:
