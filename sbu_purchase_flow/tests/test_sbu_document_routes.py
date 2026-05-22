@@ -20,8 +20,14 @@ class TestSbuDocumentRoutes(TransactionCase):
         self.assertEqual(workflow_route_to_request_type('OSC'), 'vt')
         self.assertEqual(workflow_route_to_request_type('ST'), 'st')
 
+    def _project(self, name):
+        return self.env['project.project'].create({
+            'name': name,
+            'company_id': self.env.company.id,
+        })
+
     def test_create_wizard_la_requires_topic(self):
-        project = self.env['project.project'].create({'name': 'Route wizard'})
+        project = self._project('Route wizard')
         wiz = self.env['sbu.purchase.request.create.wizard'].create({
             'project_id': project.id,
             'workflow_route': 'LA',
@@ -32,7 +38,7 @@ class TestSbuDocumentRoutes(TransactionCase):
             wiz.action_create()
 
     def test_create_wizard_la_success(self):
-        project = self.env['project.project'].create({'name': 'Route LA'})
+        project = self._project('Route LA')
         wiz = self.env['sbu.purchase.request.create.wizard'].create({
             'project_id': project.id,
             'workflow_route': 'LA',

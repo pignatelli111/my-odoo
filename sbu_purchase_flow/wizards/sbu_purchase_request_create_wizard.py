@@ -118,11 +118,12 @@ class SbuPurchaseRequestCreateWizard(models.TransientModel):
                 % (self.project_id.display_name, self.workflow_route),
             )
 
+        company = self.project_id.company_id or self.env.company
         vals = {
             'project_id': self.project_id.id,
             'workflow_route': self.workflow_route,
             'request_type': workflow_route_to_request_type(self.workflow_route),
-            'company_id': self.project_id.company_id.id,
+            'company_id': company.id,
             'priority': self.priority,
             'need_by_date': self.need_by_date,
             'topic': self.topic,
