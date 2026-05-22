@@ -29,14 +29,21 @@ class AccountMove(models.Model):
         store=True,
     )
 
-    @api.depends('project_id', 'project_id.sbu_revision_label', 'sbu_sal_sheet_id', 'sbu_sal_sheet_id.sbu_revision_label')
+    @api.depends(
+        'sbu_sal_sheet_id',
+        'sbu_sal_sheet_id.sbu_revision_label',
+        'sbu_sal_sheet_id.project_id',
+        'sbu_sal_sheet_id.project_id.sbu_revision_label',
+    )
     def _compute_sbu_revision_label(self):
+        """REV label via SAL sheet (account.move often has no project_id on Odoo.sh)."""
+        has_move_project = 'project_id' in self._fields
         for move in self:
             label = False
-            if move.project_id:
-                label = move.project_id.sbu_revision_label
-            elif move.sbu_sal_sheet_id:
+            if move.sbu_sal_sheet_id:
                 label = move.sbu_sal_sheet_id.sbu_revision_label
+            elif has_move_project and move.project_id:
+                label = move.project_id.sbu_revision_label
             move.sbu_revision_label = label
 
     @api.depends('name', 'ref', 'sbu_revision_label', 'state')

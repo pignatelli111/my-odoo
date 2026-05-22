@@ -31,7 +31,7 @@
                             </div>
                             <div class="col-6">
                                 <strong>Job / Project:</strong>
-                                <span t-esc="sheet.project_id.display_name if sheet else (o.project_id.display_name if o.project_id else '—')"/>
+                                <span t-esc="sheet.project_id.sbu_revision_label if sheet and sheet.project_id else (sheet.project_id.display_name if sheet and sheet.project_id else '—')"/>
                                 <br/>
                                 <strong>Source estimate:</strong>
                                 <span t-esc="sheet.estimate_id.display_name if sheet and sheet.estimate_id else '—'"/>
