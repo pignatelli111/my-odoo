@@ -101,7 +101,7 @@ class SbuSalPassiveSheet(models.Model):
         currency_field='currency_id',
     )
     amount_retention = fields.Monetary(
-        string='Retention',
+        string='Retention amount',
         compute='_compute_amounts',
         store=True,
         currency_field='currency_id',
@@ -312,6 +312,7 @@ class SbuSalPassiveSheet(models.Model):
             'partner_id': self.vendor_id.id,
             'journal_id': journal.id,
             'currency_id': self.currency_id.id,
+            'invoice_date': self.date or fields.Date.today(),
             'invoice_origin': self.name,
             'ref': _('Passive SAL %s') % self.name,
             'fiscal_position_id': fiscal_position.id if fiscal_position else False,

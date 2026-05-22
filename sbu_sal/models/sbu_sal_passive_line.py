@@ -57,10 +57,8 @@ class SbuSalPassiveLine(models.Model):
     )
 
     @api.depends(
-        'sheet_id',
-        'sheet_id.project_id',
         'estimate_line_id',
-        'percent_this_sal',
+        'sheet_id.project_id',
         'sheet_id.state',
     )
     def _compute_percent_prior_sal(self):

@@ -94,10 +94,8 @@
                 <filter name="confirmed" string="Confirmed" domain="[('state', '=', 'confirmed')]"/>
                 <filter name="invoiced" string="Billed" domain="[('state', '=', 'invoiced')]"/>
                 <filter name="scope_posa" string="Installation (posa)" domain="[('subcontract_scope', '=', 'posa')]"/>
-                <group expand="0" string="Group by">
-                    <filter name="group_project" string="Project" context="{'group_by': 'project_id'}"/>
-                    <filter name="group_vendor" string="Vendor" context="{'group_by': 'vendor_id'}"/>
-                </group>
+                <filter name="group_project" string="Group: Project" context="{'group_by': 'project_id'}"/>
+                <filter name="group_vendor" string="Group: Vendor" context="{'group_by': 'vendor_id'}"/>
             </search>
         </field>
     </record>

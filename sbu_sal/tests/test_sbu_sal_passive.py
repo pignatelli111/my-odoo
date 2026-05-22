@@ -7,6 +7,17 @@ from odoo.tests.common import TransactionCase
 @tagged('post_install', '-at_install')
 class TestSbuSalPassive(TransactionCase):
 
+    @staticmethod
+    def _duplicate_labels(env, model_name):
+        Model = env[model_name]
+        by_label = {}
+        for fname, field in Model._fields.items():
+            label = field.string
+            if not label:
+                continue
+            by_label.setdefault(label, []).append(fname)
+        return {label: names for label, names in by_label.items() if len(names) > 1}
+
     def _estimate_with_posa(self):
         customer = self.env['res.partner'].create({'name': 'Passive SAL customer'})
         vendor = self.env['res.partner'].create({
@@ -33,6 +44,12 @@ class TestSbuSalPassive(TransactionCase):
     def test_models_registered(self):
         self.assertTrue(self.env['sbu.sal.passive.sheet']._name)
         self.assertTrue(self.env['sbu.sal.passive.line']._name)
+
+    def test_passive_model_labels_distinct(self):
+        """Regression: duplicate labels on the same model fail Odoo.sh builds."""
+        for model in ('sbu.sal.passive.sheet', 'sbu.sal.passive.line'):
+            dups = self._duplicate_labels(self.env, model)
+            self.assertEqual(dups, {}, f'{model}: {dups}')
 
     def test_load_posa_budget_from_estimate(self):
         estimate, eline, project, vendor = self._estimate_with_posa()
@@ -99,13 +116,6 @@ class TestSbuSalPassive(TransactionCase):
             'vendor_id': vendor.id,
         })
         second.action_load_posa_budget_from_estimate()
-        self.assertEqual(second.line_ids.percent_prior_sal, 30.0)
-
-    def test_passive_sheet_field_labels_are_distinct(self):
-        sheet = self.env['sbu.sal.passive.sheet']
-        labels = [
-            sheet._fields['line_ids'].string,
-            sheet._fields['budget_total'].string,
-            sheet._fields['amount_gross'].string,
-        ]
-        self.assertEqual(len(labels), len(set(labels)), labels)
+        prior = second.line_ids.mapped('percent_prior_sal')
+        self.assertEqual(len(prior), 1)
+        self.assertAlmostEqual(prior[0], 30.0)
