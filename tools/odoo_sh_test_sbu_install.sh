@@ -5,6 +5,9 @@
 set -euo pipefail
 DB="${PGDATABASE:?Set PGDATABASE}"
 ADDONS="/home/odoo/src/user,/home/odoo/src/odoo/addons,/home/odoo/src/odoo/odoo/addons"
+if [[ -d /home/odoo/src/enterprise ]]; then
+  ADDONS="/home/odoo/src/enterprise,${ADDONS}"
+fi
 ODOO="/home/odoo/src/odoo/odoo-bin"
 LOG="${1:-/home/odoo/tmp/sbu-install-test.log}"
 MODULES="sbu_stock_config,sbu_estimate,sbu_purchase_flow,sbu_sal,sbu_project,sbu_documents,sbu_closure,sbu_integrations,sbu_logikal,sbu_mail_ingest,sbu_qonto,sbu_revolut"
@@ -40,6 +43,15 @@ if [[ "$NEED_INSTALL" -eq 1 ]]; then
 else
   echo "=== SBU tests via -u (upgrade installed modules) ==="
   INSTALL_FLAG="-u"
+  echo "=== Mark installed SBU modules as 'to upgrade' (force tests on SSH) ==="
+  python3 "$ODOO" shell -d "$DB" --addons-path="$ADDONS" --stop-after-init <<'PY' 2>/dev/null || true
+mods = ['sbu_estimate', 'sbu_purchase_flow', 'sbu_sal', 'sbu_stock_config',
+        'sbu_project', 'sbu_documents', 'sbu_closure', 'sbu_integrations',
+        'sbu_logikal', 'sbu_mail_ingest', 'sbu_qonto', 'sbu_revolut']
+imm = env['ir.module.module'].search([('name', 'in', mods), ('state', '=', 'installed')])
+if imm:
+    imm.write({'state': 'to upgrade'})
+PY
 fi
 
 python3 "$ODOO" \

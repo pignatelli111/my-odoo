@@ -1,7 +1,5 @@
 #!/bin/bash
-# Odoo.sh build hook: install Python deps for SBU Excel import (sbu_estimate).
-set -euo pipefail
-REQ="/home/odoo/src/user/requirements.txt"
-if [[ -f "$REQ" ]]; then
-    pip3 install -r "$REQ"
-fi
+# Odoo.sh build hook (optional).
+# Python deps: Odoo.sh already installs requirements.txt from the repo root.
+# Do not use "set -e" here — a pip warning must not fail the whole build.
+exit 0

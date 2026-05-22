@@ -1,12 +1,13 @@
 #!/bin/bash
 # Odoo.sh SSH: bash ~/src/user/tools/grep_odoo_sh_test_fail.sh
 # (Script lives in the git repo under src/user, not in $HOME.)
-set -euo pipefail
+set -uo pipefail
 LOG="${1:-/home/odoo/logs/install.log}"
 USER_REPO="${USER_REPO:-/home/odoo/src/user}"
 if [[ ! -f "$LOG" ]]; then
-  echo "Missing log: $LOG" >&2
-  exit 1
+  echo "Note: $LOG not found (Odoo.sh often logs tests elsewhere)."
+  echo "Run: bash $USER_REPO/tools/odoo_sh_run_tests.sh"
+  LOG=/dev/null
 fi
 echo "=== Commit on this build ==="
 git -C "$USER_REPO" log -1 --oneline 2>/dev/null || echo "(no git at $USER_REPO)"
@@ -52,9 +53,8 @@ echo ""
 echo "=== SBU test stats (look for failures=N errors=N) ==="
 grep -E 'odoo\.addons\.sbu_.*tests|odoo\.tests\.stats: sbu_|failures=[1-9]| errors=[1-9]' "$LOG" | tail -15 || echo "(none)"
 echo ""
-echo "=== Re-run SBU install+tests (SSH — auto -i or -u) ==="
-echo "bash \$USER_REPO/tools/odoo_sh_test_sbu_install.sh /tmp/sbu-test.log"
-echo "grep -E 'odoo.tests.result:|sbu_sal|FAIL:' /tmp/sbu-test.log | tail -20"
+echo "=== Re-run SBU tests (SSH — creates /tmp/sbu-test.log) ==="
+echo "bash \$USER_REPO/tools/odoo_sh_run_tests.sh"
 echo ""
 echo "=== Total WARNING count in install.log (Odoo.sh may flag any) ==="
 grep -c WARNING "$LOG" 2>/dev/null || echo 0
