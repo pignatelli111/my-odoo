@@ -41,7 +41,7 @@ class SbuPurchaseRequestLine(models.Model):
     )
     technical_data_state = fields.Selection(
         related='request_id.technical_data_state',
-        string='Technical data',
+        string='Dati tecnici testata',
         store=True,
         readonly=True,
     )

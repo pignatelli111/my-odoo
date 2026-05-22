@@ -46,7 +46,7 @@ class SbuPurchaseRequestCreateWizard(models.TransientModel):
         help='Se la commessa ha un preventivo vinto, importa le righe BOM per questa route.',
     )
     need_by_date = fields.Date(string='Data fabbisogno')
-    topic = fields.Char(string='Topic / argomento')
+    topic = fields.Char(string='Topic / Argomento')
     excel_item = fields.Char(
         string='Item template',
         help='Codice voce Excel (es. LA01, PAN02) per tracciabilità.',

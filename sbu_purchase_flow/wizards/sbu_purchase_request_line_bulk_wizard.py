@@ -58,7 +58,7 @@ class SbuPurchaseRequestLineBulkWizard(models.TransientModel):
             ('2', 'High'),
             ('3', 'Critical'),
         ],
-        string='Priority',
+        string='Priorità riga',
         default='0',
     )
 

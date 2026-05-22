@@ -90,7 +90,7 @@ class SbuPurchaseRequestLine(models.Model):
             ('2', 'High'),
             ('3', 'Critical'),
         ],
-        string='Priority',
+        string='Priorità riga',
         default='0',
         required=True,
         help='Line-level priority (defaults from request when exploding BOM).',

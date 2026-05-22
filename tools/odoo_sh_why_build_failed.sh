@@ -54,8 +54,12 @@ grep WARNING "$INSTALL_LOG" 2>/dev/null \
   | grep -v 'werkzeug' \
   | grep -v 'not installable, skipped' \
   | grep -v 'ir_mail_server' \
-  | grep -E 'sbu_|src/user' | tail -20 || echo "(none)"
+  | grep -E 'sbu_|src/user|have the same label|Fields with the same' | tail -30 || echo "(none)"
 echo "Total WARNING in install.log: $(grep -c WARNING "$INSTALL_LOG" 2>/dev/null || echo 0)"
+echo ""
+echo "=== 7b) ALL custom-module WARNING lines (broader) ==="
+grep WARNING "$INSTALL_LOG" 2>/dev/null \
+  | grep '/home/odoo/src/user' | tail -20 || echo "(none)"
 
 echo ""
 echo "=== 8) Module install failures ==="

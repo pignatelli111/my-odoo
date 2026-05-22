@@ -54,7 +54,7 @@ class SbuPurchaseRequest(models.Model):
             ('2', 'High'),
             ('3', 'Critical'),
         ],
-        string='Priority',
+        string='Priorità testata',
         default='0',
         required=True,
         tracking=True,
