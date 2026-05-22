@@ -1,5 +1,8 @@
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
+from odoo.tools.float_utils import float_is_zero
+
+from .sbu_budget_helpers import PO_DRAFT_STATES
 
 from .sbu_workflow_routing import (
     SBU_WORKFLOW_ROUTE_SELECTION,
@@ -484,40 +487,38 @@ class SbuPurchaseRequest(models.Model):
             return chosen
         return Offer.search(base, limit=1)
 
+    def _sbu_find_or_create_draft_po(self, vendor):
+        """Reuse one draft RFQ per vendor+request (avoid duplicate PO headers)."""
+        self.ensure_one()
+        Po = self.env['purchase.order']
+        domain = [
+            ('partner_id', '=', vendor.id),
+            ('sbu_purchase_request_id', '=', self.id),
+            ('state', 'in', PO_DRAFT_STATES),
+            ('company_id', '=', self.company_id.id),
+        ]
+        po = Po.search(domain, order='id desc', limit=1)
+        if po:
+            return po
+        po_vals = {
+            'partner_id': vendor.id,
+            'origin': _('%s — %s') % (self.name, vendor.name),
+            'company_id': self.company_id.id,
+            'sbu_purchase_request_id': self.id,
+        }
+        if 'project_id' in Po._fields:
+            po_vals['project_id'] = self.project_id.id
+        return Po.create(po_vals)
+
     def _sbu_create_rfq_po_lines(self, po, pr_lines):
-        """Append purchase.order.line rows from PR lines onto ``po``."""
-        Pol = self.env['purchase.order.line']
+        """Create/update draft PO lines with **qty remaining** (Cosimo punto 15)."""
         for line in pr_lines:
             if not line.product_id:
                 continue
-            parts = []
-            if line.pos:
-                parts.append(f'[{line.pos}]')
-            if line.article_code:
-                parts.append(line.article_code)
-            if line.dimension_mm:
-                parts.append(line.dimension_mm)
-            prefix = ' '.join(parts) + ' — ' if parts else ''
-            desc = (line.name or line.product_id.display_name).strip()
-            planned = fields.Datetime.now()
-            if line.date_required:
-                planned = fields.Datetime.to_datetime(line.date_required)
-            offer = self._sbu_offer_for_po_line(po.partner_id, line)
-            pol_vals = {
-                'order_id': po.id,
-                'product_id': line.product_id.id,
-                'product_qty': line.product_qty,
-                'product_uom_id': line.product_uom.id,
-                'name': prefix + desc,
-                'date_planned': planned,
-                'sbu_pr_line_id': line.id,
-            }
-            if offer:
-                pol_vals['sbu_offer_id'] = offer.id
-                if offer.unit_price:
-                    pol_vals['price_unit'] = offer.unit_price
-            pol_vals.update(line._sbu_po_line_dimension_vals())
-            Pol.create(pol_vals)
+            qty = line.qty_remaining
+            if float_is_zero(qty, precision_rounding=line.product_uom.rounding):
+                continue
+            line._sbu_upsert_rfq_po_line(po, qty)
 
     def _sbu_rfq_vendor_partners(self):
         """Partners to receive draft RFQs (explicit PR choice wins over supplier_rank filter)."""
@@ -546,19 +547,25 @@ class SbuPurchaseRequest(models.Model):
                 _('Set «RFQ vendors» and/or a preferred vendor on this request, '
                   'or create a supplier contact (Purchase tab: Vendor) before generating RFQs.')
             )
+        lines_to_order = self.line_ids.filtered(
+            lambda line: line.product_id and not float_is_zero(
+                line.qty_remaining,
+                precision_rounding=line.product_uom.rounding,
+            )
+        )
+        if not lines_to_order:
+            raise UserError(
+                _(
+                    'All request lines are already fully covered on RFQ/PO '
+                    '(remaining quantity is zero). Adjust RFQ quantities or increase '
+                    'the requested quantity on the RDA line.'
+                )
+            )
         Po = self.env['purchase.order']
         created = Po.browse()
         for vendor in vendors:
-            po_vals = {
-                'partner_id': vendor.id,
-                'origin': _('%s — %s') % (self.name, vendor.name),
-                'company_id': self.company_id.id,
-                'sbu_purchase_request_id': self.id,
-            }
-            if 'project_id' in Po._fields:
-                po_vals['project_id'] = self.project_id.id
-            po = Po.create(po_vals)
-            self._sbu_create_rfq_po_lines(po, self.line_ids)
+            po = self._sbu_find_or_create_draft_po(vendor)
+            self._sbu_create_rfq_po_lines(po, lines_to_order)
             created |= po
         for po in created:
             self.purchase_order_ids = [(4, po.id)]

@@ -305,11 +305,11 @@ Oggi **no** import automatico anagrafiche. Opzionale in fase 2 API Qonto (benefi
 
 ### Punto 15 — Quantità 1,03 e residuo RDA
 
-**Spiegazione qty 1,03**  
-Di solito è **quantità da distinta**: perdita %, arrotondamento confezione o MOQ (es. 10 × 1,03). Non è un errore di unità di misura se documentato.
+**Stato:** implementato (`sbu_purchase_flow` 19.0.1.0.44). Dettaglio: [COSIMO_PUNTO15_RDA_RESIDUO_QTY.md](COSIMO_PUNTO15_RDA_RESIDUO_QTY.md).
 
-**Residuo**  
-Se Cosimo cambia qty su RFQ e vuole il **residuo** sulla RDA: verificare/implementare righe parziali ordinate vs da ordinare.
+**Qty 1,03** — quantità richiesta (+3% perdita fabbisogno default), non U.M.
+
+**Residuo** — campi `qty_ordered` / `qty_remaining`; RFQ usa il residuo; modifica qty RFQ aggiorna il residuo sulla RDA.
 
 ---
 
@@ -357,7 +357,7 @@ su commessa, preventivo, foglio SAL, RDA, fattura (campo related). Filtro «solo
 - [ ] Regole delivery standard  
 - [ ] Stampa offerta con flag/condizioni strutturate  
 - [ ] Stampa fattura per voce contratto + SAL  
-- [ ] Residuo qty su RDA dopo PO parziale  
+- [x] Residuo qty su RDA dopo PO parziale (`sbu_purchase_flow` 19.0.1.0.44)  
 - [ ] Logikal → dimensioni BOM (dopo P0.2)  
 
 ### Fase P2 — UX e dati

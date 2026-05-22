@@ -36,9 +36,11 @@
                 <field name="sbu_sqm_per_piece" string="MQ/cad"/>
                 <field name="sbu_sqm_total" string="MQ tot."/>
             </xpath>
+            <xpath expr="//field[@name='order_line']//field[@name='product_qty']" position="after">
+                <field name="sbu_pr_line_id" optional="show" readonly="1"/>
+            </xpath>
             <xpath expr="//field[@name='order_line']//field[@name='price_unit']" position="after">
                 <field name="sbu_offer_id" optional="show"/>
-                <field name="sbu_pr_line_id" optional="hide"/>
             </xpath>
         </field>
     </record>

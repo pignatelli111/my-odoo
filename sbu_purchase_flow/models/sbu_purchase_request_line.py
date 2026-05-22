@@ -1,7 +1,11 @@
 from odoo import api, fields, models, _
 from odoo.exceptions import ValidationError
+from odoo.tools.float_utils import float_compare, float_is_zero
 
 from odoo.addons.sbu_estimate.models.sbu_manual_input import SBU_MANUAL_INPUT_STATE
+
+SBU_PO_ACTIVE_STATES = ('draft', 'sent', 'to approve', 'purchase', 'done')
+SBU_PO_DRAFT_STATES = ('draft', 'sent', 'to approve')
 
 
 class SbuPurchaseRequestLine(models.Model):
@@ -74,12 +78,47 @@ class SbuPurchaseRequestLine(models.Model):
     )
     weight_kg = fields.Float(string='Peso Kg', digits=(16, 3))
     product_id = fields.Many2one('product.product', string='Product')
-    product_qty = fields.Float(string='Quantity', default=1.0, digits='Product Unit of Measure')
+    product_qty = fields.Float(
+        string='Qty requested',
+        default=1.0,
+        digits='Product Unit of Measure',
+        help='Quantità richiesta (distinta + perdita %% / MOQ / confezione). '
+             'Non confondere con l’unità di misura (colonna U.M.).',
+    )
     product_uom = fields.Many2one(
         'uom.uom',
-        string='Unit of measure',
+        string='UoM',
         required=True,
         default=lambda self: self.env.ref('uom.product_uom_unit', raise_if_not_found=False),
+    )
+    po_line_ids = fields.One2many(
+        'purchase.order.line',
+        'sbu_pr_line_id',
+        string='RFQ/PO lines',
+    )
+    qty_ordered = fields.Float(
+        string='Qty on RFQ/PO',
+        compute='_compute_qty_order_balance',
+        store=True,
+        digits='Product Unit of Measure',
+        help='Somma quantità su righe ordine collegate (esclusi ordini annullati).',
+    )
+    qty_remaining = fields.Float(
+        string='Qty remaining',
+        compute='_compute_qty_order_balance',
+        store=True,
+        digits='Product Unit of Measure',
+        help='Residuo da ordinare = quantità richiesta − quantità già su RFQ/PO.',
+    )
+    qty_fully_ordered = fields.Boolean(
+        string='Fully ordered',
+        compute='_compute_qty_order_balance',
+        store=True,
+    )
+    qty_demand_hint = fields.Char(
+        string='Qty breakdown',
+        compute='_compute_qty_demand_hint',
+        help='Spiega arrotondamenti distinta (es. 1 × 1,03 = 1,03 per +3%% perdita).',
     )
     date_required = fields.Date(
         string='Data consegna',
@@ -143,6 +182,79 @@ class SbuPurchaseRequestLine(models.Model):
     def _compute_offer_count(self):
         for line in self:
             line.offer_count = len(line.offer_ids)
+
+    @api.depends(
+        'product_qty',
+        'product_uom',
+        'po_line_ids.product_qty',
+        'po_line_ids.order_id.state',
+    )
+    def _compute_qty_order_balance(self):
+        for line in self:
+            active_lines = line.po_line_ids.filtered(
+                lambda pol: pol.order_id.state in SBU_PO_ACTIVE_STATES and not pol.display_type
+            )
+            ordered = sum(active_lines.mapped('product_qty'))
+            rounding = line.product_uom.rounding if line.product_uom else 0.01
+            line.qty_ordered = ordered
+            remaining = (line.product_qty or 0.0) - ordered
+            if float_compare(remaining, 0.0, precision_rounding=rounding) <= 0:
+                line.qty_remaining = 0.0
+                line.qty_fully_ordered = True
+            else:
+                line.qty_remaining = remaining
+                line.qty_fully_ordered = False
+
+    @api.depends(
+        'product_qty',
+        'source_bom_line_id',
+        'source_bom_line_id.qty_theoretical',
+        'source_bom_line_id.demand_loss_pct',
+        'request_id.demand_loss_pct',
+        'bom_qty_sync',
+    )
+    def _compute_qty_demand_hint(self):
+        for line in self:
+            bom = line.source_bom_line_id
+            req = line.request_id
+            if not bom or not line.bom_qty_sync:
+                line.qty_demand_hint = False
+                continue
+            theoretical = bom.qty_theoretical or 0.0
+            loss = bom.demand_loss_pct if bom.demand_loss_pct else (req.demand_loss_pct or 0.0)
+            if float_is_zero(theoretical, precision_digits=3):
+                line.qty_demand_hint = _('Da distinta')
+                continue
+            if loss:
+                line.qty_demand_hint = _(
+                    '%(theo)s × (1 + %(loss)s%%) = %(qty)s (perdita fabbisogno)'
+                ) % {
+                    'theo': theoretical,
+                    'loss': loss,
+                    'qty': line.product_qty,
+                }
+            else:
+                line.qty_demand_hint = _('Teorico distinta: %(theo)s → richiesta %(qty)s') % {
+                    'theo': theoretical,
+                    'qty': line.product_qty,
+                }
+
+    @api.constrains('product_qty', 'qty_ordered', 'product_uom')
+    def _check_product_qty_not_below_ordered(self):
+        for line in self:
+            rounding = line.product_uom.rounding if line.product_uom else 0.01
+            if float_compare(
+                line.product_qty,
+                line.qty_ordered,
+                precision_rounding=rounding,
+            ) < 0:
+                raise ValidationError(
+                    _(
+                        'La quantità richiesta (%.2f) non può essere inferiore alla quantità '
+                        'già su RFQ/PO (%.2f) per «%s».'
+                    )
+                    % (line.product_qty, line.qty_ordered, line.display_name)
+                )
 
     @api.depends(
         'source_bom_line_id.manual_input_state',
@@ -283,3 +395,57 @@ class SbuPurchaseRequestLine(models.Model):
                 bom = line.source_bom_line_id
                 line.product_qty = line.request_id._sbu_demand_qty_from_bom(bom)
                 line._sbu_apply_dimension_vals_from_bom(bom)
+
+    def _sbu_draft_po_lines(self, purchase_order):
+        """Draft RFQ lines on ``purchase_order`` linked to this RDA line."""
+        self.ensure_one()
+        return self.po_line_ids.filtered(
+            lambda pol: (
+                pol.order_id == purchase_order
+                and pol.order_id.state in SBU_PO_DRAFT_STATES
+                and not pol.display_type
+            )
+        )
+
+    def _sbu_upsert_rfq_po_line(self, purchase_order, qty):
+        """Create or update a single draft PO line with ``qty`` (residual to order)."""
+        self.ensure_one()
+        Pol = self.env['purchase.order.line']
+        po = purchase_order
+        if float_is_zero(qty, precision_rounding=self.product_uom.rounding):
+            return Pol.browse()
+        draft_lines = self._sbu_draft_po_lines(po)
+        if len(draft_lines) > 1:
+            draft_lines[1:].unlink()
+            draft_lines = draft_lines[:1]
+        if draft_lines:
+            draft_lines.write({'product_qty': qty})
+            return draft_lines
+        parts = []
+        if self.pos:
+            parts.append(f'[{self.pos}]')
+        if self.article_code:
+            parts.append(self.article_code)
+        if self.dimension_mm:
+            parts.append(self.dimension_mm)
+        prefix = ' '.join(parts) + ' — ' if parts else ''
+        desc = (self.name or self.product_id.display_name).strip()
+        planned = fields.Datetime.now()
+        if self.date_required:
+            planned = fields.Datetime.to_datetime(self.date_required)
+        offer = self.request_id._sbu_offer_for_po_line(po.partner_id, self)
+        pol_vals = {
+            'order_id': po.id,
+            'product_id': self.product_id.id,
+            'product_qty': qty,
+            'product_uom_id': self.product_uom.id,
+            'name': prefix + desc,
+            'date_planned': planned,
+            'sbu_pr_line_id': self.id,
+        }
+        if offer:
+            pol_vals['sbu_offer_id'] = offer.id
+            if offer.unit_price:
+                pol_vals['price_unit'] = offer.unit_price
+        pol_vals.update(self._sbu_po_line_dimension_vals())
+        return Pol.create(pol_vals)

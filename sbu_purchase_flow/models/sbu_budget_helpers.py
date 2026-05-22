@@ -57,15 +57,16 @@ def sbu_cost_family_for_pr_line(pr_line):
     return 'extra'
 
 
-def sbu_pr_line_engaged_amount(pr_line):
+def sbu_pr_line_engaged_amount(pr_line, qty=None):
     """Best-effort line value for open PR (offers → standard price)."""
+    qty = qty if qty is not None else (pr_line.qty_remaining or pr_line.product_qty or 0.0)
     offers = pr_line.offer_ids.filtered(lambda o: o.unit_price > 0)
     if offers:
         best = min(offers.mapped('unit_price'))
-        return best * (pr_line.product_qty or 0.0)
+        return best * qty
     product = pr_line.product_id
     if product:
-        return (product.standard_price or 0.0) * (pr_line.product_qty or 0.0)
+        return (product.standard_price or 0.0) * qty
     return 0.0
 
 
@@ -102,6 +103,13 @@ def sbu_collect_project_budget(project, env):
                     totals[fam]['po_draft'] += pol.price_subtotal or 0.0
                 elif po.state in PO_CONFIRMED_STATES:
                     totals[fam]['po_confirmed'] += pol.price_subtotal or 0.0
+            if (
+                pr_line.request_id.state in OPEN_PR_REQUEST_STATES
+                and (pr_line.qty_remaining or 0.0) > 0
+            ):
+                totals[fam]['open_pr'] += sbu_pr_line_engaged_amount(
+                    pr_line, qty=pr_line.qty_remaining
+                )
         elif pr_line.request_id.state in OPEN_PR_REQUEST_STATES:
             totals[fam]['open_pr'] += sbu_pr_line_engaged_amount(pr_line)
 

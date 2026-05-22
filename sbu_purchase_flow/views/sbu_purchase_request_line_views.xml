@@ -23,7 +23,11 @@
                 <field name="sqm_per_piece" string="MQ/cad"/>
                 <field name="sqm_total" string="MQ tot."/>
                 <field name="dimension_mm" string="Dimensioni"/>
-                <field name="product_qty"/>
+                <field name="qty_ordered" optional="show"/>
+                <field name="qty_remaining" optional="show"
+                       decoration-warning="qty_remaining &gt; 0 and qty_ordered &gt; 0"/>
+                <field name="product_qty" string="Qtà richiesta"/>
+                <field name="product_uom" string="U.M." optional="show"/>
                 <field name="date_required" optional="show"/>
                 <field name="destination" optional="show"/>
                 <field name="procurement_mode" optional="show"/>
@@ -66,6 +70,10 @@
                         domain="[('procurement_mode', '=', 'purchase')]"/>
                 <filter name="procurement_wh" string="Approvv.: magazzino"
                         domain="[('procurement_mode', '=', 'warehouse')]"/>
+                <filter name="has_qty_remaining" string="Con residuo da ordinare"
+                        domain="[('qty_remaining', '&gt;', 0)]"/>
+                <filter name="fully_ordered" string="Completamente su RFQ/PO"
+                        domain="[('qty_fully_ordered', '=', True)]"/>
                 <filter name="prio_high" string="Priorità alta/critica"
                         domain="[('line_priority', 'in', ('2', '3'))]"/>
                 <separator/>
