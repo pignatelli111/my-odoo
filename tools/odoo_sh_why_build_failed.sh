@@ -8,6 +8,17 @@ USER_REPO="${USER_REPO:-/home/odoo/src/user}"
 
 echo "=== Git commit on this container ==="
 git -C "$USER_REPO" log -1 --oneline 2>/dev/null || echo "(no git)"
+echo "Branch: $(git -C "$USER_REPO" branch --show-current 2>/dev/null || echo '?')"
+echo "PGDATABASE: ${PGDATABASE:-?}"
+
+echo ""
+echo "=== 0) Log files and what install.log actually ran ==="
+ls -la /home/odoo/logs/ 2>/dev/null || echo "(no ~/logs)"
+echo "--- first 5 lines of install.log (command line) ---"
+head -5 "$INSTALL_LOG" 2>/dev/null || true
+echo "--- grep sbu_ in install.log (was SBU build run?) ---"
+grep -c 'sbu_' "$INSTALL_LOG" 2>/dev/null || echo 0
+grep -n 'sbu_purchase_flow\|sbu_estimate\|test-enable\|Executed command' "$INSTALL_LOG" 2>/dev/null | head -8 || echo "(no SBU / no test run in this install.log)"
 
 echo ""
 echo "=== 1) Final lines of install.log (exit reason often here) ==="
@@ -67,5 +78,29 @@ grep -nE 'Could not load module|Module .* failed|Unable to install|AssertionErro
   "$INSTALL_LOG" 2>/dev/null | tail -15 || echo "(none)"
 
 echo ""
-echo "=== 9) Reproduce full Odoo.sh SBU install+test (optional, ~2–5 min) ==="
+echo "=== 9) odoo.log (runtime / sometimes tests) ==="
+if [[ -f "$ODOO_LOG" ]]; then
+  grep -nE 'WARNING|ERROR|CRITICAL|have the same label|sbu_|tests\.result' "$ODOO_LOG" 2>/dev/null | tail -25 || echo "(none)"
+  echo "WARNING count in odoo.log: $(grep -c WARNING "$ODOO_LOG" 2>/dev/null || echo 0)"
+else
+  echo "(no $ODOO_LOG)"
+fi
+
+echo ""
+echo "=== 10) pip.log (dependency issues) ==="
+PIP_LOG="/home/odoo/logs/pip.log"
+if [[ -f "$PIP_LOG" ]]; then
+  tail -30 "$PIP_LOG"
+else
+  echo "(no pip.log)"
+fi
+
+echo ""
+echo "=== 11) If UI still shows Warning but logs are clean ==="
+echo "The yellow Warning on Odoo.sh is often a DIFFERENT build step than this SSH install.log."
+echo "Open: Project → Builds → click the latest build → read each step log (Install / Test / etc.)."
+echo "SSH install.log may be from DB init (20 modules) while Test step uses another log."
+
+echo ""
+echo "=== 12) Reproduce full Odoo.sh SBU install+test on this DB (optional) ==="
 echo "bash $USER_REPO/tools/odoo_sh_test_sbu_install.sh /home/odoo/tmp/sbu-repro.log"
