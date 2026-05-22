@@ -1,6 +1,8 @@
 from odoo import api, fields, models, _
 from odoo.exceptions import ValidationError
 
+from odoo.addons.sbu_estimate.models.sbu_manual_input import SBU_MANUAL_INPUT_STATE
+
 
 class SbuPurchaseRequestLine(models.Model):
     _name = 'sbu.purchase.request.line'
@@ -52,6 +54,17 @@ class SbuPurchaseRequestLine(models.Model):
         related='source_bom_line_id.technical_confirmed',
         string='Confirmed for PO',
         readonly=True,
+    )
+    manual_input_state = fields.Selection(
+        selection=SBU_MANUAL_INPUT_STATE,
+        string='Manual input status',
+        compute='_compute_manual_input_state',
+        store=True,
+    )
+    manual_input_pending = fields.Boolean(
+        string='Needs manual entry',
+        compute='_compute_manual_input_pending',
+        store=True,
     )
     utilization = fields.Char(
         string='Utilizzo',
@@ -128,6 +141,45 @@ class SbuPurchaseRequestLine(models.Model):
     def _compute_offer_count(self):
         for line in self:
             line.offer_count = len(line.offer_ids)
+
+    @api.depends(
+        'source_bom_line_id.manual_input_state',
+        'needs_technical_confirm',
+        'width_mm',
+        'height_mm',
+    )
+    def _compute_manual_input_state(self):
+        for line in self:
+            bom = line.source_bom_line_id
+            if bom:
+                line.manual_input_state = bom.manual_input_state
+            elif line.needs_technical_confirm:
+                line.manual_input_state = 'pending'
+            elif not line.width_mm and not line.height_mm:
+                line.manual_input_state = 'pending'
+            else:
+                line.manual_input_state = 'auto'
+
+    @api.depends(
+        'manual_input_state',
+        'width_mm',
+        'height_mm',
+        'depth_mm',
+        'product_qty',
+        'date_required',
+        'article_code',
+    )
+    def _compute_manual_input_pending(self):
+        for line in self:
+            if line.manual_input_state != 'pending':
+                line.manual_input_pending = False
+                continue
+            line.manual_input_pending = (
+                not line.width_mm
+                or not line.height_mm
+                or not line.product_qty
+                or not line.date_required
+            )
 
     @api.depends('width_mm', 'height_mm', 'depth_mm', 'sqm_per_piece', 'sqm_total')
     def _compute_dimension_mm(self):

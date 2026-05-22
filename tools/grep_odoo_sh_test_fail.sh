@@ -47,7 +47,7 @@ echo "=== SBU test stats (look for failures=N errors=N) ==="
 grep -E 'odoo\.addons\.sbu_.*tests|odoo\.tests\.stats: sbu_|failures=[1-9]| errors=[1-9]' "$LOG" | tail -15 || echo "(none)"
 echo ""
 echo "=== Re-run SBU tests only (SSH) ==="
-echo "python3 /home/odoo/src/odoo/odoo-bin -d \"\$PGDATABASE\" --addons-path=/home/odoo/src/user,/home/odoo/src/odoo/addons,/home/odoo/src/odoo/odoo/addons --test-enable --stop-after-init --log-level=test --test-tags /sbu_estimate,/sbu_purchase_flow,/sbu_sal 2>&1 | tail -80"
+echo "python3 /home/odoo/src/odoo/odoo-bin -d \"\$PGDATABASE\" --addons-path=/home/odoo/src/user,/home/odoo/src/odoo/addons,/home/odoo/src/odoo/odoo/addons -u sbu_estimate,sbu_purchase_flow,sbu_sal --test-enable --stop-after-init --log-level=test --test-tags /sbu_estimate,/sbu_purchase_flow,/sbu_sal 2>&1 | tail -80"
 echo ""
 echo "=== Total WARNING count in install.log (Odoo.sh may flag any) ==="
 grep -c WARNING "$LOG" 2>/dev/null || echo 0

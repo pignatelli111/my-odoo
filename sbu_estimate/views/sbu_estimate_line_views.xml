@@ -82,26 +82,36 @@
                                     <field name="product_id"/>
                                     <field name="description"/>
                                     <field name="calc_type"/>
-                                    <field name="dimension_display" optional="show"/>
                                     <field name="width_mm_effective" optional="hide"/>
                                     <field name="height_mm_effective" optional="hide"/>
-                                    <field name="depth_mm" optional="hide"/>
                                     <field name="sqm_per_piece_effective" optional="show"/>
                                     <field name="sqm_coverage_factor" optional="hide"/>
                                     <field name="height_adjust_mm" optional="hide"/>
                                     <field name="qty_formula_factor"/>
+                                    <field name="manual_input_state" column_invisible="1"/>
+                                    <field name="manual_input_pending" column_invisible="1"/>
+                                    <field name="manual_dim_pending" column_invisible="1"/>
                                     <field name="needs_technical_confirm" column_invisible="1"/>
-                                    <field name="technical_confirmed"
-                                           decoration-warning="needs_technical_confirm and not technical_confirmed"
-                                           decoration-success="needs_technical_confirm and technical_confirmed"/>
-                                    <field name="data_phase" optional="show"/>
+                                    <field name="dimension_display" optional="show"
+                                           decoration-success="manual_dim_pending"
+                                           decoration-muted="manual_input_state == 'imported'"/>
+                                    <field name="depth_mm" optional="hide"
+                                           decoration-success="manual_input_pending and not depth_mm"
+                                           decoration-muted="manual_input_state == 'imported' and depth_mm"/>
+                                    <field name="unit_cost"
+                                           decoration-success="manual_input_pending and calc_type == 'lump_sum' and not unit_cost"
+                                           decoration-muted="manual_input_state == 'imported'"/>
+                                    <field name="technical_confirmed" optional="show"
+                                           decoration-warning="needs_technical_confirm and manual_input_pending and not technical_confirmed"
+                                           decoration-muted="manual_input_state == 'imported'"/>
+                                    <field name="data_phase" optional="show"
+                                           decoration-muted="manual_input_state == 'imported'"/>
                                     <field name="pack_size"/>
                                     <field name="demand_loss_pct" optional="show"/>
                                     <field name="demand_moq" optional="show"/>
                                     <field name="qty_theoretical" readonly="1"/>
                                     <field name="qty_ordered" readonly="1"/>
                                     <field name="uom_id"/>
-                                    <field name="unit_cost"/>
                                     <field name="total_cost" readonly="1"/>
                                     <field name="note"/>
                                 </list>

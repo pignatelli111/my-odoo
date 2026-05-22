@@ -13,9 +13,17 @@
                 <field name="name"/>
                 <field name="article_code" optional="show"/>
                 <field name="product_id"/>
-                <field name="width_mm" string="L (mm)"/>
-                <field name="height_mm" string="H (mm)"/>
-                <field name="depth_mm" string="P (mm)"/>
+                <field name="manual_input_state" column_invisible="1"/>
+                <field name="manual_input_pending" column_invisible="1"/>
+                <field name="width_mm" string="L (mm)"
+                       decoration-success="manual_input_pending and not width_mm"
+                       decoration-muted="manual_input_state == 'imported' and width_mm"/>
+                <field name="height_mm" string="H (mm)"
+                       decoration-success="manual_input_pending and not height_mm"
+                       decoration-muted="manual_input_state == 'imported' and height_mm"/>
+                <field name="depth_mm" string="P (mm)"
+                       decoration-success="manual_input_pending and not depth_mm"
+                       decoration-muted="manual_input_state == 'imported' and depth_mm"/>
                 <field name="sqm_per_piece" string="MQ/cad"/>
                 <field name="sqm_total" string="MQ tot."/>
                 <field name="dimension_mm" string="Dimensioni"/>
@@ -54,6 +62,10 @@
                 <separator/>
                 <filter name="pending_technical" string="In attesa conferma tecnica"
                         domain="[('needs_technical_confirm', '=', True), ('technical_confirmed', '=', False)]"/>
+                <filter name="manual_input_pending" string="Compilazione manuale (verde)"
+                        domain="[('manual_input_pending', '=', True)]"/>
+                <filter name="manual_input_imported" string="Da import / Logikal (grigio)"
+                        domain="[('manual_input_state', '=', 'imported')]"/>
                 <filter name="procurement_purchase" string="Approvv.: acquisto"
                         domain="[('procurement_mode', '=', 'purchase')]"/>
                 <filter name="procurement_wh" string="Approvv.: magazzino"

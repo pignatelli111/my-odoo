@@ -3,6 +3,8 @@ import math
 from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
 
+from .sbu_manual_input import SBU_MANUAL_INPUT_STATE
+
 
 class SbuEstimateBomLine(models.Model):
     """
@@ -133,6 +135,23 @@ class SbuEstimateBomLine(models.Model):
         string='Confermato per PO',
         default=False,
         help='Spunta dopo revisione disegni / documento tecnico del consulente.',
+    )
+    manual_input_state = fields.Selection(
+        selection=SBU_MANUAL_INPUT_STATE,
+        string='Manual input status',
+        compute='_compute_manual_input_state',
+        store=True,
+        help='Green list cells when «pending»; gray when «imported» (Logikal / technical file).',
+    )
+    manual_input_pending = fields.Boolean(
+        string='Needs manual entry',
+        compute='_compute_manual_input_pending',
+        store=True,
+    )
+    manual_dim_pending = fields.Boolean(
+        string='Dimensions need entry',
+        compute='_compute_manual_dim_pending',
+        store=True,
     )
     qty_theoretical = fields.Float(
         string='Quantità Teorica',
@@ -389,6 +408,66 @@ class SbuEstimateBomLine(models.Model):
 
             line.qty_theoretical = theoretical
             line.qty_ordered = line._sbu_qty_after_demand_rules(theoretical)
+
+    def _sbu_parent_dimensions_incomplete(self):
+        """True when BOM calc needs parent B/H but ANACO row is still empty."""
+        self.ensure_one()
+        parent = self.estimate_line_id
+        if not parent:
+            return self.dimension_source == 'manual'
+        if self.calc_type == 'surface':
+            return not parent.width_mm or not parent.height_mm
+        if self.calc_type == 'linear':
+            return not parent.width_mm
+        return False
+
+    @api.depends(
+        'needs_technical_confirm',
+        'technical_confirmed',
+        'data_phase',
+        'dimension_source',
+        'calc_type',
+        'unit_cost',
+        'estimate_line_id.width_mm',
+        'estimate_line_id.height_mm',
+    )
+    def _compute_manual_input_state(self):
+        for line in self:
+            if line.technical_confirmed:
+                line.manual_input_state = 'ok'
+            elif line.data_phase in ('technical', 'logikal'):
+                line.manual_input_state = 'imported'
+            elif line.needs_technical_confirm or line.dimension_source == 'manual':
+                line.manual_input_state = 'pending'
+            elif line.calc_type == 'lump_sum' and not line.unit_cost:
+                line.manual_input_state = 'pending'
+            elif line._sbu_parent_dimensions_incomplete():
+                line.manual_input_state = 'pending'
+            else:
+                line.manual_input_state = 'auto'
+
+    @api.depends('manual_input_state')
+    def _compute_manual_input_pending(self):
+        for line in self:
+            line.manual_input_pending = line.manual_input_state == 'pending'
+
+    @api.depends(
+        'manual_input_pending',
+        'estimate_line_id.width_mm',
+        'estimate_line_id.height_mm',
+        'depth_mm',
+        'dimension_source',
+        'calc_type',
+    )
+    def _compute_manual_dim_pending(self):
+        for line in self:
+            line.manual_dim_pending = (
+                line.manual_input_pending
+                and (
+                    line._sbu_parent_dimensions_incomplete()
+                    or (line.dimension_source == 'manual' and not line.depth_mm)
+                )
+            )
 
     # ── Computed: total cost ──────────────────────────────────────────────────
     @api.depends('qty_ordered', 'unit_cost')

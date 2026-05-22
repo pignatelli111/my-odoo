@@ -66,7 +66,7 @@ Questo documento mappa i **18 punti** di Cosimo su: stato attuale, gap, priorit�
 | 4 | Item / Topic / Area su purchase requests | Da chiarire UX | Campi `excel_item`, `topic`; route = `workflow_route` / `request_type` | **P2** |
 | 5 | Mancano LA/LZ/ST/PAN/OSC; creazione guidata tipi | **Corretto** | Filtri/searchpanel route + wizard «Nuovo documento» | **P1** ✅ base |
 | 6 | SAL passivo (posa, subappalto) | **Corretto** | Foglio SAL passivo + fattura fornitore; base in `sbu_sal` | **P0** ✅ base |
-| 7 | Celle verdi = compilazione manuale | Ottima UX | Non implementato | **P2** |
+| 7 | Celle verdi = compilazione manuale | Ottima UX | Evidenza verde/grigio su righe ANACO, distinta ITEM, RDA | **P2** ✅ base |
 | 8 | Planner Microsoft ↔ Odoo | Realistico | Solo deep link / processo; sync bidirezionale fragile | **P3** |
 | 9 | Logikal | Rimandato | Modulo presente; dimensioni finali su BOM = TODO | **P1** |
 | 10 | Qonto: riconciliazione auto; abbandono what-if | Parziale | Import + suggerimento match; **no** riconciliazione banca auto | **P1** (bank) |
@@ -193,8 +193,14 @@ SAL cliente: foglio SAL → fattura attiva → CDP.
 
 ### Punto 7 — Celle verdi (compilazione manuale)
 
-**Proposta**  
-Campo calcolato `richiede_input` su righe preventivo/RDA; decorazione lista **verde** se vuoto; **grigio** se valorizzato da import tecnico o Logikal.
+**Implementato (base)**  
+- Stato `manual_input_state` / flag `manual_input_pending` su **distinta ITEM** (`sbu.estimate.bom.line`) e **righe RDA** (`sbu.purchase.request.line`).  
+- Liste Odoo: **verde** (`decoration-success`) sulle celle vuote da compilare; **grigio** (`decoration-muted`) quando i dati arrivano da import tecnico o fase **Logikal** (`data_phase`).  
+- Righe preventivo ANACO: verde su **B/H** se U.M. = MQ/ML e misure mancanti.  
+- Filtri RDA: «Compilazione manuale (verde)», «Da import / Logikal (grigio)».
+
+**Proposta (estensioni)**  
+Regole per colonna Excel specifica; stesso schema su RFQ/PO; legenda in form.
 
 ---
 

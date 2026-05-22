@@ -86,6 +86,12 @@ class SbuEstimateLine(models.Model):
         store=True,
         help='Suggested downstream workflow code from cost family (VC/VS, ST, PAN, LA, LZ, …).',
     )
+    manual_input_pending = fields.Boolean(
+        string='Needs manual entry',
+        compute='_compute_manual_input_pending',
+        store=True,
+        help='Green highlight on empty B/H when U.M. is MQ or ML (ANACO manual cells).',
+    )
     uom_id = fields.Many2one(
         'uom.uom',
         string='U.M. Odoo',
@@ -409,6 +415,16 @@ class SbuEstimateLine(models.Model):
             line.workflow_route = (
                 COST_FAMILY_WORKFLOW_ROUTE.get(line.cost_family or '', '') or False
             )
+
+    @api.depends('calc_uom_type', 'width_mm', 'height_mm')
+    def _compute_manual_input_pending(self):
+        for line in self:
+            if line.calc_uom_type == 'mq':
+                line.manual_input_pending = not line.width_mm or not line.height_mm
+            elif line.calc_uom_type == 'ml':
+                line.manual_input_pending = not line.width_mm
+            else:
+                line.manual_input_pending = False
 
     @api.depends(
         'cost_coibentazione_cad', 'cost_posa_lamiera_lin_cad',
