@@ -13,6 +13,7 @@ class TestSbuRevisionDisplay(TransactionCase):
 
     def test_revision_sort_key(self):
         self.assertEqual(sbu_revision_sort_key('REV00'), 0)
+        self.assertEqual(sbu_revision_sort_key('REV01'), 1)
         self.assertEqual(sbu_revision_sort_key('REV02'), 2)
         self.assertLess(sbu_revision_sort_key('REV01'), sbu_revision_sort_key('REV02'))
 
@@ -44,6 +45,7 @@ class TestSbuRevisionDisplay(TransactionCase):
             'revision': 'REV01',
             'previous_revision_id': e0.id,
         })
+        e0.invalidate_recordset(['sbu_is_latest_revision'])
         self.assertTrue(e1.sbu_is_latest_revision)
         self.assertFalse(e0.sbu_is_latest_revision)
 

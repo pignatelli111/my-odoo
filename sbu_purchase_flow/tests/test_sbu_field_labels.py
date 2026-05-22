@@ -33,3 +33,7 @@ class TestSbuPurchaseFieldLabels(TransactionCase):
     def test_project_budget_family_labels_distinct(self):
         dups = duplicate_custom_field_labels(self.env, 'sbu.project.budget.family')
         self.assertEqual(dups, {}, dups)
+
+    def test_delivery_standard_labels_distinct(self):
+        dups = duplicate_custom_field_labels(self.env, 'sbu.delivery.standard')
+        self.assertEqual(dups, {}, dups)

@@ -77,7 +77,7 @@ class SbuDeliveryStandard(models.Model):
         """Best matching active rule for company + line context."""
         company = pr_line.request_id.company_id or self.env.company
         cost_family = sbu_cost_family_for_pr_line(pr_line)
-        route = (pr_line.workflow_route or pr_line.request_id.workflow_route or '').strip()
+        route = (pr_line.request_id.workflow_route or '').strip()
         req_type = pr_line.request_id.request_type
         glass_mode = 'any'
         if cost_family == 'glass' or req_type == 'vt':

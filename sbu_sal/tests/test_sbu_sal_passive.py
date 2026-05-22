@@ -38,7 +38,13 @@ class TestSbuSalPassive(TransactionCase):
 
     def test_passive_model_labels_distinct(self):
         """Regression: duplicate labels on SBU fields (not mail.thread Followers)."""
-        for model in ('sbu.sal.passive.sheet', 'sbu.sal.passive.line'):
+        for model in (
+            'sbu.sal.passive.sheet',
+            'sbu.sal.passive.line',
+            'sbu.sal.sheet',
+            'sbu.payment.certificate',
+            'account.move',
+        ):
             dups = duplicate_custom_field_labels(self.env, model)
             self.assertEqual(dups, {}, f'{model}: {dups}')
 

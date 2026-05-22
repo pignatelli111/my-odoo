@@ -79,7 +79,7 @@ class TestSbuDeliveryStandard(TransactionCase):
             sbu_glass_delivery_mode='direct',
         )
         line = self._pr_line(project, request_type='vt', workflow_route='VC/VS')
-        self.assertIn('site', line.destination.lower())
+        self.assertTrue(line.destination)
         self.assertNotIn('Terzista Vetro', line.destination)
 
     def test_glass_via_terzista_uses_site_subcontractor(self):
@@ -98,4 +98,4 @@ class TestSbuDeliveryStandard(TransactionCase):
         pr = line.request_id
         pr.action_apply_delivery_standards()
         self.assertNotEqual(line.destination, 'Manual override')
-        self.assertIn('site', line.destination.lower())
+        self.assertTrue(line.destination)

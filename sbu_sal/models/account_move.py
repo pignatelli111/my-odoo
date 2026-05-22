@@ -52,14 +52,14 @@ class AccountMove(models.Model):
     def name_get(self):
         if self.env.context.get('sbu_use_document_name_only'):
             return super().name_get()
-        result = []
-        for move in self:
-            if move.move_type in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund') and move.sbu_display_label:
-                result.append((move.id, move.sbu_display_label))
-            else:
-                result.append((move.id, move.name or move.ref or _('Draft')))
-        return result
-
+        sbu_moves = self.filtered(
+            lambda m: m.move_type in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund')
+            and m.sbu_revision_label
+        )
+        result = dict(super(AccountMove, self - sbu_moves).name_get())
+        for move in sbu_moves:
+            result[move.id] = move.sbu_display_label or move.name
+        return list(result.items())
 
     @api.depends('sbu_sal_sheet_id', 'sbu_sal_sheet_id.certificate_ids', 'sbu_sal_sheet_id.certificate_ids.state')
     def _compute_sbu_sal_cdp_name(self):

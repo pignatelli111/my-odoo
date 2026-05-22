@@ -16,6 +16,7 @@ class TestSbuEstimateFieldLabels(TransactionCase):
             'sbu.estimate.bom.line',
             'sbu.estimate.sal.line',
             'sbu.estimate.commercial.term',
+            'project.project',
         ):
             dups = duplicate_custom_field_labels(self.env, model)
             self.assertEqual(dups, {}, f'{model}: {dups}')
