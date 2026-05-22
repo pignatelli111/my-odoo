@@ -315,8 +315,9 @@ Oggi **no** import automatico anagrafiche. Opzionale in fase 2 API Qonto (benefi
 
 ### Punto 16 — Stampa offerta (flag e condizioni)
 
-**Proposta**  
-Tab «Condizioni commerciali» strutturate: pagamento, ritenute, garanzia, flag verde/rosso come ANACO; report QWeb offerta che legge questi campi (non solo testo libero).
+**Stato:** implementato (`sbu_estimate` 19.0.1.0.82). Dettaglio: [COSIMO_PUNTO16_STAMPA_OFFERTA.md](COSIMO_PUNTO16_STAMPA_OFFERTA.md).
+
+Tab condizioni strutturate + report **Offerta / Preventivo (SBU)** con flag verde/rosso.
 
 ---
 
@@ -355,7 +356,7 @@ su commessa, preventivo, foglio SAL, RDA, fattura (campo related). Filtro «solo
 - [ ] Stati RDA «revisione tecnica» + import Excel tecnico  
 - [ ] Wizard tipi documento (LA, LZ, OSC, …)  
 - [ ] Regole delivery standard  
-- [ ] Stampa offerta con flag/condizioni strutturate  
+- [x] Stampa offerta con flag/condizioni strutturate (`sbu_estimate` 19.0.1.0.82)  
 - [ ] Stampa fattura per voce contratto + SAL  
 - [x] Residuo qty su RDA dopo PO parziale (`sbu_purchase_flow` 19.0.1.0.44)  
 - [ ] Logikal → dimensioni BOM (dopo P0.2)  
