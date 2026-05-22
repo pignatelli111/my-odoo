@@ -58,3 +58,5 @@ Upgrade **`sbu_purchase_flow`** and **`sbu_estimate`** on production after the f
 Fix: scope bulk domain by `request_id.project_id`; use a smaller planned budget and force `price_unit` in the budget test.
 
 **Stale shell checkout:** if `git log -1` on the Odoo.sh shell shows an old commit (e.g. `4dc3ef6`) while GitHub `production` is newer, wait for the build to deploy or run `git pull` in `~/src/user` after the green build.
+
+**Production branch reset (May 2026):** `production` was force-aligned to `main` so Odoo.sh runs a full rebuild with the same code + test fixes (prod DB tests differ from dev).
