@@ -10,6 +10,17 @@ from .sbu_workflow_routing import (
 class ProjectProject(models.Model):
     _inherit = 'project.project'
 
+    sbu_budget_family_ids = fields.One2many(
+        'sbu.project.budget.family',
+        'project_id',
+        string='Budget by cost family',
+    )
+    sbu_budget_po_unlock = fields.Boolean(
+        string='Unlock PO over budget',
+        copy=False,
+        help='When enabled, purchase orders on this job can be confirmed even if a cost '
+             'family exceeds the ANACO budget (admin only).',
+    )
     sbu_purchase_request_count = fields.Integer(
         string='Purchase requests',
         compute='_compute_sbu_purchase_request_count',
@@ -19,6 +30,28 @@ class ProjectProject(models.Model):
         pr = self.env['sbu.purchase.request'].sudo()
         for project in self:
             project.sbu_purchase_request_count = pr.search_count([('project_id', '=', project.id)])
+
+    def action_sbu_refresh_budget_families(self):
+        """Rebuild budget vs engaged rows from estimate + PR/PO (Cosimo point 11)."""
+        self.ensure_one()
+        self.env['sbu.project.budget.family'].refresh_project(self)
+        return True
+
+    def action_sbu_open_budget_dashboard(self):
+        """Single screen: preventive budget, engaged, residual, traffic lights."""
+        self.ensure_one()
+        self.action_sbu_refresh_budget_families()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Purchase budget by family'),
+            'res_model': 'sbu.project.budget.family',
+            'view_mode': 'list',
+            'domain': [('project_id', '=', self.id)],
+            'context': {
+                'default_project_id': self.id,
+                'search_default_project_id': self.id,
+            },
+        }
 
     def action_view_sbu_purchase_requests(self):
         self.ensure_one()

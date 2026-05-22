@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sbu_project_budget_family_list" model="ir.ui.view">
+        <field name="name">sbu.project.budget.family.list</field>
+        <field name="model">sbu.project.budget.family</field>
+        <field name="arch" type="xml">
+            <list string="Budget by cost family"
+                  decoration-success="traffic_light == 'ok'"
+                  decoration-warning="traffic_light == 'warning'"
+                  decoration-danger="traffic_light == 'over'"
+                  create="false" delete="false">
+                <field name="project_id" column_invisible="1"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="cost_family_label" string="Famiglia"/>
+                <field name="budget_planned" string="Budget (preventivo)" sum="Total"/>
+                <field name="amount_open_pr" string="RDA aperte" sum="Total"/>
+                <field name="amount_po_draft" string="PO bozza" sum="Total"/>
+                <field name="amount_po_confirmed" string="PO confermati" sum="Total"/>
+                <field name="amount_engaged" string="Impegnato" sum="Total"/>
+                <field name="amount_residual" string="Residuo" sum="Total"/>
+                <field name="pct_engaged" string="Impegnato %" widget="progressbar"/>
+                <field name="pct_residual" string="Residuo %"/>
+                <field name="traffic_light" string="Semaforo" widget="badge"
+                       decoration-success="traffic_light == 'ok'"
+                       decoration-warning="traffic_light == 'warning'"
+                       decoration-danger="traffic_light == 'over'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_sbu_project_budget_family_search" model="ir.ui.view">
+        <field name="name">sbu.project.budget.family.search</field>
+        <field name="model">sbu.project.budget.family</field>
+        <field name="arch" type="xml">
+            <search string="Budget by family">
+                <field name="project_id"/>
+                <field name="cost_family"/>
+                <filter string="Over budget" name="over" domain="[('is_over_budget', '=', True)]"/>
+                <filter string="Yellow" name="warn" domain="[('traffic_light', '=', 'warning')]"/>
+                <filter string="Green" name="ok" domain="[('traffic_light', '=', 'ok')]"/>
+                <group>
+                    <filter string="Project" name="grp_project" context="{'group_by': 'project_id'}"/>
+                    <filter string="Family" name="grp_family" context="{'group_by': 'cost_family'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_sbu_project_budget_family" model="ir.actions.act_window">
+        <field name="name">Budget acquisti per famiglia</field>
+        <field name="res_model">sbu.project.budget.family</field>
+        <field name="view_mode">list</field>
+        <field name="search_view_id" ref="view_sbu_project_budget_family_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Open a job and use «Budget acquisti» to refresh rows from the ANACO estimate and purchase documents.
+            </p>
+        </field>
+    </record>
+</odoo>

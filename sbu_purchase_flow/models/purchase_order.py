@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 from odoo import _, api, fields, models
+from odoo.exceptions import UserError
+
+from .sbu_budget_helpers import sbu_cost_family_for_pr_line, sbu_cost_family_label
 
 
 class PurchaseOrder(models.Model):
@@ -66,6 +69,52 @@ class PurchaseOrder(models.Model):
                 if 'project_id' in self._fields and pr.project_id:
                     vals['project_id'] = pr.project_id.id
         return super().create(vals_list)
+
+    def _sbu_user_can_override_budget_po(self):
+        self.ensure_one()
+        if self.env.user.has_group('base.group_system'):
+            return True
+        project = self.project_id
+        return bool(project and project.sbu_budget_po_unlock)
+
+    def _sbu_cost_family_for_po_line(self, pol):
+        pr_line = pol.sbu_pr_line_id
+        if pr_line:
+            return sbu_cost_family_for_pr_line(pr_line)
+        return 'extra'
+
+    def _sbu_check_budget_before_confirm(self):
+        """Block PO confirm when any affected cost family is over budget (unless admin unlock)."""
+        Budget = self.env['sbu.project.budget.family']
+        for po in self:
+            if not po.project_id or not po.project_id.sbu_estimate_id:
+                continue
+            if po._sbu_user_can_override_budget_po():
+                continue
+            Budget.refresh_project(po.project_id)
+            over_labels = []
+            for pol in po.order_line.filtered(lambda line: not line.display_type):
+                fam = po._sbu_cost_family_for_po_line(pol)
+                row = Budget.search([
+                    ('project_id', '=', po.project_id.id),
+                    ('cost_family', '=', fam),
+                ], limit=1)
+                if row and row.is_over_budget:
+                    over_labels.append(sbu_cost_family_label(self.env, fam))
+            if over_labels:
+                raise UserError(_(
+                    'Cannot confirm this purchase order: budget exceeded for %(families)s '
+                    '(engaged above %(pct)s%% of the ANACO estimate for that family). '
+                    'Ask an administrator to review the job budget dashboard or enable '
+                    '«Unlock PO over budget» on the project.'
+                ) % {
+                    'families': ', '.join(sorted(set(over_labels))),
+                    'pct': '105',
+                })
+
+    def button_confirm(self):
+        self._sbu_check_budget_before_confirm()
+        return super().button_confirm()
 
     def action_sbu_refresh_dimensions_from_pr(self):
         """Copy L/H/P + mq from linked RDA lines onto RFQ/PO lines."""

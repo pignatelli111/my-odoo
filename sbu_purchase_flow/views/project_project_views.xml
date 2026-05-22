@@ -38,6 +38,51 @@
                         <span class="o_stat_text">By workflow</span>
                     </div>
                 </button>
+                <button name="action_sbu_open_budget_dashboard" type="object"
+                        class="oe_stat_button" icon="fa-pie-chart"
+                        invisible="not sbu_estimate_id"
+                        title="Preventivo vs impegnato per famiglia costo (semafori ITEM).">
+                    <div class="o_stat_info">
+                        <span class="o_stat_text">Budget acquisti</span>
+                    </div>
+                </button>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="Budget acquisti" name="sbu_budget_families"
+                      invisible="not sbu_estimate_id">
+                    <group>
+                        <field name="sbu_budget_po_unlock"
+                               groups="base.group_system"
+                               widget="boolean_toggle"/>
+                    </group>
+                    <div class="mb-2">
+                        <button name="action_sbu_refresh_budget_families" type="object"
+                                string="Aggiorna da preventivo e acquisti" class="btn-primary"/>
+                        <button name="action_sbu_open_budget_dashboard" type="object"
+                                string="Apri cruscotto" class="btn-secondary ms-1"/>
+                    </div>
+                    <field name="sbu_budget_family_ids" nolabel="1" readonly="1"
+                           context="{'default_project_id': id}">
+                        <list decoration-success="traffic_light == 'ok'"
+                              decoration-warning="traffic_light == 'warning'"
+                              decoration-danger="traffic_light == 'over'"
+                              create="false" delete="false">
+                            <field name="cost_family_label" string="Famiglia"/>
+                            <field name="budget_planned" string="Preventivo"/>
+                            <field name="amount_open_pr" string="RDA"/>
+                            <field name="amount_po_draft" string="PO bozza"/>
+                            <field name="amount_po_confirmed" string="PO confermati"/>
+                            <field name="amount_engaged" string="Impegnato"/>
+                            <field name="amount_residual" string="Residuo"/>
+                            <field name="pct_engaged" string="Impegnato %"/>
+                            <field name="pct_residual" string="Residuo %"/>
+                            <field name="traffic_light" string="Semaforo" widget="badge"
+                                   decoration-success="traffic_light == 'ok'"
+                                   decoration-warning="traffic_light == 'warning'"
+                                   decoration-danger="traffic_light == 'over'"/>
+                        </list>
+                    </field>
+                </page>
             </xpath>
         </field>
     </record>

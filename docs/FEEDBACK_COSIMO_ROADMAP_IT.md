@@ -70,7 +70,7 @@ Questo documento mappa i **18 punti** di Cosimo su: stato attuale, gap, priorit�
 | 8 | Planner Microsoft ↔ Odoo | Realistico | Solo deep link / processo; sync bidirezionale fragile | **P3** |
 | 9 | Logikal | Rimandato | Modulo presente; dimensioni finali su BOM = TODO | **P1** |
 | 10 | Qonto: riconciliazione auto; abbandono what-if | Parziale | Import + suggerimento match; **no** riconciliazione banca auto | **P1** (bank) |
-| 11 | Budget per tipologia (semafori ITEM) + sblocco solo admin | **Corretto** | Alert PO ~5% vs riferimento; no cruscotto famiglie | **P0** |
+| 11 | Budget per tipologia (semafori ITEM) + sblocco solo admin | **Corretto** | Cruscotto famiglia su commessa + blocco conferma PO; sblocco admin | **P0** ✅ base |
 | 12 | Costi / margini / retention import sbagliati | **Bug da verificare** | Formule import complesse; serve test file P1002 | **P0** |
 | 13 | Stampa fattura per voce contratto + SAL/CDP; dashboard | Da estendere | Fattura da foglio SAL; layout voci contratto da rifinire | **P1** |
 | 14 | Qonto → fornitori/clienti automatici | Opzionale | Non implementato | **P2** |
@@ -244,15 +244,17 @@ Pagamenti ricevuti riconciliati automaticamente; abbandono strumenti what-if fat
 **Feedback**  
 Come foglio ITEM ANACO: budget preventivo, acquistato, residuo, %; semafori; solo **admin** sblocca PO se sforamento.
 
-**Stato attuale**  
-Alert su PO se totale > ~105% di un riferimento singolo (`sbu_budget_over_limit`).
+**Stato attuale (base maggio 2026)**  
+- Modello `sbu.project.budget.family`: preventivo ANACO per famiglia, RDA aperte, PO bozza/confermati, impegnato, residuo, %, semaforo (verde &lt; 90%, giallo fino 105%, rosso oltre).  
+- Scheda commessa **Budget acquisti** + menu SBU → Purchasing → **Budget per famiglia**.  
+- Conferma PO bloccata se famiglia in rosso; sblocco con flag **Unlock PO over budget** (solo `Settings / Administrator`) o utente admin.  
+- Resta alert legacy su totale PO (`sbu_budget_over_limit`).
 
-**Proposta**  
-| Schermata | Contenuto |
-|-----------|-----------|
-| Cruscotto commessa | Per famiglia costo: budget ANACO, impegnato (RDA/PO), consuntivo, residuo, % |
-| Semaforo | Verde / giallo / rosso |
-| Blocco | Conferma PO oltre soglia solo gruppo Admin SBU |
+**Proposta fase 2**  
+| Voce | Contenuto |
+|------|-----------|
+| Consuntivo | Collegare fatture fornitore / movimenti a valore «consuntivo» per famiglia |
+| Gruppo dedicato | Ruolo «SBU budget unlock» separato da admin Odoo |
 
 ---
 

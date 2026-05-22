@@ -22,4 +22,10 @@
               parent="menu_sbu_purchase_root"
               action="action_sbu_purchase_request_line"
               sequence="15"/>
+
+    <menuitem id="menu_sbu_project_budget_family"
+              name="Budget per famiglia"
+              parent="menu_sbu_purchase_root"
+              action="action_sbu_project_budget_family"
+              sequence="20"/>
 </odoo>
