@@ -60,11 +60,13 @@ class SbuPurchaseRequestLine(models.Model):
         string='Manual input status',
         compute='_compute_manual_input_state',
         store=True,
+        readonly=True,
     )
     manual_input_pending = fields.Boolean(
         string='Needs manual entry',
         compute='_compute_manual_input_pending',
         store=True,
+        readonly=True,
     )
     utilization = fields.Char(
         string='Utilizzo',

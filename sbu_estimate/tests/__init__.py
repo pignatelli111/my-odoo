@@ -7,3 +7,4 @@ from . import test_sbu_p1002_workbook
 from . import test_sbu_estimate_sal_line_name
 from . import test_sbu_force_delete
 from . import test_sbu_manual_input_ui
+from . import test_sbu_field_labels
