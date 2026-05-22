@@ -10,6 +10,7 @@ class TestSbuSalInstall(TransactionCase):
     def test_models_registered(self):
         self.assertTrue(self.env['sbu.sal.sheet']._name)
         self.assertTrue(self.env['sbu.payment.certificate']._name)
+        self.assertTrue(self.env['sbu.sal.passive.sheet']._name)
 
     def test_sal_sheet_field_labels_are_distinct(self):
         """Regression: duplicate labels on sbu.sal.sheet form trigger Odoo.sh install WARNING."""

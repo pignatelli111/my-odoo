@@ -4,3 +4,6 @@ access_sbu_sal_sheet_manager,sbu.sal.sheet manager,model_sbu_sal_sheet,base.grou
 access_sbu_sal_sheet_line_user,sbu.sal.sheet.line user,model_sbu_sal_sheet_line,base.group_user,1,1,1,1
 access_sbu_payment_certificate_user,sbu.payment.certificate user,model_sbu_payment_certificate,base.group_user,1,1,1,1
 access_sbu_payment_certificate_manager,sbu.payment.certificate manager,model_sbu_payment_certificate,base.group_system,1,1,1,1
+access_sbu_sal_passive_sheet_user,sbu.sal.passive.sheet user,model_sbu_sal_passive_sheet,base.group_user,1,1,1,0
+access_sbu_sal_passive_sheet_manager,sbu.sal.passive.sheet manager,model_sbu_sal_passive_sheet,base.group_system,1,1,1,1
+access_sbu_sal_passive_line_user,sbu.sal.passive.line user,model_sbu_sal_passive_line,base.group_user,1,1,1,1

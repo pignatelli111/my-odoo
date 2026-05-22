@@ -65,7 +65,7 @@ Questo documento mappa i **18 punti** di Cosimo su: stato attuale, gap, priorit�
 | 3 | Filtri a tendina + applica scelta a tutto il filtrato | Utile | Searchpanel + wizard «risultato filtrato» su righe RDA | **P1** ✅ base |
 | 4 | Item / Topic / Area su purchase requests | Da chiarire UX | Campi `excel_item`, `topic`; route = `workflow_route` / `request_type` | **P2** |
 | 5 | Mancano LA/LZ/ST/PAN/OSC; creazione guidata tipi | **Corretto** | Filtri/searchpanel route + wizard «Nuovo documento» | **P1** ✅ base |
-| 6 | SAL passivo (posa, subappalto) | **Corretto** | SAL attivo cliente sì; fatture passive fornitore no | **P0** |
+| 6 | SAL passivo (posa, subappalto) | **Corretto** | Foglio SAL passivo + fattura fornitore; base in `sbu_sal` | **P0** ✅ base |
 | 7 | Celle verdi = compilazione manuale | Ottima UX | Non implementato | **P2** |
 | 8 | Planner Microsoft ↔ Odoo | Realistico | Solo deep link / processo; sync bidirezionale fragile | **P3** |
 | 9 | Logikal | Rimandato | Modulo presente; dimensioni finali su BOM = TODO | **P1** |
@@ -180,14 +180,14 @@ Il SAL deve gestire anche il **passivo**, in particolare servizi di posa (appalt
 
 **Stato attuale**  
 SAL cliente: foglio SAL → fattura attiva → CDP.  
-Fatture fornitore / posa: flusso Odoo standard `in_invoice`, **non** integrato come «SAL passivo» periodo.
+**SAL passivo (base):** modello `sbu.sal.passive.sheet` — commessa, fornitore, periodo, righe con budget ANACO (POS / famiglia installazione / costi cantiere), % avanzamento, fattura fornitore `in_invoice`. Menu **SBU → Billing → Passive SAL (subcontract)**; smart button su commessa.
 
-**Proposta**  
+**Proposta (fasi successive)**  
 | Elemento | Descrizione |
 |----------|-------------|
-| Foglio SAL passivo | Periodo + % o importo su voci subappalto |
-| Collegamento | `in_invoice` fornitore ↔ commessa ↔ famiglia costo POS |
-| Report | Avanzamento posa vs budget ANACO |
+| Report | Cruscotto avanzamento posa vs budget ANACO per commessa |
+| CDP passivo | Certificato pagamento subappalto (se richiesto) |
+| Vincoli | Blocco % cumulato > 100% su stessa voce preventivo |
 
 ---
 
@@ -323,7 +323,7 @@ su commessa, preventivo, foglio SAL, RDA, fattura (campo related). Filtro «solo
 - [ ] Label REV + data su commessa e documenti collegati  
 - [ ] Dimensioni L×H + mq su RDA → RFQ → PO  
 - [ ] Cruscotto budget per famiglia + blocco PO admin  
-- [ ] SAL passivo (posa) — modello minimo  
+- [x] SAL passivo (posa) — modello minimo (`sbu.sal.passive.sheet`)  
 
 ### Fase P1 — Acquisti produzione
 

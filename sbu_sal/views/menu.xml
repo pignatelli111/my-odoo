@@ -6,8 +6,14 @@
               sequence="40"/>
 
     <menuitem id="menu_sbu_sal_sheet"
-              name="SAL sheets"
+              name="SAL sheets (customer)"
               parent="menu_sbu_sal_root"
               action="action_sbu_sal_sheet"
               sequence="10"/>
+
+    <menuitem id="menu_sbu_sal_passive_sheet"
+              name="Passive SAL (subcontract)"
+              parent="menu_sbu_sal_root"
+              action="action_sbu_sal_passive_sheet"
+              sequence="20"/>
 </odoo>

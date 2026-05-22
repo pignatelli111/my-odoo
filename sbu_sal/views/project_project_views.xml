@@ -11,7 +11,15 @@
                         <span class="o_stat_value">
                             <field name="sbu_sal_sheet_count"/>
                         </span>
-                        <span class="o_stat_text">SAL sheets</span>
+                        <span class="o_stat_text">Customer SAL</span>
+                    </div>
+                </button>
+                <button name="action_view_sbu_sal_passive_sheets" type="object" class="oe_stat_button" icon="fa-wrench">
+                    <div class="o_stat_info">
+                        <span class="o_stat_value">
+                            <field name="sbu_sal_passive_sheet_count"/>
+                        </span>
+                        <span class="o_stat_text">Passive SAL</span>
                     </div>
                 </button>
             </xpath>

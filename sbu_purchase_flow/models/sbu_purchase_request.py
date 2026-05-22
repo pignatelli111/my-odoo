@@ -25,7 +25,7 @@ class SbuPurchaseRequest(models.Model):
     )
     workflow_route = fields.Selection(
         selection=SBU_WORKFLOW_ROUTE_SELECTION,
-        string='Percorso / route',
+        string='Route ANACO',
         index=True,
         tracking=True,
         help='Codice ANACO (LA, LZ, ST, PAN, OSC, VC/VS, …). Usare il wizard «Nuovo documento» '

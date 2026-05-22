@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sbu_sal_passive_sheet_list" model="ir.ui.view">
+        <field name="name">sbu.sal.passive.sheet.list</field>
+        <field name="model">sbu.sal.passive.sheet</field>
+        <field name="arch" type="xml">
+            <list string="Passive SAL sheets">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="vendor_id"/>
+                <field name="subcontract_scope"/>
+                <field name="period_label"/>
+                <field name="date"/>
+                <field name="amount_gross"/>
+                <field name="amount_net"/>
+                <field name="state" widget="badge"/>
+                <field name="company_id" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_sbu_sal_passive_sheet_form" model="ir.ui.view">
+        <field name="name">sbu.sal.passive.sheet.form</field>
+        <field name="model">sbu.sal.passive.sheet</field>
+        <field name="arch" type="xml">
+            <form string="Passive SAL sheet">
+                <header>
+                    <button name="action_load_posa_budget_from_estimate" string="Load POS budget" type="object"
+                            class="btn-secondary" invisible="state != 'draft' or not estimate_id"/>
+                    <button name="action_confirm" string="Confirm" type="object" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_create_vendor_bill" string="Vendor bill" type="object" class="btn-secondary"
+                            invisible="state != 'confirmed' or vendor_bill_id"/>
+                    <button name="action_view_vendor_bill" string="Open vendor bill" type="object" invisible="not vendor_bill_id"/>
+                    <button name="action_reset_draft" string="Reset to draft" type="object" invisible="state not in ('confirmed','cancelled')"/>
+                    <button name="action_cancel" string="Cancel" type="object" invisible="state == 'cancelled'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,invoiced"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="project_id"/>
+                            <field name="estimate_id"/>
+                            <field name="vendor_id"/>
+                            <field name="subcontract_scope"/>
+                            <field name="period_label"/>
+                            <field name="vendor_bill_id" readonly="1"/>
+                            <field name="date"/>
+                        </group>
+                        <group>
+                            <field name="budget_total"/>
+                            <field name="retention_percent"/>
+                            <field name="amount_gross"/>
+                            <field name="amount_retention"/>
+                            <field name="amount_net"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Progress lines">
+                            <field name="line_ids">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="estimate_line_id" options="{'no_create': True}"/>
+                                    <field name="category"/>
+                                    <field name="description"/>
+                                    <field name="budget_amount"/>
+                                    <field name="percent_prior_sal" readonly="1"/>
+                                    <field name="percent_this_sal"/>
+                                    <field name="amount_this_sal"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Notes">
+                            <field name="notes" nolabel="1" placeholder="Subcontract / installation notes…"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sbu_sal_passive_sheet_search" model="ir.ui.view">
+        <field name="name">sbu.sal.passive.sheet.search</field>
+        <field name="model">sbu.sal.passive.sheet</field>
+        <field name="arch" type="xml">
+            <search string="Passive SAL">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="vendor_id"/>
+                <field name="period_label"/>
+                <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+                <filter name="confirmed" string="Confirmed" domain="[('state', '=', 'confirmed')]"/>
+                <filter name="invoiced" string="Billed" domain="[('state', '=', 'invoiced')]"/>
+                <filter name="scope_posa" string="Installation (posa)" domain="[('subcontract_scope', '=', 'posa')]"/>
+                <group expand="0" string="Group by">
+                    <filter name="group_project" string="Project" context="{'group_by': 'project_id'}"/>
+                    <filter name="group_vendor" string="Vendor" context="{'group_by': 'vendor_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_sbu_sal_passive_sheet" model="ir.actions.act_window">
+        <field name="name">Passive SAL (subcontract)</field>
+        <field name="res_model">sbu.sal.passive.sheet</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_sbu_sal_passive_sheet_search"/>
+        <field name="context">{'default_subcontract_scope': 'posa'}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a passive SAL for installation / subcontract progress.
+            </p>
+            <p>
+                Link a project with an ANACO estimate, load the POS budget, enter progress %, then create the vendor bill.
+            </p>
+        </field>
+    </record>
+</odoo>
