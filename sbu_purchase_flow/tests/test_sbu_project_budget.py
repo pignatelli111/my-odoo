@@ -102,7 +102,7 @@ class TestSbuProjectBudget(TransactionCase):
             'partner_id': buyer_partner.id,
             'company_id': self.env.company.id,
             'company_ids': [(6, 0, [self.env.company.id])],
-            'groups_id': [(6, 0, [purchase_user.id, buyer_group.id])],
+            'group_ids': [(6, 0, [purchase_user.id, buyer_group.id])],
         })
         with self.assertRaises(UserError):
             po.with_user(buyer).button_confirm()
