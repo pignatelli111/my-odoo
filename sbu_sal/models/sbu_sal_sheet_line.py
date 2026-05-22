@@ -1,5 +1,7 @@
 from odoo import api, fields, models
 
+from odoo.addons.sbu_estimate.models.sbu_contract_uom import SBU_CONTRACT_UOM_SELECTION
+
 
 class SbuSalSheetLine(models.Model):
     _name = 'sbu.sal.sheet.line'
@@ -37,6 +39,50 @@ class SbuSalSheetLine(models.Model):
         store=True,
         readonly=True,
     )
+    item_ref = fields.Char(
+        string='Item ref.',
+        compute='_compute_contract_meta',
+        store=True,
+    )
+    uom_label = fields.Char(
+        string='U.M.',
+        compute='_compute_contract_meta',
+        store=True,
+    )
+    qty_display = fields.Float(
+        string='Contract qty',
+        compute='_compute_contract_meta',
+        store=True,
+        digits=(16, 3),
+    )
+    unit_price_display = fields.Monetary(
+        string='Unit price',
+        compute='_compute_contract_meta',
+        store=True,
+        currency_field='currency_id',
+    )
+
+    @api.depends(
+        'estimate_sal_line_id',
+        'estimate_sal_line_id.item_ref',
+        'estimate_sal_line_id.uom_type',
+        'estimate_sal_line_id.qty_contract',
+        'estimate_sal_line_id.unit_price',
+    )
+    def _compute_contract_meta(self):
+        uom_map = dict(SBU_CONTRACT_UOM_SELECTION)
+        for line in self:
+            sal = line.estimate_sal_line_id
+            if not sal:
+                line.item_ref = False
+                line.uom_label = False
+                line.qty_display = 0.0
+                line.unit_price_display = 0.0
+                continue
+            line.item_ref = sal.item_ref or False
+            line.uom_label = uom_map.get(sal.uom_type or 'mq', sal.uom_type or '')
+            line.qty_display = sal.qty_contract or 0.0
+            line.unit_price_display = sal.unit_price or 0.0
 
     @api.depends('contract_amount', 'percent_this_sal')
     def _compute_amount_this_sal(self):

@@ -72,7 +72,7 @@ Questo documento mappa i **18 punti** di Cosimo su: stato attuale, gap, priorit�
 | 10 | Qonto: riconciliazione auto; abbandono what-if | Parziale | Import + suggerimento match; **no** riconciliazione banca auto | **P1** (bank) |
 | 11 | Budget per tipologia (semafori ITEM) + sblocco solo admin | **Corretto** | Cruscotto famiglia su commessa + blocco conferma PO; sblocco admin | **P0** ✅ base |
 | 12 | Costi / margini / retention import sbagliati | **Corretto** (parità ≠ Excel 1:1) | BS prezzo ok; costi parziali; MOL fuori totale; retention SAL = default azienda | **P0** |
-| 13 | Stampa fattura per voce contratto + SAL/CDP; dashboard | Da estendere | Fattura da foglio SAL; layout voci contratto da rifinire | **P1** |
+| 13 | Stampa fattura per voce contratto + SAL/CDP; dashboard | **Corretto** | Tracciabilità SAL/fattura/CDP sì; PDF = 1–2 righe aggregate; report dettaglio da fare | **P1** |
 | 14 | Qonto → fornitori/clienti automatici | Opzionale | Non implementato | **P2** |
 | 15 | Cambio qty RDA/RFQ: residuo aperto; qty 1,03 | Spiegabile | 1,03 = perdita%/confezione distinta; residuo da confermare | **P1** |
 | 16 | Stampa offerta: flag verdi/rossi + pagamenti/ritenute | Gap | Condizioni spesso testo scollegato | **P1** |
@@ -283,12 +283,16 @@ Come foglio ITEM ANACO: budget preventivo, acquistato, residuo, %; semafori; sol
 
 ### Punto 13 — Stampa fattura e dashboard
 
-**Proposta fattura**  
-Intestazione: commessa, **SAL/xx/xxxx**, periodo, **CDP** se presente.  
-Righe: **ogni voce contrattuale** con descrizione, U.M., qty, prezzo unitario, totale; riga ritenuta.  
+**Feedback confermato** — vedi [COSIMO_PUNTO13_FATTURA_SAL_CDP.md](COSIMO_PUNTO13_FATTURA_SAL_CDP.md).
 
-**Dashboard**  
-Usare cruscotto Odoo standard + report SBU (fatturato, residuo SAL, budget acquisti) — da definire in fase P1.
+**Fatto (P1, `sbu_sal` 19.0.1.0.39)**  
+- Report QWeb **«Invoice with SAL detail (SBU)»**: testata commessa, preventivo, SAL, periodo, **CDP**; tabella **per voce contrattuale**; footer lordo/ritenuta/netto; sezione righe contabili.  
+- `account.move.sbu_sal_sheet_id` impostato in creazione fattura da foglio SAL; `sbu_sal_cdp_name` in testata.  
+- Stampa da foglio SAL (**SAL detail PDF**) e da fattura (menu Stampa + pulsante).  
+- Contabilità invariata (1–2 righe aggregate).
+
+**Aperto (P2)**  
+- Cruscotto SBU unico (fatturato vs contratto, SAL aperti); eventuale dettaglio righe in fattura elettronica SDI (opzione A, con commercialista).
 
 ---
 

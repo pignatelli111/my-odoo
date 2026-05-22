@@ -1,9 +1,32 @@
 # -*- coding: utf-8 -*-
-from odoo import api, models
+from odoo import api, fields, models
 
 
 class AccountMove(models.Model):
     _inherit = 'account.move'
+
+    sbu_sal_sheet_id = fields.Many2one(
+        'sbu.sal.sheet',
+        string='SAL sheet',
+        copy=False,
+        readonly=True,
+        index=True,
+        ondelete='set null',
+    )
+    sbu_sal_cdp_name = fields.Char(
+        string='CDP reference',
+        compute='_compute_sbu_sal_cdp_name',
+    )
+
+    @api.depends('sbu_sal_sheet_id', 'sbu_sal_sheet_id.certificate_ids', 'sbu_sal_sheet_id.certificate_ids.state')
+    def _compute_sbu_sal_cdp_name(self):
+        for move in self:
+            sheet = move.sbu_sal_sheet_id
+            if not sheet:
+                move.sbu_sal_cdp_name = False
+                continue
+            cert = sheet._sbu_certificate_to_keep()
+            move.sbu_sal_cdp_name = cert.name if cert else False
 
     def write(self, vals):
         res = super().write(vals)

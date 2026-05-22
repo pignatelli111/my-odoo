@@ -348,6 +348,8 @@ class SbuSalSheet(models.Model):
         }
         if 'project_id' in self.env['account.move']._fields:
             move_vals['project_id'] = self.project_id.id
+        if 'sbu_sal_sheet_id' in self.env['account.move']._fields:
+            move_vals['sbu_sal_sheet_id'] = self.id
 
         move = self.env['account.move'].with_company(self.company_id).create(move_vals)
         self.write({'invoice_id': move.id, 'state': 'invoiced'})
@@ -373,3 +375,13 @@ class SbuSalSheet(models.Model):
             'res_id': self.invoice_id.id,
             'view_mode': 'form',
         }
+
+    def action_print_invoice_sal_detail(self):
+        """PDF with one row per contractual SAL line (Cosimo point 13)."""
+        self.ensure_one()
+        if not self.invoice_id:
+            raise UserError(_('Create the customer invoice before printing the SAL detail layout.'))
+        report = self.env.ref('sbu_sal.action_report_sbu_invoice_sal_detail', raise_if_not_found=False)
+        if not report:
+            raise UserError(_('SAL invoice detail report is not installed.'))
+        return report.report_action(self.invoice_id)
