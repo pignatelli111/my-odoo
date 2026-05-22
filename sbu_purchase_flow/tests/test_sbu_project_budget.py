@@ -15,14 +15,23 @@ class TestSbuProjectBudget(TransactionCase):
     def _project_with_glass_budget(self, planned_cad=100.0):
         customer = self.env['res.partner'].create({'name': 'Budget test customer'})
         estimate = self.env['sbu.estimate'].create({'partner_id': customer.id})
-        self.env['sbu.estimate.line'].create({
+        eline = self.env['sbu.estimate.line'].create({
             'estimate_id': estimate.id,
             'pos': 'VC01',
             'description': 'Glass package',
             'cost_family': 'glass',
             'cost_posa_lamiera_lin_cad': planned_cad,
+            'cost_coibentazione_cad': 0.0,
+            'cost_industrial_pct': 0.0,
             'qty': 1,
         })
+        self.env.flush_all()
+        # ANACO industrial % can inflate planned above raw CAD (yellow band on prod DB).
+        self.assertGreaterEqual(
+            eline.cost_total_tot,
+            planned_cad,
+            'estimate line cost_total_tot not computed',
+        )
         project = self.env['project.project'].create({
             'name': 'Budget test job',
             'company_id': self.env.company.id,
@@ -85,17 +94,16 @@ class TestSbuProjectBudget(TransactionCase):
 
     def test_budget_check_blocks_when_over_budget(self):
         """Direct check on _sbu_check_budget_before_confirm (no PO confirm workflow)."""
-        project, estimate = self._project_with_glass_budget(planned_cad=10.0)
-        self.env.flush_all()
-        estimate.line_ids.invalidate_recordset(['cost_total_tot', 'cost_total_cad'])
+        planned = 100.0
+        project, _estimate = self._project_with_glass_budget(planned_cad=planned)
         po, _pr_line = self._po_over_glass_budget(project)
         pol = po.order_line.filtered('sbu_pr_line_id')
         self.assertEqual(len(pol), 1)
-        # Prod supplier pricelists can lower PO subtotal; force offer price for the test.
-        pol.write({'price_unit': 120.0})
+        # Prod supplier pricelists can lower PO subtotal; force a clearly red amount.
+        pol.write({'price_unit': 250.0})
         self.env.flush_all()
         pol.invalidate_recordset(['price_subtotal'])
-        self.assertGreater(pol.price_subtotal, 10.0)
+        self.assertGreater(pol.price_subtotal, planned * 1.1)
 
         rows = self.env['sbu.project.budget.family'].refresh_project(project)
         glass_row = rows.filtered(lambda r: r.cost_family == 'glass')
@@ -105,8 +113,13 @@ class TestSbuProjectBudget(TransactionCase):
         self.assertGreater(
             glass_row.pct_engaged,
             SBU_BUDGET_OVER_PCT,
-            'expected red traffic light (>105%%), got %s%% (%s)'
-            % (glass_row.pct_engaged, glass_row.traffic_light),
+            'planned=%s engaged=%s pct=%s light=%s'
+            % (
+                glass_row.budget_planned,
+                glass_row.amount_engaged,
+                glass_row.pct_engaged,
+                glass_row.traffic_light,
+            ),
         )
         self.assertTrue(glass_row.is_over_budget)
         self.assertTrue(
