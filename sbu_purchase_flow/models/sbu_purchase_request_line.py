@@ -307,6 +307,19 @@ class SbuPurchaseRequestLine(models.Model):
                 sqm_total=line.sqm_total,
             )
 
+    def _sbu_qty_remaining_to_order(self):
+        """Live residual (qty richiesta − somma RFQ/PO); safe before stored compute is flushed."""
+        self.ensure_one()
+        active_lines = self.po_line_ids.filtered(
+            lambda pol: pol.order_id.state in SBU_PO_ACTIVE_STATES and not pol.display_type
+        )
+        ordered = sum(active_lines.mapped('product_qty'))
+        rounding = self.product_uom.rounding if self.product_uom else 0.01
+        remaining = (self.product_qty or 0.0) - ordered
+        if float_compare(remaining, 0.0, precision_rounding=rounding) <= 0:
+            return 0.0
+        return remaining
+
     def _sbu_po_line_dimension_vals(self):
         self.ensure_one()
         return {

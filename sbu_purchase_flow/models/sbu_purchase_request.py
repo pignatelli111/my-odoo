@@ -515,7 +515,7 @@ class SbuPurchaseRequest(models.Model):
         for line in pr_lines:
             if not line.product_id:
                 continue
-            qty = line.qty_remaining
+            qty = line._sbu_qty_remaining_to_order()
             if float_is_zero(qty, precision_rounding=line.product_uom.rounding):
                 continue
             line._sbu_upsert_rfq_po_line(po, qty)
@@ -549,7 +549,7 @@ class SbuPurchaseRequest(models.Model):
             )
         lines_to_order = self.line_ids.filtered(
             lambda line: line.product_id and not float_is_zero(
-                line.qty_remaining,
+                line._sbu_qty_remaining_to_order(),
                 precision_rounding=line.product_uom.rounding,
             )
         )
