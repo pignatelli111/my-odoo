@@ -71,7 +71,7 @@ Questo documento mappa i **18 punti** di Cosimo su: stato attuale, gap, priorit�
 | 9 | Logikal | Rimandato | Modulo presente; dimensioni finali su BOM = TODO | **P1** |
 | 10 | Qonto: riconciliazione auto; abbandono what-if | Parziale | Import + suggerimento match; **no** riconciliazione banca auto | **P1** (bank) |
 | 11 | Budget per tipologia (semafori ITEM) + sblocco solo admin | **Corretto** | Cruscotto famiglia su commessa + blocco conferma PO; sblocco admin | **P0** ✅ base |
-| 12 | Costi / margini / retention import sbagliati | **Bug da verificare** | Formule import complesse; serve test file P1002 | **P0** |
+| 12 | Costi / margini / retention import sbagliati | **Corretto** (parità ≠ Excel 1:1) | BS prezzo ok; costi parziali; MOL fuori totale; retention SAL = default azienda | **P0** |
 | 13 | Stampa fattura per voce contratto + SAL/CDP; dashboard | Da estendere | Fattura da foglio SAL; layout voci contratto da rifinire | **P1** |
 | 14 | Qonto → fornitori/clienti automatici | Opzionale | Non implementato | **P2** |
 | 15 | Cambio qty RDA/RFQ: residuo aperto; qty 1,03 | Spiegabile | 1,03 = perdita%/confezione distinta; residuo da confermare | **P1** |
@@ -260,11 +260,24 @@ Come foglio ITEM ANACO: budget preventivo, acquistato, residuo, %; semafori; sol
 
 ### Punto 12 — Costi, margini, retention in import
 
-**Azione**  
-1. File Excel pilota (P1002 / PRV reale) + export Odoo.  
-2. Confronto riga per riga: costo tot, margine %, cap garanzia, retention.  
-3. Ticket bug su formule import (`sbu_estimate` wizard ANACO).  
-4. Test automatici regressione su import.
+**Feedback confermato** — vedi analisi: [COSIMO_PUNTO12_COSTI_MARGINI_RETENTION.md](COSIMO_PUNTO12_COSTI_MARGINI_RETENTION.md).
+
+| Voce | Excel / atteso | Odoo oggi |
+|------|----------------|-----------|
+| Prezzo cliente | Col. **BS** (catena sconti foglio) | BS → `price_anaco_bs_cad` se letto; altrimenti Σ componenti × Sc × Comm.% |
+| Costo totale | Include tutte le colonne CAD che l’utente somma | Import parziale; **MOL non nel costo totale**; es. **staffame ST/LZ** non mappato |
+| Margine % | Da celle Excel | Ricalcolato: prezzo TOT − costo TOT |
+| Retention / garanzia | % su foglio SAL o contratto | **Sempre default azienda** (es. 5 %), non dal file |
+
+**Subito (UAT)**  
+1. Dopo import: controllare **Prezzo unit. ANACO (col. BS)** sulle righe.  
+2. Tab **Voci contrattuali SAL** → correggere **Retention %** se diversa dal contratto.  
+3. `python tools/probe_anaco_workbook.py` sul file P1002 in `docs/samples/client/`.
+
+**Fix P0 (codice)**  
+1. Mapping colonne costo mancanti + retention da SAL.  
+2. Test parità numerica su P1002.  
+3. Avviso wizard se BS assente e listino diverso da atteso.
 
 ---
 
