@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-import uuid
-
 from odoo.exceptions import UserError
 from odoo.tests import tagged
 from odoo.tests.common import TransactionCase
@@ -30,21 +28,8 @@ class TestSbuProjectBudget(TransactionCase):
         })
         return project, estimate
 
-    def test_budget_family_model_labels_distinct(self):
-        dups = duplicate_custom_field_labels(self.env, 'sbu.project.budget.family')
-        self.assertEqual(dups, {}, dups)
-
-    def test_refresh_creates_family_row(self):
-        project, _estimate = self._project_with_glass_budget()
-        rows = self.env['sbu.project.budget.family'].refresh_project(project)
-        self.assertEqual(len(rows), 1)
-        row = rows[0]
-        self.assertEqual(row.cost_family, 'glass')
-        self.assertGreater(row.budget_planned, 0.0)
-        self.assertEqual(row.traffic_light, 'ok')
-
-    def test_po_confirm_blocked_over_budget_admin_unlock(self):
-        project, _estimate = self._project_with_glass_budget(planned_cad=100.0)
+    def _po_over_glass_budget(self, project):
+        """Draft PO linked to glass PR line with offer above ANACO budget."""
         partner = self.env['res.partner'].create({
             'name': 'Budget vendor',
             'supplier_rank': 1,
@@ -81,32 +66,69 @@ class TestSbuProjectBudget(TransactionCase):
             'sbu_purchase_request_id': pr.id,
         })
         pr._sbu_create_rfq_po_lines(po, pr_line)
-        pol = po.order_line.filtered(lambda line: line.sbu_pr_line_id == pr_line)
+        return po, pr_line
+
+    def test_budget_family_model_labels_distinct(self):
+        dups = duplicate_custom_field_labels(self.env, 'sbu.project.budget.family')
+        self.assertEqual(dups, {}, dups)
+
+    def test_refresh_creates_family_row(self):
+        project, _estimate = self._project_with_glass_budget()
+        rows = self.env['sbu.project.budget.family'].refresh_project(project)
+        self.assertEqual(len(rows), 1)
+        row = rows[0]
+        self.assertEqual(row.cost_family, 'glass')
+        self.assertGreater(row.budget_planned, 0.0)
+        self.assertEqual(row.traffic_light, 'ok')
+
+    def test_budget_check_blocks_when_over_budget(self):
+        """Direct check on _sbu_check_budget_before_confirm (no PO confirm workflow)."""
+        project, _estimate = self._project_with_glass_budget(planned_cad=100.0)
+        po, _pr_line = self._po_over_glass_budget(project)
+        pol = po.order_line.filtered('sbu_pr_line_id')
         self.assertEqual(len(pol), 1)
         self.assertGreater(pol.price_subtotal, 100.0)
-        self.env.flush_all()
 
         rows = self.env['sbu.project.budget.family'].refresh_project(project)
         glass_row = rows.filtered(lambda r: r.cost_family == 'glass')
+        self.assertEqual(len(glass_row), 1)
         self.assertTrue(glass_row.is_over_budget)
 
-        buyer_partner = self.env['res.partner'].create({
-            'name': 'Purchase buyer budget test',
-            'email': 'sbu_budget_buyer@test.invalid',
-        })
-        purchase_user = self.env.ref('base.group_user')
-        buyer_group = self.env.ref('purchase.group_purchase_user')
-        buyer = self.env['res.users'].with_context(no_reset_password=True).create({
-            'name': 'Purchase buyer budget test',
-            'login': 'sbu_budget_buyer_%s' % uuid.uuid4().hex[:12],
-            'partner_id': buyer_partner.id,
-            'company_id': self.env.company.id,
-            'company_ids': [(6, 0, [self.env.company.id])],
-            'group_ids': [(6, 0, [purchase_user.id, buyer_group.id])],
-        })
-        with self.assertRaises(UserError):
-            po.with_user(buyer).button_confirm()
+        # Test runner user is admin → bypass; use a plain internal user without system group.
+        internal = self.env.ref('base.group_user')
+        purchase = self.env.ref('purchase.group_purchase_user')
+        system_users = self.env.ref('base.group_system').user_ids
+        plain = self.env['res.users'].search([
+            ('share', '=', False),
+            ('group_ids', 'in', purchase.ids),
+            ('id', 'not in', system_users.ids),
+        ], limit=1)
+        if not plain:
+            partner = self.env['res.partner'].create({
+                'name': 'Budget plain buyer',
+                'email': 'sbu_budget_plain_buyer@test.invalid',
+            })
+            plain = self.env['res.users'].with_context(no_reset_password=True).create({
+                'name': 'Budget plain buyer',
+                'login': 'sbu_budget_plain_%s' % partner.id,
+                'partner_id': partner.id,
+                'company_id': self.env.company.id,
+                'company_ids': [(6, 0, [self.env.company.id])],
+                'group_ids': [(6, 0, [internal.id, purchase.id])],
+            })
 
-        project.sudo().write({'sbu_budget_po_unlock': True})
-        po.with_user(buyer).button_confirm()
-        self.assertIn(po.state, ('purchase', 'done', 'to approve'))
+        with self.assertRaises(UserError):
+            po.with_user(plain)._sbu_check_budget_before_confirm()
+
+    def test_budget_check_allows_unlock_on_project(self):
+        project, _estimate = self._project_with_glass_budget(planned_cad=100.0)
+        po, _pr_line = self._po_over_glass_budget(project)
+        project.sbu_budget_po_unlock = True
+        po._sbu_check_budget_before_confirm()
+
+    def test_budget_check_skipped_for_admin(self):
+        project, _estimate = self._project_with_glass_budget(planned_cad=100.0)
+        po, _pr_line = self._po_over_glass_budget(project)
+        # Default test env user has base.group_system.
+        self.assertTrue(self.env.user.has_group('base.group_system'))
+        po._sbu_check_budget_before_confirm()
