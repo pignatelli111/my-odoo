@@ -10,7 +10,38 @@ git log -1 --oneline
 ls tools/odoo_sh_run_tests.sh 2>/dev/null || echo "script assente — build non ancora verde su questo commit"
 ```
 
-## 2) Errori del build fallito (sempre disponibile)
+## 2) Perché `grep FAIL` è vuoto ma il build è rosso
+
+Su Odoo.sh spesso succede questo:
+
+1. **`~/logs/install.log` sulla shell** = ultimo install **riuscito** sul container, **non** per forza l’ultimo build rosso in UI.
+2. Il build **Test** fallito può essere in un **altro step** (log solo nella pagina **Builds** del progetto).
+3. Il fallimento può essere **WARNING** (etichette duplicate), **0 test eseguiti**, **Traceback upgrade**, non solo `FAIL:`.
+
+Diagnostica completa (funziona anche senza `tools/`):
+
+```bash
+cd ~/src/user
+echo "=== Commit deployato sulla shell (ultimo build VERDE) ==="
+git log -1 --oneline
+
+echo "=== Ultimo comando in install.log ==="
+head -3 ~/logs/install.log
+
+echo "=== Fine install.log ==="
+tail -25 ~/logs/install.log
+
+echo "=== Test / errori (pattern larghi) ==="
+grep -nE 'FAIL:|ERROR: test_|AssertionError|odoo\.tests\.result:|failures=[1-9]|failed, [1-9]|have the same label|Traceback|CRITICAL|ParseError|Could not load module' \
+  ~/logs/install.log ~/logs/odoo.log 2>/dev/null | tail -40
+
+echo "=== SBU nel log? ==="
+grep -c 'sbu_purchase_flow\|test-enable' ~/logs/install.log 2>/dev/null || echo 0
+```
+
+Se tutto è vuoto: apri **Odoo.sh → Builds → ultimo build rosso → log dello step Test / Install** e cerca `FAIL:` lì.
+
+## 2b) Errore rapido (solo install.log)
 
 ```bash
 grep -nE 'FAIL:|ERROR: test_|AssertionError|have the same label|odoo\.tests\.result:' ~/logs/install.log | tail -40
