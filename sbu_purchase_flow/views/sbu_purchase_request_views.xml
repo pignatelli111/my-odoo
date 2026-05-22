@@ -5,7 +5,8 @@
         <field name="model">sbu.purchase.request</field>
         <field name="arch" type="xml">
             <list string="Purchase requests">
-                <field name="name"/>
+                <field name="sbu_display_label" string="Documento"/>
+                <field name="name" optional="hide"/>
                 <field name="priority" widget="badge"
                        decoration-danger="priority == '3'"
                        decoration-warning="priority == '2'"

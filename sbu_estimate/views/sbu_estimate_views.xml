@@ -11,8 +11,12 @@
                   decoration-success="state == 'won'"
                   decoration-danger="state == 'lost'"
                   decoration-muted="state == 'cancelled'">
-                <field name="name"/>
-                <field name="revision"/>
+                <field name="sbu_display_label" string="Preventivo"/>
+                <field name="sbu_is_latest_revision" string="Ultima REV" widget="badge"
+                       decoration-success="sbu_is_latest_revision"
+                       decoration-muted="not sbu_is_latest_revision"/>
+                <field name="name" optional="hide"/>
+                <field name="revision" optional="show"/>
                 <field name="date"/>
                 <field name="partner_id"/>
                 <field name="job_site"/>
@@ -479,9 +483,14 @@
         <field name="model">sbu.estimate</field>
         <field name="arch" type="xml">
             <search>
+                <field name="sbu_display_label" string="Preventivo"/>
                 <field name="name"/>
+                <field name="revision"/>
                 <field name="partner_id"/>
                 <field name="job_site"/>
+                <filter name="sbu_latest_revision" string="Solo revisione più recente"
+                        domain="[('sbu_is_latest_revision', '=', True)]"/>
+                <separator/>
                 <filter name="draft"
                         string="Bozza"
                         domain="[('state','=','draft')]"/>

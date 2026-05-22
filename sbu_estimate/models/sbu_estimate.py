@@ -1,6 +1,11 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 
+from .sbu_revision_display import (
+    sbu_estimate_revision_label,
+    sbu_revision_sort_key,
+)
+
 
 class SbuEstimate(models.Model):
     _name = 'sbu.estimate'
@@ -41,6 +46,19 @@ class SbuEstimate(models.Model):
         string='Riferimento Completo',
         compute='_compute_full_name',
         store=True,
+    )
+    sbu_display_label = fields.Char(
+        string='Etichetta REV',
+        compute='_compute_sbu_display_label',
+        store=True,
+        index=True,
+        help='Nome · REV · data (per liste e documenti collegati).',
+    )
+    sbu_is_latest_revision = fields.Boolean(
+        string='Revisione più recente',
+        compute='_compute_sbu_is_latest_revision',
+        store=True,
+        help='True se questa è la REV più alta tra i preventivi con lo stesso Ns.',
     )
 
     # ── Dates ─────────────────────────────────────────────────────────────────
@@ -291,6 +309,27 @@ class SbuEstimate(models.Model):
         for rec in self:
             rec.full_name = f"{rec.name or ''} {rec.revision or ''}".strip()
 
+    @api.depends('name', 'revision', 'date', 'job_site')
+    def _compute_sbu_display_label(self):
+        for rec in self:
+            rec.sbu_display_label = sbu_estimate_revision_label(rec) or rec.name
+
+    @api.depends('name', 'revision')
+    def _compute_sbu_is_latest_revision(self):
+        Estimate = self.env['sbu.estimate']
+        for rec in self:
+            name = rec.name
+            if not name or name == _('New'):
+                rec.sbu_is_latest_revision = True
+                continue
+            siblings = Estimate.search([('name', '=', name)])
+            if len(siblings) <= 1:
+                rec.sbu_is_latest_revision = True
+                continue
+            my_key = sbu_revision_sort_key(rec.revision)
+            max_key = max(sbu_revision_sort_key(s.revision) for s in siblings)
+            rec.sbu_is_latest_revision = my_key >= max_key
+
     @api.depends('previous_revision_id', 'previous_revision_id.revision_root_id')
     def _compute_revision_root(self):
         for rec in self:
@@ -353,6 +392,11 @@ class SbuEstimate(models.Model):
     def _compute_project_count(self):
         for rec in self:
             rec.project_count = 1 if rec.project_id else 0
+
+    def name_get(self):
+        if self.env.context.get('sbu_use_estimate_name_only'):
+            return super().name_get()
+        return [(rec.id, rec.sbu_display_label or rec.name) for rec in self]
 
     # ── Sequence ──────────────────────────────────────────────────────────────
     @api.model_create_multi

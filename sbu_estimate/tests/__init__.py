@@ -5,6 +5,7 @@ from . import test_sbu_bom_dimension_rules
 from . import test_sbu_sal_planning_status
 from . import test_sbu_p1002_workbook
 from . import test_sbu_estimate_sal_line_name
+from . import test_sbu_revision_display
 from . import test_sbu_force_delete
 from . import test_sbu_manual_input_ui
 from . import test_sbu_field_labels

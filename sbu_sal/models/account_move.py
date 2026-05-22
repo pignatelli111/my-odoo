@@ -18,6 +18,48 @@ class AccountMove(models.Model):
         string='CDP reference',
         compute='_compute_sbu_sal_cdp_name',
     )
+    sbu_revision_label = fields.Char(
+        string='Job REV label',
+        compute='_compute_sbu_revision_label',
+        store=True,
+    )
+    sbu_display_label = fields.Char(
+        string='Display label',
+        compute='_compute_sbu_display_label',
+        store=True,
+    )
+
+    @api.depends('project_id', 'project_id.sbu_revision_label', 'sbu_sal_sheet_id', 'sbu_sal_sheet_id.sbu_revision_label')
+    def _compute_sbu_revision_label(self):
+        for move in self:
+            label = False
+            if move.project_id:
+                label = move.project_id.sbu_revision_label
+            elif move.sbu_sal_sheet_id:
+                label = move.sbu_sal_sheet_id.sbu_revision_label
+            move.sbu_revision_label = label
+
+    @api.depends('name', 'ref', 'sbu_revision_label', 'state')
+    def _compute_sbu_display_label(self):
+        from odoo.addons.sbu_estimate.models.sbu_revision_display import sbu_doc_name_with_revision
+        for move in self:
+            base = move.name or move.ref or _('Draft')
+            if move.move_type in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund') and move.sbu_revision_label:
+                move.sbu_display_label = sbu_doc_name_with_revision(base, move.sbu_revision_label)
+            else:
+                move.sbu_display_label = base
+
+    def name_get(self):
+        if self.env.context.get('sbu_use_document_name_only'):
+            return super().name_get()
+        result = []
+        for move in self:
+            if move.move_type in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund') and move.sbu_display_label:
+                result.append((move.id, move.sbu_display_label))
+            else:
+                result.append((move.id, move.name or move.ref or _('Draft')))
+        return result
+
 
     @api.depends('sbu_sal_sheet_id', 'sbu_sal_sheet_id.certificate_ids', 'sbu_sal_sheet_id.certificate_ids.state')
     def _compute_sbu_sal_cdp_name(self):

@@ -77,7 +77,7 @@ Questo documento mappa i **18 punti** di Cosimo su: stato attuale, gap, priorit�
 | 15 | Cambio qty RDA/RFQ: residuo aperto; qty 1,03 | Spiegabile | 1,03 = perdita%/confezione distinta; residuo da confermare | **P1** |
 | 16 | Stampa offerta: flag verdi/rossi + pagamenti/ritenute | Implementato | Condizioni strutturate + PDF offerta | **P1** ✅ |
 | 17 | Delivery standard (sistemista → terzista → cantiere; vetro) | **Corretto** | Regole `sbu.delivery.standard` + tab commessa + auto DESTINAZIONE | **P1** ✅ base |
-| 18 | Revisioni: label job/SAL/doc con REV + data | **Corretto** | REV su preventivo; confusione su commessa/SAL | **P0** |
+| 18 | Revisioni: label job/SAL/doc con REV + data | **Corretto** | Etichetta REV+data su Jobs, preventivi, SAL, RDA, fatture | **P0** ✅ base |
 
 **Legenda priorità:** P0 = produzione / fiducia dati · P1 = flusso acquisti/fatture completo · P2 = UX · P3 = integrazioni opzionali  
 
@@ -336,10 +336,10 @@ Regole `sbu.delivery.standard`, terzista/sistemista e modalità vetro su commess
 
 ### Punto 18 — Revisioni visibili ovunque
 
-**Proposta**  
-Nome visualizzato:  
-`[P0015_2026] BLACKROCK · REV02 · 2026-05-20`  
-su commessa, preventivo, foglio SAL, RDA, fattura (campo related). Filtro «solo revisione corrente» in liste Jobs.
+**Stato:** implementato (`sbu_estimate` 19.0.1.0.86). Dettaglio: [COSIMO_PUNTO18_REVISIONI_LABEL_IT.md](COSIMO_PUNTO18_REVISIONI_LABEL_IT.md).
+
+**Odoo oggi**  
+Etichetta `codice · REV · data` su commesse e preventivi; SAL/RDA/fatture/CDP mostrano lo stesso riferimento; Jobs filtra di default la revisione più recente.
 
 ---
 
@@ -348,7 +348,7 @@ su commessa, preventivo, foglio SAL, RDA, fattura (campo related). Filtro «solo
 ### Fase P0 — Fiducia e controllo (4–6 settimane)
 
 - [ ] Fix import costi / margini / retention (test P1002)  
-- [ ] Label REV + data su commessa e documenti collegati  
+- [x] Label REV + data su commessa e documenti collegati (`sbu_estimate` 19.0.1.0.86)  
 - [ ] Dimensioni L×H + mq su RDA → RFQ → PO  
 - [ ] Cruscotto budget per famiglia + blocco PO admin  
 - [x] SAL passivo (posa) — modello minimo (`sbu.sal.passive.sheet`)  

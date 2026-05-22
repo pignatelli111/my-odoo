@@ -1,6 +1,8 @@
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
+from odoo.addons.sbu_estimate.models.sbu_revision_display import sbu_doc_name_with_revision
+
 
 class SbuSalSheet(models.Model):
     """Progress billing sheet (SAL) linked to a project."""
@@ -38,6 +40,17 @@ class SbuSalSheet(models.Model):
         related='project_id.sbu_estimate_id',
         store=True,
         readonly=True,
+    )
+    sbu_revision_label = fields.Char(
+        string='Job REV label',
+        related='project_id.sbu_revision_label',
+        store=True,
+        readonly=True,
+    )
+    sbu_display_label = fields.Char(
+        string='Display label',
+        compute='_compute_sbu_display_label',
+        store=True,
     )
     partner_id = fields.Many2one(
         'res.partner',
@@ -134,6 +147,19 @@ class SbuSalSheet(models.Model):
             if vals.get('name', _('New')) == _('New'):
                 vals['name'] = self.env['ir.sequence'].next_by_code('sbu.sal.sheet') or _('New')
         return super().create(vals_list)
+
+    @api.depends('name', 'sbu_revision_label')
+    def _compute_sbu_display_label(self):
+        for sheet in self:
+            sheet.sbu_display_label = sbu_doc_name_with_revision(
+                sheet.name,
+                sheet.sbu_revision_label,
+            ) or sheet.name
+
+    def name_get(self):
+        if self.env.context.get('sbu_use_document_name_only'):
+            return super().name_get()
+        return [(rec.id, rec.sbu_display_label or rec.name) for rec in self]
 
     @api.depends('line_ids.amount_this_sal', 'retention_percent')
     def _compute_amounts(self):

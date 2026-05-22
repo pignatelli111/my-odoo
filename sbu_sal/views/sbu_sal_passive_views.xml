@@ -5,7 +5,8 @@
         <field name="model">sbu.sal.passive.sheet</field>
         <field name="arch" type="xml">
             <list string="Passive SAL sheets">
-                <field name="name"/>
+                <field name="sbu_display_label" string="SAL passivo"/>
+                <field name="name" optional="hide"/>
                 <field name="project_id"/>
                 <field name="vendor_id"/>
                 <field name="subcontract_scope"/>

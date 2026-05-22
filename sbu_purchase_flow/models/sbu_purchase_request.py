@@ -4,6 +4,8 @@ from odoo.tools.float_utils import float_is_zero
 
 from .sbu_budget_helpers import PO_DRAFT_STATES
 
+from odoo.addons.sbu_estimate.models.sbu_revision_display import sbu_doc_name_with_revision
+
 from .sbu_workflow_routing import (
     SBU_WORKFLOW_ROUTE_SELECTION,
     bom_product_workflow_route,
@@ -95,6 +97,17 @@ class SbuPurchaseRequest(models.Model):
         string='Source estimate',
         readonly=True,
         related='project_id.sbu_estimate_id',
+        store=True,
+    )
+    sbu_revision_label = fields.Char(
+        string='Job REV label',
+        related='project_id.sbu_revision_label',
+        store=True,
+        readonly=True,
+    )
+    sbu_display_label = fields.Char(
+        string='Display label',
+        compute='_compute_sbu_display_label',
         store=True,
     )
     vendor_id = fields.Many2one(
@@ -285,6 +298,19 @@ class SbuPurchaseRequest(models.Model):
             if route and not vals.get('request_type'):
                 vals['request_type'] = workflow_route_to_request_type(route)
         return super().create(vals_list)
+
+    @api.depends('name', 'sbu_revision_label')
+    def _compute_sbu_display_label(self):
+        for req in self:
+            req.sbu_display_label = sbu_doc_name_with_revision(
+                req.name,
+                req.sbu_revision_label,
+            ) or req.name
+
+    def name_get(self):
+        if self.env.context.get('sbu_use_document_name_only'):
+            return super().name_get()
+        return [(rec.id, rec.sbu_display_label or rec.name) for rec in self]
 
     def action_submit(self):
         self.write({

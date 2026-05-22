@@ -35,6 +35,17 @@ class SbuPaymentCertificate(models.Model):
         required=True,
         ondelete='cascade',
     )
+    sbu_revision_label = fields.Char(
+        string='Job REV label',
+        related='project_id.sbu_revision_label',
+        store=True,
+        readonly=True,
+    )
+    sbu_display_label = fields.Char(
+        string='Display label',
+        compute='_compute_sbu_display_label',
+        store=True,
+    )
     partner_id = fields.Many2one(
         'res.partner',
         string='Customer',
@@ -108,6 +119,20 @@ class SbuPaymentCertificate(models.Model):
         certs = super().create(vals_list)
         certs._sbu_touch_linked_contractual_lines()
         return certs
+
+    @api.depends('name', 'sbu_revision_label')
+    def _compute_sbu_display_label(self):
+        from odoo.addons.sbu_estimate.models.sbu_revision_display import sbu_doc_name_with_revision
+        for cert in self:
+            cert.sbu_display_label = sbu_doc_name_with_revision(
+                cert.name,
+                cert.sbu_revision_label,
+            ) or cert.name
+
+    def name_get(self):
+        if self.env.context.get('sbu_use_document_name_only'):
+            return super().name_get()
+        return [(rec.id, rec.sbu_display_label or rec.name) for rec in self]
 
     def write(self, vals):
         res = super().write(vals)

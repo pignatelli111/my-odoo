@@ -3,6 +3,8 @@ from odoo.exceptions import UserError
 
 from odoo.addons.sbu_estimate.models.sbu_estimate_line import _successive_discount_factor
 
+from odoo.addons.sbu_estimate.models.sbu_revision_display import sbu_doc_name_with_revision
+
 
 class SbuSalPassiveSheet(models.Model):
     """Passive progress billing (SAL passivo) for subcontractors / installation."""
@@ -40,6 +42,17 @@ class SbuSalPassiveSheet(models.Model):
         related='project_id.sbu_estimate_id',
         store=True,
         readonly=True,
+    )
+    sbu_revision_label = fields.Char(
+        string='Job REV label',
+        related='project_id.sbu_revision_label',
+        store=True,
+        readonly=True,
+    )
+    sbu_display_label = fields.Char(
+        string='Display label',
+        compute='_compute_sbu_display_label',
+        store=True,
     )
     vendor_id = fields.Many2one(
         'res.partner',
@@ -134,6 +147,19 @@ class SbuSalPassiveSheet(models.Model):
                     self.env['ir.sequence'].next_by_code('sbu.sal.passive.sheet') or _('New')
                 )
         return super().create(vals_list)
+
+    @api.depends('name', 'sbu_revision_label')
+    def _compute_sbu_display_label(self):
+        for sheet in self:
+            sheet.sbu_display_label = sbu_doc_name_with_revision(
+                sheet.name,
+                sheet.sbu_revision_label,
+            ) or sheet.name
+
+    def name_get(self):
+        if self.env.context.get('sbu_use_document_name_only'):
+            return super().name_get()
+        return [(rec.id, rec.sbu_display_label or rec.name) for rec in self]
 
     @api.depends('line_ids.budget_amount')
     def _compute_budget_total(self):
