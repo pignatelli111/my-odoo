@@ -29,6 +29,7 @@ class TestSbuSalInstall(TransactionCase):
         arch = view.arch_db or view.arch
         self.assertIn('sbu_sal_sheet_id', arch)
         self.assertIn('action_print_sbu_sal_detail', arch)
+        self.assertIn('sbu_sal_invoice_tab', arch)
 
     def test_finance_fields_are_computed(self):
         """Smoke: finance link fields exist (Odoo 19: do not assert field.compute name)."""

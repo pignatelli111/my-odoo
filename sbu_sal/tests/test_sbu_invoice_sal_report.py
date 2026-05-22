@@ -76,9 +76,10 @@ class TestSbuInvoiceSalReport(TransactionCase):
 
         sheet.action_create_certificate()
         self.env.flush_all()
+        self.assertTrue(sheet.certificate_ids, 'CDP should be created on the SAL sheet')
         move.invalidate_recordset(['sbu_sal_cdp_name'])
-        self.assertTrue(sheet.certificate_ids)
-        self.assertTrue(move.sbu_sal_cdp_name)
+        cdp_name = move.sbu_sal_cdp_name
+        self.assertTrue(cdp_name, 'CDP name should appear on the invoice after certificate create')
 
         action = sheet.action_print_invoice_sal_detail()
         self.assertEqual(action.get('type'), 'ir.actions.report')

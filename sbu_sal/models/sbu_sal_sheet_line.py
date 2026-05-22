@@ -1,6 +1,12 @@
 from odoo import api, fields, models
 
-from odoo.addons.sbu_estimate.models.sbu_contract_uom import SBU_CONTRACT_UOM_SELECTION
+# Local copy — avoid cross-addon import at module load (Odoo.sh install order).
+SBU_CONTRACT_UOM_LABELS = {
+    'mq': 'MQ (square metres)',
+    'ml': 'ML (linear metres)',
+    'nr': 'Nr/Pz (pieces)',
+    'corpo': 'Lump sum / A corpo',
+}
 
 
 class SbuSalSheetLine(models.Model):
@@ -70,7 +76,7 @@ class SbuSalSheetLine(models.Model):
         'estimate_sal_line_id.unit_price',
     )
     def _compute_contract_meta(self):
-        uom_map = dict(SBU_CONTRACT_UOM_SELECTION)
+        uom_map = SBU_CONTRACT_UOM_LABELS
         for line in self:
             sal = line.estimate_sal_line_id
             if not sal:
