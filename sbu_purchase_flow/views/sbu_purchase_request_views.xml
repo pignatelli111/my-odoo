@@ -118,7 +118,9 @@
                     <notebook>
                         <page string="Lines">
                             <field name="line_ids">
-                                <list editable="bottom">
+                                <list editable="bottom"
+                                      decoration-success="manual_input_pending"
+                                      decoration-muted="manual_input_state == 'imported'">
                                     <field name="sequence" widget="handle"/>
                                     <field name="line_priority" optional="show"/>
                                     <field name="pos" optional="show"/>
@@ -126,43 +128,26 @@
                                     <field name="manual_input_state" column_invisible="1"/>
                                     <field name="manual_input_pending" column_invisible="1"/>
                                     <field name="needs_technical_confirm" column_invisible="1"/>
-                                    <field name="article_code" optional="show"
-                                           decoration-success="manual_input_pending and not article_code"
-                                           decoration-muted="manual_input_state == 'imported' and article_code"/>
+                                    <field name="article_code" optional="show"/>
                                     <field name="product_id"/>
-                                    <field name="width_mm" string="L (mm)"
-                                           decoration-success="manual_input_pending and not width_mm"
-                                           decoration-muted="manual_input_state == 'imported' and width_mm"/>
-                                    <field name="height_mm" string="H (mm)"
-                                           decoration-success="manual_input_pending and not height_mm"
-                                           decoration-muted="manual_input_state == 'imported' and height_mm"/>
-                                    <field name="depth_mm" string="P (mm)"
-                                           decoration-success="manual_input_pending and not depth_mm"
-                                           decoration-muted="manual_input_state == 'imported' and depth_mm"/>
-                                    <field name="sqm_per_piece" string="MQ/cad"
-                                           decoration-muted="manual_input_state == 'imported'"/>
-                                    <field name="sqm_total" string="MQ tot."
-                                           decoration-muted="manual_input_state == 'imported'"/>
-                                    <field name="dimension_mm" string="Dimensioni" readonly="1"
-                                           decoration-muted="manual_input_state == 'imported'"/>
+                                    <field name="width_mm" string="L (mm)"/>
+                                    <field name="height_mm" string="H (mm)"/>
+                                    <field name="depth_mm" string="P (mm)"/>
+                                    <field name="sqm_per_piece" string="MQ/cad"/>
+                                    <field name="sqm_total" string="MQ tot."/>
+                                    <field name="dimension_mm" string="Dimensioni" readonly="1"/>
                                     <field name="source_bom_line_id" optional="show"/>
                                     <field name="bom_qty_sync" optional="show"/>
                                     <field name="bom_qty_ordered_ref" optional="hide"/>
                                     <field name="technical_confirmed" optional="show"
-                                           decoration-warning="needs_technical_confirm and manual_input_pending and not technical_confirmed"
-                                           decoration-muted="manual_input_state == 'imported'"/>
-                                    <field name="data_phase" optional="hide"
-                                           decoration-muted="manual_input_state == 'imported'"/>
+                                           decoration-warning="needs_technical_confirm and manual_input_pending and not technical_confirmed"/>
+                                    <field name="data_phase" optional="hide"/>
                                     <field name="utilization" optional="hide"/>
                                     <field name="weight_kg" optional="hide"/>
                                     <!-- Do not use source_bom_line_id in modifiers: Many2one is not a safe boolean in list views. -->
-                                    <field name="product_qty" readonly="bom_qty_sync"
-                                           decoration-success="manual_input_pending and not product_qty"
-                                           decoration-muted="manual_input_state == 'imported' and product_qty"/>
+                                    <field name="product_qty" readonly="bom_qty_sync"/>
                                     <field name="product_uom"/>
-                                    <field name="date_required"
-                                           decoration-success="manual_input_pending and not date_required"
-                                           decoration-muted="manual_input_state == 'imported' and date_required"/>
+                                    <field name="date_required"/>
                                     <field name="destination" optional="hide"/>
                                     <field name="procurement_mode" optional="show"/>
                                     <field name="note" optional="hide"/>

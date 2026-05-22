@@ -4,7 +4,9 @@
         <field name="name">sbu.purchase.request.line.list</field>
         <field name="model">sbu.purchase.request.line</field>
         <field name="arch" type="xml">
-            <list string="Purchase request lines">
+            <list string="Purchase request lines"
+                  decoration-success="manual_input_pending"
+                  decoration-muted="manual_input_state == 'imported'">
                 <field name="request_id"/>
                 <field name="request_type" optional="show"/>
                 <field name="workflow_route" optional="show"/>
@@ -15,15 +17,9 @@
                 <field name="product_id"/>
                 <field name="manual_input_state" column_invisible="1"/>
                 <field name="manual_input_pending" column_invisible="1"/>
-                <field name="width_mm" string="L (mm)"
-                       decoration-success="manual_input_pending and not width_mm"
-                       decoration-muted="manual_input_state == 'imported' and width_mm"/>
-                <field name="height_mm" string="H (mm)"
-                       decoration-success="manual_input_pending and not height_mm"
-                       decoration-muted="manual_input_state == 'imported' and height_mm"/>
-                <field name="depth_mm" string="P (mm)"
-                       decoration-success="manual_input_pending and not depth_mm"
-                       decoration-muted="manual_input_state == 'imported' and depth_mm"/>
+                <field name="width_mm" string="L (mm)"/>
+                <field name="height_mm" string="H (mm)"/>
+                <field name="depth_mm" string="P (mm)"/>
                 <field name="sqm_per_piece" string="MQ/cad"/>
                 <field name="sqm_total" string="MQ tot."/>
                 <field name="dimension_mm" string="Dimensioni"/>

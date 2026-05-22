@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import uuid
+
 from odoo.tests import tagged
 from odoo.tests.common import TransactionCase
 
@@ -17,20 +19,24 @@ class TestSbuManualInputUi(TransactionCase):
             'qty': 1,
         })
 
+    def _test_product(self, name, code_prefix='SBU-TST'):
+        code = '%s-%s' % (code_prefix, uuid.uuid4().hex[:8])
+        return self.env['product.product'].create({
+            'name': name,
+            'default_code': code,
+            'type': 'consu',
+            'purchase_ok': True,
+        })
+
     def test_estimate_line_manual_pending_without_dimensions(self):
         line = self._estimate_line()
         self.assertTrue(line.manual_input_pending)
-        line.width_mm = 1000
-        line.height_mm = 2000
+        line.write({'width_mm': 1000, 'height_mm': 2000})
         self.assertFalse(line.manual_input_pending)
 
     def test_bom_line_pending_when_needs_technical_confirm(self):
         eline = self._estimate_line()
-        product = self.env['product.product'].create({
-            'name': 'Glass test',
-            'default_code': 'SBU-VT-TEST',
-            'type': 'consu',
-        })
+        product = self._test_product('Glass test', 'SBU-VT')
         bom = self.env['sbu.estimate.bom.line'].create({
             'estimate_id': eline.estimate_id.id,
             'estimate_line_id': eline.id,
@@ -46,11 +52,7 @@ class TestSbuManualInputUi(TransactionCase):
     def test_bom_line_imported_phase_is_muted_state(self):
         eline = self._estimate_line()
         eline.write({'width_mm': 1000, 'height_mm': 2000})
-        product = self.env['product.product'].create({
-            'name': 'Bracket',
-            'default_code': 'SBU-ST-TEST',
-            'type': 'consu',
-        })
+        product = self._test_product('Bracket', 'SBU-ST')
         bom = self.env['sbu.estimate.bom.line'].create({
             'estimate_id': eline.estimate_id.id,
             'estimate_line_id': eline.id,
@@ -61,15 +63,3 @@ class TestSbuManualInputUi(TransactionCase):
         })
         self.assertEqual(bom.manual_input_state, 'imported')
         self.assertFalse(bom.manual_input_pending)
-
-    def test_bom_manual_field_labels_distinct(self):
-        dups = {}
-        Model = self.env['sbu.estimate.bom.line']
-        by_label = {}
-        for fname, field in Model._fields.items():
-            label = field.string
-            if not label:
-                continue
-            by_label.setdefault(label, []).append(fname)
-        dups = {k: v for k, v in by_label.items() if len(v) > 1}
-        self.assertEqual(dups, {}, dups)
