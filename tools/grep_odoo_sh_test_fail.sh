@@ -62,5 +62,11 @@ echo ""
 echo "=== Last 15 lines of install.log (build exit reason) ==="
 tail -15 "$LOG" 2>/dev/null || true
 echo ""
+if [[ -f /tmp/sbu-test.log ]]; then
+  echo ""
+  echo "=== /tmp/sbu-test.log (last manual repro) ==="
+  grep -nE 'FAIL:|ERROR: test_|AssertionError|ParseError|odoo\.tests\.result:|odoo\.tests\.stats: sbu_|0 failed, 0 error' /tmp/sbu-test.log | tail -25 || echo "(no patterns)"
+fi
+echo ""
 echo "=== Full diagnosis (when grep above is empty) ==="
 echo "bash $USER_REPO/tools/odoo_sh_why_build_failed.sh"

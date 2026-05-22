@@ -22,6 +22,14 @@ class TestSbuSalInstall(TransactionCase):
         ]
         self.assertEqual(len(labels), len(set(labels)), labels)
 
+    def test_invoice_form_view_inherits_account_move(self):
+        view = self.env.ref('sbu_sal.view_move_form_sbu_sal_invoice', raise_if_not_found=False)
+        self.assertTrue(view)
+        self.assertEqual(view.model, 'account.move')
+        arch = view.arch_db or view.arch
+        self.assertIn('sbu_sal_sheet_id', arch)
+        self.assertIn('action_print_sbu_sal_detail', arch)
+
     def test_finance_fields_are_computed(self):
         """Smoke: finance link fields exist (Odoo 19: do not assert field.compute name)."""
         sal_line = self.env['sbu.estimate.sal.line']

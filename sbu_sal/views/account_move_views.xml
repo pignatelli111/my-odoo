@@ -14,9 +14,11 @@
                     </div>
                 </button>
             </xpath>
-            <xpath expr="//field[@name='invoice_origin']" position="after">
-                <field name="sbu_sal_sheet_id" readonly="1" invisible="not sbu_sal_sheet_id"/>
-                <field name="sbu_sal_cdp_name" readonly="1" invisible="not sbu_sal_cdp_name"/>
+            <xpath expr="//div[@name='button_box']" position="after">
+                <group colspan="2" invisible="not sbu_sal_sheet_id">
+                    <field name="sbu_sal_sheet_id" readonly="1"/>
+                    <field name="sbu_sal_cdp_name" readonly="1" invisible="not sbu_sal_cdp_name"/>
+                </group>
             </xpath>
         </field>
     </record>

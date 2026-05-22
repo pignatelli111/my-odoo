@@ -89,9 +89,13 @@ class TestSbuProjectBudget(TransactionCase):
         self.assertEqual(len(pol), 1)
         self.assertGreater(pol.price_subtotal, 100.0)
 
+        self.env.flush_all()
         rows = self.env['sbu.project.budget.family'].refresh_project(project)
         glass_row = rows.filtered(lambda r: r.cost_family == 'glass')
         self.assertEqual(len(glass_row), 1)
+        self.assertGreater(glass_row.budget_planned, 0.0)
+        self.assertGreater(glass_row.amount_engaged, glass_row.budget_planned)
+        self.assertEqual(glass_row.traffic_light, 'over')
         self.assertTrue(glass_row.is_over_budget)
 
         # Test runner user is admin → bypass; use a plain internal user without system group.

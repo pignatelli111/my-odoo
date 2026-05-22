@@ -69,14 +69,22 @@ class TestSbuInvoiceSalReport(TransactionCase):
 
         sheet.action_confirm()
         sheet.action_create_draft_invoice()
+        self.env.flush_all()
         move = sheet.invoice_id
         self.assertEqual(move.sbu_sal_sheet_id, sheet)
-        self.assertEqual(move.sbu_sal_cdp_name, False)
+        self.assertFalse(move.sbu_sal_cdp_name)
 
         sheet.action_create_certificate()
+        self.env.flush_all()
+        move.invalidate_recordset(['sbu_sal_cdp_name'])
+        self.assertTrue(sheet.certificate_ids)
         self.assertTrue(move.sbu_sal_cdp_name)
 
         action = sheet.action_print_invoice_sal_detail()
         self.assertEqual(action.get('type'), 'ir.actions.report')
-        # Odoo 19: report_action puts docids in context.active_ids, not res_ids.
-        self.assertEqual(action.get('context', {}).get('active_ids'), [move.id])
+        self.assertEqual(
+            action.get('report_name'),
+            'sbu_sal.report_sbu_invoice_sal_detail_document',
+        )
+        active_ids = action.get('context', {}).get('active_ids') or []
+        self.assertIn(move.id, active_ids)
