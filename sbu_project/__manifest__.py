@@ -1,6 +1,6 @@
 {
     'name': 'SBU Project',
-    'version': '19.0.1.0.2',
+    'version': '19.0.1.0.3',
     'summary': 'Project/job UI and menus for Suburban SRL',
     'author': 'SBU Development',
     'category': 'Project',

@@ -12,9 +12,9 @@
                   decoration-danger="state == 'lost'"
                   decoration-muted="state == 'cancelled'">
                 <field name="sbu_display_label" string="Preventivo"/>
-                <field name="sbu_is_latest_revision" string="Ultima REV" widget="badge"
-                       decoration-success="sbu_is_latest_revision"
-                       decoration-muted="not sbu_is_latest_revision"/>
+                <field name="sbu_is_latest_revision" string="Ultima REV"
+                       decoration-success="sbu_is_latest_revision == True"
+                       decoration-muted="sbu_is_latest_revision == False"/>
                 <field name="name" optional="hide"/>
                 <field name="revision" optional="show"/>
                 <field name="date"/>

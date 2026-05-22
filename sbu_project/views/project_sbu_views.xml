@@ -13,8 +13,6 @@
                 <field name="partner_id"/>
                 <filter name="sbu_latest_revision" string="Solo revisione più recente"
                         domain="[('sbu_is_latest_revision', '=', True)]"/>
-                <filter name="sbu_all_revisions" string="Tutte le revisioni"
-                        domain="[]"/>
                 <separator/>
                 <filter name="sbu_active" string="In corso"
                         domain="[('sbu_state', '=', 'active')]"/>
@@ -33,9 +31,9 @@
         <field name="arch" type="xml">
             <list string="Commesse SBU" default_order="sbu_estimate_date desc, id desc">
                 <field name="sbu_revision_label" string="Commessa"/>
-                <field name="sbu_is_latest_revision" string="Ultima REV" widget="badge"
-                       decoration-success="sbu_is_latest_revision"
-                       decoration-muted="not sbu_is_latest_revision"/>
+                <field name="sbu_is_latest_revision" string="Ultima REV"
+                       decoration-success="sbu_is_latest_revision == True"
+                       decoration-muted="sbu_is_latest_revision == False"/>
                 <field name="sbu_estimate_revision" string="REV" optional="show"/>
                 <field name="sbu_estimate_date" string="Data prev." optional="show"/>
                 <field name="partner_id" optional="show"/>
