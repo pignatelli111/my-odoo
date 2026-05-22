@@ -1,7 +1,7 @@
 #!/bin/bash
-# Copy to production Odoo.sh shell (works even when tools/ is not deployed yet):
-#   curl -sL "https://raw.githubusercontent.com/pignatelli111/my-odoo/production/DIAG_PROD_SHELL.sh" -o /tmp/diag.sh && bash /tmp/diag.sh
-# Or paste this file after: cd ~/src/user && git fetch && git checkout origin/production
+# Run on Odoo.sh production shell (no git fetch — repo is read-only until green build).
+# Usage: bash ~/src/user/DIAG_PROD_SHELL.sh   (only after a green deploy)
+# Before green deploy: use the odoo.log block in docs/ODOO_SH_SHELL_COMANDI.md
 set -uo pipefail
 REPO="${USER_REPO:-/home/odoo/src/user}"
 echo "=== Git ==="

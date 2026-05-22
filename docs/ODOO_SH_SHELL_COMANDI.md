@@ -10,6 +10,8 @@ git log -1 --oneline
 ls tools/odoo_sh_run_tests.sh 2>/dev/null || echo "script assente — build non ancora verde su questo commit"
 ```
 
+**Non usare `git fetch` / `git checkout` sulla shell Odoo.sh** — il filesystem git è **read-only** (`Read-only file system`). Il codice in `~/src/user` cambia **solo** dopo un build **verde** su Odoo.sh. Fino ad allora resta l’ultimo commit deployato (es. `4dc3ef6`).
+
 ## 2) Perché `grep FAIL` è vuoto ma il build è rosso
 
 Su Odoo.sh spesso succede questo:
@@ -77,3 +79,15 @@ grep -E 'FAIL:|odoo.tests.result' /tmp/sbu-test.log | tail -15
 ```
 
 Successo: `0 failed, 0 error(s) of N tests` con **N > 0**.
+
+## 4) `lnav` / `odoo.log` (funziona anche su commit vecchio `4dc3ef6`)
+
+```bash
+# Ultimi errori test SBU nel log runtime
+grep -nE 'FAIL:|ERROR: test_|odoo\.tests\.result:|have the same label' ~/logs/odoo.log | tail -40
+
+# In lnav: apri il file poi cerca (/) FAIL:  oppure  tests.result
+lnav ~/logs/odoo.log
+```
+
+Se vedi ancora `1009 != 1` o `warning != over`, il build Odoo.sh deve deployare **`181635e`** (fix già su GitHub `production`).
