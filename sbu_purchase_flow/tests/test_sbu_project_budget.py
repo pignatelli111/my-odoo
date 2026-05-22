@@ -4,6 +4,7 @@ from odoo.tests import tagged
 from odoo.tests.common import TransactionCase
 
 from odoo.addons.sbu_estimate.tests.sbu_test_label_utils import duplicate_custom_field_labels
+from odoo.addons.sbu_purchase_flow.models.sbu_budget_helpers import SBU_BUDGET_OVER_PCT
 
 
 @tagged('post_install', '-at_install')
@@ -83,18 +84,21 @@ class TestSbuProjectBudget(TransactionCase):
 
     def test_budget_check_blocks_when_over_budget(self):
         """Direct check on _sbu_check_budget_before_confirm (no PO confirm workflow)."""
-        project, _estimate = self._project_with_glass_budget(planned_cad=100.0)
+        project, _estimate = self._project_with_glass_budget(planned_cad=50.0)
         po, _pr_line = self._po_over_glass_budget(project)
         pol = po.order_line.filtered('sbu_pr_line_id')
         self.assertEqual(len(pol), 1)
-        self.assertGreater(pol.price_subtotal, 100.0)
-
+        # Prod supplier pricelists can lower PO subtotal; force offer price for the test.
+        pol.write({'price_unit': 120.0})
         self.env.flush_all()
+        self.assertGreater(pol.price_subtotal, 50.0)
+
         rows = self.env['sbu.project.budget.family'].refresh_project(project)
         glass_row = rows.filtered(lambda r: r.cost_family == 'glass')
         self.assertEqual(len(glass_row), 1)
         self.assertGreater(glass_row.budget_planned, 0.0)
         self.assertGreater(glass_row.amount_engaged, glass_row.budget_planned)
+        self.assertGreater(glass_row.pct_engaged, SBU_BUDGET_OVER_PCT)
         self.assertEqual(glass_row.traffic_light, 'over')
         self.assertTrue(glass_row.is_over_budget)
 

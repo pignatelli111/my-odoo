@@ -47,3 +47,14 @@ Success: `0 failed, 0 error(s) of N tests` with **N > 0**.
 `purchase_order_ids` was briefly changed from **Many2many** to **One2many**; that can break **production upgrade** on an existing database. It is restored as **Many2many** with an explicit relation table; PO still sets `sbu_purchase_request_id` and syncs the M2M.
 
 Upgrade **`sbu_purchase_flow`** and **`sbu_estimate`** on production after the fix commit.
+
+## Example: 2 failures on a real production DB (May 2026)
+
+| Test | Symptom | Cause |
+|------|---------|--------|
+| `test_bulk_apply_filtered_domain_without_selection` | `1009 != 1` | Domain `[('request_type','=','rda')]` matched **all** RDA lines in prod, not only the test project |
+| `test_budget_check_blocks_when_over_budget` | `'warning' != 'over'` | PO subtotal landed in the **90–105%** yellow band (pricelist / rounding), not clearly red |
+
+Fix: scope bulk domain by `request_id.project_id`; use a smaller planned budget and force `price_unit` in the budget test.
+
+**Stale shell checkout:** if `git log -1` on the Odoo.sh shell shows an old commit (e.g. `4dc3ef6`) while GitHub `production` is newer, wait for the build to deploy or run `git pull` in `~/src/user` after the green build.
