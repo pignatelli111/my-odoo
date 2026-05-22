@@ -28,6 +28,8 @@ echo ""
 echo "=== 2) Test summary lines (any module) ==="
 grep -nE 'odoo\.tests\.result:|failures=[1-9]| errors=[1-9]|failed, [1-9]|error\(s\) of [1-9]' \
   "$INSTALL_LOG" "$ODOO_LOG" 2>/dev/null | tail -25 || echo "(none)"
+echo "--- zero tests run (SSH -i on already-installed modules) ---"
+grep -n '0 failed, 0 error(s) of 0 tests' "$INSTALL_LOG" "$ODOO_LOG" 2>/dev/null | tail -5 || echo "(none)"
 
 echo ""
 echo "=== 3) SBU test stats ==="
