@@ -36,5 +36,5 @@ class TestSbuPurchaseInstall(TransactionCase):
             self.assertIn(fname, pr_line._fields, fname)
         self.assertEqual(
             self.env['sbu.purchase.request']._fields['purchase_order_ids'].type,
-            'one2many',
+            'many2many',
         )

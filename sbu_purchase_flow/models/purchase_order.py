@@ -68,7 +68,12 @@ class PurchaseOrder(models.Model):
                 pr = self.env['sbu.purchase.request'].browse(vals['sbu_purchase_request_id'])
                 if 'project_id' in self._fields and pr.project_id:
                     vals['project_id'] = pr.project_id.id
-        return super().create(vals_list)
+        pos = super().create(vals_list)
+        for po in pos:
+            pr = po.sbu_purchase_request_id
+            if pr:
+                pr.purchase_order_ids = [(4, po.id)]
+        return pos
 
     def _sbu_user_can_override_budget_po(self):
         self.ensure_one()

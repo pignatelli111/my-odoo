@@ -101,6 +101,12 @@
                             type="object"
                             class="btn-secondary"
                             title="PDF offerta con righe e condizioni commerciali (flag verde/rosso)"/>
+                    <button name="action_load_default_commercial_terms"
+                            string="Condizioni standard"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="state in ('won', 'cancelled')"
+                            title="Carica righe condizioni commerciali (pagamento, ritenuta, inclusioni)"/>
                     <field name="state"
                            widget="statusbar"
                            statusbar_visible="draft,sent,won"/>
@@ -418,18 +424,13 @@
                         </page>
 
                         <page string="Condizioni di Fornitura" name="conditions">
-                            <group>
-                                <button name="action_load_default_commercial_terms"
-                                        string="Carica condizioni standard"
-                                        type="object"
-                                        class="btn-secondary"
-                                        invisible="state in ('won', 'cancelled')"/>
+                            <div class="mb-2">
                                 <button name="action_sync_conditions_from_terms"
                                         string="Aggiorna testi da righe"
                                         type="object"
                                         class="btn-secondary"
                                         invisible="not commercial_term_ids"/>
-                            </group>
+                            </div>
                             <group>
                                 <group string="Riepilogo offerta">
                                     <field name="offer_retention_percent"/>

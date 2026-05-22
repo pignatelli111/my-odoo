@@ -199,14 +199,7 @@
                             </group>
                         </page>
                         <page string="Purchase orders">
-                            <field name="purchase_order_ids" nolabel="1">
-                                <list>
-                                    <field name="name"/>
-                                    <field name="partner_id"/>
-                                    <field name="state"/>
-                                    <field name="amount_total"/>
-                                </list>
-                            </field>
+                            <field name="purchase_order_ids" widget="many2many_tags"/>
                         </page>
                     </notebook>
                 </sheet>

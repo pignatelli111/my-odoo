@@ -179,10 +179,13 @@ class SbuPurchaseRequest(models.Model):
         'request_id',
         string='Request lines',
     )
-    purchase_order_ids = fields.One2many(
+    purchase_order_ids = fields.Many2many(
         'purchase.order',
-        'sbu_purchase_request_id',
+        'sbu_purchase_request_purchase_order_rel',
+        'request_id',
+        'purchase_order_id',
         string='Related RFQs / POs',
+        help='Linked draft/confirmed RFQs and POs (also set purchase.order.sbu_purchase_request_id).',
     )
     attachment_ids = fields.Many2many(
         'ir.attachment',
@@ -568,6 +571,8 @@ class SbuPurchaseRequest(models.Model):
             po = self._sbu_find_or_create_draft_po(vendor)
             self._sbu_create_rfq_po_lines(po, lines_to_order)
             created |= po
+        for po in created:
+            self.purchase_order_ids = [(4, po.id)]
         if len(created) == 1:
             return {
                 'type': 'ir.actions.act_window',

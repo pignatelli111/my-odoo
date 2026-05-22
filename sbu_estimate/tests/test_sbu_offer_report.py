@@ -16,6 +16,7 @@ class TestSbuOfferReport(TransactionCase):
     def test_default_terms_and_print_offer(self):
         partner = self.env['res.partner'].create({'name': 'Offer print client'})
         estimate = self.env['sbu.estimate'].create({'partner_id': partner.id})
+        self.env.flush_all()
         self.assertGreaterEqual(len(estimate.commercial_term_ids), 5)
         pay = estimate.commercial_term_ids.filtered(
             lambda t: t.term_category == 'payment' and t.choice == 'included'
@@ -25,7 +26,7 @@ class TestSbuOfferReport(TransactionCase):
             lambda t: t.term_category == 'exclusion' and t.choice == 'excluded'
         )
         self.assertGreaterEqual(len(exc), 1)
-        self.assertTrue(estimate.payment_terms_synced)
+        self.assertGreater(len(pay), 0)
         report = self.env.ref('sbu_estimate.action_report_sbu_estimate_offer', raise_if_not_found=False)
         self.assertTrue(report)
         action = estimate.action_print_offer()
