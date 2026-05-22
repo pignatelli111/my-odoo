@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from odoo import api, fields, models
+from odoo import api, fields, models, _
+from odoo.exceptions import UserError
 
 
 class AccountMove(models.Model):
@@ -56,3 +57,13 @@ class AccountMove(models.Model):
             if certs:
                 certs.write({'state': 'paid'})
                 certs._sbu_link_payment_from_invoice()
+
+    def action_print_sbu_sal_detail(self):
+        """Print SAL contractual line detail (Cosimo point 13)."""
+        self.ensure_one()
+        if not self.sbu_sal_sheet_id:
+            raise UserError(_('This invoice is not linked to an SBU SAL sheet.'))
+        report = self.env.ref('sbu_sal.action_report_sbu_invoice_sal_detail', raise_if_not_found=False)
+        if not report:
+            raise UserError(_('SAL invoice detail report is not installed.'))
+        return report.report_action(self)

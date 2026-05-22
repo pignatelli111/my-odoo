@@ -2,6 +2,8 @@
 from odoo.tests import tagged
 from odoo.tests.common import TransactionCase
 
+from odoo.addons.sbu_estimate.tests.sbu_test_label_utils import duplicate_custom_field_labels
+
 
 @tagged('post_install', '-at_install')
 class TestSbuInvoiceSalReport(TransactionCase):
@@ -34,6 +36,11 @@ class TestSbuInvoiceSalReport(TransactionCase):
             'percent_this_sal': 10.0,
         })
         return sheet, sal_contract
+
+    def test_sal_sheet_line_labels_distinct(self):
+        """Regression: duplicate labels on sbu.sal.sheet.line trigger Odoo.sh WARNING."""
+        dups = duplicate_custom_field_labels(self.env, 'sbu.sal.sheet.line')
+        self.assertEqual(dups, {}, dups)
 
     def test_report_action_registered(self):
         report = self.env.ref('sbu_sal.action_report_sbu_invoice_sal_detail', raise_if_not_found=False)
@@ -71,4 +78,5 @@ class TestSbuInvoiceSalReport(TransactionCase):
 
         action = sheet.action_print_invoice_sal_detail()
         self.assertEqual(action.get('type'), 'ir.actions.report')
-        self.assertEqual(action.get('res_ids'), [move.id])
+        # Odoo 19: report_action puts docids in context.active_ids, not res_ids.
+        self.assertEqual(action.get('context', {}).get('active_ids'), [move.id])
