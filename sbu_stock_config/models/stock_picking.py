@@ -97,7 +97,8 @@ class StockPicking(models.Model):
 
     def action_sbu_print_ddt(self):
         self.ensure_one()
-        return self.env.ref('sbu_stock_config.action_report_sbu_ddt').report_action(self)
+        report = self.env.ref('sbu_stock_config.action_report_sbu_ddt')
+        return report.with_context(discard_logo_check=True).report_action(self)
 
     def action_sbu_deliver_to_site(self):
         """Create internal transfer Stock → Site cantiere for done incoming qty on this job."""

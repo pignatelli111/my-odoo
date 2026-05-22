@@ -82,10 +82,27 @@ class TestSbuInvoiceSalReport(TransactionCase):
         self.assertTrue(cdp_name, 'CDP name should appear on the invoice after certificate create')
 
         action = sheet.action_print_invoice_sal_detail()
-        self.assertEqual(action.get('type'), 'ir.actions.report')
+        self.assertEqual(action.get('type'), 'ir.actions.report', action)
         self.assertEqual(
             action.get('report_name'),
             'sbu_sal.report_sbu_invoice_sal_detail_document',
         )
         active_ids = action.get('context', {}).get('active_ids') or []
         self.assertIn(move.id, active_ids)
+
+    def test_account_move_print_sal_detail(self):
+        """Invoice stat button uses same report action (no layout wizard on Odoo.sh)."""
+        sheet, _sal = self._customer_sal_sheet()
+        journal = self.env['account.journal'].search([
+            ('type', '=', 'sale'),
+            ('company_id', '=', self.env.company.id),
+        ], limit=1)
+        if not journal or not journal.default_account_id:
+            self.skipTest('Sales journal with default account required')
+        if sheet.amount_retention > 0 and not self.env.company.sbu_sal_retention_account_id:
+            self.env.company.sbu_sal_retention_account_id = journal.default_account_id
+        sheet.action_confirm()
+        sheet.action_create_draft_invoice()
+        move = sheet.invoice_id
+        action = move.action_print_sbu_sal_detail()
+        self.assertEqual(action.get('type'), 'ir.actions.report', action)

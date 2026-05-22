@@ -384,4 +384,4 @@ class SbuSalSheet(models.Model):
         report = self.env.ref('sbu_sal.action_report_sbu_invoice_sal_detail', raise_if_not_found=False)
         if not report:
             raise UserError(_('SAL invoice detail report is not installed.'))
-        return report.report_action(self.invoice_id)
+        return report.with_context(discard_logo_check=True).report_action(self.invoice_id)

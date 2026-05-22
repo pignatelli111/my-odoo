@@ -1,6 +1,6 @@
 {
     'name': 'SBU SAL',
-    'version': '19.0.1.0.43',
+    'version': '19.0.1.0.44',
     'summary': 'Customer SAL, passive SAL (posa/subcontract), CDP and accounting',
     'author': 'SBU Development',
     'category': 'Accounting',

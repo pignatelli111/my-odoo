@@ -52,8 +52,9 @@ echo ""
 echo "=== TEST SUMMARY ==="
 grep -E 'odoo\.tests\.result:|odoo\.tests\.stats: sbu_' "$LOG" | tail -25 || echo "(none)"
 
-ZERO=$(grep -c '0 failed, 0 error(s) of 0 tests' "$LOG" 2>/dev/null || echo 0)
-if [[ "$ZERO" -gt 0 ]]; then
+ZERO=$(grep -c '0 failed, 0 error(s) of 0 tests' "$LOG" 2>/dev/null | tr -d '\n' || echo 0)
+ZERO=${ZERO:-0}
+if [[ "${ZERO:-0}" -gt 0 ]]; then
   echo ""
   echo ">>> 0 tests ran. See loading sbu_ lines:"
   grep -c 'loading sbu_' "$LOG" 2>/dev/null || echo 0
