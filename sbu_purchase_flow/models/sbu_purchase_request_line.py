@@ -158,6 +158,7 @@ class SbuPurchaseRequestLine(models.Model):
         string='Distinta preventivo',
         ondelete='set null',
         index=True,
+        domain="[('estimate_id', '=', request_id.estimate_id)]",
         help='Se impostata, la quantità può seguire la distinta ITEM (qty ordinata confezione).',
     )
     bom_qty_sync = fields.Boolean(

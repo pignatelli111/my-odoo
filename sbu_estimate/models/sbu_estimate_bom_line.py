@@ -15,6 +15,7 @@ class SbuEstimateBomLine(models.Model):
     _name = 'sbu.estimate.bom.line'
     _description = 'SBU Estimate BOM Line (ITEM sheet)'
     _order = 'sequence'
+    _rec_name = 'name'
 
     estimate_line_id = fields.Many2one(
         'sbu.estimate.line',
@@ -47,6 +48,13 @@ class SbuEstimateBomLine(models.Model):
         compute='_compute_description',
         store=True,
         readonly=False,
+    )
+    name = fields.Char(
+        string='Distinta ITEM',
+        compute='_compute_name',
+        store=True,
+        index=True,
+        help='Readable label for dropdowns (position, product, dimensions, qty).',
     )
 
     # ── Calculation type ──────────────────────────────────────────────────────
@@ -269,6 +277,67 @@ class SbuEstimateBomLine(models.Model):
     def _compute_description(self):
         for line in self:
             line.description = line.product_id.name or ''
+
+    @api.depends(
+        'estimate_line_id.pos',
+        'estimate_line_id.name',
+        'product_id',
+        'product_id.default_code',
+        'product_id.name',
+        'description',
+        'dimension_display',
+        'qty_theoretical',
+        'calc_type',
+        'uom_id',
+    )
+    def _compute_name(self):
+        calc_labels = dict(self._fields['calc_type'].selection)
+        for bom in self:
+            parts = []
+            pos = (bom.estimate_line_id.pos or '').strip()
+            if pos:
+                parts.append(pos)
+            code = (bom.product_id.default_code or '').strip()
+            desc = (bom.description or bom.product_id.display_name or '').strip()
+            if len(desc) > 48:
+                desc = desc[:45] + '...'
+            if code and desc:
+                parts.append('[%s] %s' % (code, desc))
+            elif code:
+                parts.append('[%s]' % code)
+            elif desc:
+                parts.append(desc)
+            if bom.dimension_display:
+                parts.append(bom.dimension_display)
+            qty = bom.qty_theoretical or 0.0
+            if qty:
+                uom = (bom.uom_id.name or '').strip()
+                calc = calc_labels.get(bom.calc_type, '') or ''
+                qty_part = '%g %s' % (qty, uom) if uom else '%g' % qty
+                if calc:
+                    qty_part = '%s (%s)' % (qty_part, calc)
+                parts.append(qty_part)
+            bom.name = ' — '.join(parts) if parts else _('BOM line %s') % (bom.id or _('new'))
+
+    @api.model
+    def name_search(self, name='', domain=None, operator='ilike', limit=100, args=None):
+        """Search by position, product code, description, or stored label."""
+        if args is not None and domain is None:
+            domain = args
+        domain = list(domain or [])
+        term = (name or '').strip()
+        if term:
+            search_domain = [
+                '|', '|', '|', '|',
+                ('name', operator, term),
+                ('description', operator, term),
+                ('product_id.default_code', operator, term),
+                ('estimate_line_id.pos', operator, term),
+                ('estimate_line_id.name', operator, term),
+            ] + domain
+            records = self.search(search_domain, limit=limit)
+            return [(rec.id, rec.display_name) for rec in records.sudo()]
+        return super().name_search(name, domain=domain, operator=operator, limit=limit)
 
     @api.onchange('product_id', 'estimate_line_id')
     def _onchange_product_id_apply_dimension_rule(self):
