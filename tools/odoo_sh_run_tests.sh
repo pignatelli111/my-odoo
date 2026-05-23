@@ -37,7 +37,7 @@ echo "=== Running upgrade + tests (log: $LOG) ==="
 python3 "$ODOO" \
   -d "$DB" \
   --addons-path="$ADDONS" \
-  -u "$MODULES" \
+  -i "$MODULES" \
   --test-enable \
   --stop-after-init \
   --log-level=test \

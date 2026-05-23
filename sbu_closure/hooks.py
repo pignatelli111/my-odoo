@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Rewrite closure document labels to English source + Italian translation (existing DBs)."""
+"""Ensure closure document type labels use English as DB source (Italian via it.po)."""
 
 CLOSURE_LABELS = {
     'sbu_closure.closure_doc_type_dop': (
@@ -25,14 +25,24 @@ CLOSURE_LABELS = {
 }
 
 
+def _it_lang_active(env):
+    """True when Italian is installed (Odoo.sh test DBs are often en_US only)."""
+    return bool(
+        env['res.lang'].with_context(active_test=False).search(
+            [('code', '=', 'it_IT')], limit=1,
+        )
+    )
+
+
 def _sync_closure_document_type_translations(env):
-    DocType = env['sbu.closure.document.type'].with_context(active_test=False)
+    apply_it = _it_lang_active(env)
     for xmlid, (en_label, it_label) in CLOSURE_LABELS.items():
         rec = env.ref(xmlid, raise_if_not_found=False)
         if not rec:
             continue
         rec.write({'name': en_label})
-        rec.with_context(lang='it_IT').write({'name': it_label})
+        if apply_it:
+            rec.with_context(lang='it_IT').write({'name': it_label})
 
 
 def post_init_hook(env):
