@@ -37,7 +37,3 @@ def _sync_closure_document_type_translations(env):
 
 def post_init_hook(env):
     _sync_closure_document_type_translations(env)
-
-
-def post_migrate(env):
-    _sync_closure_document_type_translations(env)
