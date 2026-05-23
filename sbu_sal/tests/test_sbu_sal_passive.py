@@ -43,10 +43,13 @@ class TestSbuSalPassive(TransactionCase):
             'sbu.sal.passive.line',
             'sbu.sal.sheet',
             'sbu.payment.certificate',
-            'account.move',
         ):
             dups = duplicate_custom_field_labels(self.env, model)
             self.assertEqual(dups, {}, f'{model}: {dups}')
+        move_dups = duplicate_custom_field_labels(
+            self.env, 'account.move', field_prefix='sbu_',
+        )
+        self.assertEqual(move_dups, {}, move_dups)
 
     def test_load_posa_budget_from_estimate(self):
         estimate, eline, project, vendor = self._estimate_with_posa()

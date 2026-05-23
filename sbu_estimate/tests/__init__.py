@@ -10,4 +10,5 @@ from . import test_sbu_revision_display
 from . import test_sbu_force_delete
 from . import test_sbu_manual_input_ui
 from . import test_sbu_field_labels
+from . import test_sbu_account_line_utils
 from . import test_sbu_offer_report

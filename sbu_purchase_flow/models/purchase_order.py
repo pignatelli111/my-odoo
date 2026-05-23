@@ -2,6 +2,8 @@
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 
+from odoo.addons.sbu_estimate.models.sbu_account_line_utils import sbu_is_product_line
+
 from .sbu_budget_helpers import sbu_cost_family_for_pr_line, sbu_cost_family_label
 
 
@@ -98,7 +100,7 @@ class PurchaseOrder(models.Model):
                 continue
             Budget.refresh_project(po.project_id)
             over_labels = []
-            for pol in po.order_line.filtered(lambda line: not line.display_type):
+            for pol in po.order_line.filtered(sbu_is_product_line):
                 fam = po._sbu_cost_family_for_po_line(pol)
                 row = Budget.search([
                     ('project_id', '=', po.project_id.id),

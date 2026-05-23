@@ -2,6 +2,8 @@
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
+from odoo.addons.sbu_estimate.models.sbu_account_line_utils import sbu_is_product_line
+
 
 class SbuPaymentCertificate(models.Model):
     _name = 'sbu.payment.certificate'
@@ -214,7 +216,7 @@ class SbuPaymentCertificate(models.Model):
         self.ensure_one()
         payments = self.env['account.payment']
         receivable_lines = invoice.line_ids.filtered(
-            lambda l: l.account_id.account_type == 'asset_receivable' and not l.display_type
+            lambda l: l.account_id.account_type == 'asset_receivable' and sbu_is_product_line(l)
         )
         for line in receivable_lines:
             partials = line.matched_debit_ids | line.matched_credit_ids

@@ -2,16 +2,12 @@
 from odoo.tests import tagged
 from odoo.tests.common import TransactionCase
 
+from odoo.addons.sbu_estimate.models.sbu_account_line_utils import sbu_is_product_line
 from odoo.addons.sbu_estimate.tests.sbu_test_label_utils import duplicate_custom_field_labels
-
-# Odoo 19: invoice lines use display_type='product' (not False).
-_SAL_INVOICE_LINE_SKIP = frozenset({'line_section', 'line_note'})
 
 
 def _sal_invoice_product_lines(move):
-    return move.invoice_line_ids.filtered(
-        lambda l: (l.display_type or 'product') not in _SAL_INVOICE_LINE_SKIP,
-    )
+    return move.invoice_line_ids.filtered(sbu_is_product_line)
 
 
 @tagged('post_install', '-at_install')
