@@ -8,12 +8,12 @@
 
     <!-- Estimate menu -->
     <menuitem id="menu_sbu_estimate_root"
-              name="Preventivi"
+              name="Estimates"
               parent="menu_sbu_root"
               sequence="10"/>
 
     <menuitem id="menu_sbu_estimate_list"
-              name="Tutti i Preventivi"
+              name="All estimates"
               parent="menu_sbu_estimate_root"
               action="action_sbu_estimate"
               sequence="10"/>

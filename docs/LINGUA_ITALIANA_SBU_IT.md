@@ -1,14 +1,20 @@
 # Lingua italiana — menu e interfaccia SBU
 
-## Perché alcune voci restano in inglese
+## Come funziona (due lingue)
 
-Odoo traduce l’interfaccia così:
+| Lingua utente | Cosa vede |
+|---------------|-----------|
+| **Italiano** | Testi da `i18n/it.po` (menu **Commesse**, **Preventivi**, …) |
+| **English** | Testo **inglese nel codice** (menu **Jobs**, **Estimates**, …) |
 
-1. **Lingua utente** (Preferenze → Lingua = Italiano).
-2. **Lingua installata** con opzione **Carica traduzioni** (Impostazioni → Lingue).
-3. **File di traduzione** del modulo (`i18n/it.po`) caricati all’**aggiornamento** del modulo.
+Regola Odoo: il **codice** usa l’**inglese**; l’**italiano** è nel file `sbu_*/i18n/it.po`.  
+Se nel codice c’era italiano fisso (es. **Miei Preventivi**), l’utente inglese vedeva comunque italiano — corretto dalla v. `19.0.1.0.93` di `sbu_estimate`.
 
-I menu SBU scritti in inglese nel codice (**Jobs**, **Purchasing**, **Billing**, …) restano in inglese finché non esiste `it.po` e non si aggiorna il modulo.
+## Perché alcune voci restano in inglese (utente IT)
+
+1. **Lingua utente** = Italiano (Preferenze).
+2. **Lingua installata** con **Carica traduzioni**.
+3. **`odoo-update`** sui moduli SBU dopo il deploy (carica `it.po`).
 
 I pulsanti **Nuovo**, **Cerca…**, date tipo **May 23** dipendono dalle traduzioni **standard Odoo** (`web`, `base`), non dai moduli SBU.
 

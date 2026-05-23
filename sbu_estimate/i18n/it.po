@@ -1,0 +1,201 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# * sbu_estimate
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 19.0\n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: 2026-05-20 14:00+0000\n"
+"Last-Translator: SBU Development\n"
+"Language-Team: Italian\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: it\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. module: sbu_estimate
+#: model:ir.ui.menu,name:sbu_estimate.menu_sbu_estimate_root
+msgid "Estimates"
+msgstr "Preventivi"
+
+#. module: sbu_estimate
+#: model:ir.ui.menu,name:sbu_estimate.menu_sbu_estimate_list
+msgid "All estimates"
+msgstr "Tutti i preventivi"
+
+#. module: sbu_estimate
+#: model:ir.actions.act_window,name:sbu_estimate.action_sbu_estimate
+msgid "Estimates"
+msgstr "Preventivi"
+
+#. module: sbu_estimate
+#: model_terms:ir.actions.act_window,help:sbu_estimate.action_sbu_estimate
+msgid "Create your first estimate"
+msgstr "Crea il tuo primo preventivo"
+
+#. module: sbu_estimate
+#: model_terms:ir.actions.act_window,help:sbu_estimate.action_sbu_estimate
+msgid "Enter width and height for each item and the system automatically calculates sqm, quantities and costs."
+msgstr "Inserisci le dimensioni B e H per ogni item e il sistema calcola automaticamente mq, quantità e costi."
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_list
+msgid "Estimates"
+msgstr "Preventivi"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_search
+msgid "Latest revision only"
+msgstr "Solo revisione più recente"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_search
+msgid "My estimates"
+msgstr "Miei preventivi"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_search
+msgid "Internal approval pending"
+msgstr "In approvazione interna"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_search
+msgid "Scenario: Aggressive"
+msgstr "Scenario: Aggressivo"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_search
+msgid "Scenario: Risk"
+msgstr "Scenario: Rischio"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_search
+msgid "Group by customer"
+msgstr "Raggruppa cliente"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_search
+msgid "Group by status"
+msgstr "Raggruppa stato"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_search
+msgid "Group by month"
+msgstr "Raggruppa mese"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__name
+msgid "Quote no."
+msgstr "Ns. preventivo"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__revision
+msgid "Revision"
+msgstr "Revisione"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__sbu_display_label
+msgid "Display label"
+msgstr "Preventivo"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__sbu_is_latest_revision
+msgid "Latest revision"
+msgstr "Ultima REV"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__date
+msgid "Date"
+msgstr "Data"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__partner_id
+msgid "Customer"
+msgstr "Cliente"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__job_site
+msgid "Job site / property"
+msgstr "Cantiere / immobile"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__total_sqm
+msgid "Total sqm"
+msgstr "MQ totali"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__total_price
+msgid "Total customer price"
+msgstr "Prezzo cliente totale"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__total_contract_sal
+msgid "Contract SAL total"
+msgstr "Totale contrattuale SAL"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__total_cost
+msgid "Total cost"
+msgstr "Costo totale"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__expected_margin_pct
+msgid "Expected margin (%)"
+msgstr "Margine atteso (%)"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__probability
+msgid "Win probability (%)"
+msgstr "Probabilità chiusura (%)"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__commercial_scenario
+msgid "Commercial scenario"
+msgstr "Scenario commerciale"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__state
+msgid "Status"
+msgstr "Stato"
+
+#. module: sbu_estimate
+#: model:ir.model.fields.selection,name:sbu_estimate.selection__sbu_estimate__state__draft
+msgid "Draft"
+msgstr "Bozza"
+
+#. module: sbu_estimate
+#: model:ir.model.fields.selection,name:sbu_estimate.selection__sbu_estimate__state__sent
+msgid "Sent"
+msgstr "Inviato"
+
+#. module: sbu_estimate
+#: model:ir.model.fields.selection,name:sbu_estimate.selection__sbu_estimate__state__won
+msgid "Won"
+msgstr "Vinto"
+
+#. module: sbu_estimate
+#: model:ir.model.fields.selection,name:sbu_estimate.selection__sbu_estimate__state__lost
+msgid "Lost"
+msgstr "Perso"
+
+#. module: sbu_estimate
+#: model:ir.model.fields.selection,name:sbu_estimate.selection__sbu_estimate__state__cancelled
+msgid "Cancelled"
+msgstr "Annullato"
+
+#. module: sbu_estimate
+#: model:ir.model.fields.selection,name:sbu_estimate.selection__sbu_estimate__commercial_scenario__base
+msgid "Base (standard list)"
+msgstr "Base (listino / standard)"
+
+#. module: sbu_estimate
+#: model:ir.model.fields.selection,name:sbu_estimate.selection__sbu_estimate__commercial_scenario__aggressive
+msgid "Aggressive"
+msgstr "Aggressivo"
+
+#. module: sbu_estimate
+#: model:ir.model.fields.selection,name:sbu_estimate.selection__sbu_estimate__commercial_scenario__risk
+msgid "Risk / contingency"
+msgstr "Rischio / contingency"

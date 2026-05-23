@@ -9,13 +9,13 @@ from .sbu_revision_display import (
 
 class SbuEstimate(models.Model):
     _name = 'sbu.estimate'
-    _description = 'SBU Estimate / Preventivo'
+    _description = 'SBU Estimate'
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'date desc, name desc'
 
     # ── Identity ──────────────────────────────────────────────────────────────
     name = fields.Char(
-        string='Ns. Preventivo',
+        string='Quote no.',
         required=True,
         copy=False,
         readonly=True,
@@ -23,76 +23,76 @@ class SbuEstimate(models.Model):
         tracking=True,
     )
     revision = fields.Char(
-        string='Revisione',
+        string='Revision',
         default='REV00',
         tracking=True,
     )
     previous_revision_id = fields.Many2one(
         'sbu.estimate',
-        string='Revisione precedente',
+        string='Previous revision',
         ondelete='set null',
         index=True,
         copy=False,
     )
     revision_root_id = fields.Many2one(
         'sbu.estimate',
-        string='Radice revisioni',
+        string='Revision root',
         compute='_compute_revision_root',
         store=True,
         index=True,
         recursive=True,
     )
     full_name = fields.Char(
-        string='Riferimento Completo',
+        string='Full reference',
         compute='_compute_full_name',
         store=True,
     )
     sbu_display_label = fields.Char(
-        string='Etichetta REV',
+        string='Display label',
         compute='_compute_sbu_display_label',
         store=True,
         index=True,
-        help='Nome · REV · data (per liste e documenti collegati).',
+        help='Name · REV · date (for lists and linked documents).',
     )
     sbu_is_latest_revision = fields.Boolean(
-        string='Revisione più recente',
+        string='Latest revision',
         compute='_compute_sbu_is_latest_revision',
         store=True,
-        help='True se questa è la REV più alta tra i preventivi con lo stesso Ns.',
+        help='True if this is the highest REV among quotes with the same number.',
     )
 
     # ── Dates ─────────────────────────────────────────────────────────────────
     date = fields.Date(
-        string='Data',
+        string='Date',
         default=fields.Date.today,
         required=True,
         tracking=True,
     )
     validity_date = fields.Date(
-        string='Validità Offerta',
+        string='Offer validity',
         tracking=True,
     )
 
     # ── Parties ───────────────────────────────────────────────────────────────
     partner_id = fields.Many2one(
         'res.partner',
-        string='Cliente',
+        string='Customer',
         required=True,
         tracking=True,
     )
     opportunity_id = fields.Many2one(
         'crm.lead',
-        string='Opportunità CRM',
+        string='CRM opportunity',
         domain=[('type', '=', 'opportunity')],
         tracking=True,
     )
     job_site = fields.Char(
-        string='Cantiere / Immobile',
+        string='Job site / property',
         tracking=True,
     )
     user_id = fields.Many2one(
         'res.users',
-        string='Responsabile',
+        string='Responsible',
         default=lambda self: self.env.user,
         tracking=True,
     )
@@ -107,20 +107,20 @@ class SbuEstimate(models.Model):
     # ── Commercial scenario ───────────────────────────────────────────────────
     commercial_scenario = fields.Selection(
         selection=[
-            ('base', 'Base (listino / standard)'),
-            ('aggressive', 'Aggressivo'),
-            ('risk', 'Rischio / contingency'),
+            ('base', 'Base (standard list)'),
+            ('aggressive', 'Aggressive'),
+            ('risk', 'Risk / contingency'),
         ],
-        string='Scenario commerciale',
+        string='Commercial scenario',
         tracking=True,
     )
     probability = fields.Float(
-        string='Probabilità Chiusura (%)',
+        string='Win probability (%)',
         default=50.0,
         tracking=True,
     )
     expected_margin_pct = fields.Float(
-        string='Margine Atteso (%)',
+        string='Expected margin (%)',
         compute='_compute_margin',
         store=True,
     )
@@ -149,43 +149,43 @@ class SbuEstimate(models.Model):
 
     # ── State ─────────────────────────────────────────────────────────────────
     state = fields.Selection([
-        ('draft', 'Bozza'),
-        ('sent', 'Inviato'),
-        ('won', 'Vinto'),
-        ('lost', 'Perso'),
-        ('cancelled', 'Annullato'),
-    ], string='Stato', default='draft', tracking=True)
+        ('draft', 'Draft'),
+        ('sent', 'Sent'),
+        ('won', 'Won'),
+        ('lost', 'Lost'),
+        ('cancelled', 'Cancelled'),
+    ], string='Status', default='draft', tracking=True)
 
     approval_required = fields.Boolean(
-        string='Richiede approvazione interna',
+        string='Requires internal approval',
         default=False,
         tracking=True,
     )
     approval_state = fields.Selection(
         selection=[
-            ('na', 'Nessuna'),
-            ('pending', 'In approvazione'),
-            ('approved', 'Approvato'),
-            ('rejected', 'Rifiutato'),
+            ('na', 'N/A'),
+            ('pending', 'Pending approval'),
+            ('approved', 'Approved'),
+            ('rejected', 'Rejected'),
         ],
-        string='Stato approvazione',
+        string='Approval status',
         default='na',
         copy=False,
         tracking=True,
     )
     approved_by_id = fields.Many2one(
         'res.users',
-        string='Approvato da',
+        string='Approved by',
         readonly=True,
         copy=False,
     )
     approved_on = fields.Datetime(
-        string='Approvato il',
+        string='Approved on',
         readonly=True,
         copy=False,
     )
     revision_same_name_count = fields.Integer(
-        string='Revisioni (stesso Ns.)',
+        string='Revisions (same quote no.)',
         compute='_compute_revision_same_name_count',
     )
 
@@ -218,32 +218,32 @@ class SbuEstimate(models.Model):
 
     # ── Totals (computed from lines) ──────────────────────────────────────────
     total_sqm = fields.Float(
-        string='MQ Totali',
+        string='Total sqm',
         compute='_compute_totals',
         store=True,
         digits=(16, 2),
     )
     total_price = fields.Monetary(
-        string='Prezzo Cliente Totale',
+        string='Total customer price',
         compute='_compute_totals',
         store=True,
         currency_field='currency_id',
     )
     client_price_per_sqm = fields.Float(
-        string='Prezzo cliente / MQ',
+        string='Customer price / sqm',
         compute='_compute_totals',
         store=True,
         digits=(16, 2),
         help='Prezzo cliente totale del preventivo ÷ MQ totali (€/m² vendita).',
     )
     total_cost = fields.Monetary(
-        string='Costo Totale',
+        string='Total cost',
         compute='_compute_totals',
         store=True,
         currency_field='currency_id',
     )
     total_contract_sal = fields.Monetary(
-        string='Totale Contrattuale SAL',
+        string='Contract SAL total',
         compute='_compute_totals',
         store=True,
         currency_field='currency_id',
@@ -282,7 +282,7 @@ class SbuEstimate(models.Model):
         currency_field='currency_id',
     )
     margin_amount = fields.Monetary(
-        string='Margine €',
+        string='Margin €',
         compute='_compute_margin',
         store=True,
         currency_field='currency_id',
@@ -295,7 +295,7 @@ class SbuEstimate(models.Model):
     # ── Project link (after won) ───────────────────────────────────────────────
     project_id = fields.Many2one(
         'project.project',
-        string='Commessa',
+        string='Project',
         readonly=True,
         copy=False,
     )

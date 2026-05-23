@@ -6,13 +6,13 @@
         <field name="name">sbu.estimate.list</field>
         <field name="model">sbu.estimate</field>
         <field name="arch" type="xml">
-            <list string="Preventivi"
+            <list string="Estimates"
                   delete="1"
                   decoration-success="state == 'won'"
                   decoration-danger="state == 'lost'"
                   decoration-muted="state == 'cancelled'">
-                <field name="sbu_display_label" string="Preventivo"/>
-                <field name="sbu_is_latest_revision" string="Ultima REV"
+                <field name="sbu_display_label"/>
+                <field name="sbu_is_latest_revision"
                        decoration-success="sbu_is_latest_revision == True"
                        decoration-muted="sbu_is_latest_revision == False"/>
                 <field name="name" optional="hide"/>
@@ -483,50 +483,50 @@
         <field name="model">sbu.estimate</field>
         <field name="arch" type="xml">
             <search>
-                <field name="sbu_display_label" string="Preventivo"/>
+                <field name="sbu_display_label"/>
                 <field name="name"/>
                 <field name="revision"/>
                 <field name="partner_id"/>
                 <field name="job_site"/>
-                <filter name="sbu_latest_revision" string="Solo revisione più recente"
+                <filter name="sbu_latest_revision" string="Latest revision only"
                         domain="[('sbu_is_latest_revision', '=', True)]"/>
                 <separator/>
                 <filter name="draft"
-                        string="Bozza"
+                        string="Draft"
                         domain="[('state','=','draft')]"/>
                 <filter name="sent"
-                        string="Inviato"
+                        string="Sent"
                         domain="[('state','=','sent')]"/>
                 <filter name="won"
-                        string="Vinto"
+                        string="Won"
                         domain="[('state','=','won')]"/>
                 <filter name="lost"
-                        string="Perso"
+                        string="Lost"
                         domain="[('state','=','lost')]"/>
                 <filter name="my_estimates"
-                        string="Miei Preventivi"
+                        string="My estimates"
                         domain="[('user_id','=',uid)]"/>
                 <filter name="approval_pending"
-                        string="In approvazione interna"
+                        string="Internal approval pending"
                         domain="[('approval_state','=','pending')]"/>
                 <separator/>
                 <filter name="scenario_base"
                         string="Scenario: Base"
                         domain="[('commercial_scenario','=','base')]"/>
                 <filter name="scenario_aggressive"
-                        string="Scenario: Aggressivo"
+                        string="Scenario: Aggressive"
                         domain="[('commercial_scenario','=','aggressive')]"/>
                 <filter name="scenario_risk"
-                        string="Scenario: Rischio"
+                        string="Scenario: Risk"
                         domain="[('commercial_scenario','=','risk')]"/>
                 <filter name="group_partner"
-                        string="Raggruppa Cliente"
+                        string="Group by customer"
                         context="{'group_by': 'partner_id'}"/>
                 <filter name="group_state"
-                        string="Raggruppa Stato"
+                        string="Group by status"
                         context="{'group_by': 'state'}"/>
                 <filter name="group_month"
-                        string="Raggruppa Mese"
+                        string="Group by month"
                         context="{'group_by': 'date:month'}"/>
             </search>
         </field>
@@ -534,18 +534,18 @@
 
     <!-- ── Action ─────────────────────────────────────────────────────────── -->
     <record id="action_sbu_estimate" model="ir.actions.act_window">
-        <field name="name">Preventivi</field>
+        <field name="name">Estimates</field>
         <field name="res_model">sbu.estimate</field>
         <field name="view_mode">list,form</field>
         <field name="search_view_id" ref="view_sbu_estimate_search"/>
         <field name="context">{'search_default_my_estimates': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                Crea il tuo primo preventivo
+                Create your first estimate
             </p>
             <p>
-                Inserisci le dimensioni B e H per ogni item e il sistema
-                calcola automaticamente mq, quantita e costi.
+                Enter width and height for each item and the system
+                automatically calculates sqm, quantities and costs.
             </p>
         </field>
     </record>

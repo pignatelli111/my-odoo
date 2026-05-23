@@ -6,25 +6,25 @@
               sequence="30"/>
 
     <menuitem id="menu_sbu_purchase_request_create"
-              name="Nuovo documento acquisto"
+              name="New purchase document"
               parent="menu_sbu_purchase_root"
               action="action_sbu_purchase_request_create_wizard"
               sequence="5"/>
 
     <menuitem id="menu_sbu_purchase_request"
-              name="Richieste acquisto"
+              name="Purchase requests"
               parent="menu_sbu_purchase_root"
               action="action_sbu_purchase_request"
               sequence="10"/>
 
     <menuitem id="menu_sbu_purchase_request_line"
-              name="Righe richiesta (modifica massiva)"
+              name="Request lines (bulk edit)"
               parent="menu_sbu_purchase_root"
               action="action_sbu_purchase_request_line"
               sequence="15"/>
 
     <menuitem id="menu_sbu_project_budget_family"
-              name="Budget per famiglia"
+              name="Budget by family"
               parent="menu_sbu_purchase_root"
               action="action_sbu_project_budget_family"
               sequence="20"/>

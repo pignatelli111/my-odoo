@@ -44,3 +44,23 @@ msgstr "Standard di consegna"
 #: model:ir.actions.act_window,name:sbu_purchase_flow.action_sbu_purchase_request_excel_import
 msgid "Import from Excel"
 msgstr "Importa da Excel"
+
+#. module: sbu_purchase_flow
+#: model:ir.ui.menu,name:sbu_purchase_flow.menu_sbu_purchase_request_create
+msgid "New purchase document"
+msgstr "Nuovo documento acquisto"
+
+#. module: sbu_purchase_flow
+#: model:ir.ui.menu,name:sbu_purchase_flow.menu_sbu_purchase_request
+msgid "Purchase requests"
+msgstr "Richieste acquisto"
+
+#. module: sbu_purchase_flow
+#: model:ir.ui.menu,name:sbu_purchase_flow.menu_sbu_purchase_request_line
+msgid "Request lines (bulk edit)"
+msgstr "Righe richiesta (modifica massiva)"
+
+#. module: sbu_purchase_flow
+#: model:ir.ui.menu,name:sbu_purchase_flow.menu_sbu_project_budget_family
+msgid "Budget by family"
+msgstr "Budget per famiglia"
