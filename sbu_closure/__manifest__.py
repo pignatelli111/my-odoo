@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'SBU Project closure (DOP / certifications)',
-    'version': '19.0.1.0.1',
+    'version': '19.0.1.0.2',
     'summary': 'Document object types, closure checklists, and links to project chiusura (Phase 6.5)',
     'author': 'SBU Development',
     'category': 'Project',

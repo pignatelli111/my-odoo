@@ -1,0 +1,41 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# * sbu_sal
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 19.0\n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: 2026-05-20 12:00+0000\n"
+"Last-Translator: SBU Development\n"
+"Language-Team: Italian\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: it\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. module: sbu_sal
+#: model:ir.ui.menu,name:sbu_sal.menu_sbu_sal_root
+msgid "Billing"
+msgstr "Fatturazione"
+
+#. module: sbu_sal
+#: model:ir.ui.menu,name:sbu_sal.menu_sbu_sal_sheet
+msgid "SAL sheets (customer)"
+msgstr "SAL cliente"
+
+#. module: sbu_sal
+#: model:ir.ui.menu,name:sbu_sal.menu_sbu_sal_passive_sheet
+msgid "Passive SAL (subcontract)"
+msgstr "SAL passivi (subappalto)"
+
+#. module: sbu_sal
+#: model:ir.actions.act_window,name:sbu_sal.action_sbu_sal_sheet
+msgid "SAL sheets"
+msgstr "Fogli SAL"
+
+#. module: sbu_sal
+#: model:ir.actions.act_window,name:sbu_sal.action_sbu_sal_passive_sheet
+msgid "Passive SAL (subcontract)"
+msgstr "SAL passivi (subappalto)"

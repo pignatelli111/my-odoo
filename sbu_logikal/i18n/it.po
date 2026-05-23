@@ -1,0 +1,36 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# * sbu_logikal
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 19.0\n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: 2026-05-20 12:00+0000\n"
+"Last-Translator: SBU Development\n"
+"Language-Team: Italian\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: it\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. module: sbu_logikal
+#: model:ir.ui.menu,name:sbu_logikal.menu_sbu_logikal_product_map
+msgid "Profile → product"
+msgstr "Profilo → prodotto"
+
+#. module: sbu_logikal
+#: model:ir.ui.menu,name:sbu_logikal.menu_sbu_logikal_import_batch
+msgid "Imports"
+msgstr "Import"
+
+#. module: sbu_logikal
+#: model:ir.actions.act_window,name:sbu_logikal.action_sbu_logikal_product_map
+msgid "Logikal / ReynaPro profile maps"
+msgstr "Mappature profili Logikal / ReynaPro"
+
+#. module: sbu_logikal
+#: model:ir.actions.act_window,name:sbu_logikal.action_sbu_logikal_import_batch
+msgid "Logikal / ReynaPro imports"
+msgstr "Import Logikal / ReynaPro"
