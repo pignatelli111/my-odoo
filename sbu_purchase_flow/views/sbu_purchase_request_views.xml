@@ -104,10 +104,7 @@
                             <field name="comparison_margin_buffer_pct" readonly="state in ('done','cancelled')"/>
                             <field name="excel_item"/>
                             <field name="topic"/>
-                            <field name="technical_data_state" widget="badge"
-                                   decoration-warning="technical_data_state == 'estimate_bom'"
-                                   decoration-info="technical_data_state == 'technical_review' or technical_data_state == 'excel_imported'"
-                                   decoration-success="technical_data_state == 'ready_for_po'"/>
+                            <field name="technical_data_state"/>
                         </group>
                         <group string="People &amp; dates">
                             <field name="user_id" widget="many2one_avatar_user"/>
@@ -156,8 +153,7 @@
                                            options="{'no_create': True}"/>
                                     <field name="bom_qty_sync" optional="show"/>
                                     <field name="bom_qty_ordered_ref" optional="hide"/>
-                                    <field name="technical_confirmed" optional="show"
-                                           decoration-warning="needs_technical_confirm and manual_input_pending and not technical_confirmed"/>
+                                    <field name="technical_confirmed" optional="show"/>
                                     <field name="data_phase" optional="hide"/>
                                     <field name="utilization" optional="show"/>
                                     <field name="weight_kg" optional="hide"/>
