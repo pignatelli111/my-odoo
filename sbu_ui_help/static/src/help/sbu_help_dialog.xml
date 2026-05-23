@@ -2,7 +2,7 @@
 <templates xml:space="preserve">
 
     <t t-name="sbu_ui_help.SbuHelpDialog">
-        <Dialog t-att-title="dialogTitle" size="'lg'">
+        <Dialog title="dialogTitle" size="'lg'">
             <div class="o_sbu_help_dialog" t-out="bodyMarkup"/>
             <t t-set-slot="footer">
                 <button type="button" class="btn btn-primary" t-on-click="onClose" t-esc="closeLabel"/>
