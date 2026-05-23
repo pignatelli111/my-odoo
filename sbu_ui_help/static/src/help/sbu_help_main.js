@@ -2,8 +2,9 @@
 
 import { registry } from "@web/core/registry";
 import { _t } from "@web/core/l10n/translation";
+import { router, routerBus } from "@web/core/browser/router";
 import { useBus, useService } from "@web/core/utils/hooks";
-import { Component, useState } from "@odoo/owl";
+import { Component, useState, onMounted } from "@odoo/owl";
 import { SbuHelpDialog } from "./sbu_help_dialog";
 
 export class SbuHelpMain extends Component {
@@ -16,28 +17,31 @@ export class SbuHelpMain extends Component {
         this.dialog = useService("dialog");
         this.state = useState({
             model: null,
-            viewMode: null,
+            viewMode: "form",
         });
-        useBus(this.env.bus, "ACTION_MANAGER:UI-UPDATED", () => {
-            this._syncContext();
-        });
-        this._syncContext();
+        const sync = () => this._syncContext();
+        useBus(this.env.bus, "ACTION_MANAGER:UI-UPDATED", sync);
+        useBus(routerBus, "ROUTE_CHANGE", sync);
+        onMounted(sync);
+        sync();
     }
 
     _syncContext() {
         const ctrl = this.actionService.currentController;
-        if (!ctrl?.props?.resModel) {
-            this.state.model = null;
-            this.state.viewMode = null;
-            return;
-        }
-        this.state.model = ctrl.props.resModel;
-        const viewType = ctrl.props.type || ctrl.view?.type;
-        this.state.viewMode = viewType || "form";
-    }
-
-    get showFab() {
-        return Boolean(this.state.model);
+        const props = ctrl?.props || {};
+        const action = ctrl?.action || {};
+        const route = router.current || {};
+        const stackTop = route.actionStack?.length
+            ? route.actionStack[route.actionStack.length - 1]
+            : null;
+        const model =
+            props.resModel ||
+            action.res_model ||
+            route.model ||
+            stackTop?.model ||
+            null;
+        this.state.model = model;
+        this.state.viewMode = props.type || ctrl?.view?.type || stackTop?.view_type || "form";
     }
 
     get fabTitle() {
@@ -45,28 +49,40 @@ export class SbuHelpMain extends Component {
     }
 
     async openHelp() {
-        if (!this.state.model) {
-            return;
+        let help;
+        if (this.state.model) {
+            help = await this.orm.call(
+                "sbu.ui.help.topic",
+                "get_help_for_ui",
+                [],
+                {
+                    model: this.state.model,
+                    view_mode: this.state.viewMode,
+                }
+            );
+        } else {
+            help = {
+                title: _t("Screen help"),
+                purpose: _t(
+                    "<p>Open a list or form (e.g. <strong>Estimates</strong>, "
+                    + "<strong>Purchase requests</strong>, <strong>Project</strong>) "
+                    + "then click <strong>?</strong> again for a detailed guide.</p>"
+                ),
+                sections: [],
+            };
         }
-        const helpPromise = this.orm.call(
-            "sbu.ui.help.topic",
-            "get_help_for_ui",
-            [],
+        this.dialog.add(
+            SbuHelpDialog,
+            { help },
             {
-                model: this.state.model,
-                view_mode: this.state.viewMode,
+                title: help?.title || _t("Screen help"),
+                size: "lg",
             }
         );
-        this.dialog.add(SbuHelpDialog, {
-            help: await helpPromise,
-            loading: false,
-        }, {
-            title: _t("Screen help"),
-            size: "lg",
-        });
     }
 }
 
 registry.category("main_components").add("SbuHelpMain", {
     Component: SbuHelpMain,
+    sequence: 50,
 });

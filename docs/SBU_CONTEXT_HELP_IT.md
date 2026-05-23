@@ -12,9 +12,18 @@
 - Modelli: `sbu.ui.help.topic` e righe `sbu.ui.help.item`.
 - Campi traducibili: aggiungere italiano con **Impostazioni → Traduzioni** o file `sbu_ui_help/i18n/it.po`.
 
+## Il pulsante ? non compare?
+
+1. **Apps** → cerca **SBU Context Help** → stato **Installato** (non solo presente nell’elenco).
+2. Dopo il deploy Git: `odoo-update sbu_ui_help` (shell Odoo.sh) oppure **Aggiorna** da Apps.
+3. **Ctrl+F5** nel browser (asset JavaScript).
+4. In shell: `env['ir.module.module'].search([('name','=','sbu_ui_help')]).state` → deve essere `installed`.
+
+Senza modulo installato il pulsante **non esiste** (è JavaScript, non un’impostazione utente).
+
 ## Modulo tecnico
 
-- **`sbu_ui_help`** — si installa automaticamente con gli altri moduli SBU (`auto_install`).
+- **`sbu_ui_help`** — di solito si installa con gli altri moduli SBU (`auto_install`); se manca, installarlo manualmente.
 - Dopo deploy: `odoo-update sbu_ui_help` e **Ctrl+F5** nel browser.
 
 ## Estendere la guida
