@@ -16,3 +16,8 @@ class TestSbuUiHelp(TransactionCase):
         data = self.env['sbu.ui.help.topic'].get_help_for_ui('res.partner', 'form')
         self.assertTrue(data)
         self.assertIn('res.partner', data.get('purpose', ''))
+
+    def test_get_help_sal_list_normalizes_tree(self):
+        data = self.env['sbu.ui.help.topic'].get_help_for_ui('sbu.sal.sheet', 'tree')
+        self.assertTrue(data)
+        self.assertIn('SAL', data.get('title', ''))

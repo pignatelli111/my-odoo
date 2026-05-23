@@ -258,6 +258,23 @@
         <field name="body" type="html"><p>Extra notebooks: site delivery rules, budget families, document hub, email ingest.</p></field>
     </record>
 
+    <!-- ── Customer SAL list ─────────────────────────────────────────────── -->
+    <record id="help_topic_sbu_sal_list" model="sbu.ui.help.topic">
+        <field name="name">SAL sheets — list</field>
+        <field name="model">sbu.sal.sheet</field>
+        <field name="view_mode">list</field>
+        <field name="purpose" type="html">
+            <p><strong>SAL sheets (customer)</strong>: one row per progress billing (SAL) linked to a job.</p>
+            <p>Click <strong>New</strong> to create a SAL on a project, then confirm and invoice from the form.</p>
+        </field>
+    </record>
+    <record id="help_item_sal_list_new" model="sbu.ui.help.item">
+        <field name="topic_id" ref="help_topic_sbu_sal_list"/>
+        <field name="item_type">button</field>
+        <field name="title">New</field>
+        <field name="body" type="html"><p>Opens a new SAL sheet — select the job and add lines from contractual SAL items.</p></field>
+    </record>
+
     <!-- ── Customer SAL form ────────────────────────────────────────────── -->
     <record id="help_topic_sbu_sal_form" model="sbu.ui.help.topic">
         <field name="name">Customer SAL — form</field>

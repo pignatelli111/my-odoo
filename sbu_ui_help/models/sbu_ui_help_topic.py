@@ -41,7 +41,7 @@ class SbuUiHelpTopic(models.Model):
         """Return help payload for the current screen (user language)."""
         if not model:
             return False
-        view_key = view_mode or 'form'
+        view_key = (view_mode or 'form').replace('tree', 'list')
         topics = self.search([
             ('active', '=', True),
             ('model', '=', model),
