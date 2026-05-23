@@ -136,7 +136,7 @@
                             </thead>
                             <tbody>
                                 <t t-foreach="o.invoice_line_ids" t-as="inv_line">
-                                    <tr t-if="not inv_line.display_type">
+                                    <tr t-if="inv_line.display_type not in ('line_section', 'line_note')">
                                         <td><span t-esc="inv_line.name"/></td>
                                         <td class="text-end"><span t-field="inv_line.quantity"/></td>
                                         <td class="text-end">

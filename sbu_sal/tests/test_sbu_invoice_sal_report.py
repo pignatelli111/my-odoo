@@ -4,6 +4,15 @@ from odoo.tests.common import TransactionCase
 
 from odoo.addons.sbu_estimate.tests.sbu_test_label_utils import duplicate_custom_field_labels
 
+# Odoo 19: invoice lines use display_type='product' (not False).
+_SAL_INVOICE_LINE_SKIP = frozenset({'line_section', 'line_note'})
+
+
+def _sal_invoice_product_lines(move):
+    return move.invoice_line_ids.filtered(
+        lambda l: (l.display_type or 'product') not in _SAL_INVOICE_LINE_SKIP,
+    )
+
 
 @tagged('post_install', '-at_install')
 class TestSbuInvoiceSalReport(TransactionCase):
@@ -70,7 +79,8 @@ class TestSbuInvoiceSalReport(TransactionCase):
         sheet.action_confirm()
         sheet.action_create_draft_invoice()
         move = sheet.invoice_id
-        product_lines = move.invoice_line_ids.filtered(lambda l: not l.display_type)
+        self.assertTrue(move, 'SAL should create a draft invoice')
+        product_lines = _sal_invoice_product_lines(move)
         self.assertGreaterEqual(len(product_lines), 2, product_lines.mapped('name'))
         contract_lines = product_lines.filtered(lambda l: l.price_unit > 0)
         self.assertTrue(contract_lines)
