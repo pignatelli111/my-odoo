@@ -30,7 +30,7 @@
             </xpath>
             <xpath expr="//field[@name='order_line']/list" position="attributes">
                 <attribute name="decoration-success">sbu_manual_input_pending</attribute>
-                <attribute name="decoration-muted">sbu_manual_input_state == 'imported'</attribute>
+                <attribute name="decoration-secondary">sbu_manual_input_state == 'imported'</attribute>
             </xpath>
             <xpath expr="//field[@name='order_line']//field[@name='product_qty']" position="before">
                 <field name="sbu_manual_input_pending" column_invisible="1"/>

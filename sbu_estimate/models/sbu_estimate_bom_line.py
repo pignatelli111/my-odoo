@@ -336,8 +336,13 @@ class SbuEstimateBomLine(models.Model):
                 ('estimate_line_id.name', operator, term),
             ] + domain
             records = self.search(search_domain, limit=limit)
-            return [(rec.id, rec.display_name) for rec in records.sudo()]
+            return [(rec.id, rec._sbu_label_for_many2one()) for rec in records.sudo()]
         return super().name_search(name, domain=domain, operator=operator, limit=limit)
+
+    def _sbu_label_for_many2one(self):
+        """Safe label for dropdowns (never empty / undefined)."""
+        self.ensure_one()
+        return (self.name or self.display_name or _('BOM line %s') % self.id)
 
     @api.onchange('product_id', 'estimate_line_id')
     def _onchange_product_id_apply_dimension_rule(self):

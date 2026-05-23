@@ -106,7 +106,7 @@
                             <field name="topic"/>
                             <field name="technical_data_state" widget="badge"
                                    decoration-warning="technical_data_state == 'estimate_bom'"
-                                   decoration-info="technical_data_state in ('technical_review', 'excel_imported')"
+                                   decoration-info="technical_data_state == 'technical_review' or technical_data_state == 'excel_imported'"
                                    decoration-success="technical_data_state == 'ready_for_po'"/>
                         </group>
                         <group string="People &amp; dates">
@@ -136,7 +136,7 @@
                             <field name="line_ids">
                                 <list editable="bottom"
                                       decoration-success="manual_input_pending"
-                                      decoration-muted="manual_input_state == 'imported'">
+                                      decoration-secondary="manual_input_state == 'imported'">
                                     <field name="sequence" widget="handle"/>
                                     <field name="line_priority" optional="show"/>
                                     <field name="pos" optional="show"/>
@@ -153,8 +153,7 @@
                                     <field name="sqm_total" string="MQ tot."/>
                                     <field name="dimension_mm" string="Dimensioni" readonly="1"/>
                                     <field name="source_bom_line_id" optional="show"
-                                           options="{'no_create': True}"
-                                           context="{'estimate_id': parent.estimate_id}"/>
+                                           options="{'no_create': True}"/>
                                     <field name="bom_qty_sync" optional="show"/>
                                     <field name="bom_qty_ordered_ref" optional="hide"/>
                                     <field name="technical_confirmed" optional="show"
