@@ -1,0 +1,64 @@
+# Translation of Odoo Server.
+# * sbu_ui_help
+#
+msgid ""
+msgstr ""
+"Language: it\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "Help for this screen"
+msgstr "Guida per questa schermata"
+
+msgid "Screen help"
+msgstr "Guida schermata"
+
+msgid "Close"
+msgstr "Chiudi"
+
+msgid "Buttons & actions"
+msgstr "Pulsanti e azioni"
+
+msgid "Tabs"
+msgstr "Schede"
+
+msgid "Smart buttons (top)"
+msgstr "Pulsanti intelligenti (in alto)"
+
+msgid "Filters & search"
+msgstr "Filtri e ricerca"
+
+msgid "Estimates — list"
+msgstr "Preventivi — elenco"
+
+msgid "Estimate — form"
+msgstr "Preventivo — scheda"
+
+msgid "Purchase requests — list"
+msgstr "Richieste acquisto — elenco"
+
+msgid "Purchase request — form"
+msgstr "Richiesta acquisto — scheda"
+
+msgid "SBU job — form"
+msgstr "Commessa SBU — scheda"
+
+msgid "Customer SAL — form"
+msgstr "SAL cliente — scheda"
+
+msgid "My estimates"
+msgstr "Miei preventivi"
+
+msgid "Won"
+msgstr "Vinto"
+
+msgid "New revision"
+msgstr "Nuova revisione"
+
+msgid "Import ANACO Excel"
+msgstr "Importa Excel ANACO"
+
+msgid "Create draft RFQ(s)"
+msgstr "Crea bozza RFQ"
+
+msgid "Comparison matrix"
+msgstr "Matrice confronto offerte"

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="sbu_ui_help.SbuHelpDialog">
+        <div class="o_sbu_help_dialog">
+            <div class="o_sbu_help_purpose mb-3" t-if="props.help and props.help.purpose"
+                 t-out="props.help.purpose"/>
+            <t t-if="hasSections">
+                <t t-foreach="groupedSections" t-as="group" t-key="group.type">
+                    <h5 class="mt-3 mb-2 text-primary" t-esc="group.label"/>
+                    <div class="list-group list-group-flush mb-2">
+                        <div class="list-group-item px-0 border-0 border-bottom"
+                             t-foreach="group.items" t-as="item" t-key="item_index">
+                            <strong t-esc="item.title"/>
+                            <div class="text-muted small mt-1" t-if="item.body" t-out="item.body"/>
+                        </div>
+                    </div>
+                </t>
+            </t>
+            <p class="text-muted mb-0" t-elif="props.help" t-esc="emptyHint"/>
+        </div>
+    </t>
+
+</templates>

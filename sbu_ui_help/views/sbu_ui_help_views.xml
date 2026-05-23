@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sbu_ui_help_topic_list" model="ir.ui.view">
+        <field name="name">sbu.ui.help.topic.list</field>
+        <field name="model">sbu.ui.help.topic</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="model"/>
+                <field name="view_mode"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_sbu_ui_help_topic_form" model="ir.ui.view">
+        <field name="name">sbu.ui.help.topic.form</field>
+        <field name="model">sbu.ui.help.topic</field>
+        <field name="arch" type="xml">
+            <form string="Context help">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="model"/>
+                        <field name="view_mode"/>
+                        <field name="sequence"/>
+                        <field name="active"/>
+                    </group>
+                    <group string="Purpose">
+                        <field name="purpose" nolabel="1" colspan="2"/>
+                    </group>
+                    <field name="item_ids">
+                        <list editable="bottom">
+                            <field name="sequence" widget="handle"/>
+                            <field name="item_type"/>
+                            <field name="title"/>
+                            <field name="technical_key" optional="show"/>
+                            <field name="body" optional="hide"/>
+                        </list>
+                    </field>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sbu_ui_help_topic" model="ir.actions.act_window">
+        <field name="name">Context help</field>
+        <field name="res_model">sbu.ui.help.topic</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_sbu_ui_help"
+              name="Screen help (admin)"
+              parent="sbu_estimate.menu_sbu_root"
+              action="action_sbu_ui_help_topic"
+              sequence="90"
+              groups="base.group_system"/>
+</odoo>
