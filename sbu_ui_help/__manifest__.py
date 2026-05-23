@@ -1,6 +1,6 @@
 {
     'name': 'SBU Context Help',
-    'version': '19.0.1.0.2',
+    'version': '19.0.1.0.3',
     'summary': 'Floating help button (user language) for SBU screens',
     'author': 'SBU Development',
     'category': 'Hidden',
@@ -18,6 +18,9 @@
             'sbu_ui_help/static/src/help/sbu_help.scss',
             'sbu_ui_help/static/src/help/sbu_help_dialog.xml',
             'sbu_ui_help/static/src/help/sbu_help_dialog.js',
+            'sbu_ui_help/static/src/help/sbu_help_service.js',
+            'sbu_ui_help/static/src/help/sbu_help_systray.xml',
+            'sbu_ui_help/static/src/help/sbu_help_systray.js',
             'sbu_ui_help/static/src/help/sbu_help_main.xml',
             'sbu_ui_help/static/src/help/sbu_help_main.js',
         ],

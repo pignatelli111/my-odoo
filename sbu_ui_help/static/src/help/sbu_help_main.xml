@@ -3,11 +3,11 @@
 
     <t t-name="sbu_ui_help.SbuHelpMain">
         <button type="button"
-                class="o_sbu_help_fab btn btn-primary rounded-circle shadow"
+                class="o_sbu_help_fab btn btn-warning rounded-circle shadow"
                 t-att-title="fabTitle"
                 t-att-aria-label="fabTitle"
-                t-on-click.stop="openHelp">
-            <i class="fa fa-question" role="img"/>
+                t-on-click.stop="onClick">
+            <span class="o_sbu_help_fab_label" aria-hidden="true">?</span>
         </button>
     </t>
 
