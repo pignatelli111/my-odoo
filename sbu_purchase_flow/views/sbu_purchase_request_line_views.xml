@@ -6,7 +6,7 @@
         <field name="arch" type="xml">
             <list string="Purchase request lines"
                   decoration-success="manual_input_pending"
-                  decoration-secondary="manual_input_state == 'imported'">
+                  decoration-muted="manual_input_state == 'imported'">
                 <field name="request_id"/>
                 <field name="request_type" optional="show"/>
                 <field name="workflow_route" optional="show"/>

@@ -136,7 +136,7 @@
                             <field name="line_ids">
                                 <list editable="bottom"
                                       decoration-success="manual_input_pending"
-                                      decoration-secondary="manual_input_state == 'imported'">
+                                      decoration-muted="manual_input_state == 'imported'">
                                     <field name="sequence" widget="handle"/>
                                     <field name="line_priority" optional="show"/>
                                     <field name="pos" optional="show"/>

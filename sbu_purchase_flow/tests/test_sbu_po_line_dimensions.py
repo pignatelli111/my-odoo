@@ -74,5 +74,6 @@ class TestSbuPoLineDimensions(TransactionCase):
         self.assertIn('mq/cad', pol.sbu_dimension_summary or '')
         self.assertEqual(pol.sbu_utilization, 'Montante')
         pr_line.write({'utilization': 'Traverso'})
-        pol.invalidate_recordset()
+        self.env.flush_all()
+        pol.invalidate_recordset(['sbu_utilization'])
         self.assertEqual(pol.sbu_utilization, 'Traverso')
