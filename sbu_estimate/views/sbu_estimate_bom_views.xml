@@ -30,10 +30,9 @@
                 <field name="estimate_id"/>
                 <filter name="needs_confirm" string="Needs technical confirm"
                         domain="[('needs_technical_confirm', '=', True), ('technical_confirmed', '=', False)]"/>
-                <group>
-                    <filter string="Preventivo" name="grp_estimate" context="{'group_by': 'estimate_id'}"/>
-                    <filter string="Posizione" name="grp_pos" context="{'group_by': 'estimate_line_id'}"/>
-                </group>
+                <separator/>
+                <filter string="Preventivo" name="grp_estimate" context="{'group_by': 'estimate_id'}"/>
+                <filter string="Posizione" name="grp_pos" context="{'group_by': 'estimate_line_id'}"/>
             </search>
         </field>
     </record>

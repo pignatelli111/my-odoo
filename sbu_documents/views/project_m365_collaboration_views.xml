@@ -7,6 +7,13 @@
         <field name="arch" type="xml">
             <xpath expr="//notebook" position="inside">
                 <page string="M365 collaboration" name="sbu_m365_collaboration" groups="project.group_project_user">
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <button name="action_sbu_open_planner_board" type="object"
+                                string="Open Planner board" class="btn-secondary"
+                                invisible="not sbu_planner_plan_url"/>
+                        <button name="action_sbu_import_planner_tasks_csv" type="object"
+                                string="Import Planner CSV to Odoo tasks" class="btn-secondary"/>
+                    </div>
                     <group>
                         <div class="text-muted mb-2" colspan="2">
                             Pragmatic bridge to Microsoft 365: deep links and short notes only.
@@ -23,11 +30,6 @@
                         </group>
                         <group string="Planner and Outlook">
                             <field name="sbu_planner_plan_url" widget="url"/>
-                            <button name="action_sbu_open_planner_board" type="object"
-                                    string="Open Planner board" class="btn-link"
-                                    invisible="not sbu_planner_plan_url"/>
-                            <button name="action_sbu_import_planner_tasks_csv" type="object"
-                                    string="Import Planner CSV → Odoo tasks" class="btn-secondary"/>
                             <field name="sbu_outlook_calendar_url" widget="url"/>
                         </group>
                     </group>

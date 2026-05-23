@@ -320,10 +320,8 @@ class SbuEstimateBomLine(models.Model):
             bom.name = ' — '.join(parts) if parts else _('BOM line %s') % (bom.id or _('new'))
 
     @api.model
-    def name_search(self, name='', domain=None, operator='ilike', limit=100, args=None):
+    def name_search(self, name='', domain=None, operator='ilike', limit=100):
         """Search by position, product code, description, or stored label."""
-        if args is not None and domain is None:
-            domain = args
         domain = list(domain or [])
         term = (name or '').strip()
         if term:
@@ -337,7 +335,7 @@ class SbuEstimateBomLine(models.Model):
             ] + domain
             records = self.search(search_domain, limit=limit)
             return [(rec.id, rec._sbu_label_for_many2one()) for rec in records.sudo()]
-        return super().name_search(name, domain=domain, operator=operator, limit=limit)
+        return super().name_search(name, domain, operator, limit)
 
     def _sbu_label_for_many2one(self):
         """Safe label for dropdowns (never empty / undefined)."""

@@ -1,6 +1,6 @@
 {
     "name": "SBU Documents",
-    "version": "19.0.1.0.10",
+    "version": "19.0.1.0.11",
     "summary": "M365 docs + Graph sync + Teams/Planner/Outlook deep links (Phase 5.1–5.3)",
     "author": "SBU Development",
     "category": "Document Management",
