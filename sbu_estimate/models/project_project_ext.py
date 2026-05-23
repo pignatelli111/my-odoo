@@ -9,52 +9,52 @@ class ProjectProjectSbu(models.Model):
 
     sbu_estimate_id = fields.Many2one(
         'sbu.estimate',
-        string='Preventivo di Origine',
+        string='Source estimate',
         readonly=True,
         copy=False,
     )
     sbu_project_code = fields.Char(
-        string='Codice Commessa',
+        string='Job code',
         copy=False,
         tracking=True,
     )
     sbu_job_site = fields.Char(
-        string='Cantiere / Immobile',
+        string='Job site / property',
     )
     sbu_onedrive_url = fields.Char(
-        string='Cartella OneDrive',
-        help='URL della cartella OneDrive per questa commessa',
+        string='OneDrive folder',
+        help='OneDrive folder URL for this job.',
     )
     sbu_state = fields.Selection([
-        ('setup', 'In Impostazione'),
-        ('active', 'In Corso'),
-        ('closing', 'In Chiusura'),
-        ('closed', 'Chiusa'),
-        ('archived', 'Archiviata'),
-    ], string='Stato Commessa', default='setup', tracking=True)
+        ('setup', 'Setup'),
+        ('active', 'Active'),
+        ('closing', 'Closing'),
+        ('closed', 'Closed'),
+        ('archived', 'Archived'),
+    ], string='Job status', default='setup', tracking=True)
     sbu_estimate_revision = fields.Char(
-        string='Revisione preventivo',
+        string='Estimate revision',
         related='sbu_estimate_id.revision',
         store=True,
         readonly=True,
     )
     sbu_estimate_date = fields.Date(
-        string='Data preventivo',
+        string='Estimate date',
         related='sbu_estimate_id.date',
         store=True,
         readonly=True,
     )
     sbu_revision_label = fields.Char(
-        string='Riferimento commessa',
+        string='Job reference',
         compute='_compute_sbu_revision_label',
         store=True,
         index=True,
     )
     sbu_is_latest_revision = fields.Boolean(
-        string='Revisione più recente',
+        string='Latest revision',
         compute='_compute_sbu_is_latest_revision',
         store=True,
-        help='True when the linked estimate is the highest REV for the same Ns. preventivo.',
+        help='True when the linked estimate is the highest REV for the same quote number.',
     )
 
     @api.depends(

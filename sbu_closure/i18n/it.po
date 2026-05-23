@@ -1,51 +1,32 @@
 # Translation of Odoo Server.
-# This file contains the translation of the following modules:
 # * sbu_closure
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Odoo Server 19.0\n"
-"Report-Msgid-Bugs-To: \n"
-"PO-Revision-Date: 2026-05-20 12:00+0000\n"
-"Last-Translator: SBU Development\n"
-"Language-Team: Italian\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
 "Language: it\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 
 #. module: sbu_closure
-#: model:ir.ui.menu,name:sbu_closure.menu_sbu_closure_document_types
-msgid "Closure document types"
-msgstr "Tipi documento chiusura"
+#: model:sbu.closure.document.type,name:sbu_closure.closure_doc_type_dop
+msgid "DOP / Closure offer documentation"
+msgstr "DOP / Documentazione di offerta in chiusura"
 
 #. module: sbu_closure
-#: model:ir.actions.act_window,name:sbu_closure.action_sbu_closure_document_type
-msgid "Closure document types"
-msgstr "Tipi documento chiusura"
+#: model:sbu.closure.document.type,name:sbu_closure.closure_doc_type_cert
+msgid "Certifications (compliance / safety / testing)"
+msgstr "Certificazioni (conformità / sicurezza / collaudi)"
 
 #. module: sbu_closure
-#: model_terms:ir.ui.view,arch_db:sbu_closure.view_sbu_closure_document_type_list
-msgid "Closure document types"
-msgstr "Tipi documento chiusura"
+#: model:sbu.closure.document.type,name:sbu_closure.closure_doc_type_collaudo
+msgid "Handover / completion report"
+msgstr "Verbale di collaudo / fine lavori"
 
 #. module: sbu_closure
-#: model_terms:ir.ui.view,arch_db:sbu_closure.view_sbu_closure_document_type_form
-msgid "Closure document type"
-msgstr "Tipo documento chiusura"
+#: model:sbu.closure.document.type,name:sbu_closure.closure_doc_type_asbuilt
+msgid "As-built drawings / executive documentation"
+msgstr "Elaborati as-built / redazione esecutiva"
 
 #. module: sbu_closure
-#: model_terms:ir.ui.view,arch_db:sbu_closure.view_project_form_sbu_closure
-msgid "Closure checklist"
-msgstr "Checklist chiusura commessa"
-
-#. module: sbu_closure
-#: model_terms:ir.ui.view,arch_db:sbu_closure.view_sbu_closure_requirement_form
-msgid "Closure checklist line"
-msgstr "Riga checklist chiusura"
-
-#. module: sbu_closure
-#: model_terms:ir.ui.view,arch_db:sbu_closure.view_project_form_sbu_closure
-msgid "Initialize closure checklist"
-msgstr "Inizializza checklist chiusura"
+#: model:sbu.closure.document.type,name:sbu_closure.closure_doc_type_consegna
+msgid "Final documentation delivery to customer"
+msgstr "Consegna documentazione finale al cliente"

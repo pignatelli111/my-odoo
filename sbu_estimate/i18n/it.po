@@ -199,3 +199,48 @@ msgstr "Aggressivo"
 #: model:ir.model.fields.selection,name:sbu_estimate.selection__sbu_estimate__commercial_scenario__risk
 msgid "Risk / contingency"
 msgstr "Rischio / contingency"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_project_project__sbu_state
+msgid "Job status"
+msgstr "Stato commessa"
+
+#. module: sbu_estimate
+#: model:ir.model.fields.selection,name:sbu_estimate.selection__project_project__sbu_state__setup
+msgid "Setup"
+msgstr "In impostazione"
+
+#. module: sbu_estimate
+#: model:ir.model.fields.selection,name:sbu_estimate.selection__project_project__sbu_state__active
+msgid "Active"
+msgstr "In corso"
+
+#. module: sbu_estimate
+#: model:ir.model.fields.selection,name:sbu_estimate.selection__project_project__sbu_state__closing
+msgid "Closing"
+msgstr "In chiusura"
+
+#. module: sbu_estimate
+#: model:ir.model.fields.selection,name:sbu_estimate.selection__project_project__sbu_state__closed
+msgid "Closed"
+msgstr "Chiusa"
+
+#. module: sbu_estimate
+#: model:ir.model.fields.selection,name:sbu_estimate.selection__project_project__sbu_state__archived
+msgid "Archived"
+msgstr "Archiviata"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_project_project__sbu_revision_label
+msgid "Job reference"
+msgstr "Riferimento commessa"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_project_project__sbu_is_latest_revision
+msgid "Latest revision"
+msgstr "Ultima REV"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_project_project__sbu_estimate_date
+msgid "Estimate date"
+msgstr "Data preventivo"

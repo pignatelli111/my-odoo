@@ -5,20 +5,20 @@
         <field name="model">project.project</field>
         <field name="priority">20</field>
         <field name="arch" type="xml">
-            <search string="Commesse SBU">
-                <field name="sbu_revision_label" string="Commessa"
+            <search string="SBU jobs">
+                <field name="sbu_revision_label" string="Job"
                        filter_domain="['|', ('sbu_revision_label', 'ilike', self), ('name', 'ilike', self)]"/>
                 <field name="sbu_project_code"/>
                 <field name="sbu_estimate_revision"/>
                 <field name="partner_id"/>
-                <filter name="sbu_latest_revision" string="Solo revisione più recente"
+                <filter name="sbu_latest_revision" string="Latest revision only"
                         domain="[('sbu_is_latest_revision', '=', True)]"/>
                 <separator/>
-                <filter name="sbu_active" string="In corso"
+                <filter name="sbu_active" string="Active"
                         domain="[('sbu_state', '=', 'active')]"/>
                 <group>
-                    <filter name="group_revision" string="Revisione" context="{'group_by': 'sbu_estimate_revision'}"/>
-                    <filter name="group_partner" string="Cliente" context="{'group_by': 'partner_id'}"/>
+                    <filter name="group_revision" string="Revision" context="{'group_by': 'sbu_estimate_revision'}"/>
+                    <filter name="group_partner" string="Customer" context="{'group_by': 'partner_id'}"/>
                 </group>
             </search>
         </field>
@@ -29,13 +29,13 @@
         <field name="model">project.project</field>
         <field name="priority">20</field>
         <field name="arch" type="xml">
-            <list string="Commesse SBU" default_order="sbu_estimate_date desc, id desc">
-                <field name="sbu_revision_label" string="Commessa"/>
-                <field name="sbu_is_latest_revision" string="Ultima REV"
+            <list string="SBU jobs" default_order="sbu_estimate_date desc, id desc">
+                <field name="sbu_revision_label" string="Job"/>
+                <field name="sbu_is_latest_revision" string="Latest REV"
                        decoration-success="sbu_is_latest_revision == True"
                        decoration-muted="sbu_is_latest_revision == False"/>
                 <field name="sbu_estimate_revision" string="REV" optional="show"/>
-                <field name="sbu_estimate_date" string="Data prev." optional="show"/>
+                <field name="sbu_estimate_date" string="Estimate date" optional="show"/>
                 <field name="partner_id" optional="show"/>
                 <field name="sbu_state" optional="show"/>
                 <field name="user_id" widget="many2one_avatar_user" optional="hide"/>
@@ -54,7 +54,7 @@
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">No SBU job yet</p>
             <p>Win an estimate to create a project linked to SBU.</p>
-            <p>Each line shows <strong>codice · REV · data</strong> so you can tell revisions apart.</p>
+            <p>Each line shows <strong>code · REV · date</strong> so you can tell revisions apart.</p>
         </field>
     </record>
 

@@ -1,19 +1,10 @@
 # Translation of Odoo Server.
-# This file contains the translation of the following modules:
 # * sbu_project
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Odoo Server 19.0\n"
-"Report-Msgid-Bugs-To: \n"
-"PO-Revision-Date: 2026-05-20 12:00+0000\n"
-"Last-Translator: SBU Development\n"
-"Language-Team: Italian\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
 "Language: it\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 
 #. module: sbu_project
 #: model:ir.ui.menu,name:sbu_project.menu_sbu_jobs
@@ -26,16 +17,51 @@ msgid "SBU jobs"
 msgstr "Commesse SBU"
 
 #. module: sbu_project
-#: model_terms:ir.actions.act_window,help:sbu_project.action_sbu_jobs
-msgid "No SBU job yet"
-msgstr "Nessuna commessa SBU"
+#: model_terms:ir.ui.view,arch_db:sbu_project.view_project_sbu_jobs_search
+msgid "SBU jobs"
+msgstr "Commesse SBU"
 
 #. module: sbu_project
-#: model_terms:ir.actions.act_window,help:sbu_project.action_sbu_jobs
-msgid "Win an estimate to create a project linked to SBU."
-msgstr "Segna un preventivo come vinto per creare la commessa collegata."
+#: model_terms:ir.ui.view,arch_db:sbu_project.view_project_sbu_jobs_list
+msgid "SBU jobs"
+msgstr "Commesse SBU"
 
 #. module: sbu_project
-#: model_terms:ir.actions.act_window,help:sbu_project.action_sbu_jobs
-msgid "Each line shows <strong>codice · REV · data</strong> so you can tell revisions apart."
-msgstr "Ogni riga mostra <strong>codice · REV · data</strong> per distinguere le revisioni."
+#: model_terms:ir.ui.view,arch_db:sbu_project.view_project_sbu_jobs_search
+msgid "Job"
+msgstr "Commessa"
+
+#. module: sbu_project
+#: model_terms:ir.ui.view,arch_db:sbu_project.view_project_sbu_jobs_list
+msgid "Job"
+msgstr "Commessa"
+
+#. module: sbu_project
+#: model_terms:ir.ui.view,arch_db:sbu_project.view_project_sbu_jobs_search
+msgid "Latest revision only"
+msgstr "Solo revisione più recente"
+
+#. module: sbu_project
+#: model_terms:ir.ui.view,arch_db:sbu_project.view_project_sbu_jobs_list
+msgid "Latest REV"
+msgstr "Ultima REV"
+
+#. module: sbu_project
+#: model_terms:ir.ui.view,arch_db:sbu_project.view_project_sbu_jobs_list
+msgid "Estimate date"
+msgstr "Data prev."
+
+#. module: sbu_project
+#: model_terms:ir.ui.view,arch_db:sbu_project.view_project_sbu_jobs_search
+msgid "Active"
+msgstr "In corso"
+
+#. module: sbu_project
+#: model_terms:ir.ui.view,arch_db:sbu_project.view_project_sbu_jobs_search
+msgid "Revision"
+msgstr "Revisione"
+
+#. module: sbu_project
+#: model_terms:ir.ui.view,arch_db:sbu_project.view_project_sbu_jobs_search
+msgid "Customer"
+msgstr "Cliente"
