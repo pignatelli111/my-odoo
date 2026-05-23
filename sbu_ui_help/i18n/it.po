@@ -1,64 +1,160 @@
 # Translation of Odoo Server.
+# This file contains the translation of the following modules:
 # * sbu_ui_help
 #
 msgid ""
 msgstr ""
-"Language: it\n"
+"Project-Id-Version: Odoo Server 19.0\n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: 2026-05-23 17:50+0000\n"
+"Last-Translator: SBU Development\n"
+"Language-Team: Italian\n"
+"MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: it\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+#. module: sbu_ui_help
+#. odoo-javascript
+#: code:addons/sbu_ui_help/static/src/help/sbu_help_main.js:0
+#: code:addons/sbu_ui_help/static/src/help/sbu_help_systray.js:0
 msgid "Help for this screen"
 msgstr "Guida per questa schermata"
 
+#. module: sbu_ui_help
+#. odoo-javascript
+#: code:addons/sbu_ui_help/static/src/help/sbu_help_dialog.js:0
+#: code:addons/sbu_ui_help/static/src/help/sbu_help_service.js:0
 msgid "Screen help"
 msgstr "Guida schermata"
 
+#. module: sbu_ui_help
+#. odoo-javascript
+#: code:addons/sbu_ui_help/static/src/help/sbu_help_dialog.js:0
 msgid "Close"
 msgstr "Chiudi"
 
+#. module: sbu_ui_help
+#. odoo-javascript
+#: code:addons/sbu_ui_help/static/src/help/sbu_help_dialog.js:0
+msgid "Overview"
+msgstr "Panoramica"
+
+#. module: sbu_ui_help
+#. odoo-javascript
+#: code:addons/sbu_ui_help/static/src/help/sbu_help_dialog.js:0
 msgid "Buttons & actions"
 msgstr "Pulsanti e azioni"
 
+#. module: sbu_ui_help
+#. odoo-javascript
+#: code:addons/sbu_ui_help/static/src/help/sbu_help_dialog.js:0
 msgid "Tabs"
 msgstr "Schede"
 
+#. module: sbu_ui_help
+#. odoo-javascript
+#: code:addons/sbu_ui_help/static/src/help/sbu_help_dialog.js:0
 msgid "Smart buttons (top)"
 msgstr "Pulsanti intelligenti (in alto)"
 
+#. module: sbu_ui_help
+#. odoo-javascript
+#: code:addons/sbu_ui_help/static/src/help/sbu_help_dialog.js:0
 msgid "Filters & search"
 msgstr "Filtri e ricerca"
 
+#. module: sbu_ui_help
+#. odoo-javascript
+#: code:addons/sbu_ui_help/static/src/help/sbu_help_dialog.js:0
+msgid "Important fields"
+msgstr "Campi importanti"
+
+#. module: sbu_ui_help
+#. odoo-javascript
+#: code:addons/sbu_ui_help/static/src/help/sbu_help_dialog.js:0
+msgid "Menus"
+msgstr "Menu"
+
+#. module: sbu_ui_help
+#. odoo-javascript
+#: code:addons/sbu_ui_help/static/src/help/sbu_help_service.js:0
+msgid "Could not load screen help."
+msgstr "Impossibile caricare la guida."
+
+#. module: sbu_ui_help
+#. odoo-javascript
+#: code:addons/sbu_ui_help/static/src/help/sbu_help_dialog.js:0
+msgid "Use the fields and buttons on this form as usual. Contact your SBU administrator to extend this guide."
+msgstr "Usa i campi e i pulsanti come di consueto. Contatta l'amministratore SBU per estendere questa guida."
+
+#. module: sbu_ui_help
+#: model:ir.ui.menu,name:sbu_ui_help.menu_sbu_ui_help
+msgid "Screen help (admin)"
+msgstr "Guida schermate (admin)"
+
+#. module: sbu_ui_help
+#: model:ir.actions.act_window,name:sbu_ui_help.action_sbu_ui_help_topic
+msgid "Context help"
+msgstr "Guida contestuale"
+
+#. module: sbu_ui_help
+#: model:sbu.ui.help.topic,name:sbu_ui_help.help_topic_sbu_estimate_list
 msgid "Estimates — list"
 msgstr "Preventivi — elenco"
 
+#. module: sbu_ui_help
+#: model:sbu.ui.help.topic,name:sbu_ui_help.help_topic_sbu_estimate_form
 msgid "Estimate — form"
 msgstr "Preventivo — scheda"
 
+#. module: sbu_ui_help
+#: model:sbu.ui.help.topic,name:sbu_ui_help.help_topic_sbu_pr_list
 msgid "Purchase requests — list"
 msgstr "Richieste acquisto — elenco"
 
+#. module: sbu_ui_help
+#: model:sbu.ui.help.topic,name:sbu_ui_help.help_topic_sbu_pr_form
 msgid "Purchase request — form"
 msgstr "Richiesta acquisto — scheda"
 
+#. module: sbu_ui_help
+#: model:sbu.ui.help.topic,name:sbu_ui_help.help_topic_project_form
 msgid "SBU job — form"
 msgstr "Commessa SBU — scheda"
 
+#. module: sbu_ui_help
+#: model:sbu.ui.help.topic,name:sbu_ui_help.help_topic_sbu_sal_form
 msgid "Customer SAL — form"
 msgstr "SAL cliente — scheda"
 
+#. module: sbu_ui_help
+#: model:sbu.ui.help.item,title:sbu_ui_help.help_item_est_list_my
 msgid "My estimates"
 msgstr "Miei preventivi"
 
+#. module: sbu_ui_help
+#: model:sbu.ui.help.item,title:sbu_ui_help.help_item_est_form_won
 msgid "Won"
 msgstr "Vinto"
 
+#. module: sbu_ui_help
+#: model:sbu.ui.help.item,title:sbu_ui_help.help_item_est_form_revision
 msgid "New revision"
 msgstr "Nuova revisione"
 
+#. module: sbu_ui_help
+#: model:sbu.ui.help.item,title:sbu_ui_help.help_item_est_form_anaco
 msgid "Import ANACO Excel"
 msgstr "Importa Excel ANACO"
 
+#. module: sbu_ui_help
+#: model:sbu.ui.help.item,title:sbu_ui_help.help_item_pr_form_rfq
 msgid "Create draft RFQ(s)"
 msgstr "Crea bozza RFQ"
 
+#. module: sbu_ui_help
+#: model:sbu.ui.help.item,title:sbu_ui_help.help_item_pr_form_matrix
 msgid "Comparison matrix"
 msgstr "Matrice confronto offerte"
