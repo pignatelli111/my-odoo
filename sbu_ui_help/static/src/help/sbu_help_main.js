@@ -15,6 +15,7 @@ export class SbuHelpMain extends Component {
         this.orm = useService("orm");
         this.actionService = useService("action");
         this.dialog = useService("dialog");
+        this.notification = useService("notification");
         this.state = useState({
             model: null,
             viewMode: "form",
@@ -48,37 +49,42 @@ export class SbuHelpMain extends Component {
         return _t("Help for this screen");
     }
 
-    async openHelp() {
+    async openHelp(ev) {
+        ev?.preventDefault?.();
+        ev?.stopPropagation?.();
         let help;
-        if (this.state.model) {
-            help = await this.orm.call(
-                "sbu.ui.help.topic",
-                "get_help_for_ui",
-                [],
-                {
-                    model: this.state.model,
-                    view_mode: this.state.viewMode,
-                }
-            );
-        } else {
+        try {
+            if (this.state.model) {
+                help = await this.orm.call(
+                    "sbu.ui.help.topic",
+                    "get_help_for_ui",
+                    [this.state.model, this.state.viewMode],
+                );
+            } else {
+                help = {
+                    title: _t("Screen help"),
+                    purpose: _t(
+                        "<p>Open a list or form (e.g. <strong>Estimates</strong>, "
+                        + "<strong>Purchase requests</strong>, <strong>Project</strong>) "
+                        + "then click <strong>?</strong> again for a detailed guide.</p>"
+                    ),
+                    sections: [],
+                };
+            }
+        } catch (error) {
+            console.error("SBU help: RPC failed", error);
+            this.notification.add(_t("Could not load screen help."), { type: "danger" });
             help = {
                 title: _t("Screen help"),
                 purpose: _t(
-                    "<p>Open a list or form (e.g. <strong>Estimates</strong>, "
-                    + "<strong>Purchase requests</strong>, <strong>Project</strong>) "
-                    + "then click <strong>?</strong> again for a detailed guide.</p>"
+                    "<p>Help content is not available right now. Check that module "
+                    + "<strong>SBU Context Help</strong> is installed, then refresh the page.</p>"
                 ),
                 sections: [],
             };
         }
-        this.dialog.add(
-            SbuHelpDialog,
-            { help },
-            {
-                title: help?.title || _t("Screen help"),
-                size: "lg",
-            }
-        );
+        const title = help?.title || _t("Screen help");
+        this.dialog.add(SbuHelpDialog, { help, title });
     }
 }
 

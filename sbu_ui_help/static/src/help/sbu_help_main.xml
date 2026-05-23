@@ -6,7 +6,7 @@
                 class="o_sbu_help_fab btn btn-primary rounded-circle shadow"
                 t-att-title="fabTitle"
                 t-att-aria-label="fabTitle"
-                t-on-click="openHelp">
+                t-on-click.stop="openHelp">
             <i class="fa fa-question" role="img"/>
         </button>
     </t>

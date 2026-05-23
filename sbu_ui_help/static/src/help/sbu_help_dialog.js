@@ -1,6 +1,7 @@
 /** @odoo-module **/
 
 import { _t } from "@web/core/l10n/translation";
+import { Dialog } from "@web/core/dialog/dialog";
 import { Component } from "@odoo/owl";
 
 const SECTION_LABELS = {
@@ -15,14 +16,21 @@ const SECTION_LABELS = {
 
 export class SbuHelpDialog extends Component {
     static template = "sbu_ui_help.SbuHelpDialog";
+    static components = { Dialog };
     static props = {
         close: Function,
-        help: { type: [Object, Boolean], optional: true },
-        loading: { type: Boolean, optional: true },
+        help: { type: Object, optional: true },
+        title: { type: String, optional: true },
     };
 
-    get title() {
-        return this.props.help?.title || _t("Screen help");
+    setup() {
+        if (this.env.dialogData) {
+            this.env.dialogData.dismiss = () => this.props.close();
+        }
+    }
+
+    get dialogTitle() {
+        return this.props.title || this.props.help?.title || _t("Screen help");
     }
 
     get groupedSections() {
@@ -54,5 +62,9 @@ export class SbuHelpDialog extends Component {
         return _t(
             "Use the fields and buttons on this form as usual. Contact your SBU administrator to extend this guide."
         );
+    }
+
+    onClose() {
+        this.props.close();
     }
 }
