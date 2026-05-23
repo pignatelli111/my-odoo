@@ -15,7 +15,8 @@
                 <field name="workflow_route" optional="show"/>
                 <field name="need_by_date" optional="show"/>
                 <field name="site_required_date" optional="hide"/>
-                <field name="topic" optional="hide"/>
+                <field name="excel_item" optional="show"/>
+                <field name="topic" optional="show"/>
                 <field name="project_id"/>
                 <field name="estimate_id" optional="hide"/>
                 <field name="vendor_id" optional="show"/>
@@ -53,8 +54,13 @@
                             type="object"
                             class="btn-secondary"
                             invisible="state == 'cancelled'"/>
+                    <button name="action_open_excel_import_wizard"
+                            string="Import from Excel"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="state == 'cancelled'"/>
                     <button name="action_start_technical_review" string="Avvia revisione tecnica" type="object" class="btn-secondary"
-                            invisible="state == 'cancelled' or technical_data_state != 'estimate_bom'"/>
+                            invisible="state == 'cancelled' or technical_data_state not in ('estimate_bom', 'excel_imported')"/>
                     <button name="action_mark_ready_for_po" string="Pronto per RFQ/PO" type="object" class="btn-primary"
                             invisible="state == 'cancelled' or technical_data_state == 'ready_for_po'"/>
                     <button name="action_apply_delivery_standards" string="Applica delivery standard" type="object"
@@ -68,6 +74,11 @@
                     <field name="state" widget="statusbar" statusbar_visible="draft,submitted,approved,done,cancelled"/>
                 </header>
                 <sheet>
+                    <div class="alert alert-info mb-0" role="alert" invisible="excel_item and topic">
+                        <strong>Item / Topic:</strong> use <em>Item (foglio Excel)</em> for the sheet code (LA01, PAN03…)
+                        and <em>Topic</em> for the façade or zone (e.g. north elevation). Required for LA/LZ/PAN routes
+                        when creating the document via the guided wizard.
+                    </div>
                     <div class="oe_button_box" name="button_box">
                         <button name="action_view_project" type="object" class="oe_stat_button" icon="fa-folder-open"
                                 invisible="not project_id">
@@ -95,7 +106,7 @@
                             <field name="topic"/>
                             <field name="technical_data_state" widget="badge"
                                    decoration-warning="technical_data_state == 'estimate_bom'"
-                                   decoration-info="technical_data_state == 'technical_review'"
+                                   decoration-info="technical_data_state in ('technical_review', 'excel_imported')"
                                    decoration-success="technical_data_state == 'ready_for_po'"/>
                         </group>
                         <group string="People &amp; dates">
@@ -147,7 +158,7 @@
                                     <field name="technical_confirmed" optional="show"
                                            decoration-warning="needs_technical_confirm and manual_input_pending and not technical_confirmed"/>
                                     <field name="data_phase" optional="hide"/>
-                                    <field name="utilization" optional="hide"/>
+                                    <field name="utilization" optional="show"/>
                                     <field name="weight_kg" optional="hide"/>
                                     <!-- Do not use source_bom_line_id in modifiers: Many2one is not a safe boolean in list views. -->
                                     <field name="qty_ordered" readonly="1" optional="show"/>
@@ -220,6 +231,8 @@
             <search>
                 <field name="name"/>
                 <field name="project_id"/>
+                <field name="excel_item"/>
+                <field name="topic"/>
                 <field name="request_type"/>
                 <field name="user_id"/>
                 <filter name="draft" string="Draft" domain="[('state','=','draft')]"/>
@@ -245,6 +258,8 @@
                 <separator/>
                 <filter name="tech_estimate" string="Data: estimate BOM"
                         domain="[('technical_data_state','=','estimate_bom')]"/>
+                <filter name="tech_excel" string="Data: Excel import"
+                        domain="[('technical_data_state','=','excel_imported')]"/>
                 <filter name="tech_review" string="Data: technical review"
                         domain="[('technical_data_state','=','technical_review')]"/>
                 <filter name="tech_ready" string="Data: ready for PO"

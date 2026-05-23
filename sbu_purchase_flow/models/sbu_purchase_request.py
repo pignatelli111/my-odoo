@@ -237,6 +237,7 @@ class SbuPurchaseRequest(models.Model):
     technical_data_state = fields.Selection(
         [
             ('estimate_bom', 'Stima da distinta ANACO'),
+            ('excel_imported', 'Righe da Excel tecnico'),
             ('technical_review', 'Revisione documento tecnico'),
             ('ready_for_po', 'Pronto per RFQ/PO'),
         ],
@@ -424,6 +425,17 @@ class SbuPurchaseRequest(models.Model):
         )
         return True
 
+    def action_open_excel_import_wizard(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Import lines from Excel'),
+            'res_model': 'sbu.purchase.request.excel.import.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_request_id': self.id},
+        }
+
     def action_bulk_update_lines(self):
         """Open bulk wizard for all lines on this request."""
         self.ensure_one()
@@ -502,6 +514,10 @@ class SbuPurchaseRequest(models.Model):
                     line_vals.update(bom._sbu_purchase_line_dimension_vals())
                 Line.create(line_vals)
                 created += 1
+        if created and not self.excel_item and route_filter:
+            self.excel_item = route_filter
+        if created and not self.topic and route_filter in ('LA', 'LZ', 'PAN', 'OSC', 'PRF', 'SE'):
+            self.topic = _('Route %s') % route_filter
         self.message_post(
             body=_('Loaded %(n)d demand line(s) from estimate BOM (loss %%, packs, MOQ).') % {'n': created}
         )

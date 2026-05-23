@@ -282,8 +282,8 @@ class SbuSalSheet(models.Model):
             return self.company_id.sbu_sal_invoice_post_default or 'draft'
         return self.invoice_post_override
 
-    def _sbu_sal_prepare_invoice_line_commands(self, income_account, fiscal_position):
-        """Gross + retention lines (taxes on gross) when retention > 0; else single gross (= net) line."""
+    def _sbu_sal_invoice_tax_and_analytic(self, income_account, fiscal_position):
+        """Shared taxes, mapped income account, and project analytic for invoice lines."""
         self.ensure_one()
         base_taxes = self.invoice_tax_ids or self.company_id.sbu_sal_default_tax_ids
         gross_account = income_account
@@ -292,13 +292,83 @@ class SbuSalSheet(models.Model):
             taxes = fiscal_position.map_tax(base_taxes)
         else:
             taxes = base_taxes
-
         analytic_kw = {}
         project = self.project_id
         aa = project.account_id if project else False
         if aa and 'analytic_distribution' in self.env['account.move.line']._fields:
             analytic_kw['analytic_distribution'] = {str(aa.id): 100.0}
+        return gross_account, taxes, analytic_kw
 
+    def _sbu_sal_append_retention_line(self, commands, fiscal_position, analytic_kw):
+        self.ensure_one()
+        ret_account = self.company_id.sbu_sal_retention_account_id
+        if self.amount_retention <= 0 or not ret_account:
+            return commands
+        ret_acc = fiscal_position.map_account(ret_account) if fiscal_position else ret_account
+        ret_line = {
+            'name': _('Retention (withholding) — %s') % self.name,
+            'quantity': 1.0,
+            'price_unit': -self.amount_retention,
+            'account_id': ret_acc.id,
+            'tax_ids': [fields.Command.clear()],
+            **analytic_kw,
+        }
+        commands.append(fields.Command.create(ret_line))
+        return commands
+
+    def _sbu_sal_prepare_invoice_line_commands(self, income_account, fiscal_position):
+        """One accounting line per contractual SAL row when sheet lines exist; else aggregate."""
+        self.ensure_one()
+        contractual = self.line_ids.filtered(lambda l: (l.amount_this_sal or 0.0) > 0)
+        if contractual:
+            return self._sbu_sal_prepare_invoice_line_commands_contractual(
+                income_account, fiscal_position,
+            )
+        return self._sbu_sal_prepare_invoice_line_commands_aggregate(
+            income_account, fiscal_position,
+        )
+
+    def _sbu_sal_prepare_invoice_line_commands_contractual(self, income_account, fiscal_position):
+        """Cosimo punto 13: invoice lines mirror each SAL contractual row (+ retention)."""
+        self.ensure_one()
+        gross_account, taxes, analytic_kw = self._sbu_sal_invoice_tax_and_analytic(
+            income_account, fiscal_position,
+        )
+        commands = []
+        for sal_line in self.line_ids.sorted('sequence'):
+            amount = sal_line.amount_this_sal or 0.0
+            if amount <= 0:
+                continue
+            qty = sal_line.qty_display or 1.0
+            price_unit = amount / qty if qty else amount
+            parts = []
+            if sal_line.item_ref:
+                parts.append('[%s]' % sal_line.item_ref)
+            if sal_line.description:
+                parts.append(sal_line.description)
+            if sal_line.uom_label:
+                parts.append('(%s)' % sal_line.uom_label)
+            name = ' '.join(parts) or _('SAL line')
+            commands.append(fields.Command.create({
+                'name': name,
+                'quantity': qty,
+                'price_unit': price_unit,
+                'account_id': gross_account.id,
+                'tax_ids': [fields.Command.set(taxes.ids)],
+                **analytic_kw,
+            }))
+        if not commands:
+            return self._sbu_sal_prepare_invoice_line_commands_aggregate(
+                income_account, fiscal_position,
+            )
+        return self._sbu_sal_append_retention_line(commands, fiscal_position, analytic_kw)
+
+    def _sbu_sal_prepare_invoice_line_commands_aggregate(self, income_account, fiscal_position):
+        """Legacy aggregate gross + retention when no per-line amounts."""
+        self.ensure_one()
+        gross_account, taxes, analytic_kw = self._sbu_sal_invoice_tax_and_analytic(
+            income_account, fiscal_position,
+        )
         commands = []
         ret_account = self.company_id.sbu_sal_retention_account_id
         if self.amount_retention > 0 and ret_account:
@@ -311,26 +381,16 @@ class SbuSalSheet(models.Model):
                 **analytic_kw,
             }
             commands.append(fields.Command.create(gross_line))
-            ret_acc = fiscal_position.map_account(ret_account) if fiscal_position else ret_account
-            ret_line = {
-                'name': _('Retention (withholding) — %s') % self.name,
-                'quantity': 1.0,
-                'price_unit': -self.amount_retention,
-                'account_id': ret_acc.id,
-                'tax_ids': [fields.Command.clear()],
-                **analytic_kw,
-            }
-            commands.append(fields.Command.create(ret_line))
-        else:
-            net_line = {
-                'name': _('SAL %s — progress billing') % self.name,
-                'quantity': 1.0,
-                'price_unit': self.amount_net,
-                'account_id': gross_account.id,
-                'tax_ids': [fields.Command.set(taxes.ids)],
-                **analytic_kw,
-            }
-            commands.append(fields.Command.create(net_line))
+            return self._sbu_sal_append_retention_line(commands, fiscal_position, analytic_kw)
+        net_line = {
+            'name': _('SAL %s — progress billing') % self.name,
+            'quantity': 1.0,
+            'price_unit': self.amount_net,
+            'account_id': gross_account.id,
+            'tax_ids': [fields.Command.set(taxes.ids)],
+            **analytic_kw,
+        }
+        commands.append(fields.Command.create(net_line))
         return commands
 
     def action_create_draft_invoice(self):

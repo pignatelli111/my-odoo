@@ -1,4 +1,5 @@
-from odoo import models, fields, api
+from odoo import _, api, fields, models
+from odoo.exceptions import UserError
 
 
 class ProjectProject(models.Model):
@@ -45,5 +46,23 @@ class ProjectProject(models.Model):
                 'default_project_id': self.id,
                 'default_company_id': self.company_id.id,
                 'default_subcontract_scope': 'posa',
+            },
+        }
+
+    def action_sbu_contractual_billing_overview(self):
+        """Cosimo punto 13: contractual SAL items with invoice/CDP links on the estimate."""
+        self.ensure_one()
+        estimate = self.sbu_estimate_id
+        if not estimate:
+            raise UserError(_('Link a won estimate to this project to open contractual billing.'))
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Contractual billing'),
+            'res_model': 'sbu.estimate.sal.line',
+            'view_mode': 'list,form',
+            'domain': [('estimate_id', '=', estimate.id)],
+            'context': {
+                'default_estimate_id': estimate.id,
+                'search_default_estimate_id': estimate.id,
             },
         }

@@ -171,3 +171,19 @@ class PurchaseOrderLine(models.Model):
         copy=False,
         help='L×H×P e mq copiati dalla RDA (Cosimo: visibili su RFQ/PO).',
     )
+    sbu_utilization = fields.Char(
+        string='Utilizzo',
+        copy=False,
+        help='UTILIZZO dalla riga RDA (montante, profili, …).',
+    )
+    sbu_manual_input_pending = fields.Boolean(
+        string='Needs manual entry',
+        related='sbu_pr_line_id.manual_input_pending',
+        store=True,
+        readonly=True,
+    )
+    sbu_manual_input_state = fields.Selection(
+        related='sbu_pr_line_id.manual_input_state',
+        store=True,
+        readonly=True,
+    )

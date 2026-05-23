@@ -77,6 +77,23 @@ class TestSbuBomDimensionRules(TransactionCase):
         self.assertAlmostEqual(bom.sqm_per_piece_effective, 3.45, places=3)
         self.assertAlmostEqual(bom.qty_theoretical, 17.25, places=3)
 
+    def test_create_applies_vetro_rule_without_explicit_factors(self):
+        """Rules must apply on create(), not only on product onchange."""
+        eline = self._line_with_dims(2000, 2500, qty=10.0)
+        product = self._ensure_product('SBU-VETRO', 'Vetro')
+        bom = self.env['sbu.estimate.bom.line'].create({
+            'estimate_id': eline.estimate_id.id,
+            'estimate_line_id': eline.id,
+            'product_id': product.id,
+            'calc_type': 'surface',
+            'dimension_source': 'surface',
+            'uom_id': product.uom_id.id,
+        })
+        self.env.flush_all()
+        bom.invalidate_recordset()
+        self.assertAlmostEqual(bom.sqm_coverage_factor, 0.9, places=4)
+        self.assertTrue(bom.needs_technical_confirm)
+
     def test_anaco_bom_generation_applies_vetro_rule(self):
         self._ensure_product('SBU-VETRO', 'Vetro')
         eline = self._line_with_dims(1000, 1000, qty=1.0, price_vetro_cad=500.0)

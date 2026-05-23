@@ -346,7 +346,7 @@ class SbuPurchaseRequestLine(models.Model):
 
     def _sbu_po_line_dimension_vals(self):
         self.ensure_one()
-        return {
+        vals = {
             'sbu_width_mm': self.width_mm,
             'sbu_height_mm': self.height_mm,
             'sbu_depth_mm': self.depth_mm,
@@ -354,6 +354,9 @@ class SbuPurchaseRequestLine(models.Model):
             'sbu_sqm_total': self.sqm_total,
             'sbu_dimension_summary': self.dimension_mm,
         }
+        if 'sbu_utilization' in self.env['purchase.order.line']._fields:
+            vals['sbu_utilization'] = self.utilization or False
+        return vals
 
     def _sbu_propagate_dimensions_to_po_lines(self):
         Pol = self.env['purchase.order.line']
@@ -367,7 +370,9 @@ class SbuPurchaseRequestLine(models.Model):
 
     def write(self, vals):
         res = super().write(vals)
-        dim_keys = {'width_mm', 'height_mm', 'depth_mm', 'sqm_per_piece', 'sqm_total'}
+        dim_keys = {
+            'width_mm', 'height_mm', 'depth_mm', 'sqm_per_piece', 'sqm_total', 'utilization',
+        }
         if dim_keys & set(vals.keys()):
             self._sbu_propagate_dimensions_to_po_lines()
         return res

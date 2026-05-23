@@ -204,9 +204,30 @@ class SbuEstimateBomLine(models.Model):
     # ── Notes ─────────────────────────────────────────────────────────────────
     note = fields.Char(string='Note / Utilizzo')
 
+    @api.model
+    def _sbu_vals_from_dimension_rule(self, product, estimate_line):
+        """Apply vetro 90% / zanzariere +300 mm rules on create (not only onchange)."""
+        if not product:
+            return {}
+        from .sbu_bom_dimension_rules import bom_rule_for_product_and_line
+        rule = bom_rule_for_product_and_line(product, estimate_line)
+        if not rule:
+            return {}
+        cov = rule.get('sqm_coverage_factor', 1.0)
+        return {
+            'calc_type': rule.get('calc_type'),
+            'dimension_source': rule.get('dimension_source'),
+            'sqm_coverage_factor': cov,
+            'qty_formula_factor': cov,
+            'height_adjust_mm': rule.get('height_adjust_mm', 0.0),
+            'needs_technical_confirm': rule.get('needs_technical_confirm', False),
+            'note': rule.get('note') or False,
+        }
+
     @api.model_create_multi
     def create(self, vals_list):
         Line = self.env['sbu.estimate.line']
+        Product = self.env['product.product']
         for vals in vals_list:
             eline = Line.browse(vals['estimate_line_id']) if vals.get('estimate_line_id') else Line
             if vals.get('estimate_line_id') and not vals.get('estimate_id'):
@@ -216,6 +237,11 @@ class SbuEstimateBomLine(models.Model):
                 if len(est.line_ids) == 1:
                     vals['estimate_line_id'] = est.line_ids.id
                     vals['estimate_id'] = est.id
+            product = Product.browse(vals['product_id']) if vals.get('product_id') else Product
+            rule_vals = self._sbu_vals_from_dimension_rule(product, eline)
+            for key, value in rule_vals.items():
+                if value is not False and key not in vals:
+                    vals[key] = value
         return super().create(vals_list)
 
     def write(self, vals):

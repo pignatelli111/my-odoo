@@ -52,6 +52,7 @@ class TestSbuPoLineDimensions(TransactionCase):
             'depth_mm': 50,
             'sqm_per_piece': 3.45,
             'sqm_total': 34.5,
+            'utilization': 'Montante',
         })
         self.env.flush_all()
         pr_line.invalidate_recordset(['dimension_mm'])
@@ -71,3 +72,7 @@ class TestSbuPoLineDimensions(TransactionCase):
         self.assertAlmostEqual(pol.sbu_sqm_per_piece, 3.45, places=3)
         self.assertAlmostEqual(pol.sbu_sqm_total, 34.5, places=3)
         self.assertIn('mq/cad', pol.sbu_dimension_summary or '')
+        self.assertEqual(pol.sbu_utilization, 'Montante')
+        pr_line.write({'utilization': 'Traverso'})
+        pol.invalidate_recordset()
+        self.assertEqual(pol.sbu_utilization, 'Traverso')

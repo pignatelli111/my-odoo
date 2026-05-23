@@ -550,3 +550,62 @@ class SbuQontoTransaction(models.Model):
             'suggested_payment_id': False,
             'suggested_invoice_id': False,
         })
+
+    def _sbu_payment_register_date(self):
+        self.ensure_one()
+        if self.settled_at:
+            return fields.Date.to_date(self.settled_at)
+        return fields.Date.context_today(self)
+
+    def action_register_invoice_payment(self):
+        """Create and post a customer payment for a matched/suggested invoice (Cosimo punto 10)."""
+        PaymentRegister = self.env['account.payment.register']
+        for rec in self.filtered(lambda t: t.state == 'imported'):
+            invoice = rec.match_invoice_id or rec.suggested_invoice_id
+            if not invoice:
+                raise UserError(
+                    _('Select or suggest a customer invoice before registering payment.')
+                )
+            if invoice.state != 'posted':
+                raise UserError(
+                    _('Invoice %s must be posted before registering payment.') % invoice.display_name
+                )
+            if float_compare(invoice.amount_residual, 0.0, precision_rounding=rec.currency_id.rounding) <= 0:
+                raise UserError(_('Invoice %s has no residual amount.') % invoice.display_name)
+            pay_amount = min(abs(rec.amount_signed), invoice.amount_residual)
+            ctx = {
+                'active_model': 'account.move',
+                'active_ids': invoice.ids,
+                'active_id': invoice.id,
+            }
+            wizard = PaymentRegister.with_context(**ctx).create({
+                'amount': pay_amount,
+                'payment_date': rec._sbu_payment_register_date(),
+            })
+            payments = wizard._create_payments()
+            payment = payments[:1]
+            rec.write({
+                'match_invoice_id': invoice.id,
+                'match_payment_id': payment.id if payment else False,
+                'state': 'matched',
+                'sbu_match_hint': _('Payment registered from Qonto movement.'),
+            })
+        if len(self) == 1:
+            payment = self.match_payment_id
+            if payment:
+                return {
+                    'type': 'ir.actions.act_window',
+                    'res_model': 'account.payment',
+                    'res_id': payment.id,
+                    'view_mode': 'form',
+                    'target': 'current',
+                }
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Qonto payment'),
+                'message': _('Registered payment(s) for %(n)s movement(s).') % {'n': len(self)},
+                'type': 'success',
+            },
+        }

@@ -28,13 +28,20 @@
                         invisible="not sbu_purchase_request_id"
                         title="Copia L/H/P e mq dalle righe RDA collegate (righe con riga RDA)."/>
             </xpath>
+            <xpath expr="//field[@name='order_line']/list" position="attributes">
+                <attribute name="decoration-success">sbu_manual_input_pending</attribute>
+                <attribute name="decoration-muted">sbu_manual_input_state == 'imported'</attribute>
+            </xpath>
             <xpath expr="//field[@name='order_line']//field[@name='product_qty']" position="before">
+                <field name="sbu_manual_input_pending" column_invisible="1"/>
+                <field name="sbu_manual_input_state" column_invisible="1"/>
                 <field name="sbu_dimension_summary" string="Dimensioni"/>
                 <field name="sbu_width_mm" string="L (mm)"/>
                 <field name="sbu_height_mm" string="H (mm)"/>
                 <field name="sbu_depth_mm" string="P (mm)"/>
                 <field name="sbu_sqm_per_piece" string="MQ/cad"/>
                 <field name="sbu_sqm_total" string="MQ tot."/>
+                <field name="sbu_utilization" string="Utilizzo"/>
             </xpath>
             <xpath expr="//field[@name='order_line']//field[@name='product_qty']" position="after">
                 <field name="sbu_pr_line_id" optional="show" readonly="1"/>

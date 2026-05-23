@@ -298,3 +298,28 @@ class ProjectProject(models.Model):
             'sbu_graph_item_id': graph_item_id,
         }
         return Attachment.create(vals)
+
+    def action_sbu_open_planner_board(self):
+        """Open the linked Microsoft Planner plan in the browser."""
+        self.ensure_one()
+        if not self.sbu_planner_plan_url:
+            raise UserError(
+                _('Set the Planner plan URL on the M365 collaboration tab before opening the board.')
+            )
+        return {
+            'type': 'ir.actions.act_url',
+            'url': self.sbu_planner_plan_url,
+            'target': 'new',
+        }
+
+    def action_sbu_import_planner_tasks_csv(self):
+        """Import a Planner CSV export as Odoo project tasks (internal checklist)."""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Import Planner tasks (CSV)'),
+            'res_model': 'sbu.planner.task.import.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_project_id': self.id},
+        }

@@ -56,6 +56,26 @@ class TestSbuInvoiceSalReport(TransactionCase):
         self.assertEqual(line.unit_price_display, 250.0)
         self.assertTrue(line.uom_label)
 
+    def test_invoice_has_per_contract_accounting_line(self):
+        """Cosimo punto 13: draft invoice lines follow contractual SAL rows."""
+        sheet, sal_contract = self._customer_sal_sheet()
+        journal = self.env['account.journal'].search([
+            ('type', '=', 'sale'),
+            ('company_id', '=', self.env.company.id),
+        ], limit=1)
+        if not journal or not journal.default_account_id:
+            self.skipTest('Sales journal with default account required')
+        if sheet.amount_retention > 0 and not self.env.company.sbu_sal_retention_account_id:
+            self.env.company.sbu_sal_retention_account_id = journal.default_account_id
+        sheet.action_confirm()
+        sheet.action_create_draft_invoice()
+        move = sheet.invoice_id
+        product_lines = move.invoice_line_ids.filtered(lambda l: not l.display_type)
+        self.assertGreaterEqual(len(product_lines), 2, product_lines.mapped('name'))
+        contract_lines = product_lines.filtered(lambda l: l.price_unit > 0)
+        self.assertTrue(contract_lines)
+        self.assertIn(sal_contract.item_ref, ' '.join(contract_lines.mapped('name')))
+
     def test_invoice_links_sal_sheet(self):
         sheet, _sal = self._customer_sal_sheet()
         journal = self.env['account.journal'].search([

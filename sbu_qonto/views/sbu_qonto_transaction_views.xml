@@ -39,6 +39,10 @@
                     <button name="action_apply_suggestion" string="Apply suggestion" type="object" class="btn-primary"
                             invisible="state != 'imported' or sbu_match_confidence == 'none'"/>
                     <button name="action_match_odoo" string="Match (high confidence)" type="object" class="btn-primary" invisible="state != 'imported'"/>
+                    <button name="action_register_invoice_payment" string="Register payment" type="object"
+                            class="btn-primary"
+                            invisible="state != 'imported' or (not suggested_invoice_id and not match_invoice_id)"
+                            groups="account.group_account_invoice"/>
                     <button name="action_ignore" string="Ignore" type="object" class="btn-secondary" invisible="state != 'imported'"/>
                     <field name="state" widget="statusbar" statusbar_visible="imported,matched,ignored"/>
                 </header>
@@ -71,9 +75,13 @@
                         <field name="suggested_payment_id"/>
                         <field name="suggested_invoice_id"/>
                     </group>
-                    <group string="Confirmed Odoo link (no bank reconciliation)">
+                    <group string="Confirmed Odoo link">
                         <field name="match_payment_id"/>
                         <field name="match_invoice_id"/>
+                        <div class="text-muted" colspan="2">
+                            Use <b>Register payment</b> to post a customer payment and reconcile the invoice residual.
+                            Bank journal reconciliation with Qonto remains a separate step in Accounting.
+                        </div>
                     </group>
                     <notebook>
                         <page string="Raw Qonto payload" name="raw">
@@ -94,7 +102,8 @@
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Import movements from Qonto (scheduled import or manual). Use <b>Suggest match</b> to find payments/invoices;
-                <b>Match (high confidence)</b> links only when the heuristic is strong. This does not reconcile the bank journal yet.
+                <b>Match (high confidence)</b> links only when the heuristic is strong.
+                <b>Register payment</b> creates and posts a customer payment for the suggested invoice.
             </p>
         </field>
     </record>

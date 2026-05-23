@@ -7,3 +7,4 @@ from . import test_sbu_field_labels
 from . import test_sbu_project_budget
 from . import test_sbu_pr_qty_residual
 from . import test_sbu_delivery_standard
+from . import test_sbu_pr_excel_import

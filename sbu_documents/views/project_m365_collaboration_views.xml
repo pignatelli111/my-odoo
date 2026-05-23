@@ -23,6 +23,11 @@
                         </group>
                         <group string="Planner and Outlook">
                             <field name="sbu_planner_plan_url" widget="url"/>
+                            <button name="action_sbu_open_planner_board" type="object"
+                                    string="Open Planner board" class="btn-link"
+                                    invisible="not sbu_planner_plan_url"/>
+                            <button name="action_sbu_import_planner_tasks_csv" type="object"
+                                    string="Import Planner CSV → Odoo tasks" class="btn-secondary"/>
                             <field name="sbu_outlook_calendar_url" widget="url"/>
                         </group>
                     </group>
