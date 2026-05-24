@@ -29,27 +29,27 @@ class SbuPurchaseRequestLine(models.Model):
     )
     name = fields.Char(string='Description', required=True)
     article_code = fields.Char(
-        string='Cod. articolo',
-        help='COD. ARTICOLO (Excel); se vuoto si può usare il codice prodotto Odoo.',
+        string='Item code',
+        help='Excel item code; if empty, product internal reference may be used.',
     )
-    width_mm = fields.Float(string='Larghezza L (mm)', digits=(16, 0))
-    height_mm = fields.Float(string='Altezza H (mm)', digits=(16, 0))
+    width_mm = fields.Float(string='Width L (mm)', digits=(16, 0))
+    height_mm = fields.Float(string='Height H (mm)', digits=(16, 0))
     depth_mm = fields.Float(
-        string='Profondità P (mm)',
+        string='Depth P (mm)',
         digits=(16, 0),
-        help='Profondità non unitaria (spessore / pacco / vetro stratificato, ecc.).',
+        help='Non-unit depth (thickness, pack, laminated glass, etc.).',
     )
-    sqm_per_piece = fields.Float(string='MQ/cad', digits=(16, 4))
-    sqm_total = fields.Float(string='MQ tot.', digits=(16, 4))
+    sqm_per_piece = fields.Float(string='Sqm/pc', digits=(16, 4))
+    sqm_total = fields.Float(string='Sqm total', digits=(16, 4))
     dimension_mm = fields.Char(
-        string='Dimensioni',
+        string='Dimensions',
         compute='_compute_dimension_mm',
         store=True,
         help='Riepilogo L×H×P + mq/cad + mq tot.',
     )
     data_phase = fields.Selection(
         related='source_bom_line_id.data_phase',
-        string='Fase dati',
+        string='Data phase',
         readonly=True,
     )
     needs_technical_confirm = fields.Boolean(
@@ -76,10 +76,10 @@ class SbuPurchaseRequestLine(models.Model):
         readonly=True,
     )
     utilization = fields.Char(
-        string='Utilizzo',
-        help='UTILIZZO (montante, profili, …).',
+        string='Utilization',
+        help='Utilization (mullion, profiles, …).',
     )
-    weight_kg = fields.Float(string='Peso Kg', digits=(16, 3))
+    weight_kg = fields.Float(string='Weight kg', digits=(16, 3))
     product_id = fields.Many2one('product.product', string='Product')
     product_qty = fields.Float(
         string='Qty requested',
@@ -124,20 +124,20 @@ class SbuPurchaseRequestLine(models.Model):
         help='Spiega arrotondamenti distinta (es. 1 × 1,03 = 1,03 per +3%% perdita).',
     )
     date_required = fields.Date(
-        string='Data consegna',
-        help='DATA CONSEGNA richiesta (template RDA).',
+        string='Required delivery date',
+        help='Required delivery date (RDA template).',
     )
     destination = fields.Char(
-        string='Destinazione',
-        help='DESTINATION / DESTINAZIONE (es. lavorazione conto terzi).',
+        string='Destination',
+        help='Delivery destination (e.g. subcontract processing).',
     )
     procurement_mode = fields.Selection(
         [
-            ('purchase', 'Acquisto'),
-            ('warehouse', 'Magazzino'),
+            ('purchase', 'Purchase'),
+            ('warehouse', 'Warehouse'),
         ],
-        string='Approvvigionamento',
-        help='MAGAZZINO vs ACQUISTO come ultima colonna del template RDA.',
+        string='Procurement',
+        help='Warehouse vs purchase (RDA template last column).',
     )
     note = fields.Char(string='Notes')
     line_priority = fields.Selection(
@@ -147,7 +147,7 @@ class SbuPurchaseRequestLine(models.Model):
             ('2', 'High'),
             ('3', 'Critical'),
         ],
-        string='Priorità riga',
+        string='Line priority',
         default='0',
         required=True,
         help='Line-level priority (defaults from request when exploding BOM).',
@@ -156,7 +156,7 @@ class SbuPurchaseRequestLine(models.Model):
     # ── Single BOM truth (Phase 3.1) ───────────────────────────────────────────
     source_bom_line_id = fields.Many2one(
         'sbu.estimate.bom.line',
-        string='Distinta preventivo',
+        string='Estimate BOM line',
         ondelete='set null',
         index=True,
         domain=lambda self: sbu_domain_same_estimate(
@@ -249,7 +249,7 @@ class SbuPurchaseRequestLine(models.Model):
             theoretical = bom.qty_theoretical or 0.0
             loss = bom.demand_loss_pct if bom.demand_loss_pct else (req.demand_loss_pct or 0.0)
             if float_is_zero(theoretical, precision_digits=3):
-                line.qty_demand_hint = _('Da distinta')
+                line.qty_demand_hint = _('From BOM')
                 continue
             if loss:
                 line.qty_demand_hint = _(
@@ -260,7 +260,7 @@ class SbuPurchaseRequestLine(models.Model):
                     'qty': line.product_qty,
                 }
             else:
-                line.qty_demand_hint = _('Teorico distinta: %(theo)s → richiesta %(qty)s') % {
+                line.qty_demand_hint = _('BOM theoretical: %(theo)s → requested %(qty)s') % {
                     'theo': theoretical,
                     'qty': line.product_qty,
                 }
@@ -421,7 +421,7 @@ class SbuPurchaseRequestLine(models.Model):
             est = line.request_id.estimate_id
             if est and bom.estimate_line_id.estimate_id != est:
                 raise ValidationError(
-                    _('La riga distinta collegata non appartiene al preventivo della commessa (%s).')
+                    _('Linked BOM line does not belong to the job estimate (%s).')
                     % (est.display_name,)
                 )
             dup = self.search_count([
@@ -431,7 +431,7 @@ class SbuPurchaseRequestLine(models.Model):
             ])
             if dup:
                 raise ValidationError(
-                    _('Ogni riga distinta può essere collegata una sola volta per richiesta (duplicato: %s).')
+                    _('Each BOM line can be linked only once per request (duplicate: %s).')
                     % (line.source_bom_line_id.display_name,)
                 )
 

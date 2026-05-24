@@ -46,7 +46,7 @@ class SbuPurchaseRequestLineBulkWizard(models.TransientModel):
 
     apply_procurement_mode = fields.Boolean(string='Apply procurement mode')
     procurement_mode = fields.Selection(
-        [('purchase', 'Acquisto'), ('warehouse', 'Magazzino')],
+        [('purchase', 'Purchase'), ('warehouse', 'Warehouse')],
         string='Procurement',
     )
 
@@ -58,7 +58,7 @@ class SbuPurchaseRequestLineBulkWizard(models.TransientModel):
             ('2', 'High'),
             ('3', 'Critical'),
         ],
-        string='Priorità riga',
+        string='Line priority',
         default='0',
     )
 

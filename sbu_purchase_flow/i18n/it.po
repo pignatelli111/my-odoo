@@ -64,3 +64,163 @@ msgstr "Righe richiesta (modifica massiva)"
 #: model:ir.ui.menu,name:sbu_purchase_flow.menu_sbu_project_budget_family
 msgid "Budget by family"
 msgstr "Budget per famiglia"
+
+#. module: sbu_purchase_flow
+#: model_terms:ir.ui.view,arch_db:sbu_purchase_flow.view_sbu_purchase_request_form
+msgid "Start technical review"
+msgstr "Avvia revisione tecnica"
+
+#. module: sbu_purchase_flow
+#: model_terms:ir.ui.view,arch_db:sbu_purchase_flow.view_sbu_purchase_request_form
+msgid "Ready for RFQ/PO"
+msgstr "Pronto per RFQ/PO"
+
+#. module: sbu_purchase_flow
+#: model_terms:ir.ui.view,arch_db:sbu_purchase_flow.view_sbu_purchase_request_form
+msgid "Apply delivery standard"
+msgstr "Applica delivery standard"
+
+#. module: sbu_purchase_flow
+#: model:ir.model.fields,field_description:sbu_purchase_flow.field_sbu_purchase_request__excel_item
+msgid "Item (Excel sheet)"
+msgstr "Item (foglio Excel)"
+
+#. module: sbu_purchase_flow
+#: model:ir.model.fields,field_description:sbu_purchase_flow.field_sbu_purchase_request__topic
+msgid "Topic"
+msgstr "Argomento"
+
+#. module: sbu_purchase_flow
+#: model:ir.model.fields,field_description:sbu_purchase_flow.field_sbu_purchase_request__drawn_by
+msgid "Drawn by"
+msgstr "Redatto da"
+
+#. module: sbu_purchase_flow
+#: model:ir.model.fields,field_description:sbu_purchase_flow.field_sbu_purchase_request__check_by
+msgid "Checked by"
+msgstr "Verificato da"
+
+#. module: sbu_purchase_flow
+#: model:ir.model.fields,field_description:sbu_purchase_flow.field_sbu_purchase_request__technical_data_state
+msgid "Technical data"
+msgstr "Dati tecnici"
+
+#. module: sbu_purchase_flow
+#: model:ir.model.fields.selection,name:sbu_purchase_flow.selection__sbu_purchase_request__technical_data_state__estimate_bom
+msgid "From estimate BOM"
+msgstr "Stima da distinta ANACO"
+
+#. module: sbu_purchase_flow
+#: model:ir.model.fields.selection,name:sbu_purchase_flow.selection__sbu_purchase_request__technical_data_state__excel_imported
+msgid "From technical Excel"
+msgstr "Righe da Excel tecnico"
+
+#. module: sbu_purchase_flow
+#: model:ir.model.fields.selection,name:sbu_purchase_flow.selection__sbu_purchase_request__technical_data_state__technical_review
+msgid "Technical document review"
+msgstr "Revisione documento tecnico"
+
+#. module: sbu_purchase_flow
+#: model:ir.model.fields.selection,name:sbu_purchase_flow.selection__sbu_purchase_request__technical_data_state__ready_for_po
+msgid "Ready for RFQ/PO"
+msgstr "Pronto per RFQ/PO"
+
+#. module: sbu_purchase_flow
+#: model:ir.model.fields,field_description:sbu_purchase_flow.field_sbu_purchase_request__priority
+msgid "Header priority"
+msgstr "Priorità testata"
+
+#. module: sbu_purchase_flow
+#: model:ir.model.fields,field_description:sbu_purchase_flow.field_sbu_purchase_request_line__article_code
+msgid "Item code"
+msgstr "Cod. articolo"
+
+#. module: sbu_purchase_flow
+#: model:ir.model.fields,field_description:sbu_purchase_flow.field_sbu_purchase_request_line__width_mm
+msgid "Width L (mm)"
+msgstr "Larghezza L (mm)"
+
+#. module: sbu_purchase_flow
+#: model:ir.model.fields,field_description:sbu_purchase_flow.field_sbu_purchase_request_line__height_mm
+msgid "Height H (mm)"
+msgstr "Altezza H (mm)"
+
+#. module: sbu_purchase_flow
+#: model:ir.model.fields,field_description:sbu_purchase_flow.field_sbu_purchase_request_line__depth_mm
+msgid "Depth P (mm)"
+msgstr "Profondità P (mm)"
+
+#. module: sbu_purchase_flow
+#: model:ir.model.fields,field_description:sbu_purchase_flow.field_sbu_purchase_request_line__sqm_per_piece
+msgid "Sqm/pc"
+msgstr "MQ/cad"
+
+#. module: sbu_purchase_flow
+#: model:ir.model.fields,field_description:sbu_purchase_flow.field_sbu_purchase_request_line__sqm_total
+msgid "Sqm total"
+msgstr "MQ tot."
+
+#. module: sbu_purchase_flow
+#: model:ir.model.fields,field_description:sbu_purchase_flow.field_sbu_purchase_request_line__dimension_mm
+msgid "Dimensions"
+msgstr "Dimensioni"
+
+#. module: sbu_purchase_flow
+#: model:ir.model.fields,field_description:sbu_purchase_flow.field_sbu_purchase_request_line__date_required
+msgid "Required delivery date"
+msgstr "Data consegna"
+
+#. module: sbu_purchase_flow
+#: model:ir.model.fields,field_description:sbu_purchase_flow.field_sbu_purchase_request_line__destination
+msgid "Destination"
+msgstr "Destinazione"
+
+#. module: sbu_purchase_flow
+#: model:ir.model.fields,field_description:sbu_purchase_flow.field_sbu_purchase_request_line__procurement_mode
+msgid "Procurement"
+msgstr "Approvvigionamento"
+
+#. module: sbu_purchase_flow
+#: model:ir.model.fields.selection,name:sbu_purchase_flow.selection__sbu_purchase_request_line__procurement_mode__purchase
+msgid "Purchase"
+msgstr "Acquisto"
+
+#. module: sbu_purchase_flow
+#: model:ir.model.fields.selection,name:sbu_purchase_flow.selection__sbu_purchase_request_line__procurement_mode__warehouse
+msgid "Warehouse"
+msgstr "Magazzino"
+
+#. module: sbu_purchase_flow
+#: model:ir.model.fields,field_description:sbu_purchase_flow.field_sbu_purchase_request_line__line_priority
+msgid "Line priority"
+msgstr "Priorità riga"
+
+#. module: sbu_purchase_flow
+#: model:ir.model.fields,field_description:sbu_purchase_flow.field_sbu_purchase_request_line__source_bom_line_id
+msgid "Estimate BOM line"
+msgstr "Distinta preventivo"
+
+#. module: sbu_purchase_flow
+#: model_terms:ir.ui.view,arch_db:sbu_purchase_flow.view_sbu_purchase_request_list
+msgid "Document"
+msgstr "Documento"
+
+#. module: sbu_purchase_flow
+#: model_terms:ir.ui.view,arch_db:sbu_purchase_flow.view_sbu_purchase_request_form
+msgid "Qty requested"
+msgstr "Qtà richiesta"
+
+#. module: sbu_purchase_flow
+#: model_terms:ir.ui.view,arch_db:sbu_purchase_flow.view_sbu_purchase_request_search
+msgid "Screens"
+msgstr "Zanzariere"
+
+#. module: sbu_purchase_flow
+#: model_terms:ir.ui.view,arch_db:sbu_purchase_flow.view_sbu_purchase_request_search
+msgid "Document type"
+msgstr "Tipo Odoo"
+
+#. module: sbu_purchase_flow
+#: model_terms:ir.ui.view,arch_db:sbu_purchase_flow.view_sbu_purchase_request_search
+msgid "Project / Job"
+msgstr "Commessa"

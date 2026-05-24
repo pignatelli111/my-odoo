@@ -20,13 +20,13 @@
                 <field name="width_mm" string="L (mm)"/>
                 <field name="height_mm" string="H (mm)"/>
                 <field name="depth_mm" string="P (mm)"/>
-                <field name="sqm_per_piece" string="MQ/cad"/>
-                <field name="sqm_total" string="MQ tot."/>
-                <field name="dimension_mm" string="Dimensioni"/>
+                <field name="sqm_per_piece" string="Sqm/pc"/>
+                <field name="sqm_total" string="Sqm total"/>
+                <field name="dimension_mm" string="Dimensions"/>
                 <field name="qty_ordered" optional="show"/>
                 <field name="qty_remaining" optional="show"/>
-                <field name="product_qty" string="Qtà richiesta"/>
-                <field name="product_uom" string="U.M." optional="show"/>
+                <field name="product_qty" string="Qty requested"/>
+                <field name="product_uom" string="UoM" optional="show"/>
                 <field name="date_required" optional="show"/>
                 <field name="destination" optional="show"/>
                 <field name="procurement_mode" optional="show"/>
@@ -53,64 +53,64 @@
                 <field name="workflow_route"/>
                 <field name="destination"/>
                 <separator/>
-                <filter name="no_delivery_date" string="Senza data consegna"
+                <filter name="no_delivery_date" string="No delivery date"
                         domain="[('date_required', '=', False)]"/>
-                <filter name="has_delivery_date" string="Con data consegna"
+                <filter name="has_delivery_date" string="With delivery date"
                         domain="[('date_required', '!=', False)]"/>
-                <filter name="date_required_period" string="Data consegna" date="date_required"/>
+                <filter name="date_required_period" string="Delivery date" date="date_required"/>
                 <separator/>
-                <filter name="pending_technical" string="In attesa conferma tecnica"
+                <filter name="pending_technical" string="Pending technical confirm"
                         domain="[('needs_technical_confirm', '=', True), ('technical_confirmed', '=', False)]"/>
-                <filter name="manual_input_pending" string="Compilazione manuale (verde)"
+                <filter name="manual_input_pending" string="Manual entry pending (green)"
                         domain="[('manual_input_pending', '=', True)]"/>
-                <filter name="manual_input_imported" string="Da import / Logikal (grigio)"
+                <filter name="manual_input_imported" string="From import / Logikal (grey)"
                         domain="[('manual_input_state', '=', 'imported')]"/>
-                <filter name="procurement_purchase" string="Approvv.: acquisto"
+                <filter name="procurement_purchase" string="Procurement: purchase"
                         domain="[('procurement_mode', '=', 'purchase')]"/>
-                <filter name="procurement_wh" string="Approvv.: magazzino"
+                <filter name="procurement_wh" string="Procurement: warehouse"
                         domain="[('procurement_mode', '=', 'warehouse')]"/>
-                <filter name="has_qty_remaining" string="Con residuo da ordinare"
+                <filter name="has_qty_remaining" string="Qty remaining to order"
                         domain="[('qty_remaining', '&gt;', 0)]"/>
-                <filter name="fully_ordered" string="Completamente su RFQ/PO"
+                <filter name="fully_ordered" string="Fully on RFQ/PO"
                         domain="[('qty_fully_ordered', '=', True)]"/>
-                <filter name="prio_high" string="Priorità alta/critica"
+                <filter name="prio_high" string="High / critical priority"
                         domain="[('line_priority', 'in', ('2', '3'))]"/>
                 <separator/>
                 <filter name="type_rda" string="RDA" domain="[('request_type', '=', 'rda')]"/>
                 <filter name="type_aco" string="ACO" domain="[('request_type', '=', 'aco')]"/>
                 <filter name="type_acp" string="ACP" domain="[('request_type', '=', 'acp')]"/>
-                <filter name="type_vt" string="VT / Vetro" domain="[('request_type', '=', 'vt')]"/>
+                <filter name="type_vt" string="VT / Glass" domain="[('request_type', '=', 'vt')]"/>
                 <filter name="type_st" string="ST" domain="[('request_type', '=', 'st')]"/>
-                <filter name="type_fe" string="FE / Carpenteria" domain="[('request_type', '=', 'fe')]"/>
+                <filter name="type_fe" string="FE / Steel workshop" domain="[('request_type', '=', 'fe')]"/>
                 <separator/>
                 <filter name="route_la" string="LA" domain="[('workflow_route', '=', 'LA')]"/>
                 <filter name="route_lz" string="LZ" domain="[('workflow_route', '=', 'LZ')]"/>
                 <filter name="route_st" string="ST" domain="[('workflow_route', '=', 'ST')]"/>
                 <filter name="route_pan" string="PAN" domain="[('workflow_route', '=', 'PAN')]"/>
                 <filter name="route_osc" string="OSC" domain="[('workflow_route', '=', 'OSC')]"/>
-                <filter name="route_zanz" string="Zanzariere" domain="[('workflow_route', '=', 'ZANZ')]"/>
+                <filter name="route_zanz" string="Screens" domain="[('workflow_route', '=', 'ZANZ')]"/>
                 <filter name="route_vt" string="VT / VC-VS" domain="[('workflow_route', '=', 'VC/VS')]"/>
                 <separator/>
-                <filter name="tech_estimate" string="Dati: stima distinta"
+                <filter name="tech_estimate" string="Data: estimate BOM"
                         domain="[('technical_data_state', '=', 'estimate_bom')]"/>
-                <filter name="tech_review" string="Dati: revisione tecnica"
+                <filter name="tech_review" string="Data: technical review"
                         domain="[('technical_data_state', '=', 'technical_review')]"/>
-                <filter name="tech_ready" string="Dati: pronto per PO"
+                <filter name="tech_ready" string="Data: ready for PO"
                         domain="[('technical_data_state', '=', 'ready_for_po')]"/>
                 <separator/>
-                <filter string="Raggruppa per RDA" name="grp_request" context="{'group_by': 'request_id'}"/>
-                <filter string="Raggruppa per commessa" name="grp_project" context="{'group_by': 'project_id'}"/>
-                <filter string="Raggruppa per tipo" name="grp_type" context="{'group_by': 'request_type'}"/>
-                <filter string="Raggruppa per prodotto" name="grp_product" context="{'group_by': 'product_id'}"/>
-                <filter string="Raggruppa per data consegna" name="grp_date" context="{'group_by': 'date_required'}"/>
-                <filter string="Raggruppa per priorità" name="grp_prio" context="{'group_by': 'line_priority'}"/>
+                <filter string="Group by request" name="grp_request" context="{'group_by': 'request_id'}"/>
+                <filter string="Group by project" name="grp_project" context="{'group_by': 'project_id'}"/>
+                <filter string="Group by type" name="grp_type" context="{'group_by': 'request_type'}"/>
+                <filter string="Group by product" name="grp_product" context="{'group_by': 'product_id'}"/>
+                <filter string="Group by delivery date" name="grp_date" context="{'group_by': 'date_required'}"/>
+                <filter string="Group by priority" name="grp_prio" context="{'group_by': 'line_priority'}"/>
                 <searchpanel>
                     <field name="workflow_route" string="Route (LA/LZ/ST/PAN/OSC)" enable_counters="1"/>
-                    <field name="request_type" string="Tipo Odoo" enable_counters="1"/>
-                    <field name="procurement_mode" string="Approvvigionamento" enable_counters="1"/>
-                    <field name="line_priority" string="Priorità riga" enable_counters="1"/>
-                    <field name="technical_data_state" string="Dati tecnici" enable_counters="1"/>
-                    <field name="project_id" string="Commessa" enable_counters="1" limit="40"/>
+                    <field name="request_type" string="Document type" enable_counters="1"/>
+                    <field name="procurement_mode" string="Procurement" enable_counters="1"/>
+                    <field name="line_priority" string="Line priority" enable_counters="1"/>
+                    <field name="technical_data_state" string="Technical data" enable_counters="1"/>
+                    <field name="project_id" string="Project / Job" enable_counters="1" limit="40"/>
                 </searchpanel>
             </search>
         </field>
@@ -122,9 +122,9 @@
         <field name="view_mode">list</field>
         <field name="search_view_id" ref="view_sbu_purchase_request_line_search"/>
         <field name="help" type="html">
-            <p>Usa i <b>filtri a sinistra</b> (tipo RDA, priorità, data consegna, …), poi
-               <b>Azione → Applica al risultato filtrato</b> per impostare data, destinazione,
-               magazzino/acquisto e priorità su tutte le righe del filtro (senza selezionarle una a una).</p>
+            <p>Use the <b>left filters</b> (request type, priority, delivery date, …), then
+               <b>Action → Apply to filtered result</b> to set date, destination,
+               warehouse/purchase and priority on all filtered lines (without selecting them one by one).</p>
         </field>
     </record>
 </odoo>

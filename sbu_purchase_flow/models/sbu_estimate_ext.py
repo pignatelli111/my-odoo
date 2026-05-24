@@ -15,6 +15,6 @@ class SbuEstimate(models.Model):
             )
         if not self.project_id:
             raise UserError(
-                _('Create the project (commessa) from this estimate first.')
+                _('Create the project (job) from this estimate first.')
             )
         return self.project_id.action_sbu_create_purchase_requests_by_workflow()

@@ -7,7 +7,7 @@ class SbuPurchaseRequestLine(models.Model):
 
     request_type = fields.Selection(
         related='request_id.request_type',
-        string='Tipo Odoo',
+        string='Document type',
         store=True,
         readonly=True,
     )
@@ -25,7 +25,7 @@ class SbuPurchaseRequestLine(models.Model):
     )
     technical_data_state = fields.Selection(
         related='request_id.technical_data_state',
-        string='Dati tecnici testata',
+        string='Header technical data',
         store=True,
         readonly=True,
     )

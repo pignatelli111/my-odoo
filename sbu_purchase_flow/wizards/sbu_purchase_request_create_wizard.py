@@ -15,15 +15,15 @@ class SbuPurchaseRequestCreateWizard(models.TransientModel):
 
     project_id = fields.Many2one(
         'project.project',
-        string='Commessa',
+        string='Project / Job',
         required=True,
         ondelete='cascade',
     )
     workflow_route = fields.Selection(
         selection=SBU_WIZARD_ROUTE_SELECTION,
-        string='Tipo documento / route',
+        string='Document route',
         required=True,
-        help='Elenco chiuso allineato ai template tecnici (LA, LZ, ST, PAN, OSC, …).',
+        help='Closed list aligned with technical templates (LA, LZ, ST, PAN, OSC, …).',
     )
     request_type = fields.Selection(
         selection=[
@@ -34,31 +34,31 @@ class SbuPurchaseRequestCreateWizard(models.TransientModel):
             ('fe', 'FE'),
             ('st', 'ST'),
             ('vt', 'VT'),
-            ('other', 'Altro'),
+            ('other', 'Other'),
         ],
-        string='Tipo Odoo',
+        string='Odoo document type',
         compute='_compute_request_type',
         readonly=True,
     )
     load_from_estimate = fields.Boolean(
-        string='Carica righe da distinta preventivo',
+        string='Load lines from estimate BOM',
         default=True,
-        help='Se la commessa ha un preventivo vinto, importa le righe BOM per questa route.',
+        help='If the job has a won estimate, import BOM lines for this route.',
     )
-    need_by_date = fields.Date(string='Data fabbisogno')
-    topic = fields.Char(string='Topic / Argomento')
+    need_by_date = fields.Date(string='Need-by date')
+    topic = fields.Char(string='Topic')
     excel_item = fields.Char(
         string='Item template',
-        help='Codice voce Excel (es. LA01, PAN02) per tracciabilità.',
+        help='Excel item code (e.g. LA01, PAN02) for traceability.',
     )
     priority = fields.Selection(
         [
-            ('0', 'Normale'),
-            ('1', 'Media'),
-            ('2', 'Alta'),
-            ('3', 'Critica'),
+            ('0', 'Normal'),
+            ('1', 'Medium'),
+            ('2', 'High'),
+            ('3', 'Critical'),
         ],
-        string='Priorità',
+        string='Priority',
         default='0',
         required=True,
     )
@@ -83,23 +83,23 @@ class SbuPurchaseRequestCreateWizard(models.TransientModel):
         rules = ROUTE_WIZARD_REQUIRES.get(self.workflow_route or '', {})
         if rules.get('topic') and not (self.topic or '').strip():
             raise UserError(
-                _('Per la route %s è obbligatorio il campo Topic / argomento.')
+                _('Route %s requires the Topic field.')
                 % self.workflow_route,
             )
         if rules.get('need_by') and not self.need_by_date:
             raise UserError(
-                _('Per la route %s è obbligatoria la data fabbisogno.')
+                _('Route %s requires the need-by date.')
                 % self.workflow_route,
             )
         est = self.project_id.sbu_estimate_id
         if self.load_from_estimate:
             if not est:
                 raise UserError(
-                    _('Impostare il preventivo vinto sulla commessa prima di caricare righe da distinta.'),
+                    _('Set the won estimate on the job before loading lines from BOM.'),
                 )
             if est.state != 'won':
                 raise UserError(
-                    _('Il preventivo collegato deve essere in stato «Vinto» (attuale: %s).')
+                    _('Linked estimate must be in Won state (current: %s).')
                     % (est.state,)
                 )
 
@@ -113,8 +113,8 @@ class SbuPurchaseRequestCreateWizard(models.TransientModel):
         ])
         if duplicate:
             raise UserError(
-                _('Esiste già un documento aperto per commessa %s e route %s. '
-                  'Usare quello esistente o annullarlo prima di crearne uno nuovo.')
+                _('An open document already exists for job %s and route %s. '
+                  'Use the existing one or cancel it before creating a new one.')
                 % (self.project_id.display_name, self.workflow_route),
             )
 
@@ -134,7 +134,7 @@ class SbuPurchaseRequestCreateWizard(models.TransientModel):
             pr._load_lines_from_estimate_bom(clear=True, workflow_route=self.workflow_route)
         return {
             'type': 'ir.actions.act_window',
-            'name': _('Documento acquisto'),
+            'name': _('Purchase document'),
             'res_model': 'sbu.purchase.request',
             'res_id': pr.id,
             'view_mode': 'form',

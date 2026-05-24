@@ -27,7 +27,7 @@ Su Odoo.sh, dopo build verde:
 ```bash
 cd ~/src/user
 # Aggiorna i moduli che contengono le traduzioni
-odoo-update sbu_estimate,sbu_project,sbu_purchase_flow,sbu_sal,sbu_closure,sbu_logikal
+odoo-update sbu_estimate,sbu_purchase_flow,sbu_project,sbu_sal,sbu_closure,sbu_logikal
 ```
 
 Poi nel browser: **Ctrl+F5** o logout/login.

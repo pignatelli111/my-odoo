@@ -19,10 +19,10 @@ class PurchaseOrder(models.Model):
         help='Purchase request this RFQ/PO was generated from (SBU traceability).',
     )
     sbu_budget_reference = fields.Monetary(
-        string='Preventivo cost reference',
+        string='Estimate cost reference',
         compute='_compute_sbu_budget_alert',
         currency_field='currency_id',
-        help='Distinta BOM cost on linked preventivo, else total estimated cost.',
+        help='BOM cost on linked estimate, else total estimated cost.',
     )
     sbu_budget_variance_pct = fields.Float(
         string='Over budget %',
@@ -166,15 +166,15 @@ class PurchaseOrderLine(models.Model):
     sbu_width_mm = fields.Float(string='L (mm)', digits=(16, 0), copy=False)
     sbu_height_mm = fields.Float(string='H (mm)', digits=(16, 0), copy=False)
     sbu_depth_mm = fields.Float(string='P (mm)', digits=(16, 0), copy=False)
-    sbu_sqm_per_piece = fields.Float(string='MQ/cad', digits=(16, 4), copy=False)
-    sbu_sqm_total = fields.Float(string='MQ tot.', digits=(16, 4), copy=False)
+    sbu_sqm_per_piece = fields.Float(string='Sqm/pc', digits=(16, 4), copy=False)
+    sbu_sqm_total = fields.Float(string='Sqm total', digits=(16, 4), copy=False)
     sbu_dimension_summary = fields.Char(
-        string='Dimensioni',
+        string='Dimensions',
         copy=False,
         help='L×H×P e mq copiati dalla RDA (Cosimo: visibili su RFQ/PO).',
     )
     sbu_utilization = fields.Char(
-        string='Utilizzo',
+        string='Utilization',
         copy=False,
         help='UTILIZZO dalla riga RDA (montante, profili, …).',
     )

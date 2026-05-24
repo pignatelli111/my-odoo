@@ -33,8 +33,8 @@ class SbuPurchaseRequest(models.Model):
         string='Route ANACO',
         index=True,
         tracking=True,
-        help='Codice ANACO (LA, LZ, ST, PAN, OSC, VC/VS, …). Usare il wizard «Nuovo documento» '
-             'per evitare tipi incoerenti.',
+        help='ANACO route code (LA, LZ, ST, PAN, OSC, VC/VS, …). Use «New purchase document» wizard '
+             'to avoid inconsistent types.',
     )
     request_type = fields.Selection(
         selection=[
@@ -59,7 +59,7 @@ class SbuPurchaseRequest(models.Model):
             ('2', 'High'),
             ('3', 'Critical'),
         ],
-        string='Priorità testata',
+        string='Header priority',
         default='0',
         required=True,
         tracking=True,
@@ -147,20 +147,20 @@ class SbuPurchaseRequest(models.Model):
     )
     # Header fields aligned with RDA/ACP/ACO Excel templates (row «Project», signatures, topic)
     excel_item = fields.Char(
-        string='Item (foglio Excel)',
-        help='Colonna «item» del modello RDA (es. FT, LA01).',
+        string='Item (Excel sheet)',
+        help='Excel template item column (e.g. FT, LA01).',
     )
     topic = fields.Char(
-        string='Topic / Argomento',
-        help='TOPIC / ARGOMENTO come nel template RDA.',
+        string='Topic',
+        help='Topic / subject as on the RDA template (façade, zone, etc.).',
     )
     drawn_by = fields.Char(
-        string='Redatto da',
-        help='Drawn by / Redatto da (come scheda RDA o SOTTOMISSIONE).',
+        string='Drawn by',
+        help='Drawn by (RDA / submission sheet).',
     )
     check_by = fields.Char(
-        string='Verificato da',
-        help='Check by / Verificato da.',
+        string='Checked by',
+        help='Checked by (RDA / submission sheet).',
     )
     state = fields.Selection(
         [
@@ -236,15 +236,15 @@ class SbuPurchaseRequest(models.Model):
     )
     technical_data_state = fields.Selection(
         [
-            ('estimate_bom', 'Stima da distinta ANACO'),
-            ('excel_imported', 'Righe da Excel tecnico'),
-            ('technical_review', 'Revisione documento tecnico'),
-            ('ready_for_po', 'Pronto per RFQ/PO'),
+            ('estimate_bom', 'From estimate BOM'),
+            ('excel_imported', 'From technical Excel'),
+            ('technical_review', 'Technical document review'),
+            ('ready_for_po', 'Ready for RFQ/PO'),
         ],
-        string='Dati tecnici',
+        string='Technical data',
         default='estimate_bom',
         tracking=True,
-        help='ANACO/distinta = stima; dopo documento consulente (RDA/ACO/ACP…) → pronto per ordine.',
+        help='Estimate BOM → consultant document (RDA/ACO/ACP…) → ready to order.',
     )
 
     def _sbu_loss_pct_for_bom_line(self, bom):
@@ -365,14 +365,14 @@ class SbuPurchaseRequest(models.Model):
                 names = ', '.join(pending.mapped('display_name')[:5])
                 raise UserError(
                     _(
-                        'Confermare le righe distinta prima del PO. '
-                        'Righe in attesa: %(names)s',
+                        'Confirm BOM lines before PO. '
+                        'Pending lines: %(names)s',
                         names=names,
                     )
                 )
             req.write({'technical_data_state': 'ready_for_po'})
             req.message_post(
-                body=_('Dati tecnici confermati: si possono creare RFQ/PO con misure finali.'),
+                body=_('Technical data confirmed: RFQ/PO can be created with final dimensions.'),
             )
 
     def _sbu_check_ready_for_po(self):
@@ -381,9 +381,9 @@ class SbuPurchaseRequest(models.Model):
             return
         raise UserError(
             _(
-                'I documenti tecnici (RDA/ACO/ACP/VT…) devono essere applicati prima del PO. '
-                'Usare «Avvia revisione tecnica», aggiornare misure sulle righe distinta, '
-                'spuntare «Confermato per PO», poi «Pronto per RFQ/PO».'
+                'Technical documents (PR/ACO/ACP/VT…) must be completed before PO. '
+                'Use Start technical review, update dimensions on BOM lines, '
+                'check Confirmed for PO, then Ready for RFQ/PO.'
             )
         )
 

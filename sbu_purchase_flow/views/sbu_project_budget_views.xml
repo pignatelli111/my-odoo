@@ -12,7 +12,7 @@
                 <field name="project_id" column_invisible="1"/>
                 <field name="currency_id" column_invisible="1"/>
                 <field name="cost_family_label" string="Famiglia"/>
-                <field name="budget_planned" string="Budget (preventivo)" sum="Total"/>
+                <field name="budget_planned" string="Budget (estimate)" sum="Total"/>
                 <field name="amount_open_pr" string="RDA aperte" sum="Total"/>
                 <field name="amount_po_draft" string="PO bozza" sum="Total"/>
                 <field name="amount_po_confirmed" string="PO confermati" sum="Total"/>
@@ -47,13 +47,13 @@
     </record>
 
     <record id="action_sbu_project_budget_family" model="ir.actions.act_window">
-        <field name="name">Budget acquisti per famiglia</field>
+        <field name="name">Purchase budget by family</field>
         <field name="res_model">sbu.project.budget.family</field>
         <field name="view_mode">list</field>
         <field name="search_view_id" ref="view_sbu_project_budget_family_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                Open a job and use «Budget acquisti» to refresh rows from the ANACO estimate and purchase documents.
+                Open a job and use Purchase budget to refresh rows from the ANACO estimate and purchase documents.
             </p>
         </field>
     </record>

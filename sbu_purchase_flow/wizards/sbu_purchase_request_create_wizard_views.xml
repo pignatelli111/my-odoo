@@ -4,7 +4,7 @@
         <field name="name">sbu.purchase.request.create.wizard.form</field>
         <field name="model">sbu.purchase.request.create.wizard</field>
         <field name="arch" type="xml">
-            <form string="Nuovo documento acquisto">
+            <form string="New purchase document">
                 <group>
                     <field name="project_id" options="{'no_create': True}"/>
                     <field name="workflow_route"/>
@@ -16,14 +16,14 @@
                     <field name="load_from_estimate"/>
                 </group>
                 <p class="text-muted">
-                    Scegliere solo i tipi previsti (LA, LZ, ST, PAN, OSC, VT, ACO, ACP, LDS).
-                    I campi obbligatori dipendono dalla route: Topic per materiali (LA, PAN, …),
-                    data fabbisogno per LA/LZ/ST/PAN/OSC/VT. Non si crea un secondo documento
-                    aperto con la stessa commessa e route.
+                    Choose only the supported types (LA, LZ, ST, PAN, OSC, VT, ACO, ACP, LDS).
+                    Required fields depend on the route: Topic for materials (LA, PAN, …),
+                    need-by date for LA/LZ/ST/PAN/OSC/VT. A second open document
+                    cannot be created for the same job and route.
                 </p>
                 <footer>
-                    <button name="action_create" string="Crea documento" type="object" class="btn-primary"/>
-                    <button string="Annulla" special="cancel" class="btn-secondary"/>
+                    <button name="action_create" string="Create document" type="object" class="btn-primary"/>
+                    <button string="Cancel" special="cancel" class="btn-secondary"/>
                 </footer>
             </form>
         </field>

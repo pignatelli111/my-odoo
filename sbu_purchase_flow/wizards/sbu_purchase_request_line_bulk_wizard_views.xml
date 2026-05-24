@@ -4,7 +4,7 @@
         <field name="name">sbu.purchase.request.line.bulk.wizard.form</field>
         <field name="model">sbu.purchase.request.line.bulk.wizard</field>
         <field name="arch" type="xml">
-            <form string="Applica alle righe">
+            <form string="Apply to lines">
                 <group>
                     <field name="apply_scope" widget="radio"/>
                     <field name="target_count" readonly="1"/>
@@ -19,7 +19,7 @@
                     scegli <b>Tutto il risultato filtrato</b> oppure seleziona righe →
                     spunta i campi da aggiornare e conferma.
                 </p>
-                <group string="Campi da applicare (spunta + valore)">
+                <group string="Fields to apply (check + value)">
                     <label for="apply_date_required"/>
                     <div class="o_row">
                         <field name="apply_date_required" nolabel="1"/>
@@ -52,15 +52,15 @@
                     </div>
                 </group>
                 <footer>
-                    <button name="action_apply" string="Applica" type="object" class="btn-primary"/>
-                    <button string="Annulla" special="cancel" class="btn-secondary"/>
+                    <button name="action_apply" string="Apply" type="object" class="btn-primary"/>
+                    <button string="Cancel" special="cancel" class="btn-secondary"/>
                 </footer>
             </form>
         </field>
     </record>
 
     <record id="action_sbu_purchase_request_line_bulk_wizard" model="ir.actions.act_window">
-        <field name="name">Applica alle righe selezionate</field>
+        <field name="name">Apply to selected lines</field>
         <field name="res_model">sbu.purchase.request.line.bulk.wizard</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>
@@ -69,7 +69,7 @@
     </record>
 
     <record id="action_sbu_purchase_request_line_bulk_wizard_filtered" model="ir.actions.act_window">
-        <field name="name">Applica al risultato filtrato</field>
+        <field name="name">Apply to filtered result</field>
         <field name="res_model">sbu.purchase.request.line.bulk.wizard</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>
@@ -79,7 +79,7 @@
     </record>
 
     <record id="action_sbu_purchase_request_bulk_lines_wizard" model="ir.actions.act_window">
-        <field name="name">Applica a tutte le righe RDA</field>
+        <field name="name">Apply to all request lines</field>
         <field name="res_model">sbu.purchase.request.line.bulk.wizard</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>

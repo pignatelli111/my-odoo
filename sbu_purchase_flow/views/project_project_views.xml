@@ -41,35 +41,35 @@
                 <button name="action_sbu_open_budget_dashboard" type="object"
                         class="oe_stat_button" icon="fa-pie-chart"
                         invisible="not sbu_estimate_id"
-                        title="Preventivo vs impegnato per famiglia costo (semafori ITEM).">
+                        title="Estimate vs committed by cost family (ITEM traffic lights).">
                     <div class="o_stat_info">
-                        <span class="o_stat_text">Budget acquisti</span>
+                        <span class="o_stat_text">Purchase budget</span>
                     </div>
                 </button>
             </xpath>
             <xpath expr="//notebook" position="inside">
                 <page string="Logistica / delivery" name="sbu_delivery_logistics">
                     <group>
-                        <group string="Cantiere">
+                        <group string="Site">
                             <field name="sbu_site_subcontractor_id"/>
                             <field name="sbu_system_supplier_id"/>
                         </group>
-                        <group string="Vetro">
+                        <group string="Glass">
                             <field name="sbu_glass_delivery_mode" widget="radio"/>
                         </group>
                     </group>
                     <div class="mb-2">
                         <button name="action_sbu_apply_delivery_on_all_prs" type="object"
-                                string="Applica delivery standard su tutte le RDA"
+                                string="Apply delivery standard on all purchase requests"
                                 class="btn-secondary"
-                                title="Ricalcola DESTINAZIONE su tutte le righe delle richieste acquisto della commessa."/>
+                                title="Recalculate DESTINATION on all purchase request lines for this job."/>
                     </div>
                     <p class="text-muted">
-                        Alluminio e ACO: percorso tipico sistemista → terzista cantiere (4–5 fermate) → cantiere.
-                        Vetro: scegli diretto in cantiere oppure stesso terzista dell’alluminio.
+                        Aluminium and ACO: typical route fabricator → site subcontractor (4–5 stops) → site.
+                        Glass: choose direct to site or the same subcontractor as aluminium.
                     </p>
                 </page>
-                <page string="Budget acquisti" name="sbu_budget_families"
+                <page string="Purchase budget" name="sbu_budget_families"
                       invisible="not sbu_estimate_id">
                     <group>
                         <field name="sbu_budget_po_unlock"
@@ -78,9 +78,9 @@
                     </group>
                     <div class="mb-2">
                         <button name="action_sbu_refresh_budget_families" type="object"
-                                string="Aggiorna da preventivo e acquisti" class="btn-primary"/>
+                                string="Refresh from estimate and purchases" class="btn-primary"/>
                         <button name="action_sbu_open_budget_dashboard" type="object"
-                                string="Apri cruscotto" class="btn-secondary ms-1"/>
+                                string="Open dashboard" class="btn-secondary ms-1"/>
                     </div>
                     <field name="sbu_budget_family_ids" nolabel="1" readonly="1"
                            context="{'default_project_id': id}">
@@ -89,7 +89,7 @@
                               decoration-danger="traffic_light == 'over'"
                               create="false" delete="false">
                             <field name="cost_family_label" string="Famiglia"/>
-                            <field name="budget_planned" string="Preventivo"/>
+                            <field name="budget_planned" string="Estimate"/>
                             <field name="amount_open_pr" string="RDA"/>
                             <field name="amount_po_draft" string="PO bozza"/>
                             <field name="amount_po_confirmed" string="PO confermati"/>

@@ -100,7 +100,7 @@ class ProjectProject(models.Model):
         self.ensure_one()
         return {
             'type': 'ir.actions.act_window',
-            'name': _('Nuovo documento acquisto'),
+            'name': _('New purchase document'),
             'res_model': 'sbu.purchase.request.create.wizard',
             'view_mode': 'form',
             'target': 'new',
@@ -115,7 +115,7 @@ class ProjectProject(models.Model):
         self.ensure_one()
         est = self.sbu_estimate_id
         if not est:
-            raise UserError(_('Set «Preventivo di Origine» on the project (won estimate) first.'))
+            raise UserError(_('Set Source estimate on the project (won estimate) first.'))
         if est.state != 'won':
             raise UserError(
                 _('Demand generation needs the source estimate in «Won» state (current: %s).')
@@ -144,7 +144,7 @@ class ProjectProject(models.Model):
         self.ensure_one()
         est = self.sbu_estimate_id
         if not est:
-            raise UserError(_('Set «Preventivo di Origine» on the project (won estimate) first.'))
+            raise UserError(_('Set Source estimate on the project (won estimate) first.'))
         if est.state != 'won':
             raise UserError(
                 _('Workflow purchase requests need the source estimate in «Won» state (current: %s).')
@@ -153,7 +153,7 @@ class ProjectProject(models.Model):
         routes = collect_workflow_routes_from_estimate(est)
         if not routes:
             raise UserError(
-                _('No workflow routes on estimate lines. Set «Categoria / famiglia costo» on ANACO rows first.')
+                _('No workflow routes on estimate lines. Set cost category / family on ANACO rows first.')
             )
         PurchaseRequest = self.env['sbu.purchase.request']
         created = PurchaseRequest
