@@ -2,6 +2,7 @@ from odoo import api, fields, models, _
 from odoo.exceptions import ValidationError
 
 from .sbu_contract_uom import SBU_CONTRACT_UOM_SELECTION
+from .sbu_domain_helpers import sbu_domain_same_estimate
 
 
 class SbuEstimateSalLine(models.Model):
@@ -51,7 +52,7 @@ class SbuEstimateSalLine(models.Model):
         'sal_line_id',
         'estimate_line_id',
         string='Linked estimate lines',
-        domain="[('estimate_id', '=', estimate_id)]",
+        domain=lambda self: sbu_domain_same_estimate(self.estimate_id),
         help='ANACO rows that support this contractual item (one, many, or none if manual).',
     )
 

@@ -4,6 +4,7 @@ from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
 
 from .sbu_manual_input import SBU_MANUAL_INPUT_STATE
+from .sbu_domain_helpers import sbu_domain_same_estimate
 
 
 class SbuEstimateBomLine(models.Model):
@@ -22,6 +23,7 @@ class SbuEstimateBomLine(models.Model):
         string='Riga Preventivo',
         required=True,
         ondelete='cascade',
+        domain=lambda self: sbu_domain_same_estimate(self.estimate_id),
     )
     estimate_id = fields.Many2one(
         'sbu.estimate',

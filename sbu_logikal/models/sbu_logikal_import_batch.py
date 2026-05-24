@@ -108,7 +108,11 @@ class SbuLogikalImportBatch(models.Model):
     target_estimate_line_id = fields.Many2one(
         'sbu.estimate.line',
         string='Target estimate line',
-        domain="[('estimate_id.project_id', '=', project_id)]",
+        domain=lambda self: (
+            [('estimate_id.project_id', '=', self.project_id.id)]
+            if self.project_id
+            else [('id', '=', False)]
+        ),
         help='BOM lines are created under this preventivo row.',
     )
     mrp_finished_product_id = fields.Many2one(

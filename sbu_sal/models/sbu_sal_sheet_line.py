@@ -1,5 +1,7 @@
 from odoo import api, fields, models
 
+from odoo.addons.sbu_estimate.models.sbu_domain_helpers import sbu_domain_same_estimate
+
 # Local copy — avoid cross-addon import at module load (Odoo.sh install order).
 SBU_CONTRACT_UOM_LABELS = {
     'mq': 'MQ (square metres)',
@@ -26,7 +28,9 @@ class SbuSalSheetLine(models.Model):
         string='Contractual SAL item',
         ondelete='set null',
         index=True,
-        domain="[('estimate_id', '=', parent.estimate_id)]",
+        domain=lambda self: sbu_domain_same_estimate(
+            self.sheet_id.estimate_id if self.sheet_id else False
+        ),
     )
     description = fields.Char(string='Description', required=True)
     contract_amount = fields.Monetary(

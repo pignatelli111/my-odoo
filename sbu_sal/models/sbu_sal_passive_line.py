@@ -1,5 +1,7 @@
 from odoo import api, fields, models
 
+from odoo.addons.sbu_estimate.models.sbu_domain_helpers import sbu_domain_same_estimate
+
 
 class SbuSalPassiveLine(models.Model):
     _name = 'sbu.sal.passive.line'
@@ -18,7 +20,9 @@ class SbuSalPassiveLine(models.Model):
         string='ANACO estimate line',
         ondelete='set null',
         index=True,
-        domain="[('estimate_id', '=', parent.estimate_id)]",
+        domain=lambda self: sbu_domain_same_estimate(
+            self.sheet_id.estimate_id if self.sheet_id else False
+        ),
     )
     category = fields.Selection(
         [

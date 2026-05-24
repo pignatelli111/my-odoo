@@ -314,7 +314,6 @@
                                       decoration-muted="manual_input_state == 'imported'">
                                     <field name="estimate_line_id"
                                            string="ANACO line"
-                                           domain="[('estimate_id', '=', parent.id)]"
                                            options="{'no_create': True}"/>
                                     <field name="product_id"
                                            domain="[('purchase_ok', '=', True), ('type', '=', 'consu')]"/>
