@@ -399,10 +399,112 @@ class SbuPurchaseRequest(models.Model):
         }
 
     def action_load_lines_from_estimate_bom_append(self):
-        return self._load_lines_from_estimate_bom(clear=False)
+        return self._action_open_bom_import_wizard(replace=False)
 
     def action_load_lines_from_estimate_bom_replace(self):
-        return self._load_lines_from_estimate_bom(clear=True)
+        return self._action_open_bom_import_wizard(replace=True)
+
+    def _action_open_bom_import_wizard(self, replace=False):
+        self.ensure_one()
+        if not self.estimate_id:
+            raise UserError(_('The project has no linked source estimate (won estimate).'))
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Load from estimate BOM'),
+            'res_model': 'sbu.purchase.request.bom.import.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_request_id': self.id,
+                'default_replace_existing': replace,
+            },
+        }
+
+    def _bom_line_matches_pr_route(self, bom, route_filter):
+        """Whether this ITEM row belongs on a PR with the given ANACO route."""
+        if not route_filter or not bom.product_id:
+            return False
+        eline = bom.estimate_line_id
+        if route_filter in ('OSC', 'ZANZ', 'VC/VS'):
+            bom_route = bom_product_workflow_route(bom)
+            if bom_route and bom_route != route_filter:
+                return False
+            if route_filter == 'VC/VS' and bom_route in ('OSC', 'ZANZ'):
+                return False
+            return estimate_line_matches_route(eline, route_filter)
+        if not eline or (eline.workflow_route or '') != route_filter:
+            return False
+        return True
+
+    def _candidate_bom_lines_for_import(self, scope='route'):
+        """BOM lines offered in the import wizard."""
+        self.ensure_one()
+        estimate = self.estimate_id
+        Bom = self.env['sbu.estimate.bom.line']
+        if not estimate:
+            return Bom.browse()
+        lines = Bom.browse()
+        for eline in estimate.line_ids:
+            for bom in eline.bom_line_ids:
+                if not bom.product_id:
+                    continue
+                if scope == 'all' or self._bom_line_matches_pr_route(bom, self.workflow_route):
+                    lines |= bom
+        return lines
+
+    def _load_selected_bom_lines(self, bom_lines, clear=False):
+        """Create PR lines from a chosen set of estimate BOM rows."""
+        self.ensure_one()
+        if not self.estimate_id:
+            raise UserError(_('The project has no linked source estimate (won estimate).'))
+        if clear:
+            self.line_ids.unlink()
+        existing_bom = {bid for bid in self.line_ids.mapped('source_bom_line_id').ids if bid}
+        Line = self.env['sbu.purchase.request.line']
+        created = 0
+        for bom in bom_lines.sorted(lambda b: (b.estimate_line_id.sequence, b.sequence, b.id)):
+            if bom.id in existing_bom:
+                continue
+            if bom.estimate_id != self.estimate_id:
+                continue
+            if not bom.product_id:
+                continue
+            existing_bom.add(bom.id)
+            eline = bom.estimate_line_id
+            pos = eline.pos if eline else ''
+            line_vals = {
+                'request_id': self.id,
+                'source_bom_line_id': bom.id,
+                'bom_qty_sync': True,
+                'product_id': bom.product_id.id,
+                'product_uom': bom.uom_id.id,
+                'product_qty': self._sbu_demand_qty_from_bom(bom),
+                'name': bom.description or bom.product_id.display_name,
+                'pos': pos,
+                'article_code': bom.product_id.default_code or '',
+                'procurement_mode': 'purchase',
+                'line_priority': self.priority,
+            }
+            if hasattr(bom, '_sbu_purchase_line_dimension_vals'):
+                line_vals.update(bom._sbu_purchase_line_dimension_vals())
+            Line.create(line_vals)
+            created += 1
+        route_filter = self.workflow_route
+        if created and not self.excel_item and route_filter:
+            self.excel_item = route_filter
+        if created and not self.topic and route_filter in ('LA', 'LZ', 'PAN', 'OSC', 'PRF', 'SE'):
+            self.topic = _('Route %s') % route_filter
+        self.message_post(
+            body=_('Loaded %(n)d demand line(s) from estimate BOM (loss %%, packs, MOQ).')
+            % {'n': created},
+        )
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': self._name,
+            'res_id': self.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
 
     def action_refresh_all_bom_quantities(self):
         self.line_ids.action_refresh_qty_from_bom()
@@ -471,63 +573,31 @@ class SbuPurchaseRequest(models.Model):
         }
 
     def _load_lines_from_estimate_bom(self, clear=False, workflow_route=None):
+        """Programmatic load (wizard, project actions): all BOM rows for route."""
         self.ensure_one()
-        estimate = self.estimate_id
-        if not estimate:
-            raise UserError(_('The project has no linked source estimate (won estimate).'))
-        if clear:
-            self.line_ids.unlink()
-        existing_bom = {bid for bid in self.line_ids.mapped('source_bom_line_id').ids if bid}
-        Line = self.env['sbu.purchase.request.line']
-        created = 0
         route_filter = workflow_route or self.workflow_route
-        for eline in estimate.line_ids:
-            if route_filter and not estimate_line_matches_route(eline, route_filter):
-                continue
-            pos = eline.pos or ''
-            for bom in eline.bom_line_ids:
-                if not bom.product_id:
-                    continue
-                if route_filter in ('OSC', 'ZANZ', 'VC/VS'):
-                    bom_route = bom_product_workflow_route(bom)
-                    if bom_route and bom_route != route_filter:
+        if route_filter and route_filter != self.workflow_route:
+            bom_lines = self.env['sbu.estimate.bom.line']
+            estimate = self.estimate_id
+            if estimate:
+                for eline in estimate.line_ids:
+                    if not estimate_line_matches_route(eline, route_filter):
                         continue
-                    if route_filter == 'VC/VS' and bom_route in ('OSC', 'ZANZ'):
-                        continue
-                if bom.id in existing_bom:
-                    continue
-                existing_bom.add(bom.id)
-                line_vals = {
-                    'request_id': self.id,
-                    'source_bom_line_id': bom.id,
-                    'bom_qty_sync': True,
-                    'product_id': bom.product_id.id,
-                    'product_uom': bom.uom_id.id,
-                    'product_qty': self._sbu_demand_qty_from_bom(bom),
-                    'name': bom.description or bom.product_id.display_name,
-                    'pos': pos,
-                    'article_code': bom.product_id.default_code or '',
-                    'procurement_mode': 'purchase',
-                    'line_priority': self.priority,
-                }
-                if hasattr(bom, '_sbu_purchase_line_dimension_vals'):
-                    line_vals.update(bom._sbu_purchase_line_dimension_vals())
-                Line.create(line_vals)
-                created += 1
-        if created and not self.excel_item and route_filter:
-            self.excel_item = route_filter
-        if created and not self.topic and route_filter in ('LA', 'LZ', 'PAN', 'OSC', 'PRF', 'SE'):
-            self.topic = _('Route %s') % route_filter
-        self.message_post(
-            body=_('Loaded %(n)d demand line(s) from estimate BOM (loss %%, packs, MOQ).') % {'n': created}
-        )
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': self._name,
-            'res_id': self.id,
-            'view_mode': 'form',
-            'target': 'current',
-        }
+                    for bom in eline.bom_line_ids:
+                        if not bom.product_id:
+                            continue
+                        if route_filter in ('OSC', 'ZANZ', 'VC/VS'):
+                            bom_route = bom_product_workflow_route(bom)
+                            if bom_route and bom_route != route_filter:
+                                continue
+                            if route_filter == 'VC/VS' and bom_route in ('OSC', 'ZANZ'):
+                                continue
+                        bom_lines |= bom
+        else:
+            bom_lines = self._candidate_bom_lines_for_import(scope='route')
+            if not bom_lines:
+                bom_lines = self._candidate_bom_lines_for_import(scope='all')
+        return self._load_selected_bom_lines(bom_lines, clear=clear)
 
     def _sbu_offer_for_po_line(self, partner, pr_line):
         """Prefer chosen offer for this vendor & line, else any offer from that vendor."""
