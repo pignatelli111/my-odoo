@@ -1,6 +1,7 @@
 #!/bin/bash
-# Odoo.sh SSH: bash ~/src/user/tools/grep_odoo_sh_test_fail.sh
-# (Script lives in the git repo under src/user, not in $HOME.)
+# Optional — only if Odoo.sh SSH/webshell is enabled on your plan.
+# Without shell: use docs/ODOO_SH_BUILD_LOG_ONLY.md (browser build log).
+# Usage: bash ~/src/user/tools/grep_odoo_sh_test_fail.sh
 set -uo pipefail
 LOG="${1:-/home/odoo/logs/install.log}"
 USER_REPO="${USER_REPO:-/home/odoo/src/user}"

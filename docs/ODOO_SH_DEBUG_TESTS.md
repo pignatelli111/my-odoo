@@ -1,4 +1,7 @@
-# Odoo.sh — catch build / test failures (correct shell steps)
+# Odoo.sh — catch build / test failures
+
+> **SSH / webshell disabled?** Use **`docs/ODOO_SH_BUILD_LOG_ONLY.md`** (browser build log only).  
+> The shell steps below are **optional** when your Odoo.sh plan allows SSH.
 
 Run **one block at a time**. Do not paste multiple commands on one line (no `git log -1pwd`).
 

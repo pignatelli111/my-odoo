@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
-"""Backfill contractual SAL line display names after adding field `name`."""
+"""Batched SAL line name backfill (safe on large production DBs during upgrade)."""
 
 
 def migrate(cr, version):
+    if not version:
+        return
     from odoo import api
 
     env = api.Environment(cr, 1, {})
