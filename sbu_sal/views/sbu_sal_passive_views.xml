@@ -62,8 +62,11 @@
                         <page string="Progress lines">
                             <field name="line_ids">
                                 <list editable="bottom">
+                                    <field name="estimate_id" column_invisible="1"/>
                                     <field name="sequence" widget="handle"/>
-                                    <field name="estimate_line_id" options="{'no_create': True}"/>
+                                    <field name="estimate_line_id"
+                                           domain="[('estimate_id', '=', estimate_id)]"
+                                           options="{'no_create': True}"/>
                                     <field name="category"/>
                                     <field name="description"/>
                                     <field name="budget_amount"/>
