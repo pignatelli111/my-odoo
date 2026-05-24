@@ -30,3 +30,23 @@ msgstr "Elaborati as-built / redazione esecutiva"
 #: model:sbu.closure.document.type,name:sbu_closure.closure_doc_type_consegna
 msgid "Final documentation delivery to customer"
 msgstr "Consegna documentazione finale al cliente"
+
+#. module: sbu_closure
+#: model:ir.ui.menu,name:sbu_closure.menu_sbu_closure_document_type
+msgid "Closure document types"
+msgstr "Tipi documento chiusura"
+
+#. module: sbu_closure
+#: model:ir.actions.act_window,name:sbu_closure.action_sbu_closure_document_type
+msgid "Closure document types"
+msgstr "Tipi documento chiusura"
+
+#. module: sbu_closure
+#: model_terms:ir.ui.view,arch_db:sbu_closure.view_sbu_closure_document_type_list
+msgid "Closure document types"
+msgstr "Tipi documento chiusura"
+
+#. module: sbu_closure
+#: model_terms:ir.ui.view,arch_db:sbu_closure.view_sbu_closure_document_type_form
+msgid "Closure document type"
+msgstr "Tipo documento chiusura"

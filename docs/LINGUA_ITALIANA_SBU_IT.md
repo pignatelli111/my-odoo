@@ -4,8 +4,10 @@
 
 | Lingua utente | Cosa vede |
 |---------------|-----------|
-| **Italiano** | Testi da `i18n/it.po` (menu **Commesse**, **Preventivi**, …) |
-| **English** | Testo **inglese nel codice** (menu **Jobs**, **Estimates**, …) |
+| **Italiano** | Testi da `i18n/it.po` (menu **Commesse**, **Preventivi**, colonne **Commessa**, …) |
+| **English** | Testo **inglese nel codice** (menu **Jobs**, **Latest revision only**, **Setup**, …) |
+
+Se in inglese vedi ancora italiano: erano etichette **fisse nel database** (es. tipi documento chiusura) — aggiornare con `odoo-update sbu_closure,sbu_estimate,sbu_project`.
 
 Regola Odoo: il **codice** usa l’**inglese**; l’**italiano** è nel file `sbu_*/i18n/it.po`.  
 Se nel codice c’era italiano fisso (es. **Miei Preventivi**), l’utente inglese vedeva comunque italiano — corretto dalla v. `19.0.1.0.93` di `sbu_estimate`.
@@ -25,7 +27,7 @@ Su Odoo.sh, dopo build verde:
 ```bash
 cd ~/src/user
 # Aggiorna i moduli che contengono le traduzioni
-odoo-update sbu_project,sbu_purchase_flow,sbu_sal,sbu_closure,sbu_logikal
+odoo-update sbu_estimate,sbu_project,sbu_purchase_flow,sbu_sal,sbu_closure,sbu_logikal
 ```
 
 Poi nel browser: **Ctrl+F5** o logout/login.
