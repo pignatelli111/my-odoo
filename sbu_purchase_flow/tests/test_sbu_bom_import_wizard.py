@@ -18,9 +18,8 @@ class TestSbuBomImportWizard(TransactionCase):
             'estimate_id': estimate.id,
             'description': 'Facade LA',
             'pos': 'F1',
-            'cost_family': 'sheet_metal',
+            'cost_family': 'aluminum_sheet',
         })
-        eline.write({'workflow_route': 'LA'})
         bom = self.env['sbu.estimate.bom.line'].create({
             'estimate_id': estimate.id,
             'estimate_line_id': eline.id,
