@@ -35,7 +35,6 @@
                     <field name="project_id" string="Project / Job" enable_counters="1" limit="40"/>
                     <field name="state" string="Status" enable_counters="1"/>
                     <field name="document_type_id" string="Document type" enable_counters="1"/>
-                    <field name="required" string="Required" enable_counters="1"/>
                 </searchpanel>
             </search>
         </field>

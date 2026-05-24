@@ -42,6 +42,9 @@ class TestSbuSalPassive(TransactionCase):
             'sbu.sal.passive.sheet',
             'sbu.sal.passive.line',
             'sbu.sal.sheet',
+            'sbu.sal.sheet.line',
+            'sbu.sal.sheet.line.bulk.wizard',
+            'sbu.sal.passive.line.bulk.wizard',
             'sbu.payment.certificate',
         ):
             dups = duplicate_custom_field_labels(self.env, model)

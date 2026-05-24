@@ -26,6 +26,7 @@ class TestSbuPurchaseFieldLabels(TransactionCase):
         for model in (
             'sbu.purchase.request.line.bulk.wizard',
             'sbu.purchase.request.create.wizard',
+            'sbu.purchase.request.excel.import.wizard',
         ):
             dups = duplicate_custom_field_labels(self.env, model)
             self.assertEqual(dups, {}, f'{model}: {dups}')

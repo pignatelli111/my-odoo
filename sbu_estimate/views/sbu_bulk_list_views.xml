@@ -95,7 +95,6 @@
                 <searchpanel>
                     <field name="estimate_id" string="Estimate" enable_counters="1" limit="30"/>
                     <field name="data_phase" string="Data phase" enable_counters="1"/>
-                    <field name="needs_technical_confirm" string="Needs confirm" enable_counters="1"/>
                 </searchpanel>
             </search>
         </field>

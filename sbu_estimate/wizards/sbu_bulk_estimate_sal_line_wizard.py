@@ -21,13 +21,17 @@ class SbuBulkEstimateSalLineWizard(models.TransientModel):
 
     apply_sal_status = fields.Boolean(string='Apply SAL status')
     sal_status = fields.Selection(
-        selection='_selection_sal_status',
+        selection=[
+            ('draft', 'Draft'),
+            ('prepared', 'Prepared'),
+            ('planning', 'Planned (SAL % only)'),
+            ('submitted', 'Submitted'),
+            ('approved', 'Approved'),
+            ('invoiced', 'Invoiced'),
+            ('paid', 'Paid'),
+        ],
         string='SAL status',
     )
-
-    @api.model
-    def _selection_sal_status(self):
-        return self.env['sbu.estimate.sal.line']._selection_sal_status()
 
     def _bulk_line_model(self):
         return 'sbu.estimate.sal.line'

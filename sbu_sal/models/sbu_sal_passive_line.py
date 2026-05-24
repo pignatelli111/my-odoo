@@ -27,6 +27,7 @@ class SbuSalPassiveLine(models.Model):
         readonly=True,
     )
     sheet_state = fields.Selection(
+        string='Sheet status',
         related='sheet_id.state',
         store=True,
         readonly=True,
