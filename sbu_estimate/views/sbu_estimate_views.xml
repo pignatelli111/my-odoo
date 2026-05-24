@@ -43,74 +43,74 @@
         <field name="name">sbu.estimate.form</field>
         <field name="model">sbu.estimate</field>
         <field name="arch" type="xml">
-            <form string="Preventivo" delete="1">
+            <form string="Estimate" delete="1">
                 <header>
                     <button name="action_delete_preventivo"
-                            string="Elimina"
+                            string="Delete"
                             type="object"
                             class="btn-secondary"
                             invisible="not can_delete_preventivo"
-                            title="Elimina questo preventivo (solo bozze senza commessa)"/>
+                            title="Delete this estimate (draft only, no linked job)"/>
                     <button name="action_send"
-                            string="Invia"
+                            string="Send"
                             type="object"
                             class="btn-primary"
                             invisible="state != 'draft' or (approval_required and approval_state != 'approved')"/>
                     <button name="action_request_internal_approval"
-                            string="Richiedi approvazione"
+                            string="Request approval"
                             type="object"
                             class="btn-secondary"
                             invisible="state != 'draft' or not approval_required or approval_state not in ('na', 'rejected')"/>
                     <button name="action_approve_internal"
-                            string="Approva"
+                            string="Approve"
                             type="object"
                             class="btn-success"
                             groups="sbu_estimate.group_sbu_estimate_approver"
                             invisible="approval_state != 'pending'"/>
                     <button name="action_reject_internal"
-                            string="Rifiuta"
+                            string="Reject"
                             type="object"
                             class="btn-danger"
                             groups="sbu_estimate.group_sbu_estimate_approver"
                             invisible="approval_state != 'pending'"/>
                     <button name="action_won"
-                            string="Vinto"
+                            string="Won"
                             type="object"
                             class="btn-success"
                             invisible="state not in ('draft','sent')"/>
                     <button name="action_lost"
-                            string="Perso"
+                            string="Lost"
                             type="object"
                             invisible="state not in ('draft','sent')"/>
                     <button name="action_new_revision"
-                            string="Nuova Revisione"
+                            string="New revision"
                             type="object"
                             invisible="state == 'cancelled'"/>
                     <button name="action_reset_draft"
-                            string="Riporta in Bozza"
+                            string="Reset to draft"
                             type="object"
                             invisible="state not in ('sent','lost')"/>
                     <button name="action_open_anaco_import_wizard"
-                            string="Importa Excel ANACO"
+                            string="Import ANACO Excel"
                             type="object"
                             class="btn-secondary"/>
                     <button name="action_generate_bom_from_anaco_costs"
-                            string="Genera distinta da ANACO"
+                            string="Generate BOM from ANACO"
                             type="object"
                             class="btn-secondary"
                             invisible="not line_ids"
-                            title="Crea righe Distinta Base dai costi/prezzi CAD sulle righe ANACO"/>
+                            title="Create BOM lines from CAD costs/prices on ANACO lines"/>
                     <button name="action_print_offer"
-                            string="Stampa offerta"
+                            string="Print offer"
                             type="object"
                             class="btn-secondary"
-                            title="PDF offerta con righe e condizioni commerciali (flag verde/rosso)"/>
+                            title="Offer PDF with lines and commercial terms"/>
                     <button name="action_load_default_commercial_terms"
-                            string="Condizioni standard"
+                            string="Standard terms"
                             type="object"
                             class="btn-secondary"
                             invisible="state in ('won', 'cancelled')"
-                            title="Carica righe condizioni commerciali (pagamento, ritenuta, inclusioni)"/>
+                            title="Load default commercial terms (payment, retention, inclusions)"/>
                     <field name="state"
                            widget="statusbar"
                            statusbar_visible="draft,sent,won"/>
@@ -125,7 +125,7 @@
                                 class="oe_stat_button"
                                 icon="fa-code-fork"
                                 invisible="revision_same_name_count == 0">
-                            <field name="revision_same_name_count" widget="statinfo" string="Revisioni"/>
+                            <field name="revision_same_name_count" widget="statinfo" string="Revisions"/>
                         </button>
                     </div>
                     <div class="oe_title">
@@ -137,14 +137,14 @@
                     </div>
 
                     <group>
-                        <group string="Intestazione">
+                        <group string="Header">
                             <field name="company_id" groups="base.group_multi_company"/>
                             <field name="partner_id"/>
                             <field name="opportunity_id" groups="sbu_estimate.group_sbu_estimate_user"/>
                             <field name="job_site"/>
                             <field name="user_id"/>
                         </group>
-                        <group string="Date e Commerciale">
+                        <group string="Dates and commercial">
                             <field name="date"/>
                             <field name="validity_date"/>
                             <field name="validity_days"/>
@@ -153,12 +153,12 @@
                         </group>
                     </group>
 
-                    <group string="Revisione e approvazione">
-                        <group string="Catena revisioni">
+                    <group string="Revision and approval">
+                        <group string="Revision chain">
                             <field name="previous_revision_id" readonly="1"/>
                             <field name="revision_root_id" readonly="1"/>
                         </group>
-                        <group string="Approvazione interna (opzionale)">
+                        <group string="Internal approval (optional)">
                             <field name="approval_required"/>
                             <field name="approval_state"/>
                             <field name="approved_by_id" invisible="approval_state != 'approved'"/>
@@ -166,7 +166,7 @@
                         </group>
                     </group>
 
-                    <group string="Riepilogo Economico">
+                    <group string="Economic summary">
                         <group>
                             <field name="total_sqm"/>
                             <field name="total_price" widget="monetary"/>
@@ -187,7 +187,7 @@
                     </group>
 
                     <notebook>
-                        <page string="Righe Preventivo (ANACO)" name="anaco_lines">
+                        <page string="Estimate lines (ANACO)" name="anaco_lines">
                             <field name="line_ids"
                                    mode="list,form"
                                    context="{'default_estimate_id': id}">
@@ -227,7 +227,7 @@
                                     <field name="cost_per_sqm" string="€/MQ costo" readonly="1" optional="hide"/>
                                     <field name="margin_amount" string="Margine €" readonly="1" optional="hide"/>
                                 </list>
-                                <form string="Riga preventivo">
+                                <form string="Estimate line">
                                     <sheet>
                                         <group>
                                             <group>
@@ -242,7 +242,7 @@
                                                 <field name="sqm_per_piece" readonly="1"/>
                                                 <field name="sqm" readonly="1"/>
                                             </group>
-                                            <group string="Prezzo">
+                                            <group string="Price">
                                                 <field name="price_anaco_bs_cad"/>
                                                 <field name="price_serramento_cad"/>
                                                 <field name="discount_sc1"/>
@@ -251,7 +251,7 @@
                                                 <field name="price_total_tot" readonly="1"/>
                                                 <field name="margin_pct" readonly="1"/>
                                             </group>
-                                            <group string="Costo">
+                                            <group string="Cost">
                                                 <field name="cost_coibentazione_cad"/>
                                                 <field name="cost_posa_lamiera_lin_cad"/>
                                                 <field name="cost_bom_total" readonly="1"/>
@@ -259,7 +259,7 @@
                                             </group>
                                         </group>
                                         <notebook>
-                                            <page string="Distinta Base (ITEM)" name="bom_lines">
+                                            <page string="BOM (ITEM)" name="bom_lines">
                                                 <field name="bom_line_ids">
                                                     <list editable="bottom"
                                                           decoration-success="manual_input_pending"
@@ -297,14 +297,14 @@
                             </field>
                         </page>
 
-                        <page string="Distinta Base (ITEM)" name="estimate_item_bom">
+                        <page string="BOM (ITEM)" name="estimate_item_bom">
                             <div class="mb-2">
                                 <button name="action_generate_bom_from_anaco_costs"
                                         type="object"
-                                        string="Genera distinta da ANACO"
+                                        string="Generate BOM from ANACO"
                                         class="btn-secondary"
                                         invisible="not line_ids"
-                                        title="Crea componenti distinta dai costi/prezzi CAD sulle righe ANACO"/>
+                                        title="Create BOM components from CAD costs/prices on ANACO lines"/>
                             </div>
                             <field name="item_bom_line_count" invisible="1"/>
                             <field name="item_bom_line_ids"
@@ -313,7 +313,7 @@
                                       decoration-success="manual_input_pending"
                                       decoration-muted="manual_input_state == 'imported'">
                                     <field name="estimate_line_id"
-                                           string="Riga ANACO"
+                                           string="ANACO line"
                                            domain="[('estimate_id', '=', parent.id)]"
                                            options="{'no_create': True}"/>
                                     <field name="product_id"
@@ -344,7 +344,7 @@
                             </field>
                         </page>
 
-                        <page string="Voci Contrattuali SAL" name="sal_lines">
+                        <page string="Contractual SAL lines" name="sal_lines">
                             <field name="sal_line_ids" context="{'default_estimate_id': id}">
                                 <list editable="bottom" delete="true">
                                     <field name="sequence" widget="handle"/>
@@ -412,7 +412,7 @@
                             </field>
                         </page>
 
-                        <page string="Allegati e riferimenti" name="estimate_references">
+                        <page string="Attachments and references" name="estimate_references">
                             <field name="reference_ids"
                                    context="{'default_estimate_id': id}">
                                 <list string="Riferimenti" editable="bottom">
@@ -427,10 +427,10 @@
                             </field>
                         </page>
 
-                        <page string="Condizioni di Fornitura" name="conditions">
+                        <page string="Supply conditions" name="conditions">
                             <div class="mb-2">
                                 <button name="action_sync_conditions_from_terms"
-                                        string="Aggiorna testi da righe"
+                                        string="Update text from lines"
                                         type="object"
                                         class="btn-secondary"
                                         invisible="not commercial_term_ids"/>

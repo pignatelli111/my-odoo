@@ -244,3 +244,93 @@ msgstr "Ultima REV"
 #: model:ir.model.fields,field_description:sbu_estimate.field_project_project__sbu_estimate_date
 msgid "Estimate date"
 msgstr "Data preventivo"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "Estimate"
+msgstr "Preventivo"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "New revision"
+msgstr "Nuova revisione"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "Import ANACO Excel"
+msgstr "Importa Excel ANACO"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "Generate BOM from ANACO"
+msgstr "Genera distinta da ANACO"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "Print offer"
+msgstr "Stampa offerta"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "Revisions"
+msgstr "Revisioni"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "Estimate lines (ANACO)"
+msgstr "Righe preventivo (ANACO)"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "BOM (ITEM)"
+msgstr "Distinta base (ITEM)"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "Contractual SAL lines"
+msgstr "Voci contrattuali SAL"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "Supply conditions"
+msgstr "Condizioni di fornitura"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__line_ids
+msgid "Estimate lines (ANACO)"
+msgstr "Righe preventivo (ANACO)"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__item_bom_line_ids
+msgid "BOM (ITEM)"
+msgstr "Distinta base (ITEM)"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate_bom_line__calc_type
+msgid "Calculation type"
+msgstr "Tipo calcolo"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate_bom_line__dimension_display
+msgid "Dimensions"
+msgstr "Dimensioni"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate_bom_line__data_phase
+msgid "Data phase"
+msgstr "Fase dati"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate_bom_line__pack_size
+msgid "Minimum pack"
+msgstr "Confezione minima"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate_bom_line__demand_loss_pct
+msgid "Demand loss %"
+msgstr "Perdita demand %"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate_bom_line__unit_cost
+msgid "Unit cost"
+msgstr "Costo unitario"

@@ -158,3 +158,68 @@ msgstr "Crea bozza RFQ"
 #: model:sbu.ui.help.item,title:sbu_ui_help.help_item_pr_form_matrix
 msgid "Comparison matrix"
 msgstr "Matrice confronto offerte"
+
+#. module: sbu_ui_help
+#: model:sbu.ui.help.item,title:sbu_ui_help.help_item_est_list_new
+msgid "New"
+msgstr "Nuovo"
+
+#. module: sbu_ui_help
+#: model:sbu.ui.help.item,title:sbu_ui_help.help_item_est_list_latest
+msgid "Latest revision only"
+msgstr "Solo revisione più recente"
+
+#. module: sbu_ui_help
+#: model:sbu.ui.help.item,title:sbu_ui_help.help_item_est_list_status
+msgid "Status filters (Draft, Sent, Won, Lost)"
+msgstr "Filtri stato (Bozza, Inviato, Vinto, Perso)"
+
+#. module: sbu_ui_help
+#: model:sbu.ui.help.item,title:sbu_ui_help.help_item_est_form_send
+msgid "Send"
+msgstr "Invia"
+
+#. module: sbu_ui_help
+#: model:sbu.ui.help.item,title:sbu_ui_help.help_item_est_form_bom
+msgid "Generate BOM from ANACO"
+msgstr "Genera distinta da ANACO"
+
+#. module: sbu_ui_help
+#: model:sbu.ui.help.item,title:sbu_ui_help.help_item_est_form_print
+msgid "Print offer"
+msgstr "Stampa offerta"
+
+#. module: sbu_ui_help
+#: model:sbu.ui.help.item,title:sbu_ui_help.help_item_est_form_tab_anaco
+msgid "ANACO lines"
+msgstr "Righe ANACO"
+
+#. module: sbu_ui_help
+#: model:sbu.ui.help.item,title:sbu_ui_help.help_item_est_form_tab_bom
+msgid "BOM (ITEM)"
+msgstr "Distinta base (ITEM)"
+
+#. module: sbu_ui_help
+#: model:sbu.ui.help.item,title:sbu_ui_help.help_item_est_form_tab_sal
+msgid "Contractual SAL"
+msgstr "Voci contrattuali SAL"
+
+#. module: sbu_ui_help
+#: model:sbu.ui.help.item,title:sbu_ui_help.help_item_est_form_tab_terms
+msgid "Commercial terms"
+msgstr "Condizioni commerciali"
+
+#. module: sbu_ui_help
+#: model:sbu.ui.help.item,title:sbu_ui_help.help_item_est_form_stat_rev
+msgid "Revisions (smart button)"
+msgstr "Revisioni (pulsante)"
+
+#. module: sbu_ui_help
+#: model:sbu.ui.help.topic,name:sbu_ui_help.help_topic_sbu_sal_list
+msgid "SAL sheets — list"
+msgstr "Fogli SAL — elenco"
+
+#. module: sbu_ui_help
+#: model:sbu.ui.help.item,title:sbu_ui_help.help_item_sal_list_new
+msgid "New"
+msgstr "Nuovo"

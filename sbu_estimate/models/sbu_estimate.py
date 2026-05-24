@@ -193,27 +193,27 @@ class SbuEstimate(models.Model):
     line_ids = fields.One2many(
         'sbu.estimate.line',
         'estimate_id',
-        string='Righe Preventivo (ANACO)',
+        string='Estimate lines (ANACO)',
     )
     item_bom_line_ids = fields.One2many(
         'sbu.estimate.bom.line',
         'estimate_id',
-        string='Distinta Base (ITEM)',
-        help='Componenti distinta per tutte le righe ANACO del preventivo.',
+        string='BOM (ITEM)',
+        help='BOM components for all ANACO lines on this estimate.',
     )
     item_bom_line_count = fields.Integer(
-        string='Righe distinta',
+        string='BOM lines',
         compute='_compute_item_bom_line_count',
     )
     sal_line_ids = fields.One2many(
         'sbu.estimate.sal.line',
         'estimate_id',
-        string='Voci Contrattuali SAL',
+        string='Contractual SAL lines',
     )
     reference_ids = fields.One2many(
         'sbu.estimate.reference',
         'estimate_id',
-        string='Allegati e riferimenti',
+        string='Attachments and references',
     )
 
     # ── Totals (computed from lines) ──────────────────────────────────────────

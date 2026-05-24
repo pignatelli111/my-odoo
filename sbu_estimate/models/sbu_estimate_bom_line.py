@@ -64,7 +64,7 @@ class SbuEstimateBomLine(models.Model):
         ('linear', 'Lineare (ml)'),
         ('surface', 'A Superficie (mq)'),
         ('pack', 'A Confezione (Pack/Kit)'),
-    ], string='Tipo Calcolo', required=True, default='per_piece')
+    ], string='Calculation type', required=True, default='per_piece')
 
     # ── Dimension source ──────────────────────────────────────────────────────
     dimension_source = fields.Selection([
@@ -118,7 +118,7 @@ class SbuEstimateBomLine(models.Model):
         digits=(16, 4),
     )
     dimension_display = fields.Char(
-        string='Dimensioni',
+        string='Dimensions',
         compute='_compute_effective_dimensions',
         store=True,
         help='L×H effettivi e mq/cad per RDA/RFQ.',
@@ -129,7 +129,7 @@ class SbuEstimateBomLine(models.Model):
             ('logikal', 'Bozza Logikal'),
             ('technical', 'Documento tecnico'),
         ],
-        string='Fase dati',
+        string='Data phase',
         default='estimate',
         required=True,
         help='Stima preventivo → bozza Logikal → misure finali da consulente (RDA/ACO/ACP…).',
@@ -168,12 +168,12 @@ class SbuEstimateBomLine(models.Model):
         digits=(16, 3),
     )
     pack_size = fields.Float(
-        string='Confezione Minima',
+        string='Minimum pack',
         digits=(16, 3),
         help='Quantità minima acquistabile (es. 6m per barra, 10pz per scatola)',
     )
     demand_loss_pct = fields.Float(
-        string='Perdita demand %',
+        string='Demand loss %',
         digits=(16, 2),
         default=0.0,
         help='Scarto applicato alla quantità distinta per generare la domanda (0 = usa %% della richiesta acquisto). Es. 3 = +3%%.',
@@ -199,7 +199,7 @@ class SbuEstimateBomLine(models.Model):
 
     # ── Pricing ───────────────────────────────────────────────────────────────
     unit_cost = fields.Float(
-        string='Costo Unitario',
+        string='Unit cost',
         digits=(16, 4),
     )
     total_cost = fields.Float(

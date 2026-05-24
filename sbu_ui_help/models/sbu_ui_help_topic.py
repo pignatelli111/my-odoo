@@ -49,7 +49,7 @@ class SbuUiHelpTopic(models.Model):
         ], order='sequence, id')
         if not topics:
             return self._generic_help(model, view_key)
-        topic = topics[0]
+        topic = topics[0].with_env(self.env)
         items = topic.item_ids.sorted('sequence')
         return {
             'title': topic.name,
