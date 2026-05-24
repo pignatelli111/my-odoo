@@ -12,7 +12,7 @@ def migrate(cr, version):
     if 'name' not in SalLine._fields:
         return
     while True:
-        lines = SalLine.search([('name', 'in', (False, ''))], limit=500)
+        lines = SalLine.search([('name', '=', False)], limit=500)
         if not lines:
             break
         lines._compute_name()

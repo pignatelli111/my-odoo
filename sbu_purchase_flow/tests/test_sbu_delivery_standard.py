@@ -19,7 +19,8 @@ class TestSbuDeliveryStandard(TransactionCase):
             {
                 'name': 'QA LA aluminum path',
                 'workflow_route': QA_ROUTE_LA,
-                'cost_family': 'aluminum_sheet',
+                # No cost_family: QA route is not in WORKFLOW_ROUTE_TO_REQUEST_TYPE
+                # (line resolves to «extra»); match by workflow_route only.
                 'delivery_pattern': 'via_sistemista_terzista',
                 'intermediate_stops': 5,
                 'sequence': 1,
