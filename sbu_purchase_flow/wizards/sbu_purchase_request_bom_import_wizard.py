@@ -114,34 +114,23 @@ class SbuPurchaseRequestBomImportWizard(models.TransientModel):
         self.bom_line_ids = self._default_selection_ids(candidates)
 
     def action_select_route_lines(self):
-        self.import_scope = 'route'
-        lines = self._bom_lines_for_scope('route')
-        self.bom_line_ids = lines
-        return self._reload_form()
+        self.write({
+            'import_scope': 'route',
+            'bom_line_ids': [(6, 0, self._bom_lines_for_scope('route').ids)],
+        })
 
     def action_select_all_estimate(self):
-        self.import_scope = 'all'
-        lines = self._bom_lines_for_scope('all')
-        self.bom_line_ids = lines
-        return self._reload_form()
+        self.write({
+            'import_scope': 'all',
+            'bom_line_ids': [(6, 0, self._bom_lines_for_scope('all').ids)],
+        })
 
     def action_select_new_only(self):
         candidates = self._bom_lines_for_scope()
         self.bom_line_ids = self._default_selection_ids(candidates)
-        return self._reload_form()
 
     def action_clear_selection(self):
         self.bom_line_ids = [(5, 0, 0)]
-        return self._reload_form()
-
-    def _reload_form(self):
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': self._name,
-            'res_id': self.id,
-            'view_mode': 'form',
-            'target': 'new',
-        }
 
     def action_load(self):
         self.ensure_one()

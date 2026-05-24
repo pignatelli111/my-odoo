@@ -30,17 +30,21 @@ class TestSbuBomImportWizard(TransactionCase):
         project = self.env['project.project'].create({
             'name': 'BOM import job',
             'partner_id': partner.id,
-            'sbu_estimate_id': estimate.id,
         })
+        project.write({'sbu_estimate_id': estimate.id})
+        estimate.write({'project_id': project.id})
         pr = self.env['sbu.purchase.request'].create({
             'project_id': project.id,
             'request_type': 'rda',
             'workflow_route': 'LA',
         })
-        return pr, bom
+        self.env.flush_all()
+        eline.invalidate_recordset(['workflow_route'])
+        return pr, bom, eline
 
     def test_bom_import_wizard_loads_selected(self):
-        pr, bom = self._setup_pr_with_bom()
+        pr, bom, _eline = self._setup_pr_with_bom()
+        self.assertTrue(pr.estimate_id, 'PR must be linked to source estimate')
         wiz = self.env['sbu.purchase.request.bom.import.wizard'].create({
             'request_id': pr.id,
             'import_scope': 'all',
