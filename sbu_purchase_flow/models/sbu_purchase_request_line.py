@@ -2,7 +2,6 @@ from odoo import api, fields, models, _
 from odoo.exceptions import ValidationError
 from odoo.tools.float_utils import float_compare, float_is_zero
 
-from odoo.addons.sbu_estimate.models.sbu_domain_helpers import sbu_domain_same_estimate
 from odoo.addons.sbu_estimate.models.sbu_manual_input import SBU_MANUAL_INPUT_STATE
 
 from .sbu_delivery_helpers import sbu_delivery_destination_for_line
@@ -154,15 +153,19 @@ class SbuPurchaseRequestLine(models.Model):
     )
 
     # ── Single BOM truth (Phase 3.1) ───────────────────────────────────────────
+    estimate_id = fields.Many2one(
+        'sbu.estimate',
+        string='Source estimate',
+        related='request_id.estimate_id',
+        readonly=True,
+    )
     source_bom_line_id = fields.Many2one(
         'sbu.estimate.bom.line',
         string='Estimate BOM line',
         ondelete='set null',
         index=True,
-        domain=lambda self: sbu_domain_same_estimate(
-            self.request_id.estimate_id if self.request_id else False
-        ),
-        help='Se impostata, la quantità può seguire la distinta ITEM (qty ordinata confezione).',
+        domain="[('estimate_id', '=', estimate_id)]",
+        help='When set, quantity can follow the ITEM BOM line (pack qty ordered).',
     )
     bom_qty_sync = fields.Boolean(
         string='Sync qty with BOM',

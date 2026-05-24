@@ -73,8 +73,10 @@
                         <page string="Lines">
                             <field name="line_ids">
                                 <list editable="bottom">
+                                    <field name="estimate_id" column_invisible="1"/>
                                     <field name="sequence" widget="handle"/>
                                     <field name="estimate_sal_line_id"
+                                           domain="[('estimate_id', '=', estimate_id)]"
                                            options="{'no_create': True}"
                                            context="{
                                                'list_view_ref': 'sbu_estimate.view_sbu_estimate_sal_line_list',
