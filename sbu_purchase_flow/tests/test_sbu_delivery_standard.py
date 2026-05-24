@@ -5,38 +5,62 @@ from odoo.tests.common import TransactionCase
 
 @tagged('post_install', '-at_install')
 class TestSbuDeliveryStandard(TransactionCase):
+    """Delivery rules: isolate from prod DB data (edited standards, extra rules)."""
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.Delivery = cls.env['sbu.delivery.standard']
-        cls.ensure_default_rules()
+        cls.Delivery = cls.env['sbu.delivery.standard'].sudo()
+        cls._rules_before = cls.Delivery.search([])
+        cls._rules_before.write({'active': False})
+        cls._test_rules = cls.Delivery.create([
+            {
+                'name': 'Test LA aluminum path',
+                'workflow_route': 'LA',
+                'cost_family': 'aluminum_sheet',
+                'delivery_pattern': 'via_sistemista_terzista',
+                'intermediate_stops': 5,
+                'sequence': 1,
+            },
+            {
+                'name': 'Test glass direct',
+                'cost_family': 'glass',
+                'request_type': 'vt',
+                'glass_mode': 'direct',
+                'delivery_pattern': 'direct_site',
+                'sequence': 2,
+            },
+            {
+                'name': 'Test glass via terzista',
+                'cost_family': 'glass',
+                'request_type': 'vt',
+                'glass_mode': 'via_terzista',
+                'delivery_pattern': 'via_terzista',
+                'sequence': 3,
+            },
+            {
+                'name': 'Test VC/VS direct',
+                'workflow_route': 'VC/VS',
+                'cost_family': 'glass',
+                'glass_mode': 'direct',
+                'delivery_pattern': 'direct_site',
+                'sequence': 4,
+            },
+            {
+                'name': 'Test VC/VS via terzista',
+                'workflow_route': 'VC/VS',
+                'cost_family': 'glass',
+                'glass_mode': 'via_terzista',
+                'delivery_pattern': 'via_terzista',
+                'sequence': 5,
+            },
+        ])
 
     @classmethod
-    def ensure_default_rules(cls):
-        if cls.Delivery.search_count([]):
-            return
-        cls.Delivery.create({
-            'name': 'Test LA aluminum path',
-            'workflow_route': 'LA',
-            'cost_family': 'aluminum_sheet',
-            'delivery_pattern': 'via_sistemista_terzista',
-            'intermediate_stops': 5,
-        })
-        cls.Delivery.create({
-            'name': 'Test glass direct',
-            'cost_family': 'glass',
-            'request_type': 'vt',
-            'glass_mode': 'direct',
-            'delivery_pattern': 'direct_site',
-        })
-        cls.Delivery.create({
-            'name': 'Test glass via terzista',
-            'cost_family': 'glass',
-            'request_type': 'vt',
-            'glass_mode': 'via_terzista',
-            'delivery_pattern': 'via_terzista',
-        })
+    def tearDownClass(cls):
+        cls._test_rules.unlink()
+        cls._rules_before.write({'active': True})
+        super().tearDownClass()
 
     def _project(self, **extra):
         vals = {
