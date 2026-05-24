@@ -366,7 +366,7 @@ Etichetta `codice · REV · data` su commesse e preventivi; SAL/RDA/fatture/CDP 
 ### Fase P2 — UX e dati
 
 - [ ] Celle verdi «da compilare»  
-- [ ] Bulk edit su liste filtrate  
+- [x] Bulk edit su liste filtrate (`sbu.bulk.apply.mixin` — Acquisti, Preventivo, SAL, Chiusura; searchpanel + «Applica al filtrato»)  
 - [ ] Qonto: import partners (opzionale)  
 
 ### Fase P3 — Integrazioni

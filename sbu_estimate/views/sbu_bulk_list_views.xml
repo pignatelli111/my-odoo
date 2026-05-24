@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ── Estimate lines ─────────────────────────────────────────────────── -->
+    <record id="view_sbu_estimate_line_bulk_list" model="ir.ui.view">
+        <field name="name">sbu.estimate.line.bulk.list</field>
+        <field name="model">sbu.estimate.line</field>
+        <field name="arch" type="xml">
+            <list string="Estimate lines" create="0" delete="0">
+                <field name="estimate_id"/>
+                <field name="pos" optional="show"/>
+                <field name="name"/>
+                <field name="cost_family" optional="show"/>
+                <field name="workflow_route" optional="show"/>
+                <field name="calc_uom_type" optional="show"/>
+                <field name="width_mm" optional="hide"/>
+                <field name="height_mm" optional="hide"/>
+                <field name="sqm" optional="show"/>
+                <field name="manual_input_pending" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_sbu_estimate_line_bulk_search" model="ir.ui.view">
+        <field name="name">sbu.estimate.line.bulk.search</field>
+        <field name="model">sbu.estimate.line</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="pos"/>
+                <field name="estimate_id"/>
+                <field name="description"/>
+                <separator/>
+                <filter name="manual_pending" string="Manual entry pending (green)"
+                        domain="[('manual_input_pending', '=', True)]"/>
+                <filter name="has_dimensions" string="With B×H"
+                        domain="[('width_mm', '&gt;', 0), ('height_mm', '&gt;', 0)]"/>
+                <separator/>
+                <filter string="Group by estimate" name="grp_estimate" context="{'group_by': 'estimate_id'}"/>
+                <filter string="Group by cost family" name="grp_family" context="{'group_by': 'cost_family'}"/>
+                <searchpanel>
+                    <field name="estimate_id" string="Estimate" enable_counters="1" limit="30"/>
+                    <field name="cost_family" string="Cost family" enable_counters="1"/>
+                    <field name="calc_uom_type" string="Calc. UoM" enable_counters="1"/>
+                </searchpanel>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_sbu_estimate_line_bulk_list" model="ir.actions.act_window">
+        <field name="name">Estimate lines (bulk edit)</field>
+        <field name="res_model">sbu.estimate.line</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_sbu_estimate_line_bulk_list"/>
+        <field name="search_view_id" ref="view_sbu_estimate_line_bulk_search"/>
+        <field name="help" type="html">
+            <p>Use <b>left-panel filters</b>, then <b>Action → Apply to filtered result</b>
+               to update cost family or calc. UoM on all matching ANACO rows.</p>
+        </field>
+    </record>
+
+    <!-- ── BOM lines ──────────────────────────────────────────────────────── -->
+    <record id="view_sbu_estimate_bom_line_bulk_list" model="ir.ui.view">
+        <field name="name">sbu.estimate.bom.line.bulk.list</field>
+        <field name="model">sbu.estimate.bom.line</field>
+        <field name="arch" type="xml">
+            <list string="BOM lines" create="0" delete="0">
+                <field name="estimate_id"/>
+                <field name="estimate_line_id" optional="show"/>
+                <field name="name"/>
+                <field name="product_id" optional="show"/>
+                <field name="data_phase" optional="show"/>
+                <field name="needs_technical_confirm" optional="hide"/>
+                <field name="technical_confirmed" optional="show"/>
+                <field name="manual_input_pending" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_sbu_estimate_bom_line_bulk_search" model="ir.ui.view">
+        <field name="name">sbu.estimate.bom.line.bulk.search</field>
+        <field name="model">sbu.estimate.bom.line</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="estimate_id"/>
+                <field name="product_id"/>
+                <field name="estimate_line_id"/>
+                <separator/>
+                <filter name="pending_technical" string="Pending technical confirm"
+                        domain="[('needs_technical_confirm', '=', True), ('technical_confirmed', '=', False)]"/>
+                <filter name="manual_pending" string="Manual entry pending"
+                        domain="[('manual_input_pending', '=', True)]"/>
+                <separator/>
+                <filter string="Group by estimate" name="grp_estimate" context="{'group_by': 'estimate_id'}"/>
+                <searchpanel>
+                    <field name="estimate_id" string="Estimate" enable_counters="1" limit="30"/>
+                    <field name="data_phase" string="Data phase" enable_counters="1"/>
+                    <field name="needs_technical_confirm" string="Needs confirm" enable_counters="1"/>
+                </searchpanel>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_sbu_estimate_bom_line_bulk_list" model="ir.actions.act_window">
+        <field name="name">BOM lines (bulk edit)</field>
+        <field name="res_model">sbu.estimate.bom.line</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_sbu_estimate_bom_line_bulk_list"/>
+        <field name="search_view_id" ref="view_sbu_estimate_bom_line_bulk_search"/>
+        <field name="help" type="html">
+            <p>Filter ITEM/distinta rows, then bulk-set <b>Confirmed for PO</b> or <b>Data phase</b>
+               on all filtered lines (e.g. after technical review).</p>
+        </field>
+    </record>
+
+    <!-- ── Contractual SAL lines ──────────────────────────────────────────── -->
+    <record id="view_sbu_estimate_sal_line_bulk_list" model="ir.ui.view">
+        <field name="name">sbu.estimate.sal.line.bulk.list</field>
+        <field name="model">sbu.estimate.sal.line</field>
+        <field name="arch" type="xml">
+            <list string="Contractual SAL lines" create="0" delete="0">
+                <field name="estimate_id"/>
+                <field name="item_ref"/>
+                <field name="name"/>
+                <field name="total_contract" optional="show"/>
+                <field name="retention_percent" optional="show"/>
+                <field name="sal_status" widget="badge" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_sbu_estimate_sal_line_bulk_search" model="ir.ui.view">
+        <field name="name">sbu.estimate.sal.line.bulk.search</field>
+        <field name="model">sbu.estimate.sal.line</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="item_ref"/>
+                <field name="name"/>
+                <field name="estimate_id"/>
+                <separator/>
+                <filter string="Group by estimate" name="grp_estimate" context="{'group_by': 'estimate_id'}"/>
+                <searchpanel>
+                    <field name="estimate_id" string="Estimate" enable_counters="1" limit="30"/>
+                    <field name="sal_status" string="SAL status" enable_counters="1"/>
+                </searchpanel>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_sbu_estimate_sal_line_bulk_list" model="ir.actions.act_window">
+        <field name="name">Contractual SAL lines (bulk edit)</field>
+        <field name="res_model">sbu.estimate.sal.line</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_sbu_estimate_sal_line_bulk_list"/>
+        <field name="search_view_id" ref="view_sbu_estimate_sal_line_bulk_search"/>
+        <field name="help" type="html">
+            <p>Bulk-update retention % or SAL status on filtered contractual items.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_sbu_bulk_estimate_lines"
+              name="Estimate lines (bulk edit)"
+              parent="menu_sbu_estimate_root"
+              action="action_sbu_estimate_line_bulk_list"
+              sequence="20"/>
+    <menuitem id="menu_sbu_bulk_bom_lines"
+              name="BOM lines (bulk edit)"
+              parent="menu_sbu_estimate_root"
+              action="action_sbu_estimate_bom_line_bulk_list"
+              sequence="25"/>
+    <menuitem id="menu_sbu_bulk_sal_lines"
+              name="Contractual SAL (bulk edit)"
+              parent="menu_sbu_estimate_root"
+              action="action_sbu_estimate_sal_line_bulk_list"
+              sequence="30"/>
+</odoo>

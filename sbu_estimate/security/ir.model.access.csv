@@ -21,3 +21,6 @@ access_sbu_estimate_to_project_wizard,sbu.estimate.to.project.wizard,model_sbu_e
 access_sbu_estimate_anaco_import_wizard,sbu.estimate.anaco.import.wizard,model_sbu_estimate_anaco_import_wizard,base.group_user,1,1,1,1
 access_sbu_estimate_force_delete_wizard,sbu.estimate.force.delete.wizard,model_sbu_estimate_force_delete_wizard,sbu_estimate.group_sbu_estimate_uat_cleanup,1,1,1,1
 access_sbu_estimate_force_delete_wizard_admin,sbu.estimate.force.delete.wizard admin,model_sbu_estimate_force_delete_wizard,base.group_system,1,1,1,1
+access_sbu_bulk_estimate_line_wizard,sbu.bulk.estimate.line.wizard,model_sbu_bulk_estimate_line_wizard,base.group_user,1,1,1,1
+access_sbu_bulk_estimate_bom_wizard,sbu.bulk.estimate.bom.line.wizard,model_sbu_bulk_estimate_bom_line_wizard,base.group_user,1,1,1,1
+access_sbu_bulk_estimate_sal_wizard,sbu.bulk.estimate.sal.line.wizard,model_sbu_bulk_estimate_sal_line_wizard,base.group_user,1,1,1,1

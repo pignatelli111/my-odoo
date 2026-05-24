@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'SBU Project closure (DOP / certifications)',
-    'version': '19.0.1.0.7',
+    'version': '19.0.1.0.8',
     'summary': 'Document object types, closure checklists, and links to project chiusura (Phase 6.5)',
     'author': 'SBU Development',
     'category': 'Project',
@@ -16,6 +16,7 @@
         'data/sbu_closure_document_type_data.xml',
         'views/sbu_closure_document_type_views.xml',
         'views/project_closure_views.xml',
+        'views/sbu_bulk_views.xml',
     ],
     'installable': True,
     'application': False,

@@ -13,11 +13,8 @@
                            invisible="apply_scope != 'selection' or target_count &gt; 40"/>
                 </group>
                 <p class="text-muted">
-                    <b>Flusso consigliato (come in Acquisti):</b>
-                    menu <b>Righe richiesta (modifica massiva)</b> →
-                    filtri a sinistra (tipo RDA, priorità, data, …) →
-                    scegli <b>Tutto il risultato filtrato</b> oppure seleziona righe →
-                    spunta i campi da aggiornare e conferma.
+                    Use <b>left-panel filters</b>, choose <b>All lines matching list filters</b>
+                    or select rows, tick fields to apply, then confirm.
                 </p>
                 <group string="Fields to apply (check + value)">
                     <label for="apply_date_required"/>

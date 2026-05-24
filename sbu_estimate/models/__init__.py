@@ -1,3 +1,4 @@
+from . import sbu_bulk_apply_mixin
 from . import sbu_estimate
 from . import sbu_estimate_commercial_term
 from . import sbu_estimate_commercial

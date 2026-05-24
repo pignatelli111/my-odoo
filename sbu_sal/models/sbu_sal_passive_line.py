@@ -16,6 +16,19 @@ class SbuSalPassiveLine(models.Model):
         'sbu.estimate',
         string='Source estimate',
         related='sheet_id.estimate_id',
+        store=True,
+        readonly=True,
+    )
+    project_id = fields.Many2one(
+        'project.project',
+        string='Project / Job',
+        related='sheet_id.project_id',
+        store=True,
+        readonly=True,
+    )
+    sheet_state = fields.Selection(
+        related='sheet_id.state',
+        store=True,
         readonly=True,
     )
     sequence = fields.Integer(default=10)
