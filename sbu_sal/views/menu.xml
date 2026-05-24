@@ -16,4 +16,15 @@
               parent="menu_sbu_sal_root"
               action="action_sbu_sal_passive_sheet"
               sequence="20"/>
+
+    <menuitem id="menu_sbu_sal_sheet_line_bulk"
+              name="SAL lines (bulk edit)"
+              parent="menu_sbu_sal_root"
+              action="action_sbu_sal_sheet_line_bulk_list"
+              sequence="15"/>
+    <menuitem id="menu_sbu_sal_passive_line_bulk"
+              name="Passive SAL lines (bulk edit)"
+              parent="menu_sbu_sal_root"
+              action="action_sbu_sal_passive_line_bulk_list"
+              sequence="25"/>
 </odoo>
