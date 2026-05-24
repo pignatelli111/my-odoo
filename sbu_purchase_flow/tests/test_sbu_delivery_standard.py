@@ -9,7 +9,7 @@ ROUTE_VC = 'VC/VS'
 
 @tagged('post_install', '-at_install')
 class TestSbuDeliveryStandard(TransactionCase):
-    """Delivery rules: test rules at sequence 1 win over default data (seq 10+)."""
+    """Delivery rules: test rules at sequence 0 beat default data (seq 5+)."""
 
     @classmethod
     def setUpClass(cls):
@@ -28,25 +28,29 @@ class TestSbuDeliveryStandard(TransactionCase):
             {
                 'name': 'QA LA path (test)',
                 'workflow_route': ROUTE_LA,
+                'request_type': 'rda',
+                'cost_family': 'aluminum_sheet',
                 'delivery_pattern': 'via_sistemista_terzista',
                 'intermediate_stops': 5,
-                'sequence': 1,
+                'sequence': 0,
             },
             {
                 'name': 'QA glass direct (test)',
                 'workflow_route': ROUTE_VC,
+                'request_type': 'vt',
                 'cost_family': 'glass',
                 'glass_mode': 'direct',
                 'delivery_pattern': 'direct_site',
-                'sequence': 1,
+                'sequence': 0,
             },
             {
                 'name': 'QA glass via terzista (test)',
                 'workflow_route': ROUTE_VC,
+                'request_type': 'vt',
                 'cost_family': 'glass',
                 'glass_mode': 'via_terzista',
                 'delivery_pattern': 'via_terzista',
-                'sequence': 2,
+                'sequence': 0,
             },
         ])
 
@@ -80,6 +84,16 @@ class TestSbuDeliveryStandard(TransactionCase):
         vals.update(line_extra)
         return self.env['sbu.purchase.request.line'].create(vals)
 
+    def _assert_qa_rule_matches(self, line, project):
+        rule = self.env['sbu.delivery.standard'].match_for_pr_line(line, project)
+        self.assertTrue(rule, 'no delivery rule matched')
+        self.assertIn(
+            rule.id,
+            self._qa_rules.ids,
+            'expected QA test rule, got %r' % rule.name,
+        )
+        return rule
+
     def test_la_line_gets_sistemista_terzista_path(self):
         terzista = self.env['res.partner'].create({'name': 'Terzista Nord', 'is_company': True})
         sistemista = self.env['res.partner'].create({'name': 'Sistemista SpA', 'supplier_rank': 1})
@@ -88,6 +102,7 @@ class TestSbuDeliveryStandard(TransactionCase):
             sbu_system_supplier_id=sistemista.id,
         )
         line = self._pr_line(project, workflow_route=ROUTE_LA)
+        self._assert_qa_rule_matches(line, project)
         self.assertTrue(line.destination, line.destination)
         self.assertIn('Sistemista SpA', line.destination)
         self.assertIn('Terzista Nord', line.destination)
@@ -99,6 +114,8 @@ class TestSbuDeliveryStandard(TransactionCase):
             sbu_glass_delivery_mode='direct',
         )
         line = self._pr_line(project, request_type='vt', workflow_route=ROUTE_VC)
+        rule = self._assert_qa_rule_matches(line, project)
+        self.assertEqual(rule.delivery_pattern, 'direct_site')
         self.assertTrue(line.destination)
         self.assertNotIn('Terzista Vetro', line.destination)
 
@@ -109,12 +126,15 @@ class TestSbuDeliveryStandard(TransactionCase):
             sbu_glass_delivery_mode='via_terzista',
         )
         line = self._pr_line(project, request_type='vt', workflow_route=ROUTE_VC)
+        rule = self._assert_qa_rule_matches(line, project)
+        self.assertEqual(rule.delivery_pattern, 'via_terzista')
         self.assertTrue(line.destination)
         self.assertIn('Terzista Unico', line.destination)
 
     def test_apply_overwrite_on_request(self):
         project = self._project(sbu_glass_delivery_mode='direct')
         line = self._pr_line(project, request_type='vt', workflow_route=ROUTE_VC)
+        self._assert_qa_rule_matches(line, project)
         line.destination = 'Manual override'
         pr = line.request_id
         pr.action_apply_delivery_standards()
