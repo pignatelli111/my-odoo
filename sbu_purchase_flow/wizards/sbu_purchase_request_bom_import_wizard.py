@@ -68,11 +68,11 @@ class SbuPurchaseRequestBomImportWizard(models.TransientModel):
     )
     filter_calc_type = fields.Selection(
         selection=_BOM_CALC_TYPE_SELECTION,
-        string='Calculation type',
+        string='Filter: calculation type',
     )
     filter_data_phase = fields.Selection(
         selection=_BOM_DATA_PHASE_SELECTION,
-        string='Data phase',
+        string='Filter: data phase',
     )
     filter_product_category_id = fields.Many2one(
         'product.category',

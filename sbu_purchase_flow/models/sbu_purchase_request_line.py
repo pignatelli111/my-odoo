@@ -57,13 +57,18 @@ class SbuPurchaseRequestLine(models.Model):
         readonly=True,
     )
     technical_confirmed = fields.Boolean(
-        related='source_bom_line_id.technical_confirmed',
         string='Confirmed for PO',
-        readonly=False,
+        compute='_compute_technical_confirmed',
         inverse='_inverse_technical_confirmed',
         help='Updates the linked estimate BOM (ITEM) row. '
              'Set on the estimate BOM tab if the line has no distinta link.',
     )
+
+    @api.depends('source_bom_line_id.technical_confirmed')
+    def _compute_technical_confirmed(self):
+        for line in self:
+            bom = line.source_bom_line_id
+            line.technical_confirmed = bool(bom and bom.technical_confirmed)
 
     def _inverse_technical_confirmed(self):
         for line in self:

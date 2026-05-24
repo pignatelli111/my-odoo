@@ -108,7 +108,9 @@ class TestSbuBomImportWizard(TransactionCase):
         })
         self.assertIn(bom, wiz.visible_bom_line_ids)
         self.assertNotIn(other_bom, wiz.visible_bom_line_ids)
-        wiz.filter_cost_family = 'glass'
-        wiz._compute_visible_bom_line_ids()
+        wiz.write({
+            'filter_estimate_line_id': False,
+            'filter_cost_family': 'glass',
+        })
         self.assertNotIn(bom, wiz.visible_bom_line_ids)
         self.assertIn(other_bom, wiz.visible_bom_line_ids)
