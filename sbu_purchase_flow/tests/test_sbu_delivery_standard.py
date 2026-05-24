@@ -14,13 +14,20 @@ class TestSbuDeliveryStandard(TransactionCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.Delivery = cls.env['sbu.delivery.standard'].sudo()
-        cls._test_rules = cls.Delivery.create([
+        cls.uom = cls.env.ref('uom.product_uom_unit')
+        cls.product = cls.env['product.product'].create({
+            'name': 'Delivery test product',
+            'type': 'consu',
+            'purchase_ok': True,
+        })
+
+    def setUp(self):
+        super().setUp()
+        Delivery = self.env['sbu.delivery.standard'].sudo()
+        self._qa_rules = Delivery.create([
             {
                 'name': 'QA LA aluminum path',
                 'workflow_route': QA_ROUTE_LA,
-                # No cost_family: QA route is not in WORKFLOW_ROUTE_TO_REQUEST_TYPE
-                # (line resolves to «extra»); match by workflow_route only.
                 'delivery_pattern': 'via_sistemista_terzista',
                 'intermediate_stops': 5,
                 'sequence': 1,
@@ -43,10 +50,10 @@ class TestSbuDeliveryStandard(TransactionCase):
             },
         ])
 
-    @classmethod
-    def tearDownClass(cls):
-        cls._test_rules.unlink()
-        super().tearDownClass()
+    def tearDown(self):
+        if getattr(self, '_qa_rules', None):
+            self._qa_rules.unlink()
+        super().tearDown()
 
     def _project(self, **extra):
         vals = {
@@ -66,6 +73,8 @@ class TestSbuDeliveryStandard(TransactionCase):
         vals = {
             'request_id': pr.id,
             'name': 'Test line',
+            'product_id': self.product.id,
+            'product_uom': self.uom.id,
             'product_qty': 1.0,
         }
         vals.update(line_extra)
@@ -79,6 +88,7 @@ class TestSbuDeliveryStandard(TransactionCase):
             sbu_system_supplier_id=sistemista.id,
         )
         line = self._pr_line(project, workflow_route=QA_ROUTE_LA)
+        self.assertTrue(line.destination, line.destination)
         self.assertIn('Sistemista SpA', line.destination)
         self.assertIn('Terzista Nord', line.destination)
 
@@ -99,6 +109,7 @@ class TestSbuDeliveryStandard(TransactionCase):
             sbu_glass_delivery_mode='via_terzista',
         )
         line = self._pr_line(project, request_type='vt', workflow_route=QA_ROUTE_VC)
+        self.assertTrue(line.destination)
         self.assertIn('Terzista Unico', line.destination)
 
     def test_apply_overwrite_on_request(self):

@@ -1,12 +1,13 @@
 {
     'name': 'SBU Context Help',
-    'version': '19.0.1.0.8',
+    'version': '19.0.1.0.9',
     'summary': 'Floating help button (user language) for SBU screens',
     'author': 'SBU Development',
     'category': 'Hidden',
     'depends': [
         'web',
         'sbu_estimate',
+        'sbu_sal',
     ],
     'data': [
         'security/ir.model.access.csv',
