@@ -2,14 +2,14 @@
 from odoo.tests import tagged
 from odoo.tests.common import TransactionCase
 
-# Routes used only in tests — never collide with production LA / VC/VS rules.
-QA_ROUTE_LA = 'SBU_QA_LA'
-QA_ROUTE_VC = 'SBU_QA_VC'
+# Valid sbu.purchase.request.workflow_route selection keys (not free text).
+ROUTE_LA = 'LA'
+ROUTE_VC = 'VC/VS'
 
 
 @tagged('post_install', '-at_install')
 class TestSbuDeliveryStandard(TransactionCase):
-    """Delivery rules: dedicated QA routes (do not touch prod master data)."""
+    """Delivery rules: test rules at sequence 1 win over default data (seq 10+)."""
 
     @classmethod
     def setUpClass(cls):
@@ -26,27 +26,27 @@ class TestSbuDeliveryStandard(TransactionCase):
         Delivery = self.env['sbu.delivery.standard'].sudo()
         self._qa_rules = Delivery.create([
             {
-                'name': 'QA LA aluminum path',
-                'workflow_route': QA_ROUTE_LA,
+                'name': 'QA LA path (test)',
+                'workflow_route': ROUTE_LA,
                 'delivery_pattern': 'via_sistemista_terzista',
                 'intermediate_stops': 5,
                 'sequence': 1,
             },
             {
-                'name': 'QA glass direct',
-                'workflow_route': QA_ROUTE_VC,
+                'name': 'QA glass direct (test)',
+                'workflow_route': ROUTE_VC,
                 'cost_family': 'glass',
                 'glass_mode': 'direct',
                 'delivery_pattern': 'direct_site',
-                'sequence': 2,
+                'sequence': 1,
             },
             {
-                'name': 'QA glass via terzista',
-                'workflow_route': QA_ROUTE_VC,
+                'name': 'QA glass via terzista (test)',
+                'workflow_route': ROUTE_VC,
                 'cost_family': 'glass',
                 'glass_mode': 'via_terzista',
                 'delivery_pattern': 'via_terzista',
-                'sequence': 3,
+                'sequence': 2,
             },
         ])
 
@@ -63,7 +63,7 @@ class TestSbuDeliveryStandard(TransactionCase):
         vals.update(extra)
         return self.env['project.project'].create(vals)
 
-    def _pr_line(self, project, request_type='rda', workflow_route=QA_ROUTE_LA, **line_extra):
+    def _pr_line(self, project, request_type='rda', workflow_route=ROUTE_LA, **line_extra):
         pr = self.env['sbu.purchase.request'].create({
             'project_id': project.id,
             'request_type': request_type,
@@ -87,7 +87,7 @@ class TestSbuDeliveryStandard(TransactionCase):
             sbu_site_subcontractor_id=terzista.id,
             sbu_system_supplier_id=sistemista.id,
         )
-        line = self._pr_line(project, workflow_route=QA_ROUTE_LA)
+        line = self._pr_line(project, workflow_route=ROUTE_LA)
         self.assertTrue(line.destination, line.destination)
         self.assertIn('Sistemista SpA', line.destination)
         self.assertIn('Terzista Nord', line.destination)
@@ -98,7 +98,7 @@ class TestSbuDeliveryStandard(TransactionCase):
             sbu_site_subcontractor_id=terzista.id,
             sbu_glass_delivery_mode='direct',
         )
-        line = self._pr_line(project, request_type='vt', workflow_route=QA_ROUTE_VC)
+        line = self._pr_line(project, request_type='vt', workflow_route=ROUTE_VC)
         self.assertTrue(line.destination)
         self.assertNotIn('Terzista Vetro', line.destination)
 
@@ -108,13 +108,13 @@ class TestSbuDeliveryStandard(TransactionCase):
             sbu_site_subcontractor_id=terzista.id,
             sbu_glass_delivery_mode='via_terzista',
         )
-        line = self._pr_line(project, request_type='vt', workflow_route=QA_ROUTE_VC)
+        line = self._pr_line(project, request_type='vt', workflow_route=ROUTE_VC)
         self.assertTrue(line.destination)
         self.assertIn('Terzista Unico', line.destination)
 
     def test_apply_overwrite_on_request(self):
         project = self._project(sbu_glass_delivery_mode='direct')
-        line = self._pr_line(project, request_type='vt', workflow_route=QA_ROUTE_VC)
+        line = self._pr_line(project, request_type='vt', workflow_route=ROUTE_VC)
         line.destination = 'Manual override'
         pr = line.request_id
         pr.action_apply_delivery_standards()
