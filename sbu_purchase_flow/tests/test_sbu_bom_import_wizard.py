@@ -65,6 +65,21 @@ class TestSbuBomImportWizard(TransactionCase):
         action = pr.action_load_lines_from_estimate_bom_append()
         self.assertEqual(action['res_model'], 'sbu.purchase.request.bom.import.wizard')
 
+    def test_pr_line_technical_confirmed_writes_bom(self):
+        pr, bom, _eline = self._setup_pr_with_bom()
+        bom.needs_technical_confirm = True
+        bom.technical_confirmed = False
+        pr_line = self.env['sbu.purchase.request.line'].create({
+            'request_id': pr.id,
+            'source_bom_line_id': bom.id,
+            'name': bom.product_id.display_name,
+            'product_id': bom.product_id.id,
+            'product_uom': bom.uom_id.id,
+            'product_qty': 1.0,
+        })
+        pr_line.technical_confirmed = True
+        self.assertTrue(bom.technical_confirmed)
+
     def test_wizard_filters_narrow_visible_lines(self):
         pr, bom, eline = self._setup_pr_with_bom()
         other_line = self.env['sbu.estimate.line'].create({

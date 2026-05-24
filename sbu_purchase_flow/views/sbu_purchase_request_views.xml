@@ -155,7 +155,9 @@
                                            options="{'no_create': True}"/>
                                     <field name="bom_qty_sync" optional="show"/>
                                     <field name="bom_qty_ordered_ref" optional="hide"/>
-                                    <field name="technical_confirmed" optional="show"/>
+                                    <field name="technical_confirmed" optional="show"
+                                           readonly="not source_bom_line_id"
+                                           decoration-warning="needs_technical_confirm and not technical_confirmed"/>
                                     <field name="data_phase" optional="hide"/>
                                     <field name="utilization" optional="show"/>
                                     <field name="weight_kg" optional="hide"/>

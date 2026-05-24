@@ -59,8 +59,16 @@ class SbuPurchaseRequestLine(models.Model):
     technical_confirmed = fields.Boolean(
         related='source_bom_line_id.technical_confirmed',
         string='Confirmed for PO',
-        readonly=True,
+        readonly=False,
+        inverse='_inverse_technical_confirmed',
+        help='Updates the linked estimate BOM (ITEM) row. '
+             'Set on the estimate BOM tab if the line has no distinta link.',
     )
+
+    def _inverse_technical_confirmed(self):
+        for line in self:
+            if line.source_bom_line_id:
+                line.source_bom_line_id.technical_confirmed = line.technical_confirmed
     manual_input_state = fields.Selection(
         selection=SBU_MANUAL_INPUT_STATE,
         string='Manual input status',
