@@ -60,6 +60,8 @@ class SbuPurchaseRequestLine(models.Model):
         string='Confirmed for PO',
         compute='_compute_technical_confirmed',
         inverse='_inverse_technical_confirmed',
+        store=True,
+        readonly=False,
         help='Updates the linked estimate BOM (ITEM) row. '
              'Set on the estimate BOM tab if the line has no distinta link.',
     )
