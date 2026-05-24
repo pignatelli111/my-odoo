@@ -55,6 +55,12 @@ class TestSbuBomImportWizard(TransactionCase):
         self.assertEqual(pr.line_ids.source_bom_line_id, bom)
 
     def test_route_scope_finds_la_bom(self):
-        pr, bom = self._setup_pr_with_bom()
+        pr, bom, eline = self._setup_pr_with_bom()
+        self.assertEqual(eline.workflow_route, 'LA')
         candidates = pr._candidate_bom_lines_for_import(scope='route')
         self.assertIn(bom, candidates)
+
+    def test_open_bom_import_wizard_action(self):
+        pr, _bom, _eline = self._setup_pr_with_bom()
+        action = pr.action_load_lines_from_estimate_bom_append()
+        self.assertEqual(action['res_model'], 'sbu.purchase.request.bom.import.wizard')
