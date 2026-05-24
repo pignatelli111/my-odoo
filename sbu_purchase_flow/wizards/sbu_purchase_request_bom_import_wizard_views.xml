@@ -1,5 +1,66 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- List + search tuned for the PR «Load from estimate BOM» modal -->
+    <record id="view_sbu_estimate_bom_line_list_import_wizard" model="ir.ui.view">
+        <field name="name">sbu.estimate.bom.line.list.import.wizard</field>
+        <field name="model">sbu.estimate.bom.line</field>
+        <field name="priority">25</field>
+        <field name="arch" type="xml">
+            <list string="Distinta ITEM" create="0" delete="0">
+                <field name="estimate_line_id" string="ANACO position"/>
+                <field name="name" string="Component"/>
+                <field name="product_id" optional="hide"/>
+                <field name="product_category_id" string="Category" optional="show"/>
+                <field name="calc_type" optional="show"/>
+                <field name="data_phase" optional="hide"/>
+                <field name="dimension_display" string="Dimensions" optional="show"/>
+                <field name="qty_theoretical" string="Qty theoretical" optional="show"/>
+                <field name="estimate_id" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_sbu_estimate_bom_line_import_wizard_search" model="ir.ui.view">
+        <field name="name">sbu.estimate.bom.line.search.import.wizard</field>
+        <field name="model">sbu.estimate.bom.line</field>
+        <field name="priority">25</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" string="Component"/>
+                <field name="description"/>
+                <field name="product_id"/>
+                <field name="estimate_line_id" string="ANACO position"
+                       filter_domain="['|', ('estimate_line_id.pos', 'ilike', self), ('estimate_line_id.description', 'ilike', self)]"/>
+                <separator/>
+                <filter name="filter_la" string="LA route"
+                        domain="[('estimate_line_id.workflow_route', '=', 'LA')]"/>
+                <filter name="filter_glass" string="Glass (VC/VS)"
+                        domain="[('estimate_line_id.cost_family', '=', 'glass')]"/>
+                <filter name="filter_sheet" string="Aluminium sheet"
+                        domain="[('estimate_line_id.cost_family', '=', 'aluminum_sheet')]"/>
+                <filter name="filter_bracket" string="Brackets (ST)"
+                        domain="[('estimate_line_id.cost_family', '=', 'bracket_st')]"/>
+                <filter name="filter_needs_confirm" string="Needs technical confirm"
+                        domain="[('needs_technical_confirm', '=', True), ('technical_confirmed', '=', False)]"/>
+                <separator/>
+                <filter name="grp_pos" string="Group by ANACO position"
+                        context="{'group_by': 'estimate_line_id'}"/>
+                <filter name="grp_calc" string="Group by calculation type"
+                        context="{'group_by': 'calc_type'}"/>
+                <filter name="grp_category" string="Group by product category"
+                        context="{'group_by': 'product_category_id'}"/>
+                <filter name="grp_phase" string="Group by data phase"
+                        context="{'group_by': 'data_phase'}"/>
+                <searchpanel>
+                    <field name="estimate_line_id" string="ANACO position" enable_counters="1" limit="80"/>
+                    <field name="calc_type" string="Calculation" enable_counters="1"/>
+                    <field name="data_phase" string="Data phase" enable_counters="1"/>
+                    <field name="product_category_id" string="Category" enable_counters="1" limit="40"/>
+                </searchpanel>
+            </search>
+        </field>
+    </record>
+
     <record id="view_sbu_purchase_request_bom_import_wizard_form" model="ir.ui.view">
         <field name="name">sbu.purchase.request.bom.import.wizard.form</field>
         <field name="model">sbu.purchase.request.bom.import.wizard</field>
@@ -7,29 +68,56 @@
             <form string="Load lines from estimate BOM">
                 <sheet>
                     <group>
-                        <field name="request_id" readonly="1"/>
-                        <field name="estimate_id" invisible="1"/>
-                        <field name="workflow_route" readonly="1"/>
-                        <field name="replace_existing" widget="boolean_toggle"/>
-                        <field name="import_scope" widget="radio"/>
-                        <field name="available_count" readonly="1"/>
-                        <field name="already_linked_count" readonly="1"/>
-                        <field name="selected_count" readonly="1"/>
+                        <group>
+                            <field name="request_id" readonly="1"/>
+                            <field name="estimate_id" invisible="1"/>
+                            <field name="workflow_route" readonly="1"/>
+                            <field name="replace_existing" widget="boolean_toggle"/>
+                            <field name="import_scope" widget="radio"/>
+                        </group>
+                        <group>
+                            <field name="available_count" readonly="1"/>
+                            <field name="filtered_count" readonly="1"/>
+                            <field name="already_linked_count" readonly="1"/>
+                            <field name="selected_count" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Filter list (optional)">
+                        <group>
+                            <field name="filter_estimate_line_id"
+                                   options="{'no_create': True, 'no_open': True}"/>
+                            <field name="filter_cost_family"/>
+                            <field name="filter_workflow_route" placeholder="LA, VC/VS, ST…"/>
+                        </group>
+                        <group>
+                            <field name="filter_calc_type"/>
+                            <field name="filter_data_phase"/>
+                            <field name="filter_product_category_id"/>
+                            <field name="filter_text" placeholder="Code, product, description…"/>
+                        </group>
                     </group>
                     <p class="text-muted">
-                        If <b>matching route</b> shows 0 lines, switch to <b>All estimate BOM lines</b>
-                        or check ANACO rows have the correct cost family / workflow route (e.g. LA).
+                        Use <b>filters above</b> to narrow the list, or the <b>search bar / left panel</b>
+                        on the table (group by ANACO position, category, calculation type).
+                        If <b>matching route</b> shows 0 lines, switch to <b>All estimate BOM lines</b>.
                     </p>
                     <div class="mb-2">
+                        <button name="action_select_filtered" string="Select all visible" type="object" class="btn-secondary"/>
+                        <button name="action_select_filtered_new_only" string="Select visible (not linked)" type="object" class="btn-secondary"/>
+                        <button name="action_select_same_anaco_position" string="Select this ANACO position" type="object" class="btn-secondary"/>
+                        <button name="action_clear_filters" string="Clear filters" type="object" class="btn-secondary"/>
                         <button name="action_select_route_lines" string="Select all (route)" type="object" class="btn-secondary"/>
                         <button name="action_select_all_estimate" string="Select all (estimate)" type="object" class="btn-secondary"/>
-                        <button name="action_select_new_only" string="Select not yet linked" type="object" class="btn-secondary"/>
                         <button name="action_clear_selection" string="Clear selection" type="object" class="btn-secondary"/>
                     </div>
+                    <field name="visible_bom_line_ids" invisible="1"/>
                     <field name="bom_line_ids" nolabel="1"
                            widget="many2many"
-                           domain="[('estimate_id', '=', estimate_id)]"
-                           context="{'list_view_ref': 'sbu_estimate.view_sbu_estimate_bom_line_list_picker'}"
+                           domain="[('id', 'in', visible_bom_line_ids)]"
+                           context="{
+                               'list_view_ref': 'sbu_purchase_flow.view_sbu_estimate_bom_line_list_import_wizard',
+                               'search_view_ref': 'sbu_purchase_flow.view_sbu_estimate_bom_line_import_wizard_search',
+                           }"
                            options="{'no_create': True}"/>
                 </sheet>
                 <footer>

@@ -64,3 +64,36 @@ class TestSbuBomImportWizard(TransactionCase):
         pr, _bom, _eline = self._setup_pr_with_bom()
         action = pr.action_load_lines_from_estimate_bom_append()
         self.assertEqual(action['res_model'], 'sbu.purchase.request.bom.import.wizard')
+
+    def test_wizard_filters_narrow_visible_lines(self):
+        pr, bom, eline = self._setup_pr_with_bom()
+        other_line = self.env['sbu.estimate.line'].create({
+            'estimate_id': eline.estimate_id.id,
+            'description': 'Glass row',
+            'pos': 'F2',
+            'cost_family': 'glass',
+        })
+        other_product = self.env['product.product'].create({
+            'name': 'Glass pane',
+            'default_code': 'SBU-GLASS',
+            'type': 'consu',
+            'purchase_ok': True,
+        })
+        other_bom = self.env['sbu.estimate.bom.line'].create({
+            'estimate_id': eline.estimate_id.id,
+            'estimate_line_id': other_line.id,
+            'product_id': other_product.id,
+            'unit_cost': 5.0,
+            'uom_id': other_product.uom_id.id,
+        })
+        wiz = self.env['sbu.purchase.request.bom.import.wizard'].create({
+            'request_id': pr.id,
+            'import_scope': 'all',
+            'filter_estimate_line_id': eline.id,
+        })
+        self.assertIn(bom, wiz.visible_bom_line_ids)
+        self.assertNotIn(other_bom, wiz.visible_bom_line_ids)
+        wiz.filter_cost_family = 'glass'
+        wiz._compute_visible_bom_line_ids()
+        self.assertNotIn(bom, wiz.visible_bom_line_ids)
+        self.assertIn(other_bom, wiz.visible_bom_line_ids)
