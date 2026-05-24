@@ -42,8 +42,9 @@ class SbuPurchaseRequestCreateWizard(models.TransientModel):
     )
     load_from_estimate = fields.Boolean(
         string='Load lines from estimate BOM',
-        default=True,
-        help='If the job has a won estimate, import BOM lines for this route.',
+        default=False,
+        help='If checked, import BOM lines for this route when creating the document. '
+             'Otherwise start with an empty line list and use «Add lines from estimate BOM».',
     )
     need_by_date = fields.Date(string='Need-by date')
     topic = fields.Char(string='Topic')

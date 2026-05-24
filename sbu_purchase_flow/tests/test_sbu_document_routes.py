@@ -54,6 +54,64 @@ class TestSbuDocumentRoutes(TransactionCase):
         self.assertEqual(pr.request_type, 'rda')
         self.assertEqual(pr.topic, 'Facciata sud')
         self.assertEqual(pr.company_id, self.env.company)
+        self.assertFalse(pr.line_ids)
+
+    def test_create_wizard_default_does_not_load_bom(self):
+        wiz = self.env['sbu.purchase.request.create.wizard'].new({
+            'project_id': self._project('Empty RDA').id,
+            'workflow_route': 'LA',
+        })
+        self.assertFalse(wiz.load_from_estimate)
+
+    def test_remove_bom_lines_keeps_manual_lines(self):
+        partner = self.env['res.partner'].create({'name': 'Clear BOM partner'})
+        estimate = self.env['sbu.estimate'].create({'partner_id': partner.id})
+        product = self.env['product.product'].create({
+            'name': 'BOM item',
+            'default_code': 'SBU-CLEAR',
+            'type': 'consu',
+            'purchase_ok': True,
+        })
+        eline = self.env['sbu.estimate.line'].create({
+            'estimate_id': estimate.id,
+            'description': 'Line',
+            'pos': 'F1',
+            'cost_family': 'aluminum_sheet',
+        })
+        bom = self.env['sbu.estimate.bom.line'].create({
+            'estimate_id': estimate.id,
+            'estimate_line_id': eline.id,
+            'product_id': product.id,
+            'unit_cost': 1.0,
+            'uom_id': product.uom_id.id,
+        })
+        project = self.env['project.project'].create({
+            'name': 'Clear BOM job',
+            'partner_id': partner.id,
+            'sbu_estimate_id': estimate.id,
+        })
+        pr = self.env['sbu.purchase.request'].create({
+            'project_id': project.id,
+            'request_type': 'rda',
+            'workflow_route': 'LA',
+        })
+        self.env['sbu.purchase.request.line'].create({
+            'request_id': pr.id,
+            'source_bom_line_id': bom.id,
+            'name': 'From BOM',
+            'product_id': product.id,
+            'product_uom': product.uom_id.id,
+            'product_qty': 1.0,
+        })
+        manual = self.env['sbu.purchase.request.line'].create({
+            'request_id': pr.id,
+            'name': 'Manual extra',
+            'product_id': product.id,
+            'product_uom': product.uom_id.id,
+            'product_qty': 2.0,
+        })
+        pr.action_remove_lines_from_estimate_bom()
+        self.assertEqual(pr.line_ids, manual)
 
     def test_collect_routes_splits_osc_from_glass(self):
         partner = self.env['res.partner'].create({'name': 'Route C'})

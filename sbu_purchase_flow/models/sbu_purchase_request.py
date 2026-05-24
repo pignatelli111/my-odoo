@@ -506,10 +506,15 @@ class SbuPurchaseRequest(models.Model):
             'target': 'current',
         }
 
-    def action_refresh_all_bom_quantities(self):
-        self.line_ids.action_refresh_qty_from_bom()
-        self.line_ids._sbu_propagate_dimensions_to_po_lines()
-        self.message_post(body=_('Quantities and dimensions refreshed from estimate BOM / RDA lines.'))
+    def action_remove_lines_from_estimate_bom(self):
+        """Remove demand lines that were loaded from the estimate BOM (keep manual lines)."""
+        self.ensure_one()
+        bom_linked = self.line_ids.filtered('source_bom_line_id')
+        count = len(bom_linked)
+        bom_linked.unlink()
+        self.message_post(
+            body=_('Removed %(count)d line(s) linked to estimate BOM.') % {'count': count},
+        )
         return {
             'type': 'ir.actions.act_window',
             'res_model': self._name,
@@ -517,6 +522,11 @@ class SbuPurchaseRequest(models.Model):
             'view_mode': 'form',
             'target': 'current',
         }
+
+    def copy(self, default=None):
+        """New document must not inherit lines from a duplicated request."""
+        default = dict(default or {}, line_ids=[])
+        return super().copy(default)
 
     def action_apply_delivery_standards(self):
         """Apply default delivery routes to all lines (overwrite existing destinations)."""

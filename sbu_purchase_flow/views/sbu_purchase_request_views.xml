@@ -49,11 +49,12 @@
                             type="object"
                             class="btn-secondary"
                             invisible="state == 'cancelled'"/>
-                    <button name="action_refresh_all_bom_quantities"
-                            string="Refresh BOM quantities"
+                    <button name="action_remove_lines_from_estimate_bom"
+                            string="Remove BOM lines"
                             type="object"
                             class="btn-secondary"
-                            invisible="state == 'cancelled'"/>
+                            invisible="state == 'cancelled'"
+                            confirm="Remove all lines linked to the estimate BOM? Manual lines without a BOM link are kept."/>
                     <button name="action_open_excel_import_wizard"
                             string="Import from Excel"
                             type="object"

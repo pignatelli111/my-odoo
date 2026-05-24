@@ -17,6 +17,8 @@
                 </group>
                 <p class="text-muted">
                     Choose only the supported types (LA, LZ, ST, PAN, OSC, VT, ACO, ACP, LDS).
+                    The document starts <b>without lines</b> unless you tick «Load lines from estimate BOM».
+                    Use «Add lines from estimate BOM» on the RDA form to pick rows later.
                     Required fields depend on the route: Topic for materials (LA, PAN, …),
                     need-by date for LA/LZ/ST/PAN/OSC/VT. A second open document
                     cannot be created for the same job and route.

@@ -77,7 +77,8 @@ class TestSbuBomImportWizard(TransactionCase):
             'product_uom': bom.uom_id.id,
             'product_qty': 1.0,
         })
-        pr_line.technical_confirmed = True
+        pr_line.write({'technical_confirmed': True})
+        bom.invalidate_recordset(['technical_confirmed'])
         self.assertTrue(bom.technical_confirmed)
 
     def test_wizard_filters_narrow_visible_lines(self):
