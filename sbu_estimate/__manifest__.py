@@ -42,7 +42,7 @@
         'views/sbu_estimate_line_views.xml',
         'views/sbu_estimate_sal_line_views.xml',
         'views/sbu_estimate_bom_views.xml',
-        'views/sbu_estimate_menu.xml',
+        'views/sbu_estimate_menu.xml',  # after bulk actions in sbu_bulk_list_views.xml
         'report/sbu_estimate_offer_report.xml',
     ],
     'installable': True,

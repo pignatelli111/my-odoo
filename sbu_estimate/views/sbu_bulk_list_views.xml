@@ -156,20 +156,4 @@
             <p>Bulk-update retention % or SAL status on filtered contractual items.</p>
         </field>
     </record>
-
-    <menuitem id="menu_sbu_bulk_estimate_lines"
-              name="Estimate lines (bulk edit)"
-              parent="menu_sbu_estimate_root"
-              action="action_sbu_estimate_line_bulk_list"
-              sequence="20"/>
-    <menuitem id="menu_sbu_bulk_bom_lines"
-              name="BOM lines (bulk edit)"
-              parent="menu_sbu_estimate_root"
-              action="action_sbu_estimate_bom_line_bulk_list"
-              sequence="25"/>
-    <menuitem id="menu_sbu_bulk_sal_lines"
-              name="Contractual SAL (bulk edit)"
-              parent="menu_sbu_estimate_root"
-              action="action_sbu_estimate_sal_line_bulk_list"
-              sequence="30"/>
 </odoo>
