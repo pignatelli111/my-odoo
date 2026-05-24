@@ -306,6 +306,31 @@ msgid "BOM (ITEM)"
 msgstr "Distinta base (ITEM)"
 
 #. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__item_bom_line_count
+msgid "BOM lines"
+msgstr "Righe distinta"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__sal_line_ids
+msgid "Contractual SAL lines"
+msgstr "Voci contrattuali SAL"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__reference_ids
+msgid "Attachments and references"
+msgstr "Allegati e riferimenti"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate_line__bom_line_ids
+msgid "BOM (ITEM)"
+msgstr "Distinta base (ITEM)"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "References"
+msgstr "Riferimenti"
+
+#. module: sbu_estimate
 #: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate_bom_line__calc_type
 msgid "Calculation type"
 msgstr "Tipo calcolo"

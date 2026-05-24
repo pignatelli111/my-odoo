@@ -345,7 +345,7 @@ class SbuEstimateLine(models.Model):
     bom_line_ids = fields.One2many(
         'sbu.estimate.bom.line',
         'estimate_line_id',
-        string='Distinta Base (ITEM)',
+        string='BOM (ITEM)',
     )
 
     # ── Computed: MQ/Cad. and Mq tot. ─────────────────────────────────────────

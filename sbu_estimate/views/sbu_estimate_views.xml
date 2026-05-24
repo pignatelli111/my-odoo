@@ -415,7 +415,7 @@
                         <page string="Attachments and references" name="estimate_references">
                             <field name="reference_ids"
                                    context="{'default_estimate_id': id}">
-                                <list string="Riferimenti" editable="bottom">
+                                <list string="References" editable="bottom">
                                     <field name="sequence" widget="handle"/>
                                     <field name="ref_type"/>
                                     <field name="name"/>
