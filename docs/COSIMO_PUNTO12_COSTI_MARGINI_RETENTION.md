@@ -2,7 +2,7 @@
 
 **Feedback:** dopo l’import Excel, costi, margini % e retention/garanzia non coincidono con il foglio ANACO.
 
-**Valutazione:** il feedback è **corretto**. Non è un singolo bug casuale: oggi l’import copia **parte** delle colonne e Odoo **ricalcola** prezzo/costo/margine con regole **simili ma non identiche** a Excel. La retention sulle voci SAL **non viene letta dal file**.
+**Valutazione:** il feedback è **corretto**. L’import copia **parte** delle colonne e Odoo **ricalcola** prezzo/costo/margine con regole **simili ma non identiche** a Excel. Da **`sbu_estimate` 19.0.1.0.109**: staffame ST/LZ, ritenuta % SAL da foglio, avviso BS mancante — parità 1:1 su tutto il foglio richiede ancora validazione P1002.
 
 ---
 
@@ -15,7 +15,8 @@
 | **Costo** | Coib., posa LIN, trasporto, PM, cantiere, extra; BM/BP riga 5 → % industriali/MOL | `cost_total_cad` = materiali scontati + oneri industriali; **MOL % non entra nel costo totale** (solo indicatore) |
 | **Margine %** | — | `(price_total_tot − cost_total_tot) / price_total_tot` |
 | **Voci SAL** | Item, descrizione, qty, prezzo unit., piani PT–P8, SAL-1…10 % (se colonne riconosciute) | `total_contract`, cumulative %, retention **solo default azienda** |
-| **Retention %** | **Non importata** | `retention_percent` = impostazione azienda (`sbu_sal_default_retention_percent`, tip. **5 %**) |
+| **Retention %** | **Importata** (col. «Ritenuta» / «Garanzia» o testata SAL) | Se assente nel file → default azienda (`sbu_sal_default_retention_percent`) |
+| **Staffame ST/LZ** | **Importato** (col. rilevata / 55) | `cost_staffame_cad` incluso in `cost_total_cad` |
 
 Riferimento colonne REV7: `docs/PHASE2_STEP2_4_optional_excel_import.txt`, codice `sbu_estimate/wizards/sbu_estimate_anaco_import_wizard.py`.
 
@@ -123,7 +124,7 @@ Manca ancora: test di **parità numerica** riga per riga (P0 backlog).
 > **Costo:** mancano alcune colonne CAD; il MOL in Odoo non è nel totale costo come molti fogli Excel.  
 > **Retention:** oggi **non si importa** dal file; va impostata in Odoo o nel fix P0 sopra.
 
-**Stato roadmap:** P0 aperto — vedi `FEEDBACK_COSIMO_ROADMAP_IT.md` punto 12.
+**Stato roadmap:** migliorato in codice (v `19.0.1.0.109`); validazione numerica P1002 ancora P0 — vedi `FEEDBACK_COSIMO_ROADMAP_IT.md` punto 12.
 
 ---
 

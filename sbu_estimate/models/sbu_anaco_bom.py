@@ -24,6 +24,7 @@ ANACO_LINE_FIELD_TO_PRODUCT_CODE = {
     'cost_trasporto_cad': 'SBU-TRASP',
     'cost_tech_pm_cad': 'SBU-PM',
     'cost_cantiere_cad': 'SBU-CANT',
+    'cost_staffame_cad': 'SBU-STAFF',
     'cost_extra_cad': 'SBU-EXTRA',
 }
 

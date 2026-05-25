@@ -50,6 +50,7 @@ ANACO_COL_COST_TRASPORTO = 57
 ANACO_COL_COST_TECH_PM = 59
 ANACO_COL_COST_CANTIERE = 61
 ANACO_COL_COST_EXTRA = 63
+ANACO_COL_COST_STAFFAME = 55  # ST/LZ staffame (REV7/P1002 fallback; header detect overrides)
 ANACO_COL_COST_IND_PCT = 65  # BM
 ANACO_COL_COST_MOL_PCT = 68  # BP
 ANACO_COL_BS_UNIT = 71
@@ -104,10 +105,17 @@ _ANACO_NUMERIC_COLS = tuple(
     set(ANACO_COL_PRICE.values())
     | {
         ANACO_COL_B_MM, ANACO_COL_H_MM, ANACO_COL_QTY, ANACO_COL_BS_UNIT,
-        ANACO_COL_COST_COIB, ANACO_COL_COST_POSA_LIN, ANACO_COL_COST_TRASPORTO,
-        ANACO_COL_COST_TECH_PM, ANACO_COL_COST_CANTIERE, ANACO_COL_COST_EXTRA,
+        ANACO_COL_COST_COIB, ANACO_COL_COST_POSA_LIN, ANACO_COL_COST_STAFFAME,
+        ANACO_COL_COST_TRASPORTO, ANACO_COL_COST_TECH_PM, ANACO_COL_COST_CANTIERE,
+        ANACO_COL_COST_EXTRA,
     }
 )
+
+_SAL_RETENTION_HEADER_KEYS = (
+    'RITENUTA', 'RITENUT', 'GARANZIA', 'RETENTION', 'RITENUTAGARANZIA',
+    'WITHHOLDING', 'RIT%',
+)
+_STAFFAME_HEADER_KEYS = ('STAFFAME', 'STLZ', 'ST/LZ', 'ST_LZ', 'STAFF')
 
 
 def _sheet_by_aliases(wb, aliases):
@@ -183,6 +191,57 @@ def _detect_sal_first_row(sh_vals, sh_form, fallback):
         if _sal_row_is_importable(sh_vals, sh_form, row):
             return row
     return fallback
+
+
+def _header_compact(text):
+    return re.sub(r'[\s._\-/%]+', '', (text or '').strip().upper())
+
+
+def _detect_anaco_cost_staffame_column(sh_vals, sh_form=None):
+    """Find ST/LZ staffame column from header row (Cosimo punto 12)."""
+    sh_form = sh_form or sh_vals
+    max_col = min((sh_vals.max_column or 80) + 1, 80)
+    for row in range(3, 13):
+        for col in range(1, max_col):
+            compact = _header_compact(_cell_str_merged(sh_vals, sh_form, row, col))
+            if not compact:
+                continue
+            if any(key in compact for key in _STAFFAME_HEADER_KEYS):
+                return col
+    return ANACO_COL_COST_STAFFAME
+
+
+def _detect_sal_retention_column(sh_vals, sh_form=None):
+    """Column with per-line retention % on Voci Contrattuali_SAL."""
+    sh_form = sh_form or sh_vals
+    max_col = min((sh_vals.max_column or 40) + 1, 40)
+    for row in range(1, 25):
+        for col in range(1, max_col):
+            compact = _header_compact(_cell_str_merged(sh_vals, sh_form, row, col))
+            if not compact:
+                continue
+            if any(key in compact for key in _SAL_RETENTION_HEADER_KEYS):
+                return col
+    return None
+
+
+def _detect_sal_contract_retention_percent(sh_vals, sh_form=None):
+    """Single retention % in SAL header block (applies when row has no per-line %)."""
+    sh_form = sh_form or sh_vals
+    max_col = min((sh_vals.max_column or 30) + 1, 30)
+    for row in range(1, 16):
+        for col in range(1, max_col):
+            compact = _header_compact(_cell_str_merged(sh_vals, sh_form, row, col))
+            if not compact or not any(key in compact for key in _SAL_RETENTION_HEADER_KEYS):
+                continue
+            for ncol in (col + 1, col):
+                v = _cell_num_merged(sh_vals, sh_form, row, ncol)
+                if v is None:
+                    continue
+                pct = _norm_pct(v)
+                if 0 < pct <= 100:
+                    return pct
+    return None
 
 
 def _get_workbook_sheet_pair(raw):
@@ -479,6 +538,16 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
         help='La colonna «Comm.» in testata ANACO non è mappata per-riga in REV7; '
              'impostare qui la commissione da applicare a tutte le righe importate, se serve.',
     )
+    warn_when_bs_missing = fields.Boolean(
+        string='Avvisa se manca colonna BS',
+        default=True,
+        help='Dopo import, segnala righe con listino componenti ma senza prezzo unit. BS (col. 71).',
+    )
+    import_sal_retention = fields.Boolean(
+        string='Importa ritenuta % da foglio SAL',
+        default=True,
+        help='Legge la colonna «Ritenuta» / «Garanzia» nel foglio Voci Contrattuali_SAL.',
+    )
 
     @api.model
     def default_get(self, fields_list):
@@ -498,9 +567,10 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
                   name=self.data_filename)
             )
 
-    def _import_anaco_sheet_rows(self, estimate, anaco_sh, anaco_sh_form, Line, first_row):
+    def _import_anaco_sheet_rows(self, estimate, anaco_sh, anaco_sh_form, Line, first_row, staffame_col=None):
         """Import ANACO sheet rows; returns (count, optional chatter note)."""
         sh_form = anaco_sh_form or anaco_sh
+        staffame_col = staffame_col or _detect_anaco_cost_staffame_column(anaco_sh, sh_form)
 
         def _num(row, col):
             return _cell_num_merged(anaco_sh, sh_form, row, col)
@@ -570,6 +640,7 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
             for fname, col in (
                 ('cost_coibentazione_cad', ANACO_COL_COST_COIB),
                 ('cost_posa_lamiera_lin_cad', ANACO_COL_COST_POSA_LIN),
+                ('cost_staffame_cad', staffame_col),
                 ('cost_trasporto_cad', ANACO_COL_COST_TRASPORTO),
                 ('cost_tech_pm_cad', ANACO_COL_COST_TECH_PM),
                 ('cost_cantiere_cad', ANACO_COL_COST_CANTIERE),
@@ -713,6 +784,7 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
         n_anaco = 0
         n_sal = 0
         sal_pct_col_used = None
+        sal_ret_col = None
         estimate = self.estimate_id
 
         Line = self.env['sbu.estimate.line']
@@ -733,13 +805,14 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
                 if detected != first_row:
                     first_row = detected
 
+            staffame_col = _detect_anaco_cost_staffame_column(anaco_sh, anaco_sh_form)
             n_anaco, import_note = self._import_anaco_sheet_rows(
-                estimate, anaco_sh, anaco_sh_form, Line, first_row,
+                estimate, anaco_sh, anaco_sh_form, Line, first_row, staffame_col=staffame_col,
             )
 
             if n_anaco == 0 and self.auto_detect_first_row and first_row != 1:
                 n_anaco, retry_note = self._import_anaco_sheet_rows(
-                    estimate, anaco_sh, anaco_sh_form, Line, 1,
+                    estimate, anaco_sh, anaco_sh_form, Line, 1, staffame_col=staffame_col,
                 )
                 if retry_note:
                     import_note = retry_note
@@ -772,6 +845,23 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
                 )
             if import_note:
                 estimate.message_post(body=import_note)
+            if n_anaco and self.warn_when_bs_missing:
+                missing_bs = estimate.line_ids.filtered(
+                    lambda l: not (l.price_anaco_bs_cad or 0.0)
+                    and (l.price_gross_cad or 0.0) > 0.01
+                )
+                if missing_bs:
+                    sample = ', '.join(missing_bs[:8].mapped('pos')) or _('(senza pos.)')
+                    estimate.message_post(body=_(
+                        'Import ANACO: %(n)d righe senza prezzo BS (col. 71) ma con listino '
+                        'componenti — il margine %% può differire da Excel. '
+                        'Compilare «Prezzo unit. ANACO (col. BS)» o verificare le colonne prezzo. '
+                        'Esempi: %(sample)s'
+                    ) % {'n': len(missing_bs), 'sample': sample})
+            if n_anaco and staffame_col != ANACO_COL_COST_STAFFAME:
+                estimate.message_post(body=_(
+                    'Import ANACO: colonna staffame ST/LZ rilevata alla colonna Excel %(col)d.',
+                ) % {'col': staffame_col})
             if self.import_distinta_bom and n_anaco:
                 if self.replace_anaco_lines:
                     estimate.line_ids.mapped('bom_line_ids').unlink()
@@ -819,6 +909,13 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
             else:
                 sal_pct_col = self.sal_col_sal_start or SAL_COL_SAL_START
             sal_pct_col_used = sal_pct_col
+            sal_ret_col = None
+            contract_ret_pct = None
+            if self.import_sal_retention and self.auto_detect_sal_columns:
+                sal_ret_col = _detect_sal_retention_column(sal_sh, sal_form)
+                contract_ret_pct = _detect_sal_contract_retention_percent(sal_sh, sal_form)
+            else:
+                contract_ret_pct = None
 
             seq = 10
             empty_run = 0
@@ -850,6 +947,15 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
                 else:
                     uom = 'nr'
 
+                retention_pct = self.env['sbu.estimate.sal.line']._sbu_default_retention_percent()
+                if self.import_sal_retention:
+                    if sal_ret_col:
+                        ret_cell = _sal_num(r, sal_ret_col)
+                        if ret_cell is not None:
+                            retention_pct = _norm_pct(ret_cell)
+                    elif contract_ret_pct is not None:
+                        retention_pct = contract_ret_pct
+
                 sal_vals = {
                     'estimate_id': estimate.id,
                     'sequence': seq,
@@ -858,7 +964,7 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
                     'uom_type': uom,
                     'qty_contract': qty or 0.0,
                     'unit_price': unit or 0.0,
-                    'retention_percent': self.env['sbu.estimate.sal.line']._sbu_default_retention_percent(),
+                    'retention_percent': retention_pct,
                 }
                 for (c0, c1), fname in zip(SAL_COL_FLOOR_BLOCKS, SAL_FLOOR_FIELDS):
                     block_sum = 0.0
@@ -931,6 +1037,8 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
             body += '<br/>' + _(
                 'Colonne SAL-1…10: colonna Excel %(col)d (REV7 predefinita: %(rev7)d).'
             ) % {'col': sal_pct_col_used, 'rev7': SAL_COL_SAL_START}
+        if self.import_sal and self.import_sal_retention and sal_ret_col:
+            body += '<br/>' + _('Ritenuta %%: colonna Excel %(col)d.') % {'col': sal_ret_col}
         estimate.message_post(body=body)
         return {
             'type': 'ir.actions.act_window',

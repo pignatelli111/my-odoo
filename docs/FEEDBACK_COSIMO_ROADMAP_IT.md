@@ -71,7 +71,7 @@ Questo documento mappa i **18 punti** di Cosimo su: stato attuale, gap, priorit�
 | 9 | Logikal | Rimandato | Modulo presente; dimensioni finali su BOM = TODO | **P1** |
 | 10 | Qonto: riconciliazione auto; abbandono what-if | Parziale | Import + suggerimento match; **no** riconciliazione banca auto | **P1** (bank) |
 | 11 | Budget per tipologia (semafori ITEM) + sblocco solo admin | **Corretto** | Cruscotto famiglia su commessa + blocco conferma PO; sblocco admin | **P0** ✅ base |
-| 12 | Costi / margini / retention import sbagliati | **Corretto** (parità ≠ Excel 1:1) | BS prezzo ok; costi parziali; MOL fuori totale; retention SAL = default azienda | **P0** |
+| 12 | Costi / margini / retention import sbagliati | **Parziale → migliorato** | Staffame ST/LZ + ritenuta SAL da foglio; avviso BS mancante (`sbu_estimate` 19.0.1.0.109) | **P0** (parità 100% con P1002 ancora da validare) |
 | 13 | Stampa fattura per voce contratto + SAL/CDP; dashboard | **Corretto** | Tracciabilità SAL/fattura/CDP sì; PDF = 1–2 righe aggregate; report dettaglio da fare | **P1** |
 | 14 | Qonto → fornitori/clienti automatici | Opzionale | Non implementato | **P2** |
 | 15 | Cambio qty RDA/RFQ: residuo aperto; qty 1,03 | Spiegabile | 1,03 = perdita%/confezione distinta; residuo da confermare | **P1** |
@@ -274,10 +274,15 @@ Come foglio ITEM ANACO: budget preventivo, acquistato, residuo, %; semafori; sol
 2. Tab **Voci contrattuali SAL** → correggere **Retention %** se diversa dal contratto.  
 3. `python tools/probe_anaco_workbook.py` sul file P1002 in `docs/samples/client/`.
 
-**Fix P0 (codice)**  
-1. Mapping colonne costo mancanti + retention da SAL.  
-2. Test parità numerica su P1002.  
-3. Avviso wizard se BS assente e listino diverso da atteso.
+**Fatto (base, `sbu_estimate` 19.0.1.0.109)**  
+- Import **staffame ST/LZ** (col. rilevata da intestazione o fallback 55).  
+- Import **ritenuta %** da colonna «Ritenuta» / «Garanzia» sul foglio SAL (+ % in testata contratto).  
+- Avviso chatter se righe senza **BS** ma con listino componenti.
+
+**Aperto (P0)**  
+1. Test parità numerica automatica su file P1002 (golden row).  
+2. MOL nel totale costo (opzione Excel — oggi resta indicatore).  
+3. Catena sconti foglio oltre K–M (parità prezzo senza BS).
 
 ---
 
