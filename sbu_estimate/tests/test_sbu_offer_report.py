@@ -29,6 +29,18 @@ class TestSbuOfferReport(TransactionCase):
         )
         self.assertGreaterEqual(len(exc), 1)
         self.assertGreater(len(pay), 0)
+        ret = estimate.commercial_term_ids.filtered(
+            lambda t: t.term_category == 'retention' and t.choice == 'included'
+        )
+        self.assertTrue(ret)
+        self.assertGreater(ret[0].percent_value, 0.0)
+        estimate.offer_retention_percent = 0.0
+        self.assertEqual(
+            estimate._sbu_effective_offer_retention_percent(),
+            ret[0].percent_value,
+        )
+        estimate._sbu_sync_offer_retention_from_terms()
+        self.assertEqual(estimate.offer_retention_percent, ret[0].percent_value)
         report = self.env.ref('sbu_estimate.action_report_sbu_estimate_offer', raise_if_not_found=False)
         self.assertTrue(report)
         action = estimate.action_print_offer()

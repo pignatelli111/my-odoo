@@ -110,6 +110,31 @@ class SbuEstimateCommercial(models.Model):
             rec._sbu_sync_legacy_condition_fields()
         return True
 
+    def _sbu_effective_offer_retention_percent(self):
+        """% ritenuta for offer PDF (header field or structured retention row)."""
+        self.ensure_one()
+        if self.offer_retention_percent:
+            return self.offer_retention_percent
+        included = self.commercial_term_ids.filtered(
+            lambda t: t.term_category == 'retention' and t.choice == 'included'
+        )
+        for term in included.sorted('sequence'):
+            if term.percent_value:
+                return term.percent_value
+        return self._sbu_default_offer_retention_percent()
+
+    def _sbu_sync_offer_retention_from_terms(self):
+        """Keep offer_retention_percent aligned with green retention row."""
+        for rec in self:
+            included = rec.commercial_term_ids.filtered(
+                lambda t: t.term_category == 'retention' and t.choice == 'included'
+            ).sorted('sequence')
+            if not included:
+                continue
+            pct = included[0].percent_value or rec._sbu_default_offer_retention_percent()
+            if pct and rec.offer_retention_percent != pct:
+                rec.offer_retention_percent = pct
+
     def _sbu_sync_legacy_condition_fields(self):
         """Align legacy free-text fields from structured rows."""
         for rec in self:
@@ -132,6 +157,17 @@ class SbuEstimateCommercial(models.Model):
                 rec.exclusions = '\n'.join(
                     f'• {t.name}' for t in exc if t.name
                 )
+            delivery_inc = rec.commercial_term_ids.filtered(
+                lambda t: t.term_category == 'delivery' and t.choice == 'included'
+            ).sorted('sequence')
+            if delivery_inc and delivery_inc[0].name:
+                rec.delivery_terms = delivery_inc[0].name
+            delivery_note = rec.commercial_term_ids.filtered(
+                lambda t: t.term_category == 'delivery' and t.choice == 'note'
+            ).sorted('sequence')
+            if delivery_note and delivery_note[0].name:
+                rec.delivery_timing = delivery_note[0].name
+            rec._sbu_sync_offer_retention_from_terms()
 
     def action_sync_conditions_from_terms(self):
         self._sbu_sync_legacy_condition_fields()
@@ -148,6 +184,7 @@ class SbuEstimateCommercial(models.Model):
 
     def action_print_offer(self):
         self.ensure_one()
+        self._sbu_sync_legacy_condition_fields()
         report = self.env.ref(
             'sbu_estimate.action_report_sbu_estimate_offer',
             raise_if_not_found=False,

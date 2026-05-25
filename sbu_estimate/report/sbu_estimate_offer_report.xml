@@ -140,10 +140,11 @@
                         </table>
 
                         <t t-set="retention_terms" t-value="o._sbu_commercial_terms_by_category('retention')"/>
-                        <t t-if="retention_terms or o.offer_retention_percent">
+                        <t t-set="retention_pct" t-value="o._sbu_effective_offer_retention_percent()"/>
+                        <t t-if="retention_terms or retention_pct">
                             <p class="mt-2">
                                 <strong>Ritenuta / garanzia:</strong>
-                                <span t-esc="'%.2f' % (o.offer_retention_percent or 0.0)"/>%
+                                <span t-esc="'%.2f' % retention_pct"/>%
                                 <t t-if="o.sal_retention_cap">
                                     — cap contrattuale SAL
                                     <span t-field="o.sal_retention_cap"

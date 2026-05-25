@@ -77,3 +77,24 @@ class SbuEstimateCommercialTerm(models.Model):
     def _sbu_is_printable(self):
         self.ensure_one()
         return self.choice != 'excluded'
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        terms = super().create(vals_list)
+        terms.mapped('estimate_id')._sbu_sync_offer_retention_from_terms()
+        return terms
+
+    def write(self, vals):
+        res = super().write(vals)
+        if any(
+            key in vals
+            for key in ('term_category', 'choice', 'percent_value', 'estimate_id')
+        ):
+            self.mapped('estimate_id')._sbu_sync_offer_retention_from_terms()
+        return res
+
+    def unlink(self):
+        estimates = self.mapped('estimate_id')
+        res = super().unlink()
+        estimates._sbu_sync_offer_retention_from_terms()
+        return res

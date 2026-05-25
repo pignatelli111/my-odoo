@@ -430,7 +430,8 @@
                             </div>
                             <group>
                                 <group string="Riepilogo offerta">
-                                    <field name="offer_retention_percent"/>
+                                    <field name="offer_retention_percent"
+                                           help="Allineata alla riga verde «Ritenuta»; usata in stampa offerta e SAL."/>
                                     <field name="delivery_terms"/>
                                     <field name="delivery_timing"/>
                                     <field name="validity_days"/>

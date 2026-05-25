@@ -27,3 +27,8 @@ In ANACO le condizioni di offerta usano **scelte** (flag **verde** = incluso, **
 ### Preventivi esistenti
 
 Aprire il preventivo → **Condizioni di Fornitura** → **Carica condizioni standard**.
+
+### Allineamento ritenuta / testi (1.0.108+)
+
+- **Ritenuta offerta (%)** si allinea alla riga verde «Ritenuta» (non più 0% in PDF con 5% in tabella).
+- **Stampa offerta** e **Aggiorna testi da righe** sincronizzano pagamento, resa, tempi, inclusioni/esclusioni prima della stampa.
