@@ -71,7 +71,7 @@ Questo documento mappa i **18 punti** di Cosimo su: stato attuale, gap, priorit�
 | 9 | Logikal | Rimandato | Modulo presente; dimensioni finali su BOM = TODO | **P1** |
 | 10 | Qonto: riconciliazione auto; abbandono what-if | Parziale | Import + suggerimento match; **no** riconciliazione banca auto | **P1** (bank) |
 | 11 | Budget per tipologia (semafori ITEM) + sblocco solo admin | **Corretto** | Cruscotto famiglia su commessa + blocco conferma PO; sblocco admin | **P0** ✅ base |
-| 12 | Costi / margini / retention import sbagliati | **Parziale → migliorato** | Staffame ST/LZ + ritenuta SAL da foglio; avviso BS mancante (`sbu_estimate` 19.0.1.0.109) | **P0** (parità 100% con P1002 ancora da validare) |
+| 12 | Costi / margini / retention import sbagliati | **P1002 allineato** | Mappa REV03: BS/BB/BC, staffame col.16, posa col.48 (`sbu_estimate` 19.0.1.0.110) | **P0** (validazione CI su file reale) |
 | 13 | Stampa fattura per voce contratto + SAL/CDP; dashboard | **Corretto** | Tracciabilità SAL/fattura/CDP sì; PDF = 1–2 righe aggregate; report dettaglio da fare | **P1** |
 | 14 | Qonto → fornitori/clienti automatici | Opzionale | Non implementato | **P2** |
 | 15 | Cambio qty RDA/RFQ: residuo aperto; qty 1,03 | Spiegabile | 1,03 = perdita%/confezione distinta; residuo da confermare | **P1** |

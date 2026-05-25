@@ -202,7 +202,7 @@ class TestSbuAnacoImport(TransactionCase):
         sh.cell(12, 6, 1000)
         sh.cell(12, 8, 2)
         sh.cell(12, 30, 100.0)
-        sh.cell(12, ANACO_COL_COST_STAFFAME, 25.0)
+        sh.cell(12, 16, 25.0)
         sh.cell(12, 71, 500.0)
         buf = io.BytesIO()
         wb.save(buf)

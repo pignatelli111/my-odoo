@@ -31,6 +31,8 @@
                             <field name="price_after_discounts_cad" readonly="1"/>
                             <field name="price_after_discounts_tot" readonly="1"/>
                             <field name="commission_pct"/>
+                            <field name="cost_anaco_bb_cad" optional="show"/>
+                            <field name="cost_anaco_bc_tot" optional="hide"/>
                             <field name="price_anaco_bs_cad"
                                    string="Prezzo unit. ANACO (BS)"/>
                             <field name="price_total_cad" readonly="1"/>

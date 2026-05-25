@@ -16,6 +16,10 @@ from ..models.sbu_cost_family import (
     infer_cost_family_from_pos,
     infer_cost_family_from_price_cost_vals,
 )
+from .sbu_anaco_p1002_layout import (
+    is_p1002_anaco_layout,
+    p1002_anaco_import_maps,
+)
 
 
 # Column indices (1-based) validated against ANACO_REV7_111122.xlsx layout.
@@ -50,7 +54,8 @@ ANACO_COL_COST_TRASPORTO = 57
 ANACO_COL_COST_TECH_PM = 59
 ANACO_COL_COST_CANTIERE = 61
 ANACO_COL_COST_EXTRA = 63
-ANACO_COL_COST_STAFFAME = 55  # ST/LZ staffame (REV7/P1002 fallback; header detect overrides)
+ANACO_COL_COST_STAFFAME = 16  # P ST/LZ staffame CAD (P1002 row 4); not col 55 (= cost tot BC)
+ANACO_COL_COST_POSA_P1002 = 48  # AV Posa SER e FAC (P1002); REV7 uses AX=50
 ANACO_COL_COST_IND_PCT = 65  # BM
 ANACO_COL_COST_MOL_PCT = 68  # BP
 ANACO_COL_BS_UNIT = 71
@@ -206,9 +211,46 @@ def _detect_anaco_cost_staffame_column(sh_vals, sh_form=None):
             compact = _header_compact(_cell_str_merged(sh_vals, sh_form, row, col))
             if not compact:
                 continue
+            if 'LAVORATOEPOSATO' in compact or 'COSTOMATERIALE' in compact:
+                continue
             if any(key in compact for key in _STAFFAME_HEADER_KEYS):
                 return col
     return ANACO_COL_COST_STAFFAME
+
+
+def _detect_anaco_cost_posa_column(sh_vals, sh_form=None):
+    """Posa column: P1002 AV (48) vs REV7 AX FW LIN (50)."""
+    sh_form = sh_form or sh_vals
+    max_col = min((sh_vals.max_column or 80) + 1, 80)
+    for row in range(3, 13):
+        for col in range(1, max_col):
+            compact = _header_compact(_cell_str_merged(sh_vals, sh_form, row, col))
+            if not compact:
+                continue
+            if 'POSASER' in compact or ('POSA' in compact and 'FAC' in compact):
+                return col
+            if 'FWFINITA' in compact and 'LIN' in compact:
+                return col
+    if is_p1002_anaco_layout(_cell_str_merged, sh_vals, sh_form):
+        return ANACO_COL_COST_POSA_P1002
+    return ANACO_COL_COST_POSA_LIN
+
+
+def _resolve_anaco_column_maps(anaco_sh, anaco_sh_form):
+    """Return price_map, cost_map, bb_col, bc_col for this workbook."""
+    if is_p1002_anaco_layout(_cell_str_merged, anaco_sh, anaco_sh_form):
+        return p1002_anaco_import_maps()
+    price_map = dict(ANACO_COL_PRICE)
+    cost_map = {
+        'cost_coibentazione_cad': ANACO_COL_COST_COIB,
+        'cost_posa_lamiera_lin_cad': _detect_anaco_cost_posa_column(anaco_sh, anaco_sh_form),
+        'cost_staffame_cad': _detect_anaco_cost_staffame_column(anaco_sh, anaco_sh_form),
+        'cost_trasporto_cad': ANACO_COL_COST_TRASPORTO,
+        'cost_tech_pm_cad': ANACO_COL_COST_TECH_PM,
+        'cost_cantiere_cad': ANACO_COL_COST_CANTIERE,
+        'cost_extra_cad': ANACO_COL_COST_EXTRA,
+    }
+    return price_map, cost_map, None, None
 
 
 def _detect_sal_retention_column(sh_vals, sh_form=None):
@@ -567,10 +609,14 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
                   name=self.data_filename)
             )
 
-    def _import_anaco_sheet_rows(self, estimate, anaco_sh, anaco_sh_form, Line, first_row, staffame_col=None):
+    def _import_anaco_sheet_rows(
+        self, estimate, anaco_sh, anaco_sh_form, Line, first_row,
+        price_map=None, cost_map=None, bb_col=None, bc_col=None,
+    ):
         """Import ANACO sheet rows; returns (count, optional chatter note)."""
         sh_form = anaco_sh_form or anaco_sh
-        staffame_col = staffame_col or _detect_anaco_cost_staffame_column(anaco_sh, sh_form)
+        if price_map is None or cost_map is None:
+            price_map, cost_map, bb_col, bc_col = _resolve_anaco_column_maps(anaco_sh, sh_form)
 
         def _num(row, col):
             return _cell_num_merged(anaco_sh, sh_form, row, col)
@@ -633,22 +679,21 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
                 'cost_mol_pct': mol_pct,
             }
             note_parts = []
-            for fname, col in ANACO_COL_PRICE.items():
+            for fname, col in price_map.items():
                 v = _num(r, col)
-                if v is not None:
+                if v is not None and v != 0:
                     line_vals[fname] = v
-            for fname, col in (
-                ('cost_coibentazione_cad', ANACO_COL_COST_COIB),
-                ('cost_posa_lamiera_lin_cad', ANACO_COL_COST_POSA_LIN),
-                ('cost_staffame_cad', staffame_col),
-                ('cost_trasporto_cad', ANACO_COL_COST_TRASPORTO),
-                ('cost_tech_pm_cad', ANACO_COL_COST_TECH_PM),
-                ('cost_cantiere_cad', ANACO_COL_COST_CANTIERE),
-                ('cost_extra_cad', ANACO_COL_COST_EXTRA),
-            ):
+            for fname, col in cost_map.items():
                 v = _num(r, col)
-                if v is not None:
+                if v is not None and v != 0:
                     line_vals[fname] = v
+            if bb_col:
+                bb = _num(r, bb_col)
+                bc = _num(r, bc_col) if bc_col else None
+                if bb is not None and bb > 0:
+                    line_vals['cost_anaco_bb_cad'] = bb
+                if bc is not None and bc > 0:
+                    line_vals['cost_anaco_bc_tot'] = bc
 
             bs = _num(r, ANACO_COL_BS_UNIT)
             if bs is not None:
@@ -805,14 +850,17 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
                 if detected != first_row:
                     first_row = detected
 
-            staffame_col = _detect_anaco_cost_staffame_column(anaco_sh, anaco_sh_form)
+            price_map, cost_map, bb_col, bc_col = _resolve_anaco_column_maps(anaco_sh, anaco_sh_form)
+            p1002 = is_p1002_anaco_layout(_cell_str_merged, anaco_sh, anaco_sh_form)
             n_anaco, import_note = self._import_anaco_sheet_rows(
-                estimate, anaco_sh, anaco_sh_form, Line, first_row, staffame_col=staffame_col,
+                estimate, anaco_sh, anaco_sh_form, Line, first_row,
+                price_map=price_map, cost_map=cost_map, bb_col=bb_col, bc_col=bc_col,
             )
 
             if n_anaco == 0 and self.auto_detect_first_row and first_row != 1:
                 n_anaco, retry_note = self._import_anaco_sheet_rows(
-                    estimate, anaco_sh, anaco_sh_form, Line, 1, staffame_col=staffame_col,
+                    estimate, anaco_sh, anaco_sh_form, Line, 1,
+                    price_map=price_map, cost_map=cost_map, bb_col=bb_col, bc_col=bc_col,
                 )
                 if retry_note:
                     import_note = retry_note
@@ -858,10 +906,14 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
                         'Compilare «Prezzo unit. ANACO (col. BS)» o verificare le colonne prezzo. '
                         'Esempi: %(sample)s'
                     ) % {'n': len(missing_bs), 'sample': sample})
-            if n_anaco and staffame_col != ANACO_COL_COST_STAFFAME:
+            if n_anaco and p1002:
                 estimate.message_post(body=_(
-                    'Import ANACO: colonna staffame ST/LZ rilevata alla colonna Excel %(col)d.',
-                ) % {'col': staffame_col})
+                    'Import ANACO P1002: mappatura colonne REV03 (staffame col. %(staff)d, '
+                    'posa col. %(posa)d, costo certificato BB/BC, prezzo BS).'
+                ) % {
+                    'staff': cost_map.get('cost_staffame_cad', ANACO_COL_COST_STAFFAME),
+                    'posa': cost_map.get('cost_posa_lamiera_lin_cad', ANACO_COL_COST_POSA_LIN),
+                })
             if self.import_distinta_bom and n_anaco:
                 if self.replace_anaco_lines:
                     estimate.line_ids.mapped('bom_line_ids').unlink()

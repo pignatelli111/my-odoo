@@ -139,6 +139,16 @@ class SbuEstimateLine(models.Model):
         digits=(16, 2),
         help='Se valorizzato, equivale alla cella ANACO BS (PREZZO su OFFERTA): prezzo unitario finale da Excel; ignora somma componenti e sconti Odoo.',
     )
+    cost_anaco_bb_cad = fields.Float(
+        string='Costo unit. ANACO (col. BB)',
+        digits=(16, 2),
+        help='Se valorizzato, equivale alla cella ANACO BB «Costo materiale lavorato e posato» CAD: costo unitario certificato da Excel (P1002).',
+    )
+    cost_anaco_bc_tot = fields.Float(
+        string='Costo tot. ANACO (col. BC)',
+        digits=(16, 2),
+        help='Totale costo riga da colonna BC Excel (opzionale; altrimenti BB × Qt.).',
+    )
 
     # Computed price totals (ANACO: listino componenti → sconti successivi → comm %)
     price_gross_cad = fields.Float(
@@ -503,11 +513,28 @@ class SbuEstimateLine(models.Model):
         'cost_industrial_pct', 'cost_mol_pct',
         'cost_tech_pm_cad', 'cost_trasporto_cad', 'cost_cantiere_cad',
         'cost_staffame_cad', 'cost_extra_cad',
+        'cost_anaco_bb_cad', 'cost_anaco_bc_tot',
         'discount_sc1', 'discount_sc2', 'discount_sc3',
     )
     def _compute_cost_totals(self):
         """Total cost uses chained discounts on list cost, then industrial % on discounted material."""
         for line in self:
+            if line.cost_anaco_bb_cad:
+                cad = line.cost_anaco_bb_cad
+                line.cost_industrial_cad = 0.0
+                line.cost_mol_amount_cad = 0.0
+                line.cost_total_cad = cad
+                qty = line.qty or 1.0
+                line.cost_total_tot = (
+                    line.cost_anaco_bc_tot
+                    if line.cost_anaco_bc_tot
+                    else cad * qty
+                )
+                if line.calc_uom_type == 'mq' and line.sqm:
+                    line.cost_per_sqm = line.cost_total_tot / line.sqm
+                else:
+                    line.cost_per_sqm = 0.0
+                continue
             material = (
                 (line.cost_coibentazione_cad or 0.0)
                 + (line.cost_posa_lamiera_lin_cad or 0.0)
