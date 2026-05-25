@@ -170,7 +170,7 @@
                                     <field name="product_qty" readonly="bom_qty_sync" string="Qty requested"/>
                                     <field name="product_uom" string="UoM"/>
                                     <field name="date_required"/>
-                                    <field name="destination" optional="hide"/>
+                                    <field name="destination" optional="show"/>
                                     <field name="procurement_mode" optional="show"/>
                                     <field name="note" optional="hide"/>
                                     <field name="offer_count" optional="show"/>

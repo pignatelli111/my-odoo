@@ -2,7 +2,7 @@ from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 from odoo.tools.float_utils import float_is_zero
 
-from .sbu_budget_helpers import PO_DRAFT_STATES
+from .sbu_budget_helpers import PO_DRAFT_STATES, sbu_cost_family_label
 
 from odoo.addons.sbu_estimate.models.sbu_revision_display import sbu_doc_name_with_revision
 
@@ -531,10 +531,51 @@ class SbuPurchaseRequest(models.Model):
     def action_apply_delivery_standards(self):
         """Apply default delivery routes to all lines (overwrite existing destinations)."""
         self.ensure_one()
-        count = self.line_ids._sbu_apply_delivery_standard(overwrite=True)
-        self.message_post(
-            body=_('Applied delivery standard rules to %(n)d line(s).') % {'n': count},
-        )
+        count, skipped = self.line_ids._sbu_apply_delivery_standard(overwrite=True)
+        body_parts = [
+            _('Applied delivery standard rules to <b>%(n)d</b> line(s).') % {'n': count},
+        ]
+        if not self.project_id:
+            body_parts.append(
+                _('No project on this document: link a job so subcontractor / glass settings apply.')
+            )
+        elif not self.project_id.sbu_site_subcontractor_id:
+            body_parts.append(
+                _('Tip: set <b>Site subcontractor</b> on the job tab «Logistica / delivery» '
+                  'so destination text shows real partner names.')
+            )
+        no_rule = [s for s in skipped if s.get('reason') == 'no_rule']
+        if no_rule:
+            body_parts.append(
+                _('No matching rule for <b>%(n)d</b> line(s):') % {'n': len(no_rule)}
+            )
+            for item in no_rule[:8]:
+                body_parts.append(
+                    '• %(name)s — %(family)s, route %(route)s'
+                    % {
+                        'name': item.get('name') or '—',
+                        'family': item.get('cost_family_label') or item.get('cost_family') or '—',
+                        'route': item.get('route') or '—',
+                    }
+                )
+            if len(no_rule) > 8:
+                body_parts.append(_('… and %(n)d more.') % {'n': len(no_rule) - 8})
+            body_parts.append(
+                _('Add or edit rules under <b>SBU → Purchasing → Delivery standard</b> '
+                  '(match cost family and workflow route).')
+            )
+        if count and self.line_ids:
+            sample = self.line_ids.filtered('destination')[:3]
+            for line in sample:
+                body_parts.append(
+                    '• %(pos)s %(name)s → <i>%(dest)s</i>'
+                    % {
+                        'pos': (line.pos or '').strip() or '—',
+                        'name': (line.name or '')[:40],
+                        'dest': (line.destination or '')[:120],
+                    }
+                )
+        self.message_post(body='<br/>'.join(body_parts))
         return True
 
     def action_open_excel_import_wizard(self):

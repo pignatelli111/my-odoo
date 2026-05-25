@@ -4,6 +4,7 @@ from odoo.tools.float_utils import float_compare, float_is_zero
 
 from odoo.addons.sbu_estimate.models.sbu_manual_input import SBU_MANUAL_INPUT_STATE
 
+from .sbu_budget_helpers import sbu_cost_family_for_pr_line, sbu_cost_family_label
 from .sbu_delivery_helpers import sbu_delivery_destination_for_line
 
 SBU_PO_ACTIVE_STATES = ('draft', 'sent', 'to approve', 'purchase', 'done')
@@ -211,16 +212,38 @@ class SbuPurchaseRequestLine(models.Model):
         return lines
 
     def _sbu_apply_delivery_standard(self, overwrite=False):
-        """Fill DESTINAZIONE from company rules + job logistics (Cosimo point 17)."""
+        """Fill DESTINAZIONE from company rules + job logistics (Cosimo point 17).
+
+        Returns (updated_count, skipped_lines) where each skip dict has keys:
+        name, cost_family, cost_family_label, route, reason.
+        """
         updated = 0
+        skipped = []
         for line in self:
+            if line.destination and not overwrite:
+                skipped.append({
+                    'name': line.name or line.product_id.display_name,
+                    'cost_family': sbu_cost_family_for_pr_line(line),
+                    'route': (line.workflow_route or line.request_id.workflow_route or '').strip() or '—',
+                    'reason': 'already_set',
+                })
+                continue
             dest = sbu_delivery_destination_for_line(
                 self.env, line, overwrite=overwrite,
             )
             if dest:
                 line.destination = dest
                 updated += 1
-        return updated
+            else:
+                fam = sbu_cost_family_for_pr_line(line)
+                skipped.append({
+                    'name': line.name or line.product_id.display_name,
+                    'cost_family': fam,
+                    'cost_family_label': sbu_cost_family_label(self.env, fam),
+                    'route': (line.workflow_route or line.request_id.workflow_route or '').strip() or '—',
+                    'reason': 'no_rule',
+                })
+        return updated, skipped
 
     @api.depends('offer_ids')
     def _compute_offer_count(self):

@@ -126,4 +126,5 @@
         <field name="glass_mode">via_terzista</field>
         <field name="delivery_pattern">via_terzista</field>
     </record>
+
 </odoo>

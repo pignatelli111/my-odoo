@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Loaded on upgrade (not noupdate): posa/smontaggio + generic extra fallback. -->
+    <record id="delivery_std_installation" model="sbu.delivery.standard">
+        <field name="name">Posa / smontaggio — cantiere</field>
+        <field name="sequence">40</field>
+        <field name="cost_family">installation</field>
+        <field name="workflow_route">POS</field>
+        <field name="delivery_pattern">direct_site</field>
+    </record>
+
+    <record id="delivery_std_extra" model="sbu.delivery.standard">
+        <field name="name">Extra / non classificato — via terzista</field>
+        <field name="sequence">90</field>
+        <field name="cost_family">extra</field>
+        <field name="delivery_pattern">via_terzista</field>
+    </record>
+</odoo>
