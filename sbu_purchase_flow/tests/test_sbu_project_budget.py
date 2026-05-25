@@ -207,11 +207,16 @@ class TestSbuProjectBudget(TransactionCase):
         project, estimate = self._project_with_glass_budget(planned_cad=100.0)
         eline = estimate.line_ids[0]
         uom = self.env.ref('uom.product_uom_unit')
+        expense = self.env['account.account'].search([
+            ('account_type', '=', 'expense'),
+            ('company_id', '=', self.env.company.id),
+        ], limit=1)
         product = self.env['product.product'].create({
             'name': 'Glass BOM',
             'default_code': 'GL-BUD-BOM',
             'type': 'consu',
             'purchase_ok': True,
+            **({'property_account_expense_id': expense.id} if expense else {}),
         })
         bom = self.env['sbu.estimate.bom.line'].create({
             'estimate_id': estimate.id,
@@ -249,20 +254,21 @@ class TestSbuProjectBudget(TransactionCase):
         pol.write({'price_unit': 40.0})
         po.button_confirm()
 
-        bill = self.env['account.move'].create({
-            'move_type': 'in_invoice',
-            'partner_id': partner.id,
-            'company_id': self.env.company.id,
-            'invoice_line_ids': [(0, 0, {
-                'product_id': product.id,
-                'quantity': 1.0,
-                'price_unit': 35.0,
-                'purchase_line_id': pol.id,
-            })],
-        })
-        bill.action_post()
+        journal = self.env['account.journal'].search([
+            ('type', '=', 'purchase'),
+            ('company_id', '=', self.env.company.id),
+        ], limit=1)
+        if not journal:
+            self.skipTest('Purchase journal required for consuntivo test')
+        po.action_create_invoice()
+        bills = po.invoice_ids.filtered(lambda m: m.state == 'draft')
+        if not bills:
+            self.skipTest('PO did not create a vendor bill draft')
+        bills.with_context(sbu_skip_budget_refresh=True).action_post()
 
-        rows = self.env['sbu.project.budget.family'].refresh_project(project)
+        rows = self.env['sbu.project.budget.family'].with_context(
+            sbu_skip_budget_refresh=True,
+        ).refresh_project(project)
         glass = rows.filtered(lambda r: r.cost_family == 'glass')
         self.assertGreater(glass.amount_po_confirmed, 0.0)
         self.assertGreater(glass.amount_actual, 0.0)

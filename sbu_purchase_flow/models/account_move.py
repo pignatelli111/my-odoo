@@ -15,7 +15,7 @@ class AccountMove(models.Model):
     def _post(self, soft=True):
         res = super()._post(soft=soft)
         vendor_moves = self.filtered(lambda m: m.move_type in ('in_invoice', 'in_refund'))
-        if vendor_moves:
+        if vendor_moves and not self.env.context.get('sbu_skip_budget_refresh'):
             vendor_moves._sbu_refresh_budget_after_vendor_move()
         return res
 

@@ -131,18 +131,20 @@ def sbu_pol_posted_bill_amount(pol, env):
     """Posted vendor bill subtotal (company currency) for a purchase order line."""
     if 'account.move.line' not in env:
         return 0.0
-    Aml = env['account.move.line']
-    domain = [('purchase_line_id', '=', pol.id)]
-    if 'parent_state' in Aml._fields:
-        domain.append(('parent_state', '=', 'posted'))
-    else:
-        domain.append(('move_id.state', '=', 'posted'))
-    lines = Aml.search(domain)
-    total = 0.0
     company = pol.company_id or pol.order_id.company_id
+    lines = pol.invoice_lines
+    if not lines:
+        Aml = env['account.move.line']
+        domain = [('purchase_line_id', '=', pol.id)]
+        if 'parent_state' in Aml._fields:
+            domain.append(('parent_state', '=', 'posted'))
+        else:
+            domain.append(('move_id.state', '=', 'posted'))
+        lines = Aml.search(domain)
+    total = 0.0
     for aml in lines.filtered(sbu_is_product_line):
         move = aml.move_id
-        if move.move_type not in ('in_invoice', 'in_refund'):
+        if move.state != 'posted' or move.move_type not in ('in_invoice', 'in_refund'):
             continue
         sign = -1.0 if move.move_type == 'in_refund' else 1.0
         amt = aml.price_subtotal or 0.0
@@ -275,8 +277,9 @@ def sbu_projects_for_budget_refresh(records, env):
     for move in records if records._name == 'account.move' else Move.browse():
         if move.move_type not in ('in_invoice', 'in_refund'):
             continue
-        for pol in move.invoice_line_ids.mapped('purchase_line_id'):
-            if pol.order_id.project_id:
+        bill_lines = move.invoice_line_ids if move.is_invoice() else move.line_ids
+        for pol in bill_lines.mapped('purchase_line_id'):
+            if pol and pol.order_id.project_id:
                 projects |= pol.order_id.project_id
     return projects
 
