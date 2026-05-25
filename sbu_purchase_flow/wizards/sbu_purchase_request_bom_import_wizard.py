@@ -82,19 +82,10 @@ class SbuPurchaseRequestBomImportWizard(models.TransientModel):
         string='Search text',
         help='Matches component label, description, product name or internal reference.',
     )
-    visible_bom_line_ids = fields.Many2many(
-        'sbu.estimate.bom.line',
-        string='Visible BOM lines',
-        compute='_compute_visible_bom_line_ids',
-        help='BOM rows shown in the list (scope + filters above).',
-    )
-    bom_line_ids = fields.Many2many(
-        'sbu.estimate.bom.line',
-        'sbu_pr_bom_import_wiz_rel',
+    line_ids = fields.One2many(
+        'sbu.purchase.request.bom.import.wizard.line',
         'wizard_id',
-        'bom_line_id',
-        string='BOM lines to load',
-        domain="[('id', 'in', visible_bom_line_ids)]",
+        string='BOM lines',
     )
     available_count = fields.Integer(
         string='Available in scope',
@@ -113,36 +104,30 @@ class SbuPurchaseRequestBomImportWizard(models.TransientModel):
         compute='_compute_counts',
     )
 
-    @api.depends(
-        'import_scope',
-        'request_id',
-        'filter_estimate_line_id',
-        'filter_cost_family',
-        'filter_workflow_route',
-        'filter_calc_type',
-        'filter_data_phase',
-        'filter_product_category_id',
-        'filter_text',
-    )
-    def _compute_visible_bom_line_ids(self):
-        for wiz in self:
-            wiz.visible_bom_line_ids = wiz._filtered_bom_candidates()
+    @api.model_create_multi
+    def create(self, vals_list):
+        wizards = super().create(vals_list)
+        for wiz in wizards:
+            wiz._rebuild_line_list(preserve_selection=False, auto_select_new=True)
+        return wizards
 
     @api.depends(
+        'line_ids',
+        'line_ids.selected',
         'import_scope',
         'request_id',
-        'bom_line_ids',
-        'visible_bom_line_ids',
+        'request_id.line_ids.source_bom_line_id',
     )
     def _compute_counts(self):
         for wiz in self:
             available = wiz._bom_lines_for_scope()
-            visible = wiz.visible_bom_line_ids
             linked = wiz._already_linked_bom_ids()
             wiz.available_count = len(available)
-            wiz.filtered_count = len(visible)
-            wiz.selected_count = len(wiz.bom_line_ids)
-            wiz.already_linked_count = len(visible.filtered(lambda b: b.id in linked))
+            wiz.filtered_count = len(wiz.line_ids)
+            wiz.selected_count = len(wiz.line_ids.filtered('selected'))
+            wiz.already_linked_count = len(
+                wiz.line_ids.filtered(lambda ln: ln.bom_line_id.id in linked)
+            )
 
     @api.model
     def default_get(self, fields_list):
@@ -159,16 +144,7 @@ class SbuPurchaseRequestBomImportWizard(models.TransientModel):
         req = self.env['sbu.purchase.request'].browse(req_id) if req_id else self.env['sbu.purchase.request']
         if req:
             route_lines = req._candidate_bom_lines_for_import(scope='route')
-            if route_lines:
-                res['import_scope'] = 'route'
-                candidates = route_lines
-            else:
-                res['import_scope'] = 'all'
-                candidates = req._candidate_bom_lines_for_import(scope='all')
-            linked = {
-                bid for bid in req.line_ids.mapped('source_bom_line_id').ids if bid
-            }
-            res['bom_line_ids'] = [(6, 0, candidates.filtered(lambda b: b.id not in linked).ids)]
+            res['import_scope'] = 'route' if route_lines else 'all'
         return res
 
     def _already_linked_bom_ids(self):
@@ -230,27 +206,47 @@ class SbuPurchaseRequestBomImportWizard(models.TransientModel):
         ]
         return any(needle in (p or '').lower() for p in parts)
 
-    def _prune_selection_to_visible(self):
+    def _rebuild_line_list(self, preserve_selection=False, auto_select_new=False):
         self.ensure_one()
-        visible = self.visible_bom_line_ids
-        self.bom_line_ids = self.bom_line_ids & visible
+        visible = self._filtered_bom_candidates()
+        selected_ids = set()
+        if preserve_selection:
+            selected_ids = set(
+                self.line_ids.filtered('selected').mapped('bom_line_id').ids
+            )
+        elif auto_select_new:
+            selected_ids = set(self._default_selection_ids(visible).ids)
+        self.write({
+            'line_ids': [(5, 0, 0)] + [
+                (0, 0, {
+                    'bom_line_id': bom.id,
+                    'selected': bom.id in selected_ids,
+                })
+                for bom in visible
+            ],
+        })
+
+    def _reload_wizard(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Load from estimate BOM'),
+            'res_model': self._name,
+            'res_id': self.id,
+            'view_mode': 'form',
+            'target': 'new',
+            'context': dict(self.env.context),
+        }
+
+    def action_apply_filters(self):
+        """Rebuild the table so it lists only rows matching scope + filters."""
+        self.ensure_one()
+        self._rebuild_line_list(preserve_selection=True)
+        return self._reload_wizard()
 
     @api.onchange('import_scope')
     def _onchange_import_scope(self):
-        candidates = self._bom_lines_for_scope()
-        self.bom_line_ids = self._default_selection_ids(candidates)
-
-    @api.onchange(
-        'filter_estimate_line_id',
-        'filter_cost_family',
-        'filter_workflow_route',
-        'filter_calc_type',
-        'filter_data_phase',
-        'filter_product_category_id',
-        'filter_text',
-    )
-    def _onchange_filters(self):
-        self._prune_selection_to_visible()
+        self._rebuild_line_list(preserve_selection=False, auto_select_new=True)
 
     def action_clear_filters(self):
         self.write({
@@ -262,59 +258,63 @@ class SbuPurchaseRequestBomImportWizard(models.TransientModel):
             'filter_product_category_id': False,
             'filter_text': False,
         })
+        return self.action_apply_filters()
 
     def action_select_filtered(self):
-        """Tick every visible row (after scope + filters)."""
         self.ensure_one()
-        self.bom_line_ids = [(6, 0, self.visible_bom_line_ids.ids)]
+        self.line_ids.write({'selected': True})
 
     def action_select_filtered_new_only(self):
-        """Tick visible rows not yet linked on the purchase request."""
         self.ensure_one()
-        self.bom_line_ids = [(6, 0, self._default_selection_ids(self.visible_bom_line_ids).ids)]
+        linked = self._already_linked_bom_ids()
+        for line in self.line_ids:
+            line.selected = line.bom_line_id.id not in linked
 
     def action_select_same_anaco_position(self):
-        """Select all visible ITEM rows on the filtered ANACO position."""
         self.ensure_one()
         if not self.filter_estimate_line_id:
             raise UserError(_('Set «ANACO position» first, or pick a row and use the list group-by.'))
-        lines = self.visible_bom_line_ids.filtered(
-            lambda b: b.estimate_line_id == self.filter_estimate_line_id
-        )
-        self.bom_line_ids = [(6, 0, lines.ids)]
+        for line in self.line_ids:
+            line.selected = (
+                line.bom_line_id.estimate_line_id == self.filter_estimate_line_id
+            )
 
     def action_select_route_lines(self):
-        self.write({
-            'import_scope': 'route',
-            'bom_line_ids': [(6, 0, self._bom_lines_for_scope('route').ids)],
-        })
+        self.write({'import_scope': 'route'})
+        self._rebuild_line_list(preserve_selection=False, auto_select_new=False)
+        self.line_ids.write({'selected': True})
+        return self._reload_wizard()
 
     def action_select_all_estimate(self):
-        self.write({
-            'import_scope': 'all',
-            'bom_line_ids': [(6, 0, self._bom_lines_for_scope('all').ids)],
-        })
+        self.write({'import_scope': 'all'})
+        self._rebuild_line_list(preserve_selection=False, auto_select_new=False)
+        self.line_ids.write({'selected': True})
+        return self._reload_wizard()
 
     def action_select_new_only(self):
-        candidates = self._bom_lines_for_scope()
-        self.bom_line_ids = self._default_selection_ids(candidates)
+        self.ensure_one()
+        linked = self._already_linked_bom_ids()
+        for line in self.line_ids:
+            line.selected = line.bom_line_id.id not in linked
 
     def action_clear_selection(self):
-        self.bom_line_ids = [(5, 0, 0)]
+        self.line_ids.write({'selected': False})
 
     def action_load(self):
         self.ensure_one()
         if not self.request_id.estimate_id:
             raise UserError(_('The project has no linked source estimate.'))
-        if not self.bom_line_ids:
+        bom_lines = self.line_ids.filtered('selected').mapped('bom_line_id')
+        if not bom_lines:
             raise UserError(_('Select at least one BOM line to load.'))
-        hidden = self.bom_line_ids - self.visible_bom_line_ids
+        visible = self._filtered_bom_candidates()
+        hidden = bom_lines - visible
         if hidden:
             raise UserError(
                 _('Some selected lines are outside the current filters. '
-                  'Clear filters or adjust the selection.')
+                  'Click Apply filters or adjust the selection.')
             )
         return self.request_id._load_selected_bom_lines(
-            self.bom_line_ids,
+            bom_lines,
             clear=self.replace_existing,
         )

@@ -94,12 +94,6 @@
                             string="Import ANACO Excel"
                             type="object"
                             class="btn-secondary"/>
-                    <button name="action_generate_bom_from_anaco_costs"
-                            string="Generate BOM from ANACO"
-                            type="object"
-                            class="btn-secondary"
-                            invisible="not line_ids"
-                            title="Create BOM lines from CAD costs/prices on ANACO lines"/>
                     <button name="action_print_offer"
                             string="Print offer"
                             type="object"

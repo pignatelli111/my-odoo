@@ -48,8 +48,8 @@ class TestSbuBomImportWizard(TransactionCase):
         wiz = self.env['sbu.purchase.request.bom.import.wizard'].create({
             'request_id': pr.id,
             'import_scope': 'all',
-            'bom_line_ids': [(6, 0, bom.ids)],
         })
+        wiz.line_ids.filtered(lambda ln: ln.bom_line_id == bom).selected = True
         wiz.action_load()
         self.assertEqual(len(pr.line_ids), 1)
         self.assertEqual(pr.line_ids.source_bom_line_id, bom)
@@ -101,17 +101,42 @@ class TestSbuBomImportWizard(TransactionCase):
             'product_id': other_product.id,
             'unit_cost': 5.0,
             'uom_id': other_product.uom_id.id,
+            'calc_type': 'per_piece',
         })
+        bom.calc_type = 'per_piece'
         wiz = self.env['sbu.purchase.request.bom.import.wizard'].create({
             'request_id': pr.id,
             'import_scope': 'all',
             'filter_estimate_line_id': eline.id,
         })
-        self.assertIn(bom, wiz.visible_bom_line_ids)
-        self.assertNotIn(other_bom, wiz.visible_bom_line_ids)
+        wiz.action_apply_filters()
+        self.assertEqual(wiz.filtered_count, 1)
+        self.assertEqual(wiz.line_ids.bom_line_id, bom)
         wiz.write({
             'filter_estimate_line_id': False,
             'filter_cost_family': 'glass',
         })
-        self.assertNotIn(bom, wiz.visible_bom_line_ids)
-        self.assertIn(other_bom, wiz.visible_bom_line_ids)
+        wiz.action_apply_filters()
+        self.assertEqual(wiz.filtered_count, 1)
+        self.assertEqual(wiz.line_ids.bom_line_id, other_bom)
+
+    def test_apply_filters_limits_table_rows(self):
+        pr, bom, eline = self._setup_pr_with_bom()
+        other_bom = self.env['sbu.estimate.bom.line'].create({
+            'estimate_id': eline.estimate_id.id,
+            'estimate_line_id': eline.id,
+            'product_id': bom.product_id.id,
+            'unit_cost': 3.0,
+            'uom_id': bom.uom_id.id,
+            'calc_type': 'lump_sum',
+        })
+        bom.calc_type = 'per_piece'
+        wiz = self.env['sbu.purchase.request.bom.import.wizard'].create({
+            'request_id': pr.id,
+            'import_scope': 'all',
+        })
+        self.assertEqual(wiz.filtered_count, 2)
+        wiz.filter_calc_type = 'per_piece'
+        wiz.action_apply_filters()
+        self.assertEqual(wiz.filtered_count, 1)
+        self.assertEqual(wiz.line_ids.mapped('bom_line_id'), bom)
