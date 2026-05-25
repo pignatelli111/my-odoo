@@ -1,61 +1,70 @@
-# UAT Phase C — Qonto import + matching (no full reconciliation)
+# UAT Phase C — Qonto import, partners, auto customer payments
 
-**Module:** `sbu_qonto` **19.0.1.0.4+**  
-**Scope:** Scheduled import + improved suggestions; **not** automatic bank journal reconciliation.
+**Module:** `sbu_qonto` **19.0.1.0.7+**  
+**Scope:** Import, beneficiary sync, auto customer payment register; **not** bank statement line reconciliation.
 
 ## Setup (once)
 
-1. **Settings → SBU integrations** (or company tab **Qonto**):
+1. **Settings → SBU integrations** (or company tab **Qonto (SBU)**):
    - Qonto API login + secret key + IBAN
    - **Enable Qonto import cron** = on
-   - **Suggest matches after import** = on (default)
-2. Confirm **Scheduled Actions → SBU Qonto: import movements** is **Active** (auto when step 1 is on).
+   - **Sync Qonto beneficiaries on import** = on (default)
+   - **Auto-register customer payments** = on (default)
+   - **Auto-register vendor payments** = off until UAT outbound
+2. Confirm **Scheduled Actions → SBU Qonto: import movements** is **Active**.
 3. Optional: webhook URL `https://<your-odoo>/qonto/webhook/<token>`.
 
 ## UAT flow
 
+### 0. Partner sync (punto 14)
+
+1. **Sync Qonto suppliers** (settings or company tab).
+2. **Contacts** — new/updated supplier with Qonto IBAN / beneficiary id.
+
+**Pass:** At least one beneficiary from Qonto appears as supplier.
+
 ### 1. Import
 
-1. Post a **customer inbound payment** in Odoo (known amount + payment reference).
-2. **Settings → Import Qonto movements now** (or wait for hourly cron).
-3. **Accounting → Qonto movements** — new line with same amount/reference.
+1. Post a **customer invoice** in Odoo (known residual).
+2. Receive equivalent inbound movement in Qonto (or sandbox).
+3. **Import Qonto movements now** (or cron).
 
-**Pass:** Movement imported; `state` = Imported.
+**Pass:** Movement imported; counterparty linked when IBAN known.
 
-### 2. Suggest match
+### 2. Auto reconcile customer invoice (punto 10)
 
-1. Select movement(s) → **Suggest match** (or wait for post-import suggestion).
-2. Check **Match confidence** + **Suggested payment** / **Suggested invoice** + **Match hint**.
+1. Movement **inbound**, reference contains invoice number, amount = residual.
+2. After import pipeline: `state` = **Matched**, customer invoice residual = 0.
 
-**Pass:** High confidence when reference and amount align; medium when amount-only in date window.
+**Pass:** Payment created without manual **Register payment** (high confidence).
 
-### 3. Confirm link (manual)
+### 3. Suggest / manual (exceptions)
 
-| Confidence | Action |
-|------------|--------|
-| High | **Match (high confidence)** → `Matched in Odoo` |
-| Medium / low | Review → **Apply suggestion** or pick payment/invoice manually |
+1. Ambiguous amount → **Suggest match** → review hint.
+2. Medium confidence → **Apply suggestion** or **Register customer payment**.
 
-**Pass:** `match_payment_id` or `match_invoice_id` set; still **no** automatic reconciliation on bank journal.
+### 4. Vendor outbound (optional)
 
-### 4. Ignore noise
+1. Post vendor bill; outbound movement with matching reference.
+2. Enable **Auto-register vendor payments** only after review.
+3. Or use **Register vendor payment** on the movement form.
 
-1. Bank fee / internal transfer → **Ignore**.
+### 5. Ignore noise
 
-**Pass:** `state` = Ignored; excluded from next match run.
+Bank fee / internal transfer → **Ignore**.
 
-## Out of scope (Phase C)
+## Out of scope (next phase)
 
-- Odoo bank statement reconciliation
+- Odoo bank statement ↔ Qonto journal reconciliation
 - Webhook HMAC verification
-- Revolut (same pattern in `sbu_revolut` — separate enablement)
 
 ## Sign-off
 
 | Step | OK |
 |------|-----|
+| Partner sync | |
 | Cron import | |
-| Suggestion after import | |
-| High-confidence match | |
-| Apply medium suggestion | |
+| Auto customer payment (high) | |
+| Manual suggest/match | |
+| Vendor payment (manual or auto) | |
 | Ignore | |

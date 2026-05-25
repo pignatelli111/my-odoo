@@ -11,7 +11,7 @@ Aggiornamento modulo **maggio 2026** dopo richiesta «fix all partial parts full
 | **4** | Item/Topic in lista e ricerca; help in testata RDA; default Item/Topic al caricamento BOM per route |
 | **7** | Evidenziazione verde compilazione manuale anche su **righe PO** (related da riga RDA) |
 | **8** | Tab M365: apri Planner, import **CSV → project.task**; deep link invariato |
-| **10** | Qonto: pulsante **Register payment** (`account.payment.register`) + testo operativo |
+| **10** | Qonto: auto **Register payment** cliente (import/cron/webhook) + match fornitore; vedi `COSIMO_PUNTO10_QONTO.md` |
 | **13** | Fattura cliente: **una riga contabile per voce SAL** (+ ritenuta); stat **Contract billing** su commessa |
 
 ## Moduli / versioni
@@ -20,7 +20,7 @@ Aggiornamento modulo **maggio 2026** dopo richiesta «fix all partial parts full
 - `sbu_purchase_flow` **19.0.1.0.56**
 - `sbu_documents` **19.0.1.0.10**
 - `sbu_sal` **19.0.1.0.48**
-- `sbu_qonto` **19.0.1.0.6**
+- `sbu_qonto` **19.0.1.0.7**
 
 ## Verifica su Odoo.sh
 
@@ -34,5 +34,5 @@ bash tools/odoo_sh_run_tests.sh
 
 - **9** Logikal produzione
 - **12** import costi/margini/retention da Excel ANACO
-- **14** Qonto → anagrafiche partner
-- Riconciliazione automatica **estratti conto** Qonto ↔ journal (solo pagamento fattura cliente)
+- **14** — fatto in `sbu_qonto` 19.0.1.0.7 (sync beneficiari SEPA)
+- Riconciliazione automatica **estratti conto** Qonto ↔ journal (fase 2)

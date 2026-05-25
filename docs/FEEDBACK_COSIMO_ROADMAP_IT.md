@@ -69,11 +69,11 @@ Questo documento mappa i **18 punti** di Cosimo su: stato attuale, gap, priorit�
 | 7 | Celle verdi = compilazione manuale | Ottima UX | Evidenza verde/grigio su righe ANACO, distinta ITEM, RDA | **P2** ✅ base |
 | 8 | Planner Microsoft ↔ Odoo | Realistico | Solo deep link / processo; sync bidirezionale fragile | **P3** |
 | 9 | Logikal | Rimandato | Modulo presente; dimensioni finali su BOM = TODO | **P1** |
-| 10 | Qonto: riconciliazione auto; abbandono what-if | Parziale | Import + suggerimento match; **no** riconciliazione banca auto | **P1** (bank) |
+| 10 | Qonto: riconciliazione auto; abbandono what-if | **Fatto (base)** | Import + sync partner + **auto register pagamenti cliente**; estratto conto banca = fase 2 | **P2** (bank stmt) |
 | 11 | Budget per tipologia (semafori ITEM) + sblocco solo admin | **Corretto** | Cruscotto famiglia su commessa + blocco conferma PO; sblocco admin | **P0** ✅ base |
 | 12 | Costi / margini / retention import sbagliati | **P1002 allineato** | Mappa REV03: BS/BB/BC, staffame col.16, posa col.48 (`sbu_estimate` 19.0.1.0.110) | **P0** (validazione CI su file reale) |
 | 13 | Stampa fattura per voce contratto + SAL/CDP; dashboard | **Corretto** | Tracciabilità SAL/fattura/CDP sì; PDF = 1–2 righe aggregate; report dettaglio da fare | **P1** |
-| 14 | Qonto → fornitori/clienti automatici | Opzionale | Non implementato | **P2** |
+| 14 | Qonto → fornitori/clienti automatici | **Fatto** | Sync beneficiari SEPA → `res.partner` fornitore | — |
 | 15 | Cambio qty RDA/RFQ: residuo aperto; qty 1,03 | Spiegabile | 1,03 = perdita%/confezione distinta; residuo da confermare | **P1** |
 | 16 | Stampa offerta: flag verdi/rossi + pagamenti/ritenute | Implementato | Condizioni strutturate + PDF offerta | **P1** ✅ |
 | 17 | Delivery standard (sistemista → terzista → cantiere; vetro) | **Corretto** | Regole `sbu.delivery.standard` + tab commessa + auto DESTINAZIONE | **P1** ✅ base |
@@ -224,18 +224,20 @@ Affrontare **dopo** stabilizzazione dimensioni e import tecnico (punti 1–2). M
 **Aspettativa Cosimo**  
 Pagamenti ricevuti riconciliati automaticamente; abbandono strumenti what-if fatture in Qonto.
 
-**Realtà oggi (`sbu_qonto`)**  
+**Stato (`sbu_qonto` 19.0.1.0.7+)** — vedi [COSIMO_PUNTO10_QONTO.md](COSIMO_PUNTO10_QONTO.md)
 
 | Funzione | Disponibile |
 |----------|-------------|
-| Import movimenti (API + cron) | Sì (richiede IBAN + credenziali) |
-| Suggerimento match fattura/pagamento | Sì |
-| Collegamento manuale «Matched in Odoo» | Sì |
-| Riconciliazione automatica prima nota banca | **No** (roadmap) |
-| Sostituzione completa scenari Qonto | **Parziale** (fatturazione in Odoo sì) |
+| Import movimenti (API + cron + webhook) | Sì |
+| Sync beneficiari → fornitori Odoo (punto 14) | Sì |
+| Suggerimento match fattura cliente/fornitore | Sì |
+| **Auto-registrazione pagamento cliente** (fattura saldata) | Sì (default on) |
+| Auto-registrazione pagamento fornitore | Sì (default off) |
+| Riconciliazione estratto conto bancario Odoo | **No** (fase 2) |
+| Sostituzione what-if Qonto | **Operativo** se fatture/SAL solo in Odoo |
 
 **Messaggio al cliente**  
-«Prima fase: mirror movimenti + aiuto al match. Fase successiva: riconciliazione bancaria in Odoo, poi si riduce l’uso Qonto solo come banca.»
+«Entrate: alla ricezione del bonifico la fattura cliente in Odoo si salda in automatico (alta confidenza). Uscite fornitori: sync anagrafiche da Qonto; pagamento automatico opzionale dopo UAT.»
 
 ---
 
@@ -299,8 +301,8 @@ Come foglio ITEM ANACO: budget preventivo, acquistato, residuo, %; semafori; sol
 
 ### Punto 14 — Fornitori/clienti da Qonto
 
-**Risposta**  
-Oggi **no** import automatico anagrafiche. Opzionale in fase 2 API Qonto (beneficiari) con deduplica manuale.
+**Fatto (`sbu_qonto`)**  
+Import da API beneficiari SEPA (e fallback legacy), deduplica per id/IBAN, pulsante **Sync Qonto suppliers**, opzione sync ad ogni import. Dettaglio: [COSIMO_PUNTO10_QONTO.md](COSIMO_PUNTO10_QONTO.md).
 
 ---
 
@@ -368,7 +370,7 @@ Etichetta `codice · REV · data` su commesse e preventivi; SAL/RDA/fatture/CDP 
 
 - [ ] Celle verdi «da compilare»  
 - [x] Bulk edit su liste filtrate (`sbu.bulk.apply.mixin` — Acquisti, Preventivo, SAL, Chiusura; searchpanel + «Applica al filtrato»)  
-- [ ] Qonto: import partners (opzionale)  
+- [x] Qonto: import partners + auto pagamenti cliente  
 
 ### Fase P3 — Integrazioni
 
@@ -388,7 +390,7 @@ Per equilibrio con i gap, in demo/UAT risultano **solidi**:
 - RFQ multi-fornitore; prezzi da **offerta fornitore** (non da costo interno)  
 - Chiusura commessa con checklist DOP  
 - Ricevimenti magazzino + DDT (modulo logistica)  
-- Qonto: import movimenti + suggest match (non ancora reconcile completo)  
+- Qonto: import + sync partner + auto pagamenti cliente (`COSIMO_PUNTO10_QONTO.md`); estratto conto banca = fase 2  
 
 ---
 

@@ -8,6 +8,7 @@ from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 from odoo.tools import float_compare, float_is_zero
 
+from odoo.addons.sbu_qonto.models.sbu_qonto_helpers import sbu_normalize_iban
 from odoo.addons.sbu_qonto.services.qonto_client import QontoHttpError, qonto_list_transactions
 
 _logger = logging.getLogger(__name__)
@@ -91,9 +92,22 @@ class SbuQontoTransaction(models.Model):
     )
     suggested_invoice_id = fields.Many2one(
         'account.move',
-        string='Suggested invoice',
+        string='Suggested customer invoice',
         copy=False,
         domain="[('move_type', '=', 'out_invoice')]",
+    )
+    suggested_vendor_bill_id = fields.Many2one(
+        'account.move',
+        string='Suggested vendor bill',
+        copy=False,
+        domain="[('move_type', '=', 'in_invoice')]",
+    )
+    counterparty_name = fields.Char(string='Counterparty name')
+    counterparty_iban = fields.Char(string='Counterparty IBAN', index=True)
+    partner_id = fields.Many2one(
+        'res.partner',
+        string='Counterparty',
+        help='Matched from Qonto IBAN / beneficiaries sync.',
     )
     match_payment_id = fields.Many2one(
         'account.payment',
@@ -103,16 +117,50 @@ class SbuQontoTransaction(models.Model):
     )
     match_invoice_id = fields.Many2one(
         'account.move',
-        string='Matched invoice',
+        string='Matched customer invoice',
         copy=False,
         domain="[('move_type', '=', 'out_invoice')]",
         tracking=True,
+    )
+    match_vendor_bill_id = fields.Many2one(
+        'account.move',
+        string='Matched vendor bill',
+        copy=False,
+        domain="[('move_type', '=', 'in_invoice')]",
+        tracking=True,
+    )
+    match_document_type = fields.Selection(
+        [
+            ('none', 'None'),
+            ('customer_invoice', 'Customer invoice'),
+            ('vendor_bill', 'Vendor bill'),
+            ('payment', 'Payment'),
+        ],
+        string='Matched document type',
+        compute='_compute_match_document_type',
+        store=True,
     )
 
     _sbu_qonto_remote_company_uniq = models.Constraint(
         'unique(company_id, qonto_remote_id)',
         'This Qonto movement is already imported for this company.',
     )
+
+    @api.depends('match_invoice_id', 'match_vendor_bill_id', 'match_payment_id')
+    def _compute_match_document_type(self):
+        for rec in self:
+            if rec.match_invoice_id:
+                rec.match_document_type = 'customer_invoice'
+            elif rec.match_vendor_bill_id:
+                rec.match_document_type = 'vendor_bill'
+            elif rec.match_payment_id:
+                rec.match_document_type = 'payment'
+            else:
+                rec.match_document_type = 'none'
+
+    def _sbu_is_inbound(self):
+        self.ensure_one()
+        return (self.amount_signed or 0.0) > 0
 
     @api.model
     def _parse_qonto_amount(self, tx):
@@ -154,6 +202,31 @@ class SbuQontoTransaction(models.Model):
             except (ValueError, TypeError, OverflowError):
                 return False
 
+        cp_iban = sbu_normalize_iban(
+            tx.get('counterparty_account_number')
+            or tx.get('iban')
+            or ''
+        )
+        cp_name = (
+            tx.get('clean_counterparty_name')
+            or tx.get('counterparty_name')
+            or tx.get('label')
+            or ''
+        )
+        Partner = self.env['res.partner']
+        partner_id = False
+        if cp_iban:
+            partner = Partner.search([
+                ('sbu_qonto_iban', '=', cp_iban),
+                '|', ('company_id', '=', False), ('company_id', '=', company.id),
+            ], limit=1)
+            if not partner:
+                partner = Partner.search([
+                    ('bank_ids.acc_number', '=', cp_iban),
+                    '|', ('company_id', '=', False), ('company_id', '=', company.id),
+                ], limit=1)
+            partner_id = partner.id if partner else False
+
         return {
             'company_id': company.id,
             'qonto_remote_id': remote_id,
@@ -163,12 +236,15 @@ class SbuQontoTransaction(models.Model):
             'amount': abs(amount),
             'amount_signed': amount_signed,
             'currency_id': currency.id,
-            'label': tx.get('label') or tx.get('clean_counterparty_name'),
+            'label': tx.get('label') or cp_name,
             'reference': tx.get('reference'),
             'note': tx.get('note'),
             'status': tx.get('status'),
             'settled_at': _parse_dt(tx.get('settled_at')),
             'emitted_at': _parse_dt(tx.get('emitted_at')),
+            'counterparty_name': cp_name,
+            'counterparty_iban': cp_iban or False,
+            'partner_id': partner_id,
             'raw_json': json.dumps(tx),
         }
 
@@ -254,18 +330,64 @@ class SbuQontoTransaction(models.Model):
         return total
 
     @api.model
+    def _sbu_post_import_process(self, company):
+        """Suggest, auto-link and optionally register payments (Cosimo punto 10)."""
+        Transaction = self.env['sbu.qonto.transaction'].sudo()
+        if company.sbu_qonto_sync_partners_on_import:
+            try:
+                company._sbu_sync_qonto_partners()
+            except (UserError, QontoHttpError) as e:
+                _logger.warning('Qonto partner sync skip company %s: %s', company.id, e)
+        pending = Transaction.search([
+            ('company_id', '=', company.id),
+            ('state', '=', 'imported'),
+        ])
+        if not pending:
+            return
+        if company.sbu_qonto_suggest_after_import:
+            pending.action_suggest_match()
+            pending.invalidate_recordset()
+
+        if company.sbu_qonto_auto_register_inbound:
+            inbound = pending.filtered(
+                lambda t: t._sbu_is_inbound()
+                and t.sbu_match_confidence == 'high'
+                and t.suggested_invoice_id
+            )
+            for tx in inbound:
+                try:
+                    tx.action_register_invoice_payment()
+                except UserError as e:
+                    _logger.info('Qonto auto inbound skip %s: %s', tx.id, e)
+
+        if company.sbu_qonto_auto_register_outbound:
+            outbound = pending.filtered(
+                lambda t: not t._sbu_is_inbound()
+                and t.sbu_match_confidence == 'high'
+                and t.suggested_vendor_bill_id
+            )
+            for tx in outbound:
+                try:
+                    tx.action_register_vendor_payment()
+                except UserError as e:
+                    _logger.info('Qonto auto outbound skip %s: %s', tx.id, e)
+
+        if company.sbu_qonto_auto_match_high:
+            pending = Transaction.search([
+                ('company_id', '=', company.id),
+                ('state', '=', 'imported'),
+            ])
+            if pending:
+                pending.action_match_odoo()
+
+    @api.model
     def cron_qonto_import(self):
         companies = self.env['res.company'].sudo().search([('sbu_qonto_import_enabled', '=', True)])
         Transaction = self.sudo()
         for company in companies:
             try:
                 Transaction.import_transactions_for_company(company, max_pages=2)
-                if company.sbu_qonto_suggest_after_import:
-                    pending = Transaction.search([
-                        ('company_id', '=', company.id),
-                        ('state', '=', 'imported'),
-                    ])
-                    pending.action_suggest_match()
+                self._sbu_post_import_process(company)
             except (UserError, QontoHttpError) as e:
                 _logger.warning('Qonto cron skip company %s: %s', company.id, e)
 
@@ -273,11 +395,7 @@ class SbuQontoTransaction(models.Model):
     def action_import_now(self):
         company = self.env.company
         n = self.import_transactions_for_company(company, max_pages=3)
-        if company.sbu_qonto_suggest_after_import:
-            self.search([
-                ('company_id', '=', company.id),
-                ('state', '=', 'imported'),
-            ]).action_suggest_match()
+        self._sbu_post_import_process(company)
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
@@ -289,7 +407,7 @@ class SbuQontoTransaction(models.Model):
             },
         }
 
-  # --- Matching heuristics (suggest / link aid — no bank reconciliation) ---
+    # --- Matching heuristics (suggest / link aid — no bank reconciliation) ---
 
     def _sbu_settled_date(self):
         self.ensure_one()
@@ -328,6 +446,110 @@ class SbuQontoTransaction(models.Model):
             ('state', '=', 'matched'),
         ]).mapped('match_payment_id').ids)
 
+    def _sbu_find_outbound_payment_match(self):
+        """Return (payment, confidence, hint) for vendor outbound payments."""
+        self.ensure_one()
+        Payment = self.env['account.payment']
+        rounding = self.currency_id.rounding
+        amt = abs(self.amount_signed)
+        if float_compare(amt, 0, precision_rounding=rounding) <= 0:
+            return Payment, 'none', ''
+        if self._sbu_is_inbound():
+            return Payment, 'none', ''
+
+        linked_ids = self._sbu_linked_payment_ids(self.company_id)
+        texts = self._sbu_search_texts()
+        settled = self._sbu_settled_date()
+        date_from = settled - timedelta(days=21)
+        date_to = settled + timedelta(days=7)
+        base_domain = [
+            ('company_id', '=', self.company_id.id),
+            ('partner_type', '=', 'supplier'),
+            ('payment_type', '=', 'outbound'),
+            ('state', '=', 'posted'),
+            ('currency_id', '=', self.currency_id.id),
+            ('date', '>=', date_from),
+            ('date', '<=', date_to),
+        ]
+        if self.partner_id:
+            base_domain.append(('partner_id', '=', self.partner_id.id))
+
+        for text in texts:
+            for field in ('payment_reference', 'memo', 'ref'):
+                if field not in Payment._fields:
+                    continue
+                pays = Payment.search(base_domain + [(field, '=', text)], limit=5)
+                pays = pays.filtered(lambda p: p.id not in linked_ids)
+                for pay in pays:
+                    if float_is_zero(pay.amount - amt, precision_rounding=rounding):
+                        return pay, 'high', _('Exact outbound %s match: %s') % (field, text)
+
+        amount_candidates = Payment.search(
+            base_domain + [('amount', '=', amt)],
+            order='date desc',
+            limit=50,
+        ).filtered(lambda p: p.id not in linked_ids)
+        if len(amount_candidates) == 1:
+            return amount_candidates[0], 'high', _('Single outbound payment with same amount')
+        if len(amount_candidates) > 1:
+            return Payment, 'low', _('Several outbound payments with same amount')
+        return Payment, 'none', ''
+
+    def _sbu_find_vendor_bill_match(self):
+        """Return (vendor bill, confidence, hint) for outbound movements."""
+        self.ensure_one()
+        Move = self.env['account.move']
+        rounding = self.currency_id.rounding
+        amt = abs(self.amount_signed)
+        if float_compare(amt, 0, precision_rounding=rounding) <= 0:
+            return Move, 'none', ''
+        if self._sbu_is_inbound():
+            return Move, 'none', ''
+
+        texts = self._sbu_search_texts()
+        base_domain = [
+            ('company_id', '=', self.company_id.id),
+            ('move_type', '=', 'in_invoice'),
+            ('state', '=', 'posted'),
+            ('currency_id', '=', self.currency_id.id),
+        ]
+        if self.partner_id:
+            base_domain.append(('partner_id', '=', self.partner_id.id))
+
+        for inv_name in self._sbu_extract_invoice_names(texts):
+            invs = Move.search(base_domain + [('name', '=', inv_name)], limit=2)
+            if len(invs) == 1:
+                inv = invs[0]
+                residual = inv.amount_residual
+                if float_is_zero(residual - amt, precision_rounding=rounding) or float_is_zero(
+                    inv.amount_total - amt, precision_rounding=rounding
+                ):
+                    return inv, 'high', _('Vendor bill %s with matching amount') % inv_name
+                return inv, 'medium', _('Vendor bill %s (check residual)') % inv_name
+
+        for text in texts:
+            invs = Move.search(
+                base_domain + [('payment_reference', '=', text)],
+                limit=2,
+            )
+            if len(invs) == 1:
+                inv = invs[0]
+                if float_is_zero(inv.amount_residual - amt, precision_rounding=rounding):
+                    return inv, 'high', _('Vendor payment reference %s') % text
+                return inv, 'medium', _('Vendor bill for reference %s') % text
+
+        residual_invs = Move.search(
+            base_domain + [('amount_residual', '=', amt)],
+            order='invoice_date desc',
+            limit=5,
+        )
+        if len(residual_invs) == 1:
+            return residual_invs[0], 'high', _('Unique vendor bill with matching residual')
+        if len(residual_invs) > 1:
+            return Move, 'low', _('Several vendor bills with same residual')
+
+        return Move, 'none', ''
+
     def _sbu_find_payment_match(self):
         """Return (payment, confidence, hint) or (empty, 'none', '')."""
         self.ensure_one()
@@ -336,7 +558,7 @@ class SbuQontoTransaction(models.Model):
         amt = abs(self.amount_signed)
         if float_compare(amt, 0, precision_rounding=rounding) <= 0:
             return Payment, 'none', ''
-        if (self.side or '').lower() not in ('credit', ''):
+        if not self._sbu_is_inbound():
             return Payment, 'none', ''
 
         linked_ids = self._sbu_linked_payment_ids(self.company_id)
@@ -404,6 +626,8 @@ class SbuQontoTransaction(models.Model):
         """Return (invoice, confidence, hint) or (empty, 'none', '')."""
         self.ensure_one()
         Move = self.env['account.move']
+        if not self._sbu_is_inbound():
+            return Move, 'none', ''
         rounding = self.currency_id.rounding
         amt = abs(self.amount_signed)
         if float_compare(amt, 0, precision_rounding=rounding) <= 0:
@@ -461,25 +685,40 @@ class SbuQontoTransaction(models.Model):
     def action_suggest_match(self):
         """Compute suggestions only — does not set Matched state or post entries."""
         for rec in self.filtered(lambda t: t.state == 'imported'):
-            pay, pay_conf, pay_hint = rec._sbu_find_payment_match()
-            inv, inv_conf, inv_hint = rec._sbu_find_invoice_match()
-
             confidence_order = {'none': 0, 'low': 1, 'medium': 2, 'high': 3}
             best_conf = 'none'
             vals = {
                 'suggested_payment_id': False,
                 'suggested_invoice_id': False,
+                'suggested_vendor_bill_id': False,
             }
             hint = ''
+            candidates = []
 
-            if confidence_order.get(pay_conf, 0) >= confidence_order.get(inv_conf, 0) and pay_conf != 'none':
-                vals['suggested_payment_id'] = pay.id
-                best_conf = pay_conf
-                hint = pay_hint
-            elif inv_conf != 'none':
-                vals['suggested_invoice_id'] = inv.id
-                best_conf = inv_conf
-                hint = inv_hint
+            if rec._sbu_is_inbound():
+                pay, pay_conf, pay_hint = rec._sbu_find_payment_match()
+                inv, inv_conf, inv_hint = rec._sbu_find_invoice_match()
+                if pay_conf != 'none':
+                    candidates.append(('payment', pay, pay_conf, pay_hint))
+                if inv_conf != 'none':
+                    candidates.append(('customer_invoice', inv, inv_conf, inv_hint))
+            else:
+                pay, pay_conf, pay_hint = rec._sbu_find_outbound_payment_match()
+                bill, bill_conf, bill_hint = rec._sbu_find_vendor_bill_match()
+                if pay_conf != 'none':
+                    candidates.append(('payment', pay, pay_conf, pay_hint))
+                if bill_conf != 'none':
+                    candidates.append(('vendor_bill', bill, bill_conf, bill_hint))
+
+            candidates.sort(key=lambda c: confidence_order.get(c[2], 0), reverse=True)
+            if candidates:
+                kind, doc, best_conf, hint = candidates[0]
+                if kind == 'payment':
+                    vals['suggested_payment_id'] = doc.id
+                elif kind == 'customer_invoice':
+                    vals['suggested_invoice_id'] = doc.id
+                elif kind == 'vendor_bill':
+                    vals['suggested_vendor_bill_id'] = doc.id
 
             vals['sbu_match_confidence'] = best_conf
             vals['sbu_match_hint'] = hint or False
@@ -490,14 +729,14 @@ class SbuQontoTransaction(models.Model):
         """User confirms a stored suggestion (medium/high)."""
         for rec in self.filtered(lambda t: t.state == 'imported'):
             vals = {}
-            if rec.suggested_payment_id and not rec.suggested_invoice_id:
+            if rec.suggested_payment_id:
                 vals['match_payment_id'] = rec.suggested_payment_id.id
                 vals['state'] = 'matched'
-            elif rec.suggested_invoice_id and not rec.suggested_payment_id:
+            elif rec.suggested_invoice_id:
                 vals['match_invoice_id'] = rec.suggested_invoice_id.id
                 vals['state'] = 'matched'
-            elif rec.suggested_payment_id:
-                vals['match_payment_id'] = rec.suggested_payment_id.id
+            elif rec.suggested_vendor_bill_id:
+                vals['match_vendor_bill_id'] = rec.suggested_vendor_bill_id.id
                 vals['state'] = 'matched'
             if vals:
                 rec.write(vals)
@@ -516,6 +755,9 @@ class SbuQontoTransaction(models.Model):
                     vals['state'] = 'matched'
                 elif rec.suggested_invoice_id:
                     vals['match_invoice_id'] = rec.suggested_invoice_id.id
+                    vals['state'] = 'matched'
+                elif rec.suggested_vendor_bill_id:
+                    vals['match_vendor_bill_id'] = rec.suggested_vendor_bill_id.id
                     vals['state'] = 'matched'
                 if vals:
                     rec.write(vals)
@@ -549,6 +791,7 @@ class SbuQontoTransaction(models.Model):
             'sbu_match_hint': False,
             'suggested_payment_id': False,
             'suggested_invoice_id': False,
+            'suggested_vendor_bill_id': False,
         })
 
     def _sbu_payment_register_date(self):
@@ -609,3 +852,64 @@ class SbuQontoTransaction(models.Model):
                 'type': 'success',
             },
         }
+
+    def action_register_vendor_payment(self):
+        """Post vendor payment for a matched/suggested vendor bill (Cosimo punto 10 passive)."""
+        PaymentRegister = self.env['account.payment.register']
+        for rec in self.filtered(lambda t: t.state == 'imported'):
+            bill = rec.match_vendor_bill_id or rec.suggested_vendor_bill_id
+            if not bill:
+                raise UserError(
+                    _('Select or suggest a vendor bill before registering payment.')
+                )
+            if bill.state != 'posted':
+                raise UserError(
+                    _('Vendor bill %s must be posted before registering payment.')
+                    % bill.display_name
+                )
+            if float_compare(bill.amount_residual, 0.0, precision_rounding=rec.currency_id.rounding) <= 0:
+                raise UserError(_('Vendor bill %s has no residual amount.') % bill.display_name)
+            pay_amount = min(abs(rec.amount_signed), bill.amount_residual)
+            ctx = {
+                'active_model': 'account.move',
+                'active_ids': bill.ids,
+                'active_id': bill.id,
+            }
+            wizard = PaymentRegister.with_context(**ctx).create({
+                'amount': pay_amount,
+                'payment_date': rec._sbu_payment_register_date(),
+            })
+            payments = wizard._create_payments()
+            payment = payments[:1]
+            rec.write({
+                'match_vendor_bill_id': bill.id,
+                'match_payment_id': payment.id if payment else False,
+                'state': 'matched',
+                'sbu_match_hint': _('Vendor payment registered from Qonto movement.'),
+            })
+        if len(self) == 1 and self.match_payment_id:
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'account.payment',
+                'res_id': self.match_payment_id.id,
+                'view_mode': 'form',
+                'target': 'current',
+            }
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Qonto vendor payment'),
+                'message': _('Registered vendor payment(s) for %(n)s movement(s).') % {
+                    'n': len(self),
+                },
+                'type': 'success',
+            },
+        }
+
+    def action_sync_qonto_partners(self):
+        """Sync beneficiaries from Qonto for this movement's company."""
+        companies = self.mapped('company_id')
+        for company in companies:
+            company.action_sbu_sync_qonto_partners()
+        return True

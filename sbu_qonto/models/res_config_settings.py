@@ -15,11 +15,28 @@ class ResConfigSettings(models.TransientModel):
         related='company_id.sbu_qonto_suggest_after_import',
         readonly=False,
     )
+    sbu_qonto_sync_partners_on_import = fields.Boolean(
+        related='company_id.sbu_qonto_sync_partners_on_import',
+        readonly=False,
+    )
+    sbu_qonto_auto_match_high = fields.Boolean(
+        related='company_id.sbu_qonto_auto_match_high',
+        readonly=False,
+    )
+    sbu_qonto_auto_register_inbound = fields.Boolean(
+        related='company_id.sbu_qonto_auto_register_inbound',
+        readonly=False,
+    )
+    sbu_qonto_auto_register_outbound = fields.Boolean(
+        related='company_id.sbu_qonto_auto_register_outbound',
+        readonly=False,
+    )
 
     def action_qonto_import_now(self):
         self.ensure_one()
         company = self.company_id
         n = self.env['sbu.qonto.transaction'].import_transactions_for_company(company, max_pages=3)
+        self.env['sbu.qonto.transaction']._sbu_post_import_process(company)
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
@@ -30,3 +47,7 @@ class ResConfigSettings(models.TransientModel):
                 'sticky': False,
             },
         }
+
+    def action_qonto_sync_partners(self):
+        self.ensure_one()
+        return self.company_id.action_sbu_sync_qonto_partners()

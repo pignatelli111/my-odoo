@@ -9,20 +9,25 @@
                     <button name="action_import_now" type="object" string="Import now" class="btn-secondary" display="always"/>
                     <button name="action_suggest_match" type="object" string="Suggest match" class="btn-secondary"/>
                     <button name="action_match_odoo" type="object" string="Match (high confidence)" class="btn-primary"/>
+                    <button name="action_sync_qonto_partners" type="object" string="Sync suppliers" class="btn-secondary"/>
                 </header>
                 <field name="settled_at"/>
                 <field name="qonto_remote_id"/>
                 <field name="side"/>
                 <field name="amount_signed"/>
                 <field name="currency_id"/>
+                <field name="counterparty_name" optional="show"/>
+                <field name="partner_id" optional="show"/>
                 <field name="label"/>
                 <field name="reference"/>
+                <field name="match_document_type" optional="show"/>
                 <field name="sbu_match_confidence" widget="badge" optional="show"/>
                 <field name="state" widget="badge"/>
-                <field name="suggested_payment_id" optional="show"/>
-                <field name="suggested_invoice_id" optional="show"/>
-                <field name="match_payment_id" optional="show"/>
+                <field name="suggested_invoice_id" optional="hide"/>
+                <field name="suggested_vendor_bill_id" optional="hide"/>
                 <field name="match_invoice_id" optional="show"/>
+                <field name="match_vendor_bill_id" optional="show"/>
+                <field name="match_payment_id" optional="show"/>
                 <field name="source"/>
                 <field name="company_id" column_invisible="1"/>
             </list>
@@ -39,9 +44,13 @@
                     <button name="action_apply_suggestion" string="Apply suggestion" type="object" class="btn-primary"
                             invisible="state != 'imported' or sbu_match_confidence == 'none'"/>
                     <button name="action_match_odoo" string="Match (high confidence)" type="object" class="btn-primary" invisible="state != 'imported'"/>
-                    <button name="action_register_invoice_payment" string="Register payment" type="object"
+                    <button name="action_register_invoice_payment" string="Register customer payment" type="object"
                             class="btn-primary"
-                            invisible="state != 'imported' or (not suggested_invoice_id and not match_invoice_id)"
+                            invisible="state != 'imported' or amount_signed &lt;= 0 or (not suggested_invoice_id and not match_invoice_id)"
+                            groups="account.group_account_invoice"/>
+                    <button name="action_register_vendor_payment" string="Register vendor payment" type="object"
+                            class="btn-primary"
+                            invisible="state != 'imported' or amount_signed &gt;= 0 or (not suggested_vendor_bill_id and not match_vendor_bill_id)"
                             groups="account.group_account_invoice"/>
                     <button name="action_ignore" string="Ignore" type="object" class="btn-secondary" invisible="state != 'imported'"/>
                     <field name="state" widget="statusbar" statusbar_visible="imported,matched,ignored"/>
@@ -64,6 +73,11 @@
                             <field name="emitted_at"/>
                         </group>
                     </group>
+                    <group string="Counterparty">
+                        <field name="counterparty_name"/>
+                        <field name="counterparty_iban"/>
+                        <field name="partner_id"/>
+                    </group>
                     <group>
                         <field name="label"/>
                         <field name="reference"/>
@@ -74,13 +88,17 @@
                         <field name="sbu_match_hint"/>
                         <field name="suggested_payment_id"/>
                         <field name="suggested_invoice_id"/>
+                        <field name="suggested_vendor_bill_id"/>
                     </group>
                     <group string="Confirmed Odoo link">
+                        <field name="match_document_type"/>
                         <field name="match_payment_id"/>
                         <field name="match_invoice_id"/>
+                        <field name="match_vendor_bill_id"/>
                         <div class="text-muted" colspan="2">
-                            Use <b>Register payment</b> to post a customer payment and reconcile the invoice residual.
-                            Bank journal reconciliation with Qonto remains a separate step in Accounting.
+                            <b>Customer inbound:</b> Register payment reconciles the invoice in Odoo (Cosimo punto 10).
+                            <b>Vendor outbound:</b> same for vendor bills when enabled.
+                            Bank statement line reconciliation with the Qonto journal remains optional in Accounting.
                         </div>
                     </group>
                     <notebook>
@@ -101,9 +119,9 @@
         <field name="context">{}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                Import movements from Qonto (scheduled import or manual). Use <b>Suggest match</b> to find payments/invoices;
-                <b>Match (high confidence)</b> links only when the heuristic is strong.
-                <b>Register payment</b> creates and posts a customer payment for the suggested invoice.
+                Import movements from Qonto (cron, manual, or webhook). Beneficiaries sync creates suppliers in Odoo.
+                High-confidence <b>inbound</b> movements can auto-register customer payments (invoice reconciled in Odoo).
+                Use Qonto only as the bank account—not for invoice what-if scenarios.
             </p>
         </field>
     </record>

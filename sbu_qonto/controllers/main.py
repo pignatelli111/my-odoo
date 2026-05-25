@@ -27,9 +27,10 @@ class SbuQontoWebhook(http.Controller):
             return request.make_response('Unauthorized', status=401)
         raw = request.httprequest.get_data(cache=False, as_text=True)
         try:
-            request.env['sbu.qonto.transaction'].sudo().with_company(company).qonto_process_webhook_payload(
-                company, raw
-            )
+            Transaction = request.env['sbu.qonto.transaction'].sudo().with_company(company)
+            count = Transaction.qonto_process_webhook_payload(company, raw)
+            if count:
+                Transaction._sbu_post_import_process(company)
         except Exception:
             _logger.exception('Qonto webhook processing failed for company %s', company.id)
             return request.make_response('Error', status=500)

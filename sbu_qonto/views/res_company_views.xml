@@ -14,6 +14,10 @@
                         <field name="sbu_qonto_use_sandbox"/>
                         <field name="sbu_qonto_import_enabled"/>
                         <field name="sbu_qonto_suggest_after_import"/>
+                        <field name="sbu_qonto_sync_partners_on_import"/>
+                        <field name="sbu_qonto_auto_match_high"/>
+                        <field name="sbu_qonto_auto_register_inbound"/>
+                        <field name="sbu_qonto_auto_register_outbound"/>
                     </group>
                     <group string="Webhook" groups="account.group_account_manager">
                         <field
@@ -22,6 +26,14 @@
                             placeholder="Same value as the &lt;token&gt; segment in /qonto/webhook/&lt;token&gt;"
                         />
                     </group>
+                    <div class="oe_button_box" groups="account.group_account_manager">
+                        <button
+                            name="action_sbu_sync_qonto_partners"
+                            type="object"
+                            string="Sync Qonto suppliers"
+                            class="btn-secondary"
+                        />
+                    </div>
                 </page>
             </xpath>
         </field>

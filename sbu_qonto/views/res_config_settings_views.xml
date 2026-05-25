@@ -9,7 +9,7 @@
                 <setting string="Qonto API login" help="Sign-in / login from Qonto integrations (not your email password).">
                     <field name="sbu_qonto_login"/>
                 </setting>
-                <setting string="Qonto secret key" help="API secret; Qonto remains the bank of record—Odoo only mirrors movements.">
+                <setting string="Qonto secret key" help="API secret; Qonto remains the bank of record—Odoo mirrors movements and reconciles invoices.">
                     <field name="sbu_qonto_secret_key" password="True" groups="account.group_account_manager"/>
                 </setting>
                 <setting string="Qonto IBAN" help="Bank account IBAN used by GET /v2/transactions.">
@@ -21,17 +21,36 @@
                 <setting string="Qonto webhook token" help="Path segment for /qonto/webhook/&lt;token&gt;; must match Qonto webhook URL.">
                     <field name="sbu_qonto_webhook_token" password="True"/>
                 </setting>
-                <setting string="Qonto import cron" help="Enables the hourly scheduled import for this company (scheduled action turns on when at least one company is enabled).">
+                <setting string="Qonto import cron" help="Hourly import when enabled (scheduled action activates if any company is enabled).">
                     <field name="sbu_qonto_import_enabled"/>
                 </setting>
-                <setting string="Suggest matches after import" help="Fills payment/invoice suggestions after each import; does not auto-link except via Match (high confidence).">
+                <setting string="Suggest matches after import" help="Fills invoice/payment suggestions on new movements.">
                     <field name="sbu_qonto_suggest_after_import"/>
                 </setting>
-                <div class="mt-2">
+                <setting string="Sync Qonto beneficiaries on import" help="Imports/updates suppliers from Qonto SEPA beneficiaries before matching (Cosimo punto 14).">
+                    <field name="sbu_qonto_sync_partners_on_import"/>
+                </setting>
+                <setting string="Auto-link high-confidence matches" help="Links movements to invoices/payments when confidence is high (without posting payment).">
+                    <field name="sbu_qonto_auto_match_high"/>
+                </setting>
+                <setting string="Auto-register customer payments" help="Posts customer payments on inbound movements with high-confidence invoice match (Cosimo punto 10).">
+                    <field name="sbu_qonto_auto_register_inbound"/>
+                </setting>
+                <setting string="Auto-register vendor payments" help="Posts vendor payments on outbound movements—off by default; enable only after UAT.">
+                    <field name="sbu_qonto_auto_register_outbound"/>
+                </setting>
+                <div class="mt-2 d-flex gap-2 flex-wrap">
                     <button
                         name="action_qonto_import_now"
                         type="object"
                         string="Import Qonto movements now"
+                        class="btn-secondary"
+                        groups="account.group_account_user"
+                    />
+                    <button
+                        name="action_qonto_sync_partners"
+                        type="object"
+                        string="Sync Qonto suppliers"
                         class="btn-secondary"
                         groups="account.group_account_user"
                     />
