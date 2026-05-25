@@ -7,7 +7,6 @@
         <field name="arch" type="xml">
             <xpath expr="//div[@name='button_box']" position="before">
                 <field name="sbu_estimate_id" invisible="1"/>
-                <field name="currency_id" invisible="1"/>
             </xpath>
             <xpath expr="//div[@name='button_box']" position="inside">
                 <button name="action_view_sbu_sal_sheets" type="object" class="oe_stat_button" icon="fa-book">
@@ -49,7 +48,7 @@
                             <field name="sbu_billing_contract_total" widget="monetary"/>
                             <field name="sbu_billing_billed" widget="monetary"/>
                             <field name="sbu_billing_remaining" widget="monetary"/>
-                            <field name="sbu_billing_progress_pct" widget="progressbar"/>
+                            <field name="sbu_billing_progress_pct"/>
                         </group>
                         <group string="Documenti recenti">
                             <field name="sbu_billing_open_sal_count"/>

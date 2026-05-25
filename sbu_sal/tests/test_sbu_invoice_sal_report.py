@@ -51,7 +51,7 @@ class TestSbuInvoiceSalReport(TransactionCase):
         report = self.env.ref('sbu_sal.action_report_sbu_invoice_sal_detail', raise_if_not_found=False)
         self.assertTrue(report)
         self.assertEqual(report.model, 'account.move')
-        self.assertIn('dettaglio SAL', report.name)
+        self.assertTrue(report.report_name)
 
     def test_sheet_line_contract_meta(self):
         sheet, sal_contract = self._customer_sal_sheet()

@@ -46,11 +46,6 @@ class ProjectProject(models.Model):
         string='Latest customer invoice',
         compute='_compute_sbu_billing_dashboard',
     )
-    currency_id = fields.Many2one(
-        'res.currency',
-        related='company_id.currency_id',
-        readonly=True,
-    )
 
     def _compute_sbu_sal_sheet_count(self):
         sheet = self.env['sbu.sal.sheet'].sudo()

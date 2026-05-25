@@ -2,6 +2,8 @@
 from odoo.tests import tagged
 from odoo.tests.common import TransactionCase
 
+from odoo.addons.sbu_estimate.tests.sbu_test_label_utils import duplicate_custom_field_labels
+
 
 @tagged('post_install', '-at_install')
 class TestSbuProjectBillingDashboard(TransactionCase):
@@ -35,6 +37,13 @@ class TestSbuProjectBillingDashboard(TransactionCase):
         })
         return project, sheet, sal_contract
 
+    def test_project_sbu_billing_field_labels_distinct(self):
+        """Regression: duplicate sbu_* labels on project.project fail Odoo.sh builds."""
+        dups = duplicate_custom_field_labels(
+            self.env, 'project.project', field_prefix='sbu_',
+        )
+        self.assertEqual(dups, {}, dups)
+
     def test_billing_dashboard_kpis_from_contract_lines(self):
         project, sheet, sal_contract = self._project_with_sal_billing()
         project.invalidate_recordset()
@@ -52,8 +61,7 @@ class TestSbuProjectBillingDashboard(TransactionCase):
         if not journal or not journal.default_account_id:
             self.skipTest('Sales journal with default account required')
         sheet.action_create_draft_invoice()
-        sal_contract.invalidate_recordset()
-        sal_contract._compute_billing_summary()
+        sal_contract._sbu_recompute_billing_from_sheet_lines()
         project.invalidate_recordset()
         project._compute_sbu_billing_dashboard()
         self.assertGreater(project.sbu_billing_billed, 0.0)
