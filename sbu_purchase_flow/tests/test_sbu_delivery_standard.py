@@ -140,3 +140,27 @@ class TestSbuDeliveryStandard(TransactionCase):
         pr.action_apply_delivery_standards()
         self.assertNotEqual(line.destination, 'Manual override')
         self.assertTrue(line.destination)
+
+    def test_smontaggio_product_uses_installation_not_facade_glass(self):
+        """Facade F1 may be «glass» on estimate line; SBU-SMONT row is still posa."""
+        smont = self.env.ref(
+            'sbu_estimate.product_tmpl_sbu_smontaggio',
+            raise_if_not_found=False,
+        )
+        product = smont.product_variant_id if smont else self.product
+        if smont:
+            product = smont.product_variant_ids[:1] or product
+        from odoo.addons.sbu_purchase_flow.models.sbu_budget_helpers import (
+            sbu_cost_family_for_pr_line,
+        )
+        project = self._project()
+        line = self._pr_line(
+            project,
+            workflow_route=ROUTE_LA,
+            product_id=product.id,
+            name='Smontaggio',
+        )
+        self.assertEqual(sbu_cost_family_for_pr_line(line), 'installation')
+        rule = self.env['sbu.delivery.standard'].match_for_pr_line(line, project)
+        self.assertTrue(rule)
+        self.assertEqual(rule.cost_family, 'installation')

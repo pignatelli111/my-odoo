@@ -551,7 +551,7 @@ class SbuPurchaseRequest(models.Model):
             )
             for item in no_rule[:8]:
                 body_parts.append(
-                    '• %(name)s — %(family)s, route %(route)s'
+                    '• %(name)s — family <i>%(family)s</i>, document route <i>%(route)s</i>'
                     % {
                         'name': item.get('name') or '—',
                         'family': item.get('cost_family_label') or item.get('cost_family') or '—',

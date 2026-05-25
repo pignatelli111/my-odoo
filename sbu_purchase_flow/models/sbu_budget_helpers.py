@@ -3,9 +3,11 @@
 
 from collections import defaultdict
 
+from odoo.addons.sbu_estimate.models.sbu_anaco_bom import ANACO_LINE_FIELD_TO_PRODUCT_CODE
 from odoo.addons.sbu_estimate.models.sbu_cost_family import (
     COST_FAMILY_WORKFLOW_ROUTE,
     SBU_COST_FAMILY_SELECTION,
+    infer_cost_family_from_price_cost_vals,
 )
 
 SBU_BUDGET_WARN_PCT = 90.0
@@ -14,6 +16,20 @@ SBU_BUDGET_OVER_PCT = 105.0
 WORKFLOW_ROUTE_TO_COST_FAMILY = {
     route: family for family, route in COST_FAMILY_WORKFLOW_ROUTE.items()
 }
+
+# Product on distinta row (SBU-SMONT, SBU-VETRO, …) beats facade cost_family on estimate line.
+SBU_PRODUCT_CODE_TO_COST_FAMILY = {}
+for _field, _code in ANACO_LINE_FIELD_TO_PRODUCT_CODE.items():
+    _fam = infer_cost_family_from_price_cost_vals({_field: 1.0})
+    if _fam:
+        SBU_PRODUCT_CODE_TO_COST_FAMILY[_code.strip().upper()] = _fam
+
+
+def sbu_cost_family_from_product(product):
+    if not product:
+        return False
+    code = (product.default_code or '').strip().upper()
+    return SBU_PRODUCT_CODE_TO_COST_FAMILY.get(code)
 
 OPEN_PR_REQUEST_STATES = ('draft', 'submitted', 'approved')
 PO_DRAFT_STATES = ('draft', 'sent', 'to approve')
@@ -38,10 +54,14 @@ def sbu_traffic_light_from_pct(pct_engaged, planned):
 
 
 def sbu_cost_family_for_pr_line(pr_line):
-    """Resolve ANACO cost family from BOM / estimate line / workflow route."""
+    """Resolve ANACO cost family from product, BOM / estimate line / workflow route."""
     if not pr_line:
         return 'extra'
     bom = pr_line.source_bom_line_id
+    product = pr_line.product_id or (bom.product_id if bom else False)
+    fam = sbu_cost_family_from_product(product)
+    if fam:
+        return fam
     if bom and bom.estimate_line_id and bom.estimate_line_id.cost_family:
         return bom.estimate_line_id.cost_family
     route = pr_line.workflow_route or pr_line.request_id.workflow_route
