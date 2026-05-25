@@ -207,9 +207,9 @@ class TestSbuProjectBudget(TransactionCase):
         project, estimate = self._project_with_glass_budget(planned_cad=100.0)
         eline = estimate.line_ids[0]
         uom = self.env.ref('uom.product_uom_unit')
-        expense = self.env['account.account'].search([
+        expense = self.env['account.account'].with_company(self.env.company).search([
             ('account_type', '=', 'expense'),
-            ('company_id', '=', self.env.company.id),
+            ('company_ids', 'in', self.env.company.ids),
         ], limit=1)
         product = self.env['product.product'].create({
             'name': 'Glass BOM',
