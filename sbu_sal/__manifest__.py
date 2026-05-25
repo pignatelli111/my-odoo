@@ -1,6 +1,6 @@
 {
     'name': 'SBU SAL',
-    'version': '19.0.1.0.63',
+    'version': '19.0.1.0.64',
     'summary': 'Customer SAL, passive SAL (posa/subcontract), CDP and accounting',
     'author': 'SBU Development',
     'category': 'Accounting',
@@ -21,6 +21,7 @@
         'views/sbu_estimate_sal_line_views.xml',
         'views/project_project_views.xml',
         'report/sbu_invoice_sal_report.xml',
+        'report/account_invoice_report_sbu_sal.xml',
         'views/account_move_views.xml',
         'views/sbu_bulk_views.xml',
         'views/menu.xml',

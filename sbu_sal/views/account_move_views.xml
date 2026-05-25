@@ -10,16 +10,17 @@
                         class="oe_stat_button" icon="fa-file-pdf-o"
                         invisible="move_type != 'out_invoice' or not sbu_sal_sheet_id">
                     <div class="o_stat_info">
-                        <span class="o_stat_text">SAL detail</span>
+                        <span class="o_stat_text">Dettaglio SAL</span>
                     </div>
                 </button>
             </xpath>
             <xpath expr="//notebook" position="inside">
-                <page string="SBU SAL" name="sbu_sal_invoice_tab"
+                <page string="SAL SBU" name="sbu_sal_invoice_tab"
                       invisible="move_type != 'out_invoice' or not sbu_sal_sheet_id">
                     <group>
                         <field name="sbu_sal_sheet_id" readonly="1"/>
-                        <field name="sbu_sal_cdp_name" readonly="1"/>
+                        <field name="sbu_sal_cdp_name" readonly="1" string="CDP"/>
+                        <field name="sbu_revision_label" readonly="1" string="Commessa (REV)"/>
                     </group>
                 </page>
             </xpath>

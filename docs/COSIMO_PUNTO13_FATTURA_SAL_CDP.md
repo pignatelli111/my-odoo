@@ -2,7 +2,7 @@
 
 **Feedback:** in fattura servono **ogni singola voce di contratto** con descrizione, valori, unità di misura e totali; in testata **SAL di riferimento** e **CDP**; gli avanzamenti poi visibili anche da moduli standard Odoo (dashboard / cruscotto).
 
-**Valutazione:** la richiesta è **corretta** e allineata al processo Suburban. Oggi la **tracciabilità** SAL → fattura → CDP c’è nei dati; la **stampa/PDF** cliente è ancora **sintetica** (1–2 righe contabili), non il dettaglio per voce contrattuale.
+**Valutazione:** la richiesta è **corretta** e allineata al processo Suburban. Tracciabilità SAL → fattura → CDP nei dati; **PDF dettaglio per voce** e **cruscotto commessa** implementati in `sbu_sal` **19.0.1.0.64+** (fattura contabile: una riga per voce contrattuale quando il foglio SAL ha importi periodo).
 
 ---
 
@@ -30,27 +30,23 @@ Certificato di pagamento / CDP (sbu.payment.certificate), collegato al SAL e all
 
 Sul **preventivo**, ogni voce contrattuale mostra anche **fatturato**, **residuo**, **garanzia**, riferimenti fattura/CDP (tab aggiornata da `sbu_sal`).
 
-### 1.2 Cosa stampa la fattura oggi (GAP)
+### 1.2 Stampa e righe fattura (implementato)
 
-La creazione fattura (`action_create_draft_invoice` in `sbu_sal/models/sbu_sal_sheet.py`) genera **righe contabili aggregate**, non una riga per voce contratto:
+| Output | Stato |
+|--------|--------|
+| Righe contabili | **Una riga per voce contrattuale** con importo periodo (`_sbu_sal_prepare_invoice_line_commands_contractual`) + riga ritenuta se prevista |
+| PDF **«Fattura con dettaglio SAL (SBU)»** | Testata IT: commessa, preventivo, SAL, periodo, **CDP**; tabella voci; footer lordo/ritenuta/netto |
+| PDF fattura standard Odoo | Inherit `account.report_invoice_document`: blocco **SAL + CDP + commessa** in testata |
+| Campo `ref` fattura | `SAL … · CDP … · Commessa …` alla creazione |
 
-| Caso | Righe fattura Odoo |
-|------|-------------------|
-| Con ritenuta | 1) «SAL … — progress (gross)» = totale lordo periodo · 2) «Retention (withholding)» = −ritenuta |
-| Senza ritenuta | 1 sola riga «SAL … — progress billing» = netto |
-
-**Non compaiono** su `account.move.line`: descrizione voce F4b, U.M., qty contrattuale, prezzo unitario, importo voce del periodo.
-
-Il PDF standard Odoo (**Stampa fattura**) riproduce quelle 1–2 righe + totali IVA. **Non** c’è report QWeb SBU dedicato in `sbu_sal` (nessun `report/*.xml` custom oggi).
-
-### 1.3 Testata fattura / CDP (parziale)
+### 1.3 Testata fattura / CDP
 
 | Richiesta Cosimo | Stato |
 |------------------|--------|
-| Commessa / job | Parziale — `project_id` sulla fattura se il campo esiste; partner = cliente |
-| Riferimento **SAL/xx/xxxx** | Sì — `ref` e `invoice_origin` tipicamente «SAL …» |
-| Periodo SAL | Data foglio SAL; non sempre ripetuta in evidenza sul PDF |
-| **CDP** in testata fattura | **No** — il CDP è documento **separato** (`sbu.payment.certificate`); collegato ma non stampato sul layout fattura standard |
+| Commessa / job | Sì — `project_id`, tab fattura **SAL SBU**, PDF |
+| Riferimento **SAL** | Sì — `ref`, `invoice_origin`, PDF |
+| Periodo SAL | Data foglio → `invoice_date` fattura; PDF dettaglio |
+| **CDP** | Sì — `sbu_sal_cdp_name`, `ref`, PDF standard e dettaglio SAL |
 
 ---
 
@@ -64,9 +60,9 @@ Il PDF standard Odoo (**Stampa fattura**) riproduce quelle 1–2 righe + totali 
 | Avanzamenti SAL | Commessa → **SAL sheets**; preventivo → **Voci contrattuali SAL** (fatturato / residuo / %) |
 | Pagamenti | Stato pagamento fattura; CDP **Issued / Paid** |
 | Contabilità | Prima nota standard; analitica su commessa se configurata |
-| KPI aggregati | **Da definire** — cruscotto SBU dedicato (fatturato vs contratto, SAL aperti) è in roadmap **P1**, non ancora un modulo “dashboard Suburban” |
+| KPI aggregati | **Fatto** — tab commessa **«Avanzamento fatturazione»**: valore contratto, fatturato, residuo, % avanzamento, SAL aperti, ultimo CDP/fattura |
 
-Quindi: gli **avanzamenti sono tracciati** nel modello SBU; la **vista executive** passa ancora per liste Odoo (SAL, fatture, progetto), non per un unico cruscotto come in Excel.
+Collegamenti rapidi: pulsanti **Fatturazione contratto**, **Fatture cliente**, **Fogli SAL**.
 
 ---
 
@@ -113,7 +109,8 @@ Quindi: gli **avanzamenti sono tracciati** nel modello SBU; la **vista executive
 | 3 | Riga ritenuta e totali lordo / netto come oggi | idem | **Fatto** (footer PDF + righe contabili aggregate invariati) |
 | 4 | Azione **Stampa** su fattura (menu Stampa + pulsante) e su foglio SAL | idem | **Fatto** |
 | 5 | Collegamento `sbu_sal_sheet_id` + `sbu_sal_cdp_name` su `account.move` | `account.move` | **Fatto** |
-| 6 | (P2) Cruscotto progetto: fatturato, residuo SAL, ultimo CDP | `sbu_project` / reporting | Aperto |
+| 6 | Cruscotto commessa: fatturato, residuo, SAL aperti, ultimo CDP/fattura | `sbu_sal` (`project.project`) | **Fatto** (v `19.0.1.0.64`) |
+| 7 | Testata PDF fattura standard con SAL/CDP | `sbu_sal/report/account_invoice_report_sbu_sal.xml` | **Fatto** |
 
 ---
 

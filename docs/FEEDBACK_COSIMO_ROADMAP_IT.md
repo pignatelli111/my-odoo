@@ -285,14 +285,14 @@ Come foglio ITEM ANACO: budget preventivo, acquistato, residuo, %; semafori; sol
 
 **Feedback confermato** — vedi [COSIMO_PUNTO13_FATTURA_SAL_CDP.md](COSIMO_PUNTO13_FATTURA_SAL_CDP.md).
 
-**Fatto (P1, `sbu_sal` 19.0.1.0.39)**  
-- Report QWeb **«Invoice with SAL detail (SBU)»**: testata commessa, preventivo, SAL, periodo, **CDP**; tabella **per voce contrattuale**; footer lordo/ritenuta/netto; sezione righe contabili.  
-- `account.move.sbu_sal_sheet_id` impostato in creazione fattura da foglio SAL; `sbu_sal_cdp_name` in testata.  
-- Stampa da foglio SAL (**SAL detail PDF**) e da fattura (menu Stampa + pulsante).  
-- Contabilità invariata (1–2 righe aggregate).
+**Fatto (`sbu_sal` 19.0.1.0.64)**  
+- Report QWeb **«Fattura con dettaglio SAL (SBU)»** (etichette IT): testata commessa, preventivo, SAL, periodo, **CDP**; tabella **per voce contrattuale**; footer lordo/ritenuta/netto.  
+- Fattura: **una riga contabile per voce** contrattuale con importo periodo; `ref` con SAL · CDP · commessa; `sbu_sal_sheet_id` + `sbu_sal_cdp_name`.  
+- Stampa da foglio SAL e da fattura (pulsante **Dettaglio SAL**); inherit PDF fattura standard con blocco SAL/CDP.  
+- Tab commessa **«Avanzamento fatturazione»**: contratto / fatturato / residuo / % / SAL aperti / ultimo CDP e fattura.
 
-**Aperto (P2)**  
-- Cruscotto SBU unico (fatturato vs contratto, SAL aperti); eventuale dettaglio righe in fattura elettronica SDI (opzione A, con commercialista).
+**Aperto (opzionale)**  
+- Dettaglio righe in fattura elettronica SDI (opzione A, con commercialista).
 
 ---
 

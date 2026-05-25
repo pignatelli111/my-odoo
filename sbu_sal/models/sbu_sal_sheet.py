@@ -268,6 +268,24 @@ class SbuSalSheet(models.Model):
             )[:1]
         return keep
 
+    def _sbu_sal_build_invoice_ref(self):
+        """Customer reference on invoice: SAL, optional CDP, job REV label."""
+        self.ensure_one()
+        ref_parts = [_('SAL %s') % self.name]
+        cert = self._sbu_certificate_to_keep()
+        if cert:
+            ref_parts.append(_('CDP %s') % cert.name)
+        if self.project_id:
+            job_label = self.project_id.sbu_revision_label or self.project_id.display_name
+            ref_parts.append(_('Job %s') % job_label)
+        return ' · '.join(ref_parts)
+
+    def _sbu_sal_sync_invoice_ref(self):
+        """Refresh invoice ref when CDP is created after the draft invoice."""
+        for sheet in self:
+            if sheet.invoice_id:
+                sheet.invoice_id.write({'ref': sheet._sbu_sal_build_invoice_ref()})
+
     def action_cleanup_duplicate_certificates(self):
         """Delete extra CDPs on this SAL (UAT cleanup). Keeps one: paid > issued > newest."""
         self.ensure_one()
@@ -332,6 +350,7 @@ class SbuSalSheet(models.Model):
             'amount_gross': self.amount_gross,
             'retention_percent': self.retention_percent,
         })
+        self._sbu_sal_sync_invoice_ref()
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'sbu.payment.certificate',
@@ -491,10 +510,12 @@ class SbuSalSheet(models.Model):
             'journal_id': journal.id,
             'currency_id': self.currency_id.id,
             'invoice_origin': self.name,
-            'ref': _('SAL %s') % self.name,
+            'ref': self._sbu_sal_build_invoice_ref(),
             'fiscal_position_id': fiscal_position.id if fiscal_position else False,
             'invoice_line_ids': line_commands,
         }
+        if self.date and 'invoice_date' in self.env['account.move']._fields:
+            move_vals['invoice_date'] = self.date
         if 'project_id' in self.env['account.move']._fields:
             move_vals['project_id'] = self.project_id.id
         if 'sbu_sal_sheet_id' in self.env['account.move']._fields:
