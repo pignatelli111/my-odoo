@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sbu_estimate_form_budget_columns" model="ir.ui.view">
+        <field name="name">sbu.estimate.form.budget.columns</field>
+        <field name="model">sbu.estimate</field>
+        <field name="inherit_id" ref="sbu_estimate.view_sbu_estimate_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='line_ids']//list//field[@name='margin_pct']" position="after">
+                <field name="budget_orders_issued" string="Ordini emessi" optional="show" readonly="1"/>
+                <field name="budget_costs_incurred" string="Costi sostenuti" optional="show" readonly="1"/>
+                <field name="budget_residual" string="Residuo ordini" optional="show" readonly="1"/>
+                <field name="budget_vs_estimate_pct" string="% su preventivo" optional="show" readonly="1"/>
+                <field name="budget_traffic_light" string="Semaforo" widget="badge" optional="show"
+                       decoration-success="budget_traffic_light == 'ok'"
+                       decoration-warning="budget_traffic_light == 'warning'"
+                       decoration-danger="budget_traffic_light == 'over'"/>
+            </xpath>
+            <xpath expr="//page[@name='anaco_lines']" position="after">
+                <page string="Budget acquisti (ITEM)" name="sbu_item_budget"
+                      invisible="not line_ids">
+                    <p class="text-muted">
+                        Preventivo, ordini emessi (PO confermati) e costi sostenuti (fatture fornitore registrate)
+                        per riga ANACO. Usa «Aggiorna budget» sulla commessa o conferma PO / registra fatture.
+                    </p>
+                    <field name="line_ids" nolabel="1" readonly="1">
+                        <list decoration-success="budget_traffic_light == 'ok'"
+                              decoration-warning="budget_traffic_light == 'warning'"
+                              decoration-danger="budget_traffic_light == 'over'"
+                              default_order="sequence, pos">
+                            <field name="pos"/>
+                            <field name="description"/>
+                            <field name="cost_family" string="Famiglia"/>
+                            <field name="cost_total_tot" string="Preventivo"/>
+                            <field name="budget_orders_issued" string="Ordini emessi"/>
+                            <field name="budget_costs_incurred" string="Costi sostenuti"/>
+                            <field name="budget_residual" string="Residuo"/>
+                            <field name="budget_vs_estimate_pct" string="% su preventivo"/>
+                            <field name="budget_pct_paid" string="% pagati su ordine" optional="hide"/>
+                            <field name="budget_traffic_light" string="Semaforo" widget="badge"
+                                   decoration-success="budget_traffic_light == 'ok'"
+                                   decoration-warning="budget_traffic_light == 'warning'"
+                                   decoration-danger="budget_traffic_light == 'over'"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

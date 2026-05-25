@@ -15,10 +15,13 @@
                 <field name="budget_planned" string="Budget (estimate)" sum="Total"/>
                 <field name="amount_open_pr" string="RDA aperte" sum="Total"/>
                 <field name="amount_po_draft" string="PO bozza" sum="Total"/>
-                <field name="amount_po_confirmed" string="PO confermati" sum="Total"/>
-                <field name="amount_engaged" string="Impegnato" sum="Total"/>
-                <field name="amount_residual" string="Residuo" sum="Total"/>
+                <field name="amount_po_confirmed" string="Ordini emessi" sum="Total"/>
+                <field name="amount_actual" string="Costi sostenuti" sum="Total"/>
+                <field name="amount_engaged" string="Impegnato tot." sum="Total"/>
+                <field name="amount_residual" string="Residuo (impegnato)" sum="Total"/>
+                <field name="amount_residual_actual" string="Residuo (consuntivo)" sum="Total" optional="show"/>
                 <field name="pct_engaged" string="Impegnato %"/>
+                <field name="pct_actual" string="Consuntivo %"/>
                 <field name="pct_residual" string="Residuo %"/>
                 <field name="traffic_light" string="Semaforo" widget="badge"
                        decoration-success="traffic_light == 'ok'"

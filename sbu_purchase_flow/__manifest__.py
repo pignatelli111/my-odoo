@@ -1,6 +1,6 @@
 {
     'name': 'SBU Purchase Flow',
-    'version': '19.0.1.0.90',
+    'version': '19.0.1.0.91',
     'summary': 'RDA/ACP/ACO/LDS purchase requests; PR→PO project link with sbu_stock_config (4.2)',
     'author': 'SBU Development',
     'category': 'Purchase',
@@ -8,12 +8,14 @@
         'base',
         'mail',
         'purchase',
+        'account',
         'stock',
         'project',
         'sbu_estimate',
         'sbu_stock_config',
     ],
     'data': [
+        'security/sbu_purchase_security.xml',
         'security/ir.model.access.csv',
         'data/sbu_purchase_request_sequence.xml',
         'data/sbu_delivery_standard_data.xml',
@@ -30,6 +32,7 @@
         'views/sbu_project_budget_views.xml',
         'views/sbu_delivery_standard_views.xml',
         'views/sbu_estimate_views.xml',
+        'views/sbu_estimate_budget_views.xml',
         'views/menu.xml',
     ],
     'external_dependencies': {

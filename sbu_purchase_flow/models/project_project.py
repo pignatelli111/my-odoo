@@ -18,8 +18,8 @@ class ProjectProject(models.Model):
     sbu_budget_po_unlock = fields.Boolean(
         string='Unlock PO over budget',
         copy=False,
-        help='When enabled, purchase orders on this job can be confirmed even if a cost '
-             'family exceeds the ANACO budget (admin only).',
+        help='When enabled, users in «SBU — Sblocco budget acquisti» (or Settings administrators) '
+             'can confirm purchase orders even if a cost family exceeds the ANACO budget.',
     )
     sbu_purchase_request_count = fields.Integer(
         string='Purchase requests',

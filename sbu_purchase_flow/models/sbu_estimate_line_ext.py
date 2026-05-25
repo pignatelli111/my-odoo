@@ -1,9 +1,38 @@
 # -*- coding: utf-8 -*-
-from odoo import models
+from odoo import api, fields, models
+
+from .sbu_budget_helpers import sbu_traffic_light_from_pct
 
 
 class SbuEstimateLine(models.Model):
     _inherit = 'sbu.estimate.line'
+
+    budget_traffic_light = fields.Selection(
+        [
+            ('ok', 'Green'),
+            ('warning', 'Yellow'),
+            ('over', 'Red'),
+        ],
+        string='Budget traffic light',
+        compute='_compute_sbu_budget_traffic_light',
+        store=True,
+    )
+
+    @api.depends(
+        'cost_total_tot',
+        'budget_orders_issued',
+        'budget_costs_incurred',
+    )
+    def _compute_sbu_budget_traffic_light(self):
+        for line in self:
+            planned = line.cost_total_tot or 0.0
+            if not planned:
+                line.budget_traffic_light = 'ok'
+                continue
+            pct_orders = (line.budget_orders_issued / planned) * 100.0
+            pct_actual = (line.budget_costs_incurred / planned) * 100.0
+            pct_watch = max(pct_orders, pct_actual)
+            line.budget_traffic_light = sbu_traffic_light_from_pct(pct_watch, planned)
 
     def write(self, vals):
         res = super().write(vals)

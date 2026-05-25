@@ -65,7 +65,7 @@
                       invisible="not sbu_estimate_id">
                     <group>
                         <field name="sbu_budget_po_unlock"
-                               groups="base.group_system"
+                               groups="sbu_purchase_flow.group_sbu_budget_unlock,base.group_system"
                                widget="boolean_toggle"/>
                     </group>
                     <div class="mb-2">
@@ -84,10 +84,13 @@
                             <field name="budget_planned" string="Estimate"/>
                             <field name="amount_open_pr" string="RDA"/>
                             <field name="amount_po_draft" string="PO bozza"/>
-                            <field name="amount_po_confirmed" string="PO confermati"/>
-                            <field name="amount_engaged" string="Impegnato"/>
-                            <field name="amount_residual" string="Residuo"/>
+                            <field name="amount_po_confirmed" string="Ordini emessi"/>
+                            <field name="amount_actual" string="Costi sostenuti"/>
+                            <field name="amount_engaged" string="Impegnato tot."/>
+                            <field name="amount_residual" string="Residuo (impegnato)"/>
+                            <field name="amount_residual_actual" string="Residuo (consuntivo)" optional="hide"/>
                             <field name="pct_engaged" string="Impegnato %"/>
+                            <field name="pct_actual" string="Consuntivo %"/>
                             <field name="pct_residual" string="Residuo %"/>
                             <field name="traffic_light" string="Semaforo" widget="badge"
                                    decoration-success="traffic_light == 'ok'"

@@ -4,6 +4,7 @@ from odoo import api, fields, models, _
 from .sbu_budget_helpers import (
     sbu_collect_project_budget,
     sbu_cost_family_label,
+    sbu_sync_estimate_line_budgets,
     sbu_traffic_light_from_pct,
 )
 from odoo.addons.sbu_estimate.models.sbu_cost_family import SBU_COST_FAMILY_SELECTION
@@ -58,9 +59,14 @@ class SbuProjectBudgetFamily(models.Model):
         help='RFQ/PO in draft, sent, or waiting approval.',
     )
     amount_po_confirmed = fields.Monetary(
-        string='PO confirmed',
+        string='Orders issued',
         currency_field='currency_id',
-        help='Confirmed purchase orders (purchase/done).',
+        help='Confirmed purchase orders (purchase/done) — ITEM «Ordini emessi».',
+    )
+    amount_actual = fields.Monetary(
+        string='Actual costs',
+        currency_field='currency_id',
+        help='Posted vendor bills linked to PO lines (ITEM «Costi sostenuti»).',
     )
     amount_engaged = fields.Monetary(
         string='Total engaged',
@@ -85,6 +91,18 @@ class SbuProjectBudgetFamily(models.Model):
         compute='_compute_derived_amounts',
         store=True,
         digits=(16, 2),
+    )
+    pct_actual = fields.Float(
+        string='Actual %',
+        compute='_compute_derived_amounts',
+        store=True,
+        digits=(16, 2),
+    )
+    amount_residual_actual = fields.Monetary(
+        string='Residual vs actual',
+        compute='_compute_derived_amounts',
+        store=True,
+        currency_field='currency_id',
     )
     traffic_light = fields.Selection(
         [
@@ -117,6 +135,7 @@ class SbuProjectBudgetFamily(models.Model):
         'amount_open_pr',
         'amount_po_draft',
         'amount_po_confirmed',
+        'amount_actual',
     )
     def _compute_derived_amounts(self):
         for row in self:
@@ -127,14 +146,19 @@ class SbuProjectBudgetFamily(models.Model):
             )
             row.amount_engaged = engaged
             planned = row.budget_planned or 0.0
+            actual = row.amount_actual or 0.0
             row.amount_residual = planned - engaged
+            row.amount_residual_actual = planned - actual
             if planned > 0:
                 row.pct_engaged = engaged / planned * 100.0
                 row.pct_residual = row.amount_residual / planned * 100.0
+                row.pct_actual = actual / planned * 100.0
             else:
                 row.pct_engaged = 0.0
                 row.pct_residual = 0.0
-            row.traffic_light = sbu_traffic_light_from_pct(row.pct_engaged, planned)
+                row.pct_actual = 0.0
+            pct_watch = max(row.pct_engaged, row.pct_actual)
+            row.traffic_light = sbu_traffic_light_from_pct(pct_watch, planned)
             row.is_over_budget = row.traffic_light == 'over'
 
     @api.model
@@ -150,7 +174,8 @@ class SbuProjectBudgetFamily(models.Model):
         for fam, amounts in sorted(totals.items(), key=lambda x: sbu_cost_family_label(self.env, x[0])):
             planned = amounts['planned']
             engaged = amounts['open_pr'] + amounts['po_draft'] + amounts['po_confirmed']
-            if planned <= 0 and engaged <= 0:
+            actual = amounts.get('actual', 0.0)
+            if planned <= 0 and engaged <= 0 and actual <= 0:
                 continue
             vals_list.append({
                 'project_id': project.id,
@@ -160,8 +185,11 @@ class SbuProjectBudgetFamily(models.Model):
                 'amount_open_pr': amounts['open_pr'],
                 'amount_po_draft': amounts['po_draft'],
                 'amount_po_confirmed': amounts['po_confirmed'],
+                'amount_actual': amounts.get('actual', 0.0),
             })
-        return self.create(vals_list)
+        rows = self.create(vals_list)
+        sbu_sync_estimate_line_budgets(project, self.env)
+        return rows
 
     @api.model
     def project_has_over_budget(self, project):

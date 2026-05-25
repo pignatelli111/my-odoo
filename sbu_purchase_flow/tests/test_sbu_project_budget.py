@@ -149,8 +149,52 @@ class TestSbuProjectBudget(TransactionCase):
     def test_budget_check_allows_unlock_on_project(self):
         project, _estimate = self._project_with_glass_budget(planned_cad=100.0)
         po, _pr_line = self._po_over_glass_budget(project)
+        pol = po.order_line.filtered('sbu_pr_line_id')
+        pol.write({'price_unit': 250.0})
+        unlock_group = self.env.ref('sbu_purchase_flow.group_sbu_budget_unlock')
+        partner = self.env['res.partner'].create({
+            'name': 'Budget unlock buyer',
+            'email': 'sbu_budget_unlock@test.invalid',
+        })
+        unlock_user = self.env['res.users'].with_context(no_reset_password=True).create({
+            'name': 'Budget unlock buyer',
+            'login': 'sbu_budget_unlock_%s' % partner.id,
+            'partner_id': partner.id,
+            'company_id': self.env.company.id,
+            'company_ids': [(6, 0, [self.env.company.id])],
+            'group_ids': [
+                (6, 0, [
+                    self.env.ref('base.group_user').id,
+                    self.env.ref('purchase.group_purchase_user').id,
+                    unlock_group.id,
+                ]),
+            ],
+        })
         project.sbu_budget_po_unlock = True
-        po._sbu_check_budget_before_confirm()
+        po.with_user(unlock_user)._sbu_check_budget_before_confirm()
+
+    def test_budget_flag_alone_not_enough_without_unlock_group(self):
+        project, _estimate = self._project_with_glass_budget(planned_cad=100.0)
+        po, _pr_line = self._po_over_glass_budget(project)
+        pol = po.order_line.filtered('sbu_pr_line_id')
+        pol.write({'price_unit': 250.0})
+        project.sbu_budget_po_unlock = True
+        internal = self.env.ref('base.group_user')
+        purchase = self.env.ref('purchase.group_purchase_user')
+        partner = self.env['res.partner'].create({
+            'name': 'Budget flag only buyer',
+            'email': 'sbu_budget_flag_only@test.invalid',
+        })
+        buyer = self.env['res.users'].with_context(no_reset_password=True).create({
+            'name': 'Budget flag only buyer',
+            'login': 'sbu_budget_flag_%s' % partner.id,
+            'partner_id': partner.id,
+            'company_id': self.env.company.id,
+            'company_ids': [(6, 0, [self.env.company.id])],
+            'group_ids': [(6, 0, [internal.id, purchase.id])],
+        })
+        with self.assertRaises(UserError):
+            po.with_user(buyer)._sbu_check_budget_before_confirm()
 
     def test_budget_check_skipped_for_admin(self):
         project, _estimate = self._project_with_glass_budget(planned_cad=100.0)
@@ -158,3 +202,70 @@ class TestSbuProjectBudget(TransactionCase):
         # Default test env user has base.group_system.
         self.assertTrue(self.env.user.has_group('base.group_system'))
         po._sbu_check_budget_before_confirm()
+
+    def test_refresh_includes_actual_and_syncs_estimate_line(self):
+        project, estimate = self._project_with_glass_budget(planned_cad=100.0)
+        eline = estimate.line_ids[0]
+        uom = self.env.ref('uom.product_uom_unit')
+        product = self.env['product.product'].create({
+            'name': 'Glass BOM',
+            'default_code': 'GL-BUD-BOM',
+            'type': 'consu',
+            'purchase_ok': True,
+        })
+        bom = self.env['sbu.estimate.bom.line'].create({
+            'estimate_id': estimate.id,
+            'estimate_line_id': eline.id,
+            'product_id': product.id,
+            'uom_id': uom.id,
+            'unit_cost': 10.0,
+            'qty_ordered': 1.0,
+        })
+        partner = self.env['res.partner'].create({
+            'name': 'Actual vendor',
+            'supplier_rank': 1,
+        })
+        pr = self.env['sbu.purchase.request'].create({
+            'project_id': project.id,
+            'request_type': 'vt',
+            'company_id': self.env.company.id,
+        })
+        pr_line = self.env['sbu.purchase.request.line'].create({
+            'request_id': pr.id,
+            'name': 'Glass BOM line',
+            'product_id': product.id,
+            'product_uom': uom.id,
+            'product_qty': 1.0,
+            'source_bom_line_id': bom.id,
+        })
+        po = self.env['purchase.order'].create({
+            'partner_id': partner.id,
+            'company_id': self.env.company.id,
+            'project_id': project.id,
+            'sbu_purchase_request_id': pr.id,
+        })
+        pr._sbu_create_rfq_po_lines(po, pr_line)
+        pol = po.order_line.filtered('sbu_pr_line_id')
+        pol.write({'price_unit': 40.0})
+        po.button_confirm()
+
+        bill = self.env['account.move'].create({
+            'move_type': 'in_invoice',
+            'partner_id': partner.id,
+            'company_id': self.env.company.id,
+            'invoice_line_ids': [(0, 0, {
+                'product_id': product.id,
+                'quantity': 1.0,
+                'price_unit': 35.0,
+                'purchase_line_id': pol.id,
+            })],
+        })
+        bill.action_post()
+
+        rows = self.env['sbu.project.budget.family'].refresh_project(project)
+        glass = rows.filtered(lambda r: r.cost_family == 'glass')
+        self.assertGreater(glass.amount_po_confirmed, 0.0)
+        self.assertGreater(glass.amount_actual, 0.0)
+        eline.invalidate_recordset()
+        self.assertGreater(eline.budget_orders_issued, 0.0)
+        self.assertGreater(eline.budget_costs_incurred, 0.0)

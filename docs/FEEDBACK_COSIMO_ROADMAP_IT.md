@@ -244,17 +244,13 @@ Pagamenti ricevuti riconciliati automaticamente; abbandono strumenti what-if fat
 **Feedback**  
 Come foglio ITEM ANACO: budget preventivo, acquistato, residuo, %; semafori; solo **admin** sblocca PO se sforamento.
 
-**Stato attuale (base maggio 2026)**  
-- Modello `sbu.project.budget.family`: preventivo ANACO per famiglia, RDA aperte, PO bozza/confermati, impegnato, residuo, %, semaforo (verde &lt; 90%, giallo fino 105%, rosso oltre).  
+**Stato attuale (completo, `sbu_purchase_flow` 19.0.1.0.91+)**  
+- Modello `sbu.project.budget.family`: preventivo, RDA, PO bozza, **ordini emessi**, **costi sostenuti (consuntivo)**, impegnato, residui, %, semaforo (peggior % tra impegnato e consuntivo).  
 - Scheda commessa **Budget acquisti** + menu SBU → Purchasing → **Budget per famiglia**.  
-- Conferma PO bloccata se famiglia in rosso; sblocco con flag **Unlock PO over budget** (solo `Settings / Administrator`) o utente admin.  
-- Resta alert legacy su totale PO (`sbu_budget_over_limit`).
-
-**Proposta fase 2**  
-| Voce | Contenuto |
-|------|-----------|
-| Consuntivo | Collegare fatture fornitore / movimenti a valore «consuntivo» per famiglia |
-| Gruppo dedicato | Ruolo «SBU budget unlock» separato da admin Odoo |
+- Preventivo → tab **Budget acquisti (ITEM)** + colonne ordini/costi/semaforo su righe ANACO (sync da PO/fatture).  
+- Conferma PO bloccata se famiglia in rosso; sblocco: **Administrator** oppure gruppo **SBU — Sblocco budget acquisti** + flag commessa **Unlock PO over budget**.  
+- Refresh automatico su conferma PO e registrazione/annullamento fatture fornitore.  
+- Vedi [COSIMO_PUNTO11_BUDGET_ACQUISTI.md](COSIMO_PUNTO11_BUDGET_ACQUISTI.md).
 
 ---
 

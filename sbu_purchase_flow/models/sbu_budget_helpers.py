@@ -3,6 +3,9 @@
 
 from collections import defaultdict
 
+from odoo import fields
+
+from odoo.addons.sbu_estimate.models.sbu_account_line_utils import sbu_is_product_line
 from odoo.addons.sbu_estimate.models.sbu_anaco_bom import ANACO_LINE_FIELD_TO_PRODUCT_CODE
 from odoo.addons.sbu_estimate.models.sbu_cost_family import (
     COST_FAMILY_WORKFLOW_ROUTE,
@@ -101,13 +104,106 @@ def sbu_pr_line_engaged_amount(pr_line, qty=None):
     return 0.0
 
 
+def sbu_estimate_line_for_pol(pol):
+    """ANACO estimate line linked via PR → BOM (ITEM traceability)."""
+    pr_line = pol.sbu_pr_line_id
+    if not pr_line or not pr_line.source_bom_line_id:
+        return False
+    return pr_line.source_bom_line_id.estimate_line_id
+
+
+def sbu_pol_amount_company(pol, amount_field='price_subtotal'):
+    """PO line subtotal in company currency."""
+    company = pol.company_id or pol.order_id.company_id
+    currency = pol.currency_id or pol.order_id.currency_id
+    amount = getattr(pol, amount_field, 0.0) or 0.0
+    if not amount or not currency or currency == company.currency_id:
+        return amount
+    order_date = pol.order_id.date_order
+    if order_date and hasattr(order_date, 'date'):
+        order_date = order_date.date()
+    if not order_date:
+        order_date = fields.Date.today()
+    return currency._convert(amount, company.currency_id, company, order_date)
+
+
+def sbu_pol_posted_bill_amount(pol, env):
+    """Posted vendor bill subtotal (company currency) for a purchase order line."""
+    if 'account.move.line' not in env:
+        return 0.0
+    Aml = env['account.move.line']
+    domain = [('purchase_line_id', '=', pol.id)]
+    if 'parent_state' in Aml._fields:
+        domain.append(('parent_state', '=', 'posted'))
+    else:
+        domain.append(('move_id.state', '=', 'posted'))
+    lines = Aml.search(domain)
+    total = 0.0
+    company = pol.company_id or pol.order_id.company_id
+    for aml in lines.filtered(sbu_is_product_line):
+        move = aml.move_id
+        if move.move_type not in ('in_invoice', 'in_refund'):
+            continue
+        sign = -1.0 if move.move_type == 'in_refund' else 1.0
+        amt = aml.price_subtotal or 0.0
+        if aml.currency_id and aml.currency_id != company.currency_id:
+            amt = aml.currency_id._convert(
+                amt, company.currency_id, company, aml.date or move.date,
+            )
+        total += sign * amt
+    return total
+
+
+def sbu_collect_estimate_line_budget(project, env):
+    """Return dict estimate_line_id -> {orders, actual} from PO + vendor bills."""
+    totals = defaultdict(lambda: {'orders': 0.0, 'actual': 0.0})
+    if not project.sbu_estimate_id:
+        return totals
+    Pol = env['purchase.order.line']
+    pols = Pol.search([
+        ('order_id.project_id', '=', project.id),
+        ('order_id.state', '!=', 'cancel'),
+        ('sbu_pr_line_id', '!=', False),
+    ])
+    for pol in pols:
+        eline = sbu_estimate_line_for_pol(pol)
+        if not eline:
+            continue
+        po = pol.order_id
+        if po.state in PO_CONFIRMED_STATES:
+            totals[eline.id]['orders'] += sbu_pol_amount_company(pol)
+        totals[eline.id]['actual'] += sbu_pol_posted_bill_amount(pol, env)
+    return totals
+
+
+def sbu_sync_estimate_line_budgets(project, env):
+    """Write ITEM-style ordini emessi / costi sostenuti on ANACO lines."""
+    estimate = project.sbu_estimate_id
+    if not estimate:
+        return
+    totals = sbu_collect_estimate_line_budget(project, env)
+    EstimateLine = env['sbu.estimate.line']
+    for eline in estimate.line_ids:
+        amounts = totals.get(eline.id, {'orders': 0.0, 'actual': 0.0})
+        vals = {
+            'budget_orders_issued': amounts['orders'],
+            'budget_costs_incurred': amounts['actual'],
+        }
+        if (
+            eline.budget_orders_issued != vals['budget_orders_issued']
+            or eline.budget_costs_incurred != vals['budget_costs_incurred']
+        ):
+            eline.write(vals)
+
+
 def sbu_collect_project_budget(project, env):
-    """Return dict cost_family -> {planned, open_pr, po_draft, po_confirmed}."""
+    """Return dict cost_family -> {planned, open_pr, po_draft, po_confirmed, actual}."""
     totals = defaultdict(lambda: {
         'planned': 0.0,
         'open_pr': 0.0,
         'po_draft': 0.0,
         'po_confirmed': 0.0,
+        'actual': 0.0,
     })
     estimate = project.sbu_estimate_id
     if estimate:
@@ -130,10 +226,12 @@ def sbu_collect_project_budget(project, env):
         if pols:
             for pol in pols:
                 po = pol.order_id
+                subtotal = sbu_pol_amount_company(pol)
                 if po.state in PO_DRAFT_STATES:
-                    totals[fam]['po_draft'] += pol.price_subtotal or 0.0
+                    totals[fam]['po_draft'] += subtotal
                 elif po.state in PO_CONFIRMED_STATES:
-                    totals[fam]['po_confirmed'] += pol.price_subtotal or 0.0
+                    totals[fam]['po_confirmed'] += subtotal
+                totals[fam]['actual'] += sbu_pol_posted_bill_amount(pol, env)
             if (
                 pr_line.request_id.state in OPEN_PR_REQUEST_STATES
                 and (pr_line.qty_remaining or 0.0) > 0
@@ -153,9 +251,39 @@ def sbu_collect_project_budget(project, env):
     for po in pos:
         for pol in po.order_line.filtered(lambda l: not l.sbu_pr_line_id):
             fam = 'extra'
+            subtotal = sbu_pol_amount_company(pol)
             if po.state in PO_DRAFT_STATES:
-                totals[fam]['po_draft'] += pol.price_subtotal or 0.0
+                totals[fam]['po_draft'] += subtotal
             elif po.state in PO_CONFIRMED_STATES:
-                totals[fam]['po_confirmed'] += pol.price_subtotal or 0.0
+                totals[fam]['po_confirmed'] += subtotal
+            totals[fam]['actual'] += sbu_pol_posted_bill_amount(pol, env)
 
     return totals
+
+
+def sbu_projects_for_budget_refresh(records, env):
+    """Projects affected by PO / vendor bill changes."""
+    Project = env['project.project']
+    projects = Project.browse()
+    Po = env['purchase.order']
+    for po in records if records._name == 'purchase.order' else Po.browse():
+        if po.project_id:
+            projects |= po.project_id
+    Move = env.get('account.move')
+    if not Move:
+        return projects
+    for move in records if records._name == 'account.move' else Move.browse():
+        if move.move_type not in ('in_invoice', 'in_refund'):
+            continue
+        for pol in move.invoice_line_ids.mapped('purchase_line_id'):
+            if pol.order_id.project_id:
+                projects |= pol.order_id.project_id
+    return projects
+
+
+def sbu_refresh_projects_budget(projects, env):
+    """Rebuild family rows and sync estimate line budget columns."""
+    Budget = env['sbu.project.budget.family']
+    for project in projects:
+        if project.sbu_estimate_id:
+            Budget.refresh_project(project)

@@ -4,7 +4,11 @@ from odoo.exceptions import UserError
 
 from odoo.addons.sbu_estimate.models.sbu_account_line_utils import sbu_is_product_line
 
-from .sbu_budget_helpers import sbu_cost_family_for_pr_line, sbu_cost_family_label
+from .sbu_budget_helpers import (
+    sbu_cost_family_for_pr_line,
+    sbu_cost_family_label,
+    sbu_refresh_projects_budget,
+)
 
 
 class PurchaseOrder(models.Model):
@@ -79,8 +83,11 @@ class PurchaseOrder(models.Model):
 
     def _sbu_user_can_override_budget_po(self):
         self.ensure_one()
-        if self.env.user.has_group('base.group_system'):
+        user = self.env.user
+        if user.has_group('base.group_system'):
             return True
+        if not user.has_group('sbu_purchase_flow.group_sbu_budget_unlock'):
+            return False
         project = self.project_id
         return bool(project and project.sbu_budget_po_unlock)
 
@@ -112,8 +119,8 @@ class PurchaseOrder(models.Model):
                 raise UserError(_(
                     'Cannot confirm this purchase order: budget exceeded for %(families)s '
                     '(engaged above %(pct)s%% of the ANACO estimate for that family). '
-                    'Ask an administrator to review the job budget dashboard or enable '
-                    '«Unlock PO over budget» on the project.'
+                    'Ask a user with «SBU — Sblocco budget acquisti» to review the job budget '
+                    'dashboard or enable «Unlock PO over budget» on the project.'
                 ) % {
                     'families': ', '.join(sorted(set(over_labels))),
                     'pct': '105',
@@ -121,7 +128,11 @@ class PurchaseOrder(models.Model):
 
     def button_confirm(self):
         self._sbu_check_budget_before_confirm()
-        return super().button_confirm()
+        res = super().button_confirm()
+        projects = self.mapped('project_id').filtered('sbu_estimate_id')
+        if projects:
+            sbu_refresh_projects_budget(projects, self.env)
+        return res
 
     def action_sbu_refresh_dimensions_from_pr(self):
         """Copy L/H/P + mq from linked RDA lines onto RFQ/PO lines."""
