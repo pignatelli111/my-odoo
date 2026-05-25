@@ -170,3 +170,33 @@ class TestSbuDeliveryStandard(TransactionCase):
         self.assertEqual(rule.cost_family, 'installation')
         line._sbu_apply_delivery_standard(overwrite=True)
         self.assertTrue(line.destination)
+
+    def test_kit_avvolgimento_on_la_rda_is_accessory_not_glass(self):
+        from odoo.addons.sbu_purchase_flow.models.sbu_budget_helpers import (
+            sbu_cost_family_for_pr_line,
+        )
+        kit = self.env.ref(
+            'sbu_estimate.product_tmpl_sbu_kit_avvolgimento',
+            raise_if_not_found=False,
+        )
+        product = self.product
+        if kit:
+            product = kit.product_variant_ids[:1] or product
+        terzista = self.env['res.partner'].create({'name': 'Terzista kit', 'is_company': True})
+        sistemista = self.env['res.partner'].create({'name': 'Sistemista kit', 'supplier_rank': 1})
+        project = self._project(
+            sbu_site_subcontractor_id=terzista.id,
+            sbu_system_supplier_id=sistemista.id,
+        )
+        line = self._pr_line(
+            project,
+            workflow_route=ROUTE_LA,
+            product_id=product.id,
+            name='Kit avvolgimento',
+        )
+        self.assertEqual(sbu_cost_family_for_pr_line(line), 'accessory')
+        rule = self.env['sbu.delivery.standard'].match_for_pr_line(line, project)
+        self.assertTrue(rule, rule)
+        updated, _skipped = line._sbu_apply_delivery_standard(overwrite=True)
+        self.assertEqual(updated, 1)
+        self.assertIn('Sistemista kit', line.destination)

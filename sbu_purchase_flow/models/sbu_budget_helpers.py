@@ -19,10 +19,21 @@ WORKFLOW_ROUTE_TO_COST_FAMILY = {
 
 # Product on distinta row (SBU-SMONT, SBU-VETRO, …) beats facade cost_family on estimate line.
 SBU_PRODUCT_CODE_TO_COST_FAMILY = {}
+# ANACO catalog codes without a single price_* infer column (kit, osc, …).
+SBU_PRODUCT_CODE_FAMILY_OVERRIDES = {
+    'SBU-KIT-AVV': 'accessory',
+    'SBU-OSC': 'accessory',
+    'SBU-CASS': 'accessory',
+    'SBU-AUTO': 'accessory',
+    'SBU-ZANZ': 'accessory',
+    'SBU-TRAS': 'accessory',
+    'SBU-COIB': 'accessory',
+}
 for _field, _code in ANACO_LINE_FIELD_TO_PRODUCT_CODE.items():
     _fam = infer_cost_family_from_price_cost_vals({_field: 1.0})
     if _fam:
         SBU_PRODUCT_CODE_TO_COST_FAMILY[_code.strip().upper()] = _fam
+SBU_PRODUCT_CODE_TO_COST_FAMILY.update(SBU_PRODUCT_CODE_FAMILY_OVERRIDES)
 
 
 def sbu_cost_family_from_product(product):
