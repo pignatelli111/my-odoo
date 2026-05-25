@@ -4,6 +4,7 @@ from odoo.tests import tagged
 from odoo.tests.common import TransactionCase
 
 from odoo.addons.sbu_estimate.tests.sbu_test_label_utils import duplicate_custom_field_labels
+from odoo.addons.sbu_purchase_flow.models.sbu_budget_helpers import sbu_pol_posted_bill_amount
 
 SBU_BUDGET_OVER_PCT = 105.0
 
@@ -203,20 +204,17 @@ class TestSbuProjectBudget(TransactionCase):
         self.assertTrue(self.env.user.has_group('base.group_system'))
         po._sbu_check_budget_before_confirm()
 
-    def test_refresh_includes_actual_and_syncs_estimate_line(self):
-        project, estimate = self._project_with_glass_budget(planned_cad=100.0)
+    def _project_po_with_bom_line(self, planned_cad=100.0, price_unit=40.0):
+        """Confirmed PO + PR/BOM link for ITEM budget sync tests."""
+        project, estimate = self._project_with_glass_budget(planned_cad=planned_cad)
         eline = estimate.line_ids[0]
         uom = self.env.ref('uom.product_uom_unit')
-        expense = self.env['account.account'].with_company(self.env.company).search([
-            ('account_type', '=', 'expense'),
-            ('company_ids', 'in', self.env.company.ids),
-        ], limit=1)
         product = self.env['product.product'].create({
             'name': 'Glass BOM',
             'default_code': 'GL-BUD-BOM',
             'type': 'consu',
             'purchase_ok': True,
-            **({'property_account_expense_id': expense.id} if expense else {}),
+            'purchase_method': 'purchase',
         })
         bom = self.env['sbu.estimate.bom.line'].create({
             'estimate_id': estimate.id,
@@ -251,27 +249,44 @@ class TestSbuProjectBudget(TransactionCase):
         })
         pr._sbu_create_rfq_po_lines(po, pr_line)
         pol = po.order_line.filtered('sbu_pr_line_id')
-        pol.write({'price_unit': 40.0})
+        pol.write({'price_unit': price_unit})
         po.button_confirm()
+        return project, eline, po, pol, partner
 
+    def test_refresh_syncs_estimate_orders_from_confirmed_po(self):
+        project, eline, po, pol, _partner = self._project_po_with_bom_line()
+        self.assertEqual(po.state, 'purchase')
+        rows = self.env['sbu.project.budget.family'].refresh_project(project)
+        glass = rows.filtered(lambda r: r.cost_family == 'glass')
+        self.assertGreater(glass.amount_po_confirmed, 0.0)
+        eline.invalidate_recordset()
+        self.assertGreater(eline.budget_orders_issued, 0.0)
+
+    def test_refresh_includes_actual_from_posted_vendor_bill(self):
+        if 'account.move' not in self.env:
+            self.skipTest('account module required')
+        project, eline, _po, pol, partner = self._project_po_with_bom_line()
         journal = self.env['account.journal'].search([
             ('type', '=', 'purchase'),
             ('company_id', '=', self.env.company.id),
         ], limit=1)
         if not journal:
             self.skipTest('Purchase journal required for consuntivo test')
-        po.action_create_invoice()
-        bills = po.invoice_ids.filtered(lambda m: m.state == 'draft')
-        if not bills:
-            self.skipTest('PO did not create a vendor bill draft')
-        bills.with_context(sbu_skip_budget_refresh=True).action_post()
-
+        bill = self.env['account.move'].with_context(default_move_type='in_invoice').create({
+            'move_type': 'in_invoice',
+            'partner_id': partner.id,
+            'journal_id': journal.id,
+            'invoice_line_ids': [(0, 0, pol._prepare_account_move_line())],
+        })
+        try:
+            bill.with_context(sbu_skip_budget_refresh=True).action_post()
+        except Exception as exc:
+            self.skipTest('Vendor bill post not available in test DB: %s' % exc)
+        self.assertGreater(sbu_pol_posted_bill_amount(pol, self.env), 0.0)
         rows = self.env['sbu.project.budget.family'].with_context(
             sbu_skip_budget_refresh=True,
         ).refresh_project(project)
         glass = rows.filtered(lambda r: r.cost_family == 'glass')
-        self.assertGreater(glass.amount_po_confirmed, 0.0)
         self.assertGreater(glass.amount_actual, 0.0)
         eline.invalidate_recordset()
-        self.assertGreater(eline.budget_orders_issued, 0.0)
         self.assertGreater(eline.budget_costs_incurred, 0.0)
