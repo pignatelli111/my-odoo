@@ -1,5 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <record id="view_picking_search_sbu_job" model="ir.ui.view">
+        <field name="name">stock.picking.search.sbu.job</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_internal_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <separator/>
+                <filter name="sbu_has_project" string="Linked to job"
+                        domain="[('project_id', '!=', False)]"/>
+                <filter name="sbu_incoming" string="Receipts"
+                        domain="[('picking_type_id.code', '=', 'incoming')]"/>
+                <filter name="sbu_outgoing" string="Deliveries"
+                        domain="[('picking_type_id.code', '=', 'outgoing')]"/>
+                <filter name="sbu_internal" string="Internal"
+                        domain="[('picking_type_id.code', '=', 'internal')]"/>
+                <filter name="grp_sbu_project" string="Group: Job"
+                        context="{'group_by': 'project_id'}"/>
+                <searchpanel>
+                    <field name="picking_type_id" string="Operation" enable_counters="1"/>
+                    <field name="state" string="Status" enable_counters="1"/>
+                    <field name="project_id" string="Project / Job" enable_counters="1" limit="40"/>
+                </searchpanel>
+            </xpath>
+        </field>
+    </record>
+
     <record id="stock_picking_form_inherit_sbu_project" model="ir.ui.view">
         <field name="name">stock.picking.form.inherit.sbu.project</field>
         <field name="model">stock.picking</field>

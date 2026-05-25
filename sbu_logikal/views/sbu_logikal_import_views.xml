@@ -102,10 +102,39 @@
         </field>
     </record>
 
+    <record id="view_sbu_logikal_import_batch_search" model="ir.ui.view">
+        <field name="name">sbu.logikal.import.batch.search</field>
+        <field name="model">sbu.logikal.import.batch</field>
+        <field name="arch" type="xml">
+            <search string="Logikal imports">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="remote_project_ref"/>
+                <separator/>
+                <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+                <filter name="parsed" string="Parsed" domain="[('state', '=', 'parsed')]"/>
+                <filter name="applied" string="Applied" domain="[('state', '=', 'applied')]"/>
+                <filter name="error" string="Error" domain="[('state', '=', 'error')]"/>
+                <filter name="source_file" string="File" domain="[('source', '=', 'file')]"/>
+                <filter name="source_api" string="API" domain="[('source', '=', 'api')]"/>
+                <separator/>
+                <filter name="grp_project" string="Group: Project" context="{'group_by': 'project_id'}"/>
+                <filter name="grp_state" string="Group: Status" context="{'group_by': 'state'}"/>
+                <searchpanel>
+                    <field name="state" string="Status" enable_counters="1"/>
+                    <field name="source" string="Source" enable_counters="1"/>
+                    <field name="apply_mode" string="Apply to" enable_counters="1"/>
+                    <field name="project_id" string="Project / Job" enable_counters="1" limit="40"/>
+                </searchpanel>
+            </search>
+        </field>
+    </record>
+
     <record id="action_sbu_logikal_import_batch" model="ir.actions.act_window">
         <field name="name">Logikal / ReynaPro imports</field>
         <field name="res_model">sbu.logikal.import.batch</field>
         <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_sbu_logikal_import_batch_search"/>
         <field name="context">{}</field>
     </record>
 

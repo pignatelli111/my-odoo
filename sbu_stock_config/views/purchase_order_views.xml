@@ -26,4 +26,23 @@
             </xpath>
         </field>
     </record>
+
+    <record id="view_purchase_order_search_sbu_job" model="ir.ui.view">
+        <field name="name">purchase.order.search.sbu.job</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.view_purchase_order_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <separator/>
+                <filter name="sbu_has_project" string="Linked to job"
+                        domain="[('project_id', '!=', False)]"/>
+                <filter name="grp_sbu_project" string="Group: Job"
+                        context="{'group_by': 'project_id'}"/>
+                <searchpanel>
+                    <field name="state" string="Status" enable_counters="1"/>
+                    <field name="project_id" string="Project / Job" enable_counters="1" limit="40"/>
+                </searchpanel>
+            </xpath>
+        </field>
+    </record>
 </odoo>

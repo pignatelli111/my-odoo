@@ -31,6 +31,7 @@ class ProjectProject(models.Model):
             'res_model': 'sbu.sal.sheet',
             'view_mode': 'list,form',
             'domain': [('project_id', '=', self.id)],
+            'search_view_id': self.env.ref('sbu_sal.view_sbu_sal_sheet_search').id,
             'context': {'default_project_id': self.id, 'default_company_id': self.company_id.id},
         }
 
@@ -42,6 +43,7 @@ class ProjectProject(models.Model):
             'res_model': 'sbu.sal.passive.sheet',
             'view_mode': 'list,form',
             'domain': [('project_id', '=', self.id)],
+            'search_view_id': self.env.ref('sbu_sal.view_sbu_sal_passive_sheet_search').id,
             'context': {
                 'default_project_id': self.id,
                 'default_company_id': self.company_id.id,
@@ -61,6 +63,7 @@ class ProjectProject(models.Model):
             'res_model': 'sbu.estimate.sal.line',
             'view_mode': 'list,form',
             'domain': [('estimate_id', '=', estimate.id)],
+            'search_view_id': self.env.ref('sbu_estimate.view_sbu_estimate_sal_line_search').id,
             'context': {
                 'default_estimate_id': estimate.id,
                 'search_default_estimate_id': estimate.id,

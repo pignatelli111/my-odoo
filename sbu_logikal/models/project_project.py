@@ -27,5 +27,6 @@ class ProjectProject(models.Model):
             'res_model': 'sbu.logikal.import.batch',
             'view_mode': 'list,form',
             'domain': [('project_id', '=', self.id)],
+            'search_view_id': self.env.ref('sbu_logikal.view_sbu_logikal_import_batch_search').id,
             'context': {'default_project_id': self.id, 'default_company_id': self.company_id.id},
         }

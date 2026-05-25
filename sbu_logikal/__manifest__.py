@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'SBU Logikal / ReynaPro',
-    'version': '19.0.1.0.3',
+    'version': '19.0.1.0.4',
     'summary': 'File or API bridge from Logikal/ReynaPro exports into products, estimate BOM, or MRP BOM (Phase 7.1)',
     'author': 'SBU Development',
     'category': 'Technical',

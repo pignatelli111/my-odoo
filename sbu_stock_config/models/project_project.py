@@ -118,6 +118,7 @@ class ProjectProject(models.Model):
             'res_model': 'stock.picking',
             'view_mode': 'list,form',
             'domain': [('project_id', '=', self.id)],
+            'search_view_id': self.env.ref('stock.view_picking_internal_search').id,
             'context': {'default_project_id': self.id},
         }
 
@@ -132,7 +133,11 @@ class ProjectProject(models.Model):
                 ('project_id', '=', self.id),
                 ('picking_type_id.code', '=', 'incoming'),
             ],
-            'context': {'default_project_id': self.id},
+            'search_view_id': self.env.ref('stock.view_picking_internal_search').id,
+            'context': {
+                'default_project_id': self.id,
+                'search_default_sbu_incoming': 1,
+            },
         }
 
     def action_sbu_view_purchase_orders(self):
@@ -143,6 +148,7 @@ class ProjectProject(models.Model):
             'res_model': 'purchase.order',
             'view_mode': 'list,form',
             'domain': [('project_id', '=', self.id)],
+            'search_view_id': self.env.ref('purchase.view_purchase_order_filter').id,
             'context': {'default_project_id': self.id},
         }
 

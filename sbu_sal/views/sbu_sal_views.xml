@@ -161,9 +161,38 @@
         </field>
     </record>
 
+    <record id="view_sbu_sal_sheet_search" model="ir.ui.view">
+        <field name="name">sbu.sal.sheet.search</field>
+        <field name="model">sbu.sal.sheet</field>
+        <field name="arch" type="xml">
+            <search string="Customer SAL">
+                <field name="name"/>
+                <field name="sbu_display_label"/>
+                <field name="project_id"/>
+                <field name="partner_id"/>
+                <field name="estimate_id"/>
+                <separator/>
+                <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+                <filter name="confirmed" string="Confirmed" domain="[('state', '=', 'confirmed')]"/>
+                <filter name="invoiced" string="Invoiced" domain="[('state', '=', 'invoiced')]"/>
+                <filter name="cancelled" string="Cancelled" domain="[('state', '=', 'cancelled')]"/>
+                <filter name="has_invoice" string="Has invoice" domain="[('invoice_id', '!=', False)]"/>
+                <separator/>
+                <filter name="grp_project" string="Group: Project" context="{'group_by': 'project_id'}"/>
+                <filter name="grp_state" string="Group: Status" context="{'group_by': 'state'}"/>
+                <searchpanel>
+                    <field name="state" string="Status" enable_counters="1"/>
+                    <field name="project_id" string="Project / Job" enable_counters="1" limit="40"/>
+                    <field name="partner_id" string="Customer" enable_counters="1" limit="40"/>
+                </searchpanel>
+            </search>
+        </field>
+    </record>
+
     <record id="action_sbu_sal_sheet" model="ir.actions.act_window">
         <field name="name">SAL sheets</field>
         <field name="res_model">sbu.sal.sheet</field>
         <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_sbu_sal_sheet_search"/>
     </record>
 </odoo>

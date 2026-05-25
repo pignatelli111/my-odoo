@@ -91,15 +91,26 @@
         <field name="arch" type="xml">
             <search string="Passive SAL">
                 <field name="name"/>
+                <field name="sbu_display_label"/>
                 <field name="project_id"/>
                 <field name="vendor_id"/>
                 <field name="period_label"/>
+                <separator/>
                 <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
                 <filter name="confirmed" string="Confirmed" domain="[('state', '=', 'confirmed')]"/>
                 <filter name="invoiced" string="Billed" domain="[('state', '=', 'invoiced')]"/>
                 <filter name="scope_posa" string="Installation (posa)" domain="[('subcontract_scope', '=', 'posa')]"/>
+                <filter name="scope_sub" string="Subcontract" domain="[('subcontract_scope', '=', 'subappalto')]"/>
+                <separator/>
                 <filter name="group_project" string="Group: Project" context="{'group_by': 'project_id'}"/>
                 <filter name="group_vendor" string="Group: Vendor" context="{'group_by': 'vendor_id'}"/>
+                <filter name="group_scope" string="Group: Scope" context="{'group_by': 'subcontract_scope'}"/>
+                <searchpanel>
+                    <field name="state" string="Status" enable_counters="1"/>
+                    <field name="subcontract_scope" string="Scope" enable_counters="1"/>
+                    <field name="project_id" string="Project / Job" enable_counters="1" limit="40"/>
+                    <field name="vendor_id" string="Vendor" enable_counters="1" limit="40"/>
+                </searchpanel>
             </search>
         </field>
     </record>

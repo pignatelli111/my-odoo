@@ -93,6 +93,9 @@ class ProjectProject(models.Model):
             'res_model': 'sbu.purchase.request',
             'view_mode': 'list,form',
             'domain': [('project_id', '=', self.id)],
+            'search_view_id': self.env.ref(
+                'sbu_purchase_flow.view_sbu_purchase_request_search'
+            ).id,
             'context': {'default_project_id': self.id, 'default_company_id': self.company_id.id},
         }
 

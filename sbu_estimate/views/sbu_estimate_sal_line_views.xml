@@ -27,10 +27,24 @@
             <search string="Contractual SAL items">
                 <field name="name" string="Voce"/>
                 <field name="item_ref" string="Item"/>
+                <field name="description"/>
                 <field name="estimate_id" string="Preventivo"/>
-                <filter string="Group by preventivo"
-                        name="group_estimate"
+                <separator/>
+                <filter name="sal_draft" string="Draft" domain="[('sal_status', '=', 'draft')]"/>
+                <filter name="sal_planning" string="Planned" domain="[('sal_status', '=', 'planning')]"/>
+                <filter name="sal_invoiced" string="Invoiced" domain="[('sal_status', '=', 'invoiced')]"/>
+                <filter name="sal_paid" string="Paid" domain="[('sal_status', '=', 'paid')]"/>
+                <filter name="has_invoice" string="Has invoice" domain="[('invoice_id', '!=', False)]"/>
+                <filter name="has_cdp" string="Has CDP" domain="[('payment_certificate_id', '!=', False)]"/>
+                <separator/>
+                <filter string="Group by preventivo" name="group_estimate"
                         context="{'group_by': 'estimate_id'}"/>
+                <filter string="Group by status" name="group_sal_status"
+                        context="{'group_by': 'sal_status'}"/>
+                <searchpanel>
+                    <field name="sal_status" string="Status" enable_counters="1"/>
+                    <field name="estimate_id" string="Preventivo" enable_counters="1" limit="40"/>
+                </searchpanel>
             </search>
         </field>
     </record>
