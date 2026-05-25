@@ -18,8 +18,9 @@ grep -nE 'FAIL:|ERROR: test_|AssertionError|failures=[1-9]| errors=[1-9]|failed,
 echo ""
 echo "=== Test summary (install.log — any module) ==="
 grep -nE 'odoo\.tests\.result:' "$LOG" | tail -10 || echo "(none)"
-ZERO_TESTS=$(grep -c '0 failed, 0 error(s) of 0 tests' "$LOG" 2>/dev/null || echo 0)
-if [[ "$ZERO_TESTS" -gt 0 ]]; then
+ZERO_TESTS=$(grep -c '0 failed, 0 error(s) of 0 tests' "$LOG" 2>/dev/null || true)
+ZERO_TESTS=${ZERO_TESTS:-0}
+if [[ "${ZERO_TESTS}" -gt 0 ]]; then
   echo ""
   echo ">>> NOT GREEN: 0 tests executed (SBU modules likely uninstalled — -u alone does nothing)."
   echo ">>> Run: bash $USER_REPO/tools/odoo_sh_test_sbu_install.sh"

@@ -47,6 +47,22 @@ class ProjectProject(models.Model):
         compute='_compute_sbu_billing_dashboard',
     )
 
+    @api.model
+    def _sbu_customer_invoice_domain(self, project):
+        """Invoices for a job without requiring account.move.project_id (not on all Odoo 19 stacks)."""
+        Move = self.env['account.move']
+        domain = [
+            ('move_type', '=', 'out_invoice'),
+            ('state', '!=', 'cancel'),
+        ]
+        if 'sbu_sal_sheet_id' in Move._fields:
+            domain.append(('sbu_sal_sheet_id.project_id', '=', project.id))
+        elif 'project_id' in Move._fields:
+            domain.append(('project_id', '=', project.id))
+        else:
+            domain.append(('invoice_origin', 'ilike', 'SAL'))
+        return domain
+
     def _compute_sbu_sal_sheet_count(self):
         sheet = self.env['sbu.sal.sheet'].sudo()
         for project in self:
@@ -99,22 +115,8 @@ class ProjectProject(models.Model):
                 order='date desc, id desc',
                 limit=1,
             )
-            inv_domain = [
-                ('move_type', '=', 'out_invoice'),
-                ('state', '!=', 'cancel'),
-            ]
-            if 'sbu_sal_sheet_id' in Move._fields:
-                inv_domain = [
-                    ('move_type', '=', 'out_invoice'),
-                    ('state', '!=', 'cancel'),
-                    '|',
-                    ('sbu_sal_sheet_id.project_id', '=', project.id),
-                    ('project_id', '=', project.id),
-                ]
-            elif 'project_id' in Move._fields:
-                inv_domain.append(('project_id', '=', project.id))
             project.sbu_billing_last_invoice_id = Move.search(
-                inv_domain,
+                self._sbu_customer_invoice_domain(project),
                 order='invoice_date desc, id desc',
                 limit=1,
             )
@@ -184,28 +186,11 @@ class ProjectProject(models.Model):
     def action_sbu_customer_invoices(self):
         """Customer invoices linked to this job via SAL."""
         self.ensure_one()
-        Move = self.env['account.move']
-        domain = [
-            ('move_type', '=', 'out_invoice'),
-            ('state', '!=', 'cancel'),
-        ]
-        if 'sbu_sal_sheet_id' in Move._fields:
-            domain = [
-                ('move_type', '=', 'out_invoice'),
-                ('state', '!=', 'cancel'),
-                '|',
-                ('sbu_sal_sheet_id.project_id', '=', self.id),
-                ('project_id', '=', self.id),
-            ]
-        elif 'project_id' in Move._fields:
-            domain.append(('project_id', '=', self.id))
-        else:
-            domain.append(('invoice_origin', 'ilike', 'SAL'))
         return {
             'type': 'ir.actions.act_window',
             'name': _('Customer invoices (SAL)'),
             'res_model': 'account.move',
             'view_mode': 'list,form',
-            'domain': domain,
+            'domain': self._sbu_customer_invoice_domain(self),
             'context': {'default_move_type': 'out_invoice'},
         }

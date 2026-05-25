@@ -68,6 +68,16 @@ class TestSbuProjectBillingDashboard(TransactionCase):
         self.assertLess(project.sbu_billing_remaining, project.sbu_billing_contract_total)
         self.assertTrue(project.sbu_billing_last_invoice_id)
 
+    def test_customer_invoice_domain_never_uses_missing_move_project_id(self):
+        """Odoo.sh: account.move has no project_id — domain must use SAL sheet link only."""
+        project, _sheet, _sal = self._project_with_sal_billing()
+        domain = self.env['project.project']._sbu_customer_invoice_domain(project)
+        field_names = {term[0] for term in domain if isinstance(term, (list, tuple)) and len(term) >= 3}
+        self.assertNotIn('project_id', field_names)
+        self.assertIn('sbu_sal_sheet_id.project_id', field_names)
+        # Must not raise during search (regression: Invalid field account.move.project_id)
+        self.env['account.move'].search(domain, limit=1)
+
     def test_billing_dashboard_actions(self):
         project, _sheet, _sal = self._project_with_sal_billing()
         action = project.action_sbu_contractual_billing_overview()
