@@ -8,4 +8,6 @@ access_sbu_sal_passive_sheet_user,sbu.sal.passive.sheet user,model_sbu_sal_passi
 access_sbu_sal_passive_sheet_manager,sbu.sal.passive.sheet manager,model_sbu_sal_passive_sheet,base.group_system,1,1,1,1
 access_sbu_sal_passive_line_user,sbu.sal.passive.line user,model_sbu_sal_passive_line,base.group_user,1,1,1,1
 access_sbu_sal_sheet_line_bulk_wizard,sbu.sal.sheet.line.bulk.wizard,model_sbu_sal_sheet_line_bulk_wizard,base.group_user,1,1,1,1
+access_sbu_sal_sheet_line_import_wizard,sbu.sal.sheet.line.import.wizard,model_sbu_sal_sheet_line_import_wizard,base.group_user,1,1,1,1
+access_sbu_sal_sheet_line_import_wizard_line,sbu.sal.sheet.line.import.wizard.line,model_sbu_sal_sheet_line_import_wizard_line,base.group_user,1,1,1,1
 access_sbu_sal_passive_line_bulk_wizard,sbu.sal.passive.line.bulk.wizard,model_sbu_sal_passive_line_bulk_wizard,base.group_user,1,1,1,1

@@ -71,8 +71,19 @@
                     </group>
                     <notebook>
                         <page string="Lines">
+                            <div class="mb-2" invisible="state != 'draft'">
+                                <button name="action_add_lines_from_contract"
+                                        string="Add lines from contract"
+                                        type="object"
+                                        class="btn-primary"/>
+                                <button name="action_replace_lines_from_contract"
+                                        string="Replace lines from contract"
+                                        type="object"
+                                        class="btn-secondary ms-1"
+                                        confirm="Remove all current SAL lines and reload from your selection?"/>
+                            </div>
                             <field name="line_ids">
-                                <list editable="bottom">
+                                <list editable="bottom" create="0">
                                     <field name="estimate_id" column_invisible="1"/>
                                     <field name="sequence" widget="handle"/>
                                     <field name="estimate_sal_line_id"

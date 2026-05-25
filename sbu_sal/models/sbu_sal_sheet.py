@@ -186,6 +186,69 @@ class SbuSalSheet(models.Model):
     def action_reset_draft(self):
         self.write({'state': 'draft'})
 
+    def action_add_lines_from_contract(self):
+        return self._action_open_contract_line_import_wizard(replace=False)
+
+    def action_replace_lines_from_contract(self):
+        return self._action_open_contract_line_import_wizard(replace=True)
+
+    def _action_open_contract_line_import_wizard(self, replace=False):
+        self.ensure_one()
+        if not self.estimate_id:
+            raise UserError(_('Link a source estimate on the project before adding lines.'))
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Add lines from contract'),
+            'res_model': 'sbu.sal.sheet.line.import.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_sheet_id': self.id,
+                'default_replace_existing': replace,
+            },
+        }
+
+    def _load_selected_contract_lines(self, contract_lines, clear=False):
+        """Create SAL sheet lines from selected contractual SAL rows."""
+        self.ensure_one()
+        if clear:
+            self.line_ids.unlink()
+        existing = {
+            sid for sid in self.line_ids.mapped('estimate_sal_line_id').ids if sid
+        }
+        SheetLine = self.env['sbu.sal.sheet.line']
+        seq_base = max(self.line_ids.mapped('sequence') or [0])
+        created = 0
+        for sal_line in contract_lines.sorted(
+            lambda l: (l.sequence, l.item_ref or '', l.id)
+        ):
+            if sal_line.id in existing:
+                continue
+            if sal_line.estimate_id != self.estimate_id:
+                continue
+            seq_base += 10
+            SheetLine.create({
+                'sheet_id': self.id,
+                'sequence': seq_base,
+                'estimate_sal_line_id': sal_line.id,
+                'description': sal_line.description or sal_line.item_ref or sal_line.name,
+                'contract_amount': sal_line.total_contract,
+                'percent_this_sal': 0.0,
+            })
+            existing.add(sal_line.id)
+            created += 1
+            if sal_line.retention_percent:
+                self.retention_percent = sal_line.retention_percent
+        if not created and not clear:
+            raise UserError(_('No new lines were added (items may already be on this SAL).'))
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'sbu.sal.sheet',
+            'res_id': self.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
+
     @api.depends('certificate_ids')
     def _compute_certificate_count(self):
         for sheet in self:
