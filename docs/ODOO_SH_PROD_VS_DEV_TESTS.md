@@ -4,6 +4,8 @@
 
 Use **`docs/ODOO_SH_BUILD_LOG_ONLY.md`** — diagnose from the **Build log in the browser** only.
 
+**Instant KILLED + Shell disabled:** run **`docs/ODOO_SH_REAL_SQL_FIX.md`** first (SQL button on branch **`real`**).
+
 ---
 
 ## Git branches (check first)

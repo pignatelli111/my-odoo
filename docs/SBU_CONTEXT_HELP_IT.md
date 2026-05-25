@@ -2,13 +2,13 @@
 
 The **`sbu_ui_help`** module (floating **?** button, systray **Screen help**, RPC on every screen) was **removed** because it caused **memory pressure and container kills** on Odoo.sh production.
 
-A **minimal stub** (`sbu_ui_help` **19.0.1.0.10**, no JS/assets) is kept in git only so production can **load the DB** and run a migration that **uninstalls** the app. After a **green** production build, the stub can be deleted from git in a follow-up commit.
+A **minimal stub** (no JS/assets) may stay in git until production DB rows are cleaned. **Uninstall in the database** via **`docs/ODOO_SH_REAL_SQL_FIX.md`** (Odoo.sh **SQL** button on branch **`real`**).
 
 ## After deploy
 
-1. Wait for a **green** build on branch **`real`** (stub auto-uninstalls on upgrade).
-2. If help still appears: **Apps** → **SBU Context Help** → **Uninstall**.
-3. **Ctrl+F5** in the browser so backend assets reload without the help JS.
+1. Run **`tools/sql/odoo_sh_uninstall_sbu_ui_help.sql`** on Odoo.sh **SQL** (see **`docs/ODOO_SH_REAL_SQL_FIX.md`**).
+2. **Rebuild** branch **`real`** until green.
+3. **Ctrl+F5** in the browser.
 
 ## User documentation
 
