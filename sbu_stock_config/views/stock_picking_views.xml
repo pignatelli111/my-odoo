@@ -10,11 +10,11 @@
                 <filter name="sbu_has_project" string="Linked to job"
                         domain="[('project_id', '!=', False)]"/>
                 <filter name="sbu_incoming" string="Receipts"
-                        domain="[('picking_type_id.code', '=', 'incoming')]"/>
+                        domain="[('picking_type_code', '=', 'incoming')]"/>
                 <filter name="sbu_outgoing" string="Deliveries"
-                        domain="[('picking_type_id.code', '=', 'outgoing')]"/>
+                        domain="[('picking_type_code', '=', 'outgoing')]"/>
                 <filter name="sbu_internal" string="Internal"
-                        domain="[('picking_type_id.code', '=', 'internal')]"/>
+                        domain="[('picking_type_code', '=', 'internal')]"/>
                 <filter name="grp_sbu_project" string="Group: Job"
                         context="{'group_by': 'project_id'}"/>
                 <searchpanel>

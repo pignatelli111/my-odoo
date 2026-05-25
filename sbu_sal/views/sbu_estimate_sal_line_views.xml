@@ -42,6 +42,21 @@
         </field>
     </record>
 
+    <record id="view_sbu_estimate_sal_line_search_sal" model="ir.ui.view">
+        <field name="name">sbu.estimate.sal.line.search.sbu_sal</field>
+        <field name="model">sbu.estimate.sal.line</field>
+        <field name="inherit_id" ref="sbu_estimate.view_sbu_estimate_sal_line_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <separator/>
+                <filter name="has_invoice" string="Has invoice"
+                        domain="[('invoice_id', '!=', False)]"/>
+                <filter name="has_cdp" string="Has CDP"
+                        domain="[('payment_certificate_id', '!=', False)]"/>
+            </xpath>
+        </field>
+    </record>
+
     <record id="view_sbu_estimate_form_sal_contract" model="ir.ui.view">
         <field name="name">sbu.estimate.form.sal.contract.sbu_sal</field>
         <field name="model">sbu.estimate</field>

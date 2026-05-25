@@ -136,7 +136,7 @@ class TestSbuBomImportWizard(TransactionCase):
             'import_scope': 'all',
         })
         self.assertEqual(wiz.filtered_count, 2)
-        wiz.filter_calc_type = 'per_piece'
+        wiz.write({'filter_calc_type': 'per_piece'})
         wiz.action_apply_filters()
         self.assertEqual(wiz.filtered_count, 1)
         self.assertEqual(wiz.line_ids.mapped('bom_line_id'), bom)
