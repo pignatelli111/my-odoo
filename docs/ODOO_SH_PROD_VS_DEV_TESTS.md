@@ -25,7 +25,8 @@ Odoo.sh → **Settings** → production branch = **`real`**.
 | Cause | Dev | Production |
 |--------|-----|------------|
 | Database | Lighter / reset often | Many RDA lines, real master data |
-| Install time | Shorter | Upgrade + tests on large DB → **KILLED** possible |
+| Install time | Shorter | **Upgrades your live DB** (not a fresh test DB) → **KILLED** if RAM runs out |
+| Stored field on big tables | N/A | e.g. `store=True` on all RDA lines → full recompute → **KILLED** |
 | Stale Git branch | `main` latest | Was `production` @ old SHA — fixed by aligning branches |
 
 ---
@@ -49,6 +50,8 @@ Copy the surrounding lines if you need help.
 | Delivery standard assertions | QA-only routes `SBU_QA_LA` / `SBU_QA_VC` (no prod rule edits) |
 | Slow install on prod | `post_init_hook` skips mass user/BOM work when `--test-enable` |
 | SAL name migration | Batched 500 rows (not `search([])` on full table) |
+| Prod **KILLED** after “Confirmed for PO” list filter | `technical_confirmed` on PR lines is **not stored** (writable compute only) |
+| Shell greyed out | Normal while build is **KILLED** / failed — wait for **green** build |
 
 ---
 

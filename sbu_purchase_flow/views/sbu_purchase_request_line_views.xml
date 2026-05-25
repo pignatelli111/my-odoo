@@ -60,7 +60,7 @@
                 <filter name="date_required_period" string="Delivery date" date="date_required"/>
                 <separator/>
                 <filter name="pending_technical" string="Pending technical confirm"
-                        domain="[('needs_technical_confirm', '=', True), ('technical_confirmed', '=', False)]"/>
+                        domain="[('source_bom_line_id.needs_technical_confirm', '=', True), ('source_bom_line_id.technical_confirmed', '=', False)]"/>
                 <filter name="manual_input_pending" string="Manual entry pending (green)"
                         domain="[('manual_input_pending', '=', True)]"/>
                 <filter name="manual_input_imported" string="From import / Logikal (grey)"
