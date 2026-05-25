@@ -1,5 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_sbu_ui_help_topic_user,sbu.ui.help.topic user,model_sbu_ui_help_topic,base.group_user,1,0,0,0
-access_sbu_ui_help_item_user,sbu.ui.help.item user,model_sbu_ui_help_item,base.group_user,1,0,0,0
-access_sbu_ui_help_topic_manager,sbu.ui.help.topic manager,model_sbu_ui_help_topic,base.group_system,1,1,1,1
-access_sbu_ui_help_item_manager,sbu.ui.help.item manager,model_sbu_ui_help_item,base.group_system,1,1,1,1

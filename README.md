@@ -20,7 +20,6 @@ Custom **Odoo 19.0** addons for **Suburban SRL a Socio Unico**.
 | `sbu_estimate` | Custom estimating engine (ANACO → Odoo) |
 | `sbu_purchase_flow` | RDA/ACO/ACP/LDS purchase flow |
 | `sbu_project` | Project / job container |
-| `sbu_ui_help` | Floating **?** help button (user language) on SBU screens |
 | `sbu_stock_config` | Stock locations / routes for SBU |
 | `sbu_sal` | SAL + payment certificates + retention |
 | `sbu_documents` | Document hub, Microsoft Graph folder sync, M365 links |
