@@ -52,6 +52,8 @@ Copy the surrounding lines if you need help.
 | SAL name migration | Batched 500 rows (not `search([])` on full table) |
 | Prod **KILLED** after “Confirmed for PO” list filter | `technical_confirmed` on PR lines is **not stored** (writable compute only) |
 | Shell greyed out | Normal while build is **KILLED** / failed — wait for **green** build |
+| **KILLED** in a few seconds, no log progress | Production DB still has **`sbu_ui_help` installed** but addon was missing from git → restore stub + auto-uninstall (`19.0.1.0.10`) |
+| UI label **Test Failed** on Production | Misleading: production builds **load your live DB**, they do not run the dev test suite |
 
 ---
 
