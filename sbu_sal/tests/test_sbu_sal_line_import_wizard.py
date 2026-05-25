@@ -37,9 +37,10 @@ class TestSbuSalLineImportWizard(TransactionCase):
             'sheet_id': sheet.id,
             'import_scope': 'all',
         })
+        wiz.line_ids.write({'selected': False})
         wiz.line_ids.filtered(
             lambda ln: ln.contract_line_id == sal_a
-        ).selected = True
+        ).write({'selected': True})
         wiz.action_load()
         self.assertEqual(len(sheet.line_ids), 1)
         self.assertEqual(sheet.line_ids.estimate_sal_line_id, sal_a)

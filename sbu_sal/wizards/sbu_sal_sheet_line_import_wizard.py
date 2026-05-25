@@ -68,13 +68,16 @@ class SbuSalSheetLineImportWizard(models.TransientModel):
 
     @api.model
     def _selection_sal_status(self):
-        return self.env['sbu.estimate.sal.line']._fields['sal_status'].selection
+        return self.env['sbu.estimate.sal.line']._selection_sal_status()
 
     @api.model_create_multi
     def create(self, vals_list):
         wizards = super().create(vals_list)
         for wiz in wizards:
-            wiz._rebuild_line_list(preserve_selection=False, auto_select_new=True)
+            wiz._rebuild_line_list(
+                preserve_selection=False,
+                auto_select_new=wiz.import_scope == 'missing',
+            )
         return wizards
 
     @api.depends(
