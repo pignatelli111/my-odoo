@@ -5,7 +5,7 @@
         <field name="name">Posa / smontaggio — cantiere</field>
         <field name="sequence">40</field>
         <field name="cost_family">installation</field>
-        <field name="workflow_route">POS</field>
+        <field name="workflow_route" eval="False"/>
         <field name="delivery_pattern">direct_site</field>
     </record>
 

@@ -143,16 +143,16 @@ class TestSbuDeliveryStandard(TransactionCase):
 
     def test_smontaggio_product_uses_installation_not_facade_glass(self):
         """Facade F1 may be «glass» on estimate line; SBU-SMONT row is still posa."""
+        from odoo.addons.sbu_purchase_flow.models.sbu_budget_helpers import (
+            sbu_cost_family_for_pr_line,
+        )
         smont = self.env.ref(
             'sbu_estimate.product_tmpl_sbu_smontaggio',
             raise_if_not_found=False,
         )
-        product = smont.product_variant_id if smont else self.product
+        product = self.product
         if smont:
             product = smont.product_variant_ids[:1] or product
-        from odoo.addons.sbu_purchase_flow.models.sbu_budget_helpers import (
-            sbu_cost_family_for_pr_line,
-        )
         project = self._project()
         line = self._pr_line(
             project,
@@ -162,5 +162,11 @@ class TestSbuDeliveryStandard(TransactionCase):
         )
         self.assertEqual(sbu_cost_family_for_pr_line(line), 'installation')
         rule = self.env['sbu.delivery.standard'].match_for_pr_line(line, project)
-        self.assertTrue(rule)
+        self.assertTrue(
+            rule,
+            'No delivery rule for installation on LA RDA — upgrade sbu_purchase_flow '
+            'or add rule without workflow_route filter.',
+        )
         self.assertEqual(rule.cost_family, 'installation')
+        line._sbu_apply_delivery_standard(overwrite=True)
+        self.assertTrue(line.destination)
