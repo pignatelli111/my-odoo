@@ -40,12 +40,49 @@ class ResConfigSettings(models.TransientModel):
         readonly=False,
     )
 
-    def action_qonto_import_now(self):
+    def _sbu_qonto_persist_from_settings(self):
+        """Write current settings form values to company (incl. unsaved secret)."""
         self.ensure_one()
         company = self.company_id
-        if not company.sbu_qonto_login or not company.sbu_qonto_secret_key:
+        vals = {}
+        if self.sbu_qonto_login is not False and self.sbu_qonto_login is not None:
+            vals['sbu_qonto_login'] = (self.sbu_qonto_login or '').strip()
+        if self.sbu_qonto_secret_key:
+            vals['sbu_qonto_secret_key'] = self.sbu_qonto_secret_key.strip()
+        if self.sbu_qonto_iban is not False and self.sbu_qonto_iban is not None:
+            from odoo.addons.sbu_qonto.models.sbu_qonto_helpers import sbu_normalize_iban
+            vals['sbu_qonto_iban'] = (
+                sbu_normalize_iban(self.sbu_qonto_iban) or (self.sbu_qonto_iban or '').strip()
+            )
+        if self.sbu_qonto_staging_token:
+            vals['sbu_qonto_staging_token'] = self.sbu_qonto_staging_token.strip()
+        vals['sbu_qonto_use_sandbox'] = self.sbu_qonto_use_sandbox
+        if vals:
+            company.write(vals)
+        return company
+
+    def set_values(self):
+        """Do not erase stored secret when the password field is left blank."""
+        companies = self.mapped('company_id')
+        preserve = {
+            c.id: c.sbu_qonto_secret_key
+            for c in companies
+            if not self.filtered(lambda s, comp=c: s.company_id == comp).sbu_qonto_secret_key
+            and c.sbu_qonto_secret_key
+        }
+        res = super().set_values()
+        for company in companies:
+            if preserve.get(company.id):
+                company.sbu_qonto_secret_key = preserve[company.id]
+        return res
+
+    def action_qonto_import_now(self):
+        self.ensure_one()
+        company = self._sbu_qonto_persist_from_settings()
+        login, secret, _iban = company._sbu_qonto_api_credentials()
+        if not login or not secret:
             raise UserError(
-                _('Save Qonto login and secret on this company first (Settings → Save).')
+                _('Enter Qonto API sign-in and secret key, then click Save or Test connection.')
             )
         try:
             n = self.env['sbu.qonto.transaction'].import_transactions_for_company(
@@ -76,8 +113,10 @@ class ResConfigSettings(models.TransientModel):
 
     def action_qonto_test_connection(self):
         self.ensure_one()
-        return self.company_id.action_sbu_test_qonto_connection()
+        company = self._sbu_qonto_persist_from_settings()
+        return company.action_sbu_test_qonto_connection()
 
     def action_qonto_sync_partners(self):
         self.ensure_one()
-        return self.company_id.action_sbu_sync_qonto_partners()
+        company = self._sbu_qonto_persist_from_settings()
+        return company.action_sbu_sync_qonto_partners()

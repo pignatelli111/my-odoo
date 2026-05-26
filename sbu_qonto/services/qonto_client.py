@@ -38,6 +38,8 @@ def _qonto_request(
     query: dict | None = None,
     staging_token: str | None = None,
 ):
+    login = (login or '').strip()
+    secret_key = (secret_key or '').strip()
     if not login or not secret_key:
         raise QontoHttpError(0, 'Qonto login and secret key are required.')
     if use_sandbox and not (staging_token or '').strip():

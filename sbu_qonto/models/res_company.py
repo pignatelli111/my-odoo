@@ -101,7 +101,28 @@ class ResCompany(models.Model):
 
     def _sbu_qonto_credentials_ok(self):
         self.ensure_one()
-        return bool(self.sbu_qonto_login and self.sbu_qonto_secret_key and self.sbu_qonto_iban)
+        login, secret, iban = self._sbu_qonto_api_credentials()
+        return bool(login and secret and iban)
+
+    def _sbu_qonto_api_credentials(self):
+        """Return stripped (login, secret) used for Authorization header."""
+        self.ensure_one()
+        login = (self.sbu_qonto_login or '').strip()
+        secret = (self.sbu_qonto_secret_key or '').strip()
+        iban = sbu_normalize_iban(self.sbu_qonto_iban) or (self.sbu_qonto_iban or '').strip()
+        return login, secret, iban
+
+    @api.model
+    def _sbu_qonto_warn_login_shape(self, login):
+        login = (login or '').strip()
+        if '@' in login:
+            raise UserError(
+                _(
+                    'Qonto API login looks like an email («%(login)s»). '
+                    'Use the API «Sign-in» slug from Qonto → Integrations → API key '
+                    '(example: pied-piper-7132), not your user email.'
+                ) % {'login': login}
+            )
 
     def _sbu_qonto_staging_token(self):
         self.ensure_one()
@@ -109,17 +130,18 @@ class ResCompany(models.Model):
 
     def _sbu_fetch_qonto_beneficiaries(self):
         self.ensure_one()
+        login, secret, _iban = self._sbu_qonto_api_credentials()
         token = self._sbu_qonto_staging_token()
         rows = qonto_list_sepa_beneficiaries(
-            self.sbu_qonto_login,
-            self.sbu_qonto_secret_key,
+            login,
+            secret,
             self.sbu_qonto_use_sandbox,
             staging_token=token,
         )
         if not rows:
             rows = qonto_list_legacy_beneficiaries(
-                self.sbu_qonto_login,
-                self.sbu_qonto_secret_key,
+                login,
+                secret,
                 self.sbu_qonto_use_sandbox,
                 staging_token=token,
             )
@@ -128,12 +150,14 @@ class ResCompany(models.Model):
     def action_sbu_test_qonto_connection(self):
         """GET /v2/organization — validates credentials before import."""
         self.ensure_one()
-        if not self._sbu_qonto_credentials_ok():
+        login, secret, iban = self._sbu_qonto_api_credentials()
+        if not login or not secret or not iban:
             raise UserError(_('Configure Qonto login, secret key and IBAN on the company first.'))
+        self._sbu_qonto_warn_login_shape(login)
         try:
             payload = qonto_get_organization(
-                self.sbu_qonto_login,
-                self.sbu_qonto_secret_key,
+                login,
+                secret,
                 self.sbu_qonto_use_sandbox,
                 staging_token=self._sbu_qonto_staging_token(),
             )

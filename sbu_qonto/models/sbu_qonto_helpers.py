@@ -12,8 +12,10 @@ def sbu_qonto_user_error(http_error):
         body = body[:600] + '…'
     if status == 401:
         hint = _(
-            'Check: API sign-in (not email), secret key, and that «Qonto sandbox» matches '
-            'your keys (off = production keys, on = sandbox keys + staging token).'
+            'Invalid credentials. In Qonto: Integrations → API key — copy the «Sign-in» '
+            '(slug, e.g. suburban-1234) and the «Secret key» (long hex string). '
+            'Do not use your email. Click Save in Odoo Settings, then Test again. '
+            '«Qonto sandbox» must be off for production keys.'
         )
     elif status == 403 and (
         'error_code":1010' in body

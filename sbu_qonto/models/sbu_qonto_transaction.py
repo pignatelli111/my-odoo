@@ -304,15 +304,17 @@ class SbuQontoTransaction(models.Model):
     @api.model
     def import_transactions_for_company(self, company, max_pages=3):
         """Pull pages from Qonto list transactions API."""
-        if not (company.sbu_qonto_login and company.sbu_qonto_secret_key and company.sbu_qonto_iban):
+        login, secret, iban = company._sbu_qonto_api_credentials()
+        if not login or not secret or not iban:
             raise UserError(_('Configure Qonto login, secret key and IBAN on the company.'))
+        company._sbu_qonto_warn_login_shape(login)
         total = 0
         page = 1
         while page <= max_pages:
             txs, meta = qonto_list_transactions(
-                company.sbu_qonto_login,
-                company.sbu_qonto_secret_key,
-                company.sbu_qonto_iban.replace(' ', ''),
+                login,
+                secret,
+                iban,
                 company.sbu_qonto_use_sandbox,
                 page=page,
                 per_page=100,

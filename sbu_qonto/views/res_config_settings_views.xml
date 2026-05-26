@@ -6,10 +6,10 @@
         <field name="inherit_id" ref="sbu_integrations.res_config_settings_view_form_inherit_sbu"/>
         <field name="arch" type="xml">
             <xpath expr="//block[@name='sbu_integration_block_other']" position="inside">
-                <setting string="Qonto API login" help="Sign-in / login from Qonto integrations (not your email password).">
-                    <field name="sbu_qonto_login"/>
+                <setting string="Qonto API login (sign-in)" help="From Qonto → Integrations → API key: the «Sign-in» slug (e.g. suburban-1234). Not your email.">
+                    <field name="sbu_qonto_login" placeholder="e.g. suburban-1234"/>
                 </setting>
-                <setting string="Qonto secret key" help="API secret; Qonto remains the bank of record—Odoo mirrors movements and reconciles invoices.">
+                <setting string="Qonto secret key" help="Long secret from the same API key page. Re-paste after Save if Test fails.">
                     <field name="sbu_qonto_secret_key" password="True" groups="account.group_account_manager"/>
                 </setting>
                 <setting string="Qonto IBAN" help="Bank account IBAN used by GET /v2/transactions.">
