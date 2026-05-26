@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'SBU Qonto',
-    'version': '19.0.1.0.8',
+    'version': '19.0.1.0.9',
     'summary': 'Qonto import, partner sync, auto customer payment register (Cosimo 10/14)',
     'author': 'SBU Development',
     'category': 'Accounting',

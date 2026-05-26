@@ -10,6 +10,12 @@ import urllib.request
 
 _logger = logging.getLogger(__name__)
 
+# Cloudflare on thirdparty.qonto.com blocks default Python-urllib fingerprints (error 1010).
+QONTO_USER_AGENT = (
+    'SBU-Odoo/19.0 QontoBusinessAPI '
+    '(https://github.com/pignatelli111/my-odoo; server integration)'
+)
+
 
 class QontoHttpError(Exception):
     def __init__(self, status, message, body=''):
@@ -48,15 +54,32 @@ def _qonto_request(
     headers = {
         'Authorization': f'{login}:{secret_key}',
         'Accept': 'application/json',
+        'User-Agent': QONTO_USER_AGENT,
     }
     token = (staging_token or '').strip()
     if use_sandbox and token:
         headers['X-Qonto-Staging-Token'] = token
-    req = urllib.request.Request(
-        url,
-        method='GET',
-        headers=headers,
-    )
+
+    # Prefer requests (urllib3 TLS stack); Cloudflare often blocks urllib default UA.
+    try:
+        import requests
+    except ImportError:
+        requests = None
+
+    if requests is not None:
+        try:
+            resp = requests.get(url, headers=headers, timeout=120)
+            resp.raise_for_status()
+            return resp.json()
+        except requests.HTTPError as e:
+            raw = (e.response.text if e.response is not None else '') or ''
+            code = e.response.status_code if e.response is not None else 0
+            _logger.warning('Qonto HTTP %s %s: %s', code, path, raw[:2000])
+            raise QontoHttpError(code, 'Qonto API request failed.', raw) from e
+        except requests.RequestException as e:
+            raise QontoHttpError(0, str(e)) from e
+
+    req = urllib.request.Request(url, method='GET', headers=headers)
     try:
         with urllib.request.urlopen(req, timeout=120) as resp:
             return json.loads(resp.read().decode())

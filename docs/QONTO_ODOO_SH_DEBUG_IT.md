@@ -48,6 +48,7 @@ grep -i qonto ~/logs/odoo.log | tail -40
 
 | Sintomo | Causa probabile | Fix |
 |---------|-----------------|-----|
+| HTTP 403 + error 1010 / Cloudflare | Odoo.sh bloccato da Cloudflare Qonto (UA/TLS) | Upgrade `sbu_qonto` ≥ 19.0.1.0.9; se persiste → Qonto support con **Ray ID** |
 | HTTP 401 | Login/secret invertiti o email al posto del sign-in | Rigenera API key in Qonto → Integrations |
 | Sandbox senza token | `Qonto sandbox` attivo senza staging token | Developer Portal → token → campo **Staging token** |
 | 0 movimenti importati | IBAN sbagliato o conto senza transazioni | `GET /v2/organization` in Qonto → IBAN corretto |

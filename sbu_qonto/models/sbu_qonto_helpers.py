@@ -15,6 +15,17 @@ def sbu_qonto_user_error(http_error):
             'Check: API sign-in (not email), secret key, and that «Qonto sandbox» matches '
             'your keys (off = production keys, on = sandbox keys + staging token).'
         )
+    elif status == 403 and (
+        'error_code":1010' in body
+        or 'error_code": 1010' in body
+        or 'browser_signature_banned' in body
+        or 'cloudflare' in body.lower()
+    ):
+        hint = _(
+            'Cloudflare blocked Odoo.sh (error 1010). Upgrade sbu_qonto to 19.0.1.0.9+, '
+            'then retry. If it persists, send the Ray ID below to Qonto support and ask them '
+            'to allow API traffic from Odoo.sh / your integration User-Agent.'
+        )
     elif status == 0:
         hint = ''
     else:
