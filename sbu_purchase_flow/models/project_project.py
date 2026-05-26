@@ -160,10 +160,19 @@ class ProjectProject(models.Model):
             )
         PurchaseRequest = self.env['sbu.purchase.request']
         created = PurchaseRequest
+        skipped = []
         for route in routes:
+            existing = PurchaseRequest.search([
+                ('project_id', '=', self.id),
+                ('workflow_route', '=', route),
+                ('state', 'not in', ('cancelled', 'done')),
+            ], limit=1)
+            if existing:
+                skipped.append(route)
+                continue
             pr = PurchaseRequest.create({
                 'project_id': self.id,
-                'request_type': workflow_route_to_request_type(route),
+                'request_type': workflow_route_to_request_type(route, self.env),
                 'workflow_route': route,
                 'company_id': self.company_id.id,
                 'demand_loss_pct': 3.0,
@@ -171,6 +180,11 @@ class ProjectProject(models.Model):
             })
             pr._load_lines_from_estimate_bom(clear=True, workflow_route=route)
             created |= pr
+        if skipped and not created:
+            raise UserError(
+                _('Open purchase documents already exist for all workflow routes on this job: %s')
+                % ', '.join(skipped)
+            )
         if len(created) == 1:
             return {
                 'type': 'ir.actions.act_window',

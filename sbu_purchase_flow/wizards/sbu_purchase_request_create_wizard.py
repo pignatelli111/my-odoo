@@ -2,11 +2,7 @@
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
-from ..models.sbu_workflow_routing import (
-    ROUTE_WIZARD_REQUIRES,
-    SBU_WIZARD_ROUTE_SELECTION,
-    workflow_route_to_request_type,
-)
+from ..models.sbu_workflow_routing import workflow_route_to_request_type
 
 
 class SbuPurchaseRequestCreateWizard(models.TransientModel):
@@ -20,11 +16,15 @@ class SbuPurchaseRequestCreateWizard(models.TransientModel):
         ondelete='cascade',
     )
     workflow_route = fields.Selection(
-        selection=SBU_WIZARD_ROUTE_SELECTION,
+        selection='_sbu_wizard_route_selection',
         string='Document route',
         required=True,
-        help='Closed list aligned with technical templates (LA, LZ, ST, PAN, OSC, …).',
+        help='Closed list from Workflow routes (SBU → Purchasing). Admins can add routes there.',
     )
+
+    @api.model
+    def _sbu_wizard_route_selection(self):
+        return self.env['sbu.workflow.route']._selection_for_field(wizard_only=True)
     request_type = fields.Selection(
         selection=[
             ('rda', 'RDA'),
@@ -67,7 +67,7 @@ class SbuPurchaseRequestCreateWizard(models.TransientModel):
     @api.depends('workflow_route')
     def _compute_request_type(self):
         for wiz in self:
-            wiz.request_type = workflow_route_to_request_type(wiz.workflow_route)
+            wiz.request_type = workflow_route_to_request_type(wiz.workflow_route, wiz.env)
 
     @api.model
     def default_get(self, fields_list):
@@ -81,7 +81,7 @@ class SbuPurchaseRequestCreateWizard(models.TransientModel):
 
     def _validate_required_fields(self):
         self.ensure_one()
-        rules = ROUTE_WIZARD_REQUIRES.get(self.workflow_route or '', {})
+        rules = self.env['sbu.workflow.route'].wizard_requires_for_code(self.workflow_route or '')
         if rules.get('topic') and not (self.topic or '').strip():
             raise UserError(
                 _('Route %s requires the Topic field.')

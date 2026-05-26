@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- Default ANACO routes (Cosimo punto 5). Admins can add routes under SBU → Purchasing. -->
+    <record id="route_la" model="sbu.workflow.route">
+        <field name="code">LA</field>
+        <field name="name">LA — Aluminium sheet</field>
+        <field name="sequence">10</field>
+        <field name="request_type">rda</field>
+        <field name="wizard_enabled" eval="True"/>
+        <field name="require_topic" eval="True"/>
+        <field name="require_need_by" eval="True"/>
+    </record>
+    <record id="route_lz" model="sbu.workflow.route">
+        <field name="code">LZ</field>
+        <field name="name">LZ — Metalwork / galvanized sheet</field>
+        <field name="sequence">20</field>
+        <field name="request_type">fe</field>
+        <field name="wizard_enabled" eval="True"/>
+        <field name="require_topic" eval="True"/>
+        <field name="require_need_by" eval="True"/>
+    </record>
+    <record id="route_st" model="sbu.workflow.route">
+        <field name="code">ST</field>
+        <field name="name">ST — Brackets</field>
+        <field name="sequence">30</field>
+        <field name="request_type">st</field>
+        <field name="wizard_enabled" eval="True"/>
+        <field name="require_need_by" eval="True"/>
+    </record>
+    <record id="route_pan" model="sbu.workflow.route">
+        <field name="code">PAN</field>
+        <field name="name">PAN — Panels</field>
+        <field name="sequence">40</field>
+        <field name="request_type">rda</field>
+        <field name="wizard_enabled" eval="True"/>
+        <field name="require_topic" eval="True"/>
+        <field name="require_need_by" eval="True"/>
+    </record>
+    <record id="route_osc" model="sbu.workflow.route">
+        <field name="code">OSC</field>
+        <field name="name">OSC — Blinds</field>
+        <field name="sequence">50</field>
+        <field name="request_type">vt</field>
+        <field name="wizard_enabled" eval="True"/>
+        <field name="require_need_by" eval="True"/>
+    </record>
+    <record id="route_vc_vs" model="sbu.workflow.route">
+        <field name="code">VC/VS</field>
+        <field name="name">VT — Glass / VC-VS</field>
+        <field name="sequence">60</field>
+        <field name="request_type">vt</field>
+        <field name="wizard_enabled" eval="True"/>
+        <field name="require_need_by" eval="True"/>
+    </record>
+    <record id="route_zanz" model="sbu.workflow.route">
+        <field name="code">ZANZ</field>
+        <field name="name">Screens</field>
+        <field name="sequence">70</field>
+        <field name="request_type">vt</field>
+        <field name="wizard_enabled" eval="True"/>
+        <field name="require_need_by" eval="True"/>
+    </record>
+    <record id="route_prf" model="sbu.workflow.route">
+        <field name="code">PRF</field>
+        <field name="name">PRF — Profiles</field>
+        <field name="sequence">80</field>
+        <field name="request_type">rda</field>
+        <field name="wizard_enabled" eval="True"/>
+        <field name="require_topic" eval="True"/>
+    </record>
+    <record id="route_ft" model="sbu.workflow.route">
+        <field name="code">FT/FTF</field>
+        <field name="name">FT — Joinery</field>
+        <field name="sequence">90</field>
+        <field name="request_type">rda</field>
+        <field name="wizard_enabled" eval="True"/>
+        <field name="require_topic" eval="True"/>
+    </record>
+    <record id="route_se" model="sbu.workflow.route">
+        <field name="code">SE</field>
+        <field name="name">SE — Frames</field>
+        <field name="sequence">100</field>
+        <field name="request_type">rda</field>
+        <field name="wizard_enabled" eval="True"/>
+        <field name="require_topic" eval="True"/>
+    </record>
+    <record id="route_ass" model="sbu.workflow.route">
+        <field name="code">ASS</field>
+        <field name="name">ACO — Assembly</field>
+        <field name="sequence">110</field>
+        <field name="request_type">aco</field>
+        <field name="wizard_enabled" eval="True"/>
+    </record>
+    <record id="route_acc" model="sbu.workflow.route">
+        <field name="code">ACC</field>
+        <field name="name">ACO — Accessories</field>
+        <field name="sequence">120</field>
+        <field name="request_type">aco</field>
+        <field name="wizard_enabled" eval="True"/>
+    </record>
+    <record id="route_gua" model="sbu.workflow.route">
+        <field name="code">GUA</field>
+        <field name="name">ACO — Gaskets</field>
+        <field name="sequence">130</field>
+        <field name="request_type">aco</field>
+        <field name="wizard_enabled" eval="True"/>
+    </record>
+    <record id="route_pos" model="sbu.workflow.route">
+        <field name="code">POS</field>
+        <field name="name">ACP — Installation</field>
+        <field name="sequence">140</field>
+        <field name="request_type">acp</field>
+        <field name="wizard_enabled" eval="True"/>
+        <field name="require_need_by" eval="True"/>
+    </record>
+    <record id="route_trn" model="sbu.workflow.route">
+        <field name="code">TRN</field>
+        <field name="name">LDS — Transport</field>
+        <field name="sequence">150</field>
+        <field name="request_type">lds</field>
+        <field name="wizard_enabled" eval="True"/>
+        <field name="require_need_by" eval="True"/>
+    </record>
+    <record id="route_pm" model="sbu.workflow.route">
+        <field name="code">PM</field>
+        <field name="name">PM — Project management</field>
+        <field name="sequence">200</field>
+        <field name="request_type">other</field>
+        <field name="wizard_enabled" eval="False"/>
+    </record>
+    <record id="route_cnt" model="sbu.workflow.route">
+        <field name="code">CNT</field>
+        <field name="name">CNT — Site costs</field>
+        <field name="sequence">210</field>
+        <field name="request_type">other</field>
+        <field name="wizard_enabled" eval="False"/>
+    </record>
+    <record id="route_ext" model="sbu.workflow.route">
+        <field name="code">EXT</field>
+        <field name="name">EXT — Extra</field>
+        <field name="sequence">220</field>
+        <field name="request_type">other</field>
+        <field name="wizard_enabled" eval="False"/>
+    </record>
+</odoo>

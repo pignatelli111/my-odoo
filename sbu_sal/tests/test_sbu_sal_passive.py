@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 from odoo.tests import tagged
 from odoo.tests.common import TransactionCase
 
@@ -103,6 +103,24 @@ class TestSbuSalPassive(TransactionCase):
         sheet.action_load_posa_budget_from_estimate()
         with self.assertRaises(UserError):
             sheet.action_load_posa_budget_from_estimate()
+
+    def test_passive_percent_over_100_blocked(self):
+        estimate, eline, project, vendor = self._estimate_with_posa()
+        sheet = self.env['sbu.sal.passive.sheet'].create({
+            'project_id': project.id,
+            'vendor_id': vendor.id,
+        })
+        sheet.action_load_posa_budget_from_estimate()
+        sheet.line_ids.write({'percent_this_sal': 60.0})
+        sheet.action_confirm()
+
+        sheet2 = self.env['sbu.sal.passive.sheet'].create({
+            'project_id': project.id,
+            'vendor_id': vendor.id,
+        })
+        sheet2.action_load_posa_budget_from_estimate()
+        with self.assertRaises(ValidationError):
+            sheet2.line_ids.write({'percent_this_sal': 50.0})
 
     def test_prior_sal_percent_cumulative(self):
         estimate, eline, project, vendor = self._estimate_with_posa()

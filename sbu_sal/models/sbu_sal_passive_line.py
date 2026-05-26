@@ -1,4 +1,5 @@
-from odoo import api, fields, models
+from odoo import _, api, fields, models
+from odoo.exceptions import ValidationError
 
 
 class SbuSalPassiveLine(models.Model):
@@ -100,6 +101,27 @@ class SbuSalPassiveLine(models.Model):
     def _compute_amount_this_sal(self):
         for line in self:
             line.amount_this_sal = (line.budget_amount or 0.0) * (line.percent_this_sal or 0.0) / 100.0
+
+    @api.constrains('percent_this_sal', 'estimate_line_id', 'sheet_id')
+    def _check_cumulative_percent_cap(self):
+        """Cosimo punto 6 — block cumulative progress over 100% on same estimate line."""
+        for line in self:
+            if not line.estimate_line_id or not line.sheet_id.project_id:
+                continue
+            if line.sheet_id.state == 'cancelled':
+                continue
+            total = (line.percent_prior_sal or 0.0) + (line.percent_this_sal or 0.0)
+            if total > 100.01:
+                raise ValidationError(
+                    _('Cumulative SAL %% on «%(desc)s» would be %(total).2f%% (max 100%%). '
+                      'Prior SAL: %(prior).2f%%, this sheet: %(this).2f%%.')
+                    % {
+                        'desc': line.description,
+                        'total': total,
+                        'prior': line.percent_prior_sal,
+                        'this': line.percent_this_sal,
+                    }
+                )
 
     @api.onchange('estimate_line_id')
     def _onchange_estimate_line_id(self):

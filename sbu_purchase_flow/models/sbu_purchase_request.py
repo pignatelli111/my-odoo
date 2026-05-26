@@ -29,13 +29,17 @@ class SbuPurchaseRequest(models.Model):
         tracking=True,
     )
     workflow_route = fields.Selection(
-        selection=SBU_WORKFLOW_ROUTE_SELECTION,
+        selection='_sbu_workflow_route_selection',
         string='Route ANACO',
         index=True,
         tracking=True,
         help='ANACO route code (LA, LZ, ST, PAN, OSC, VC/VS, …). Use «New purchase document» wizard '
-             'to avoid inconsistent types.',
+             'or configure routes under SBU → Purchasing → Workflow routes.',
     )
+
+    @api.model
+    def _sbu_workflow_route_selection(self):
+        return self.env['sbu.workflow.route']._selection_for_field()
     request_type = fields.Selection(
         selection=[
             ('rda', 'RDA — Primary materials'),

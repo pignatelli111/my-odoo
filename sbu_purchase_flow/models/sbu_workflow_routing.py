@@ -87,15 +87,22 @@ ROUTE_WIZARD_REQUIRES = {
 }
 
 
-def workflow_route_to_request_type(route_code):
+def workflow_route_to_request_type(route_code, env=None):
+    if env is not None:
+        rt = env['sbu.workflow.route'].request_type_for_code(route_code)
+        if rt:
+            return rt
     return WORKFLOW_ROUTE_TO_REQUEST_TYPE.get((route_code or '').strip(), 'other')
 
 
-def normalize_workflow_route(route_code):
+def normalize_workflow_route(route_code, env=None):
     """Return a known route key or False."""
     key = (route_code or '').strip()
     if not key:
         return False
+    if env is not None:
+        if env['sbu.workflow.route'].sudo().search_count([('code', '=', key), ('active', '=', True)]):
+            return key
     valid = {code for code, _label in SBU_WORKFLOW_ROUTE_SELECTION}
     return key if key in valid else False
 

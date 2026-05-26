@@ -24,6 +24,14 @@ class SbuPurchaseRequestOffer(models.Model):
         ondelete='cascade',
         index=True,
     )
+    pr_manual_input_pending = fields.Boolean(
+        related='request_line_id.manual_input_pending',
+        string='Manual entry pending',
+    )
+    pr_manual_input_state = fields.Selection(
+        related='request_line_id.manual_input_state',
+        string='Manual input state',
+    )
     vendor_id = fields.Many2one(
         'res.partner',
         string='Vendor',

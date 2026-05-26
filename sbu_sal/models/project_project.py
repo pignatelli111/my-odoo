@@ -46,6 +46,22 @@ class ProjectProject(models.Model):
         string='Latest customer invoice',
         compute='_compute_sbu_billing_dashboard',
     )
+    sbu_passive_budget_total = fields.Monetary(
+        string='Installation budget (ANACO)',
+        compute='_compute_sbu_passive_dashboard',
+        currency_field='currency_id',
+        help='Sum of posa/subcontract budgets on passive SAL sheets for this job.',
+    )
+    sbu_passive_invoiced_total = fields.Monetary(
+        string='Subcontract invoiced',
+        compute='_compute_sbu_passive_dashboard',
+        currency_field='currency_id',
+    )
+    sbu_passive_progress_pct = fields.Float(
+        string='Installation progress %',
+        compute='_compute_sbu_passive_dashboard',
+        digits=(16, 2),
+    )
 
     @api.model
     def _sbu_customer_invoice_domain(self, project):
@@ -72,6 +88,26 @@ class ProjectProject(models.Model):
         sheet = self.env['sbu.sal.passive.sheet'].sudo()
         for project in self:
             project.sbu_sal_passive_sheet_count = sheet.search_count([('project_id', '=', project.id)])
+
+    @api.depends(
+        'sbu_estimate_id',
+        'sbu_sal_passive_sheet_count',
+    )
+    def _compute_sbu_passive_dashboard(self):
+        PassiveSheet = self.env['sbu.sal.passive.sheet'].sudo()
+        for project in self:
+            sheets = PassiveSheet.search([('project_id', '=', project.id)])
+            project.sbu_passive_budget_total = sum(sheets.mapped('budget_total'))
+            invoiced = sheets.filtered(lambda s: s.state == 'invoiced')
+            project.sbu_passive_invoiced_total = sum(invoiced.mapped('amount_net'))
+            budget = project.sbu_passive_budget_total
+            progress_lines = sheets.mapped('line_ids').filtered(
+                lambda l: l.sheet_id.state in ('confirmed', 'invoiced')
+            )
+            progressed = sum(progress_lines.mapped('amount_this_sal'))
+            project.sbu_passive_progress_pct = (
+                (progressed / budget * 100.0) if budget else 0.0
+            )
 
     @api.depends(
         'sbu_estimate_id',

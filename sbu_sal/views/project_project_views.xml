@@ -69,6 +69,25 @@
                         Per il dettaglio per periodo usare i fogli SAL e la stampa «Fattura con dettaglio SAL (SBU)».
                     </p>
                 </page>
+                <page string="Avanzamento posa (passivo)" name="sbu_passive_dashboard"
+                      invisible="not sbu_estimate_id">
+                    <group>
+                        <group string="Subappalto / posa">
+                            <field name="sbu_passive_budget_total" widget="monetary"/>
+                            <field name="sbu_passive_invoiced_total" widget="monetary"/>
+                            <field name="sbu_passive_progress_pct"/>
+                            <field name="sbu_sal_passive_sheet_count"/>
+                        </group>
+                    </group>
+                    <div class="oe_button_box mb-2">
+                        <button name="action_view_sbu_sal_passive_sheets" type="object"
+                                string="Fogli SAL passivi" class="btn-link" icon="fa-wrench"/>
+                    </div>
+                    <p class="text-muted">
+                        Budget da fogli SAL passivi (caricati dal preventivo ANACO).
+                        La % avanzamento usa gli importi dei SAL confermati/fatturati sul budget.
+                    </p>
+                </page>
             </xpath>
         </field>
     </record>

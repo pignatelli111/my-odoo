@@ -213,6 +213,14 @@ class SbuSalPassiveSheet(models.Model):
         return 'subappalto'
 
     def action_confirm(self):
+        for sheet in self:
+            for line in sheet.line_ids:
+                total = (line.percent_prior_sal or 0.0) + (line.percent_this_sal or 0.0)
+                if total > 100.01:
+                    raise UserError(
+                        _('Cannot confirm: cumulative progress on «%s» is %.2f%% (max 100%%).')
+                        % (line.description, total)
+                    )
         self.write({'state': 'confirmed'})
 
     def action_cancel(self):

@@ -13,3 +13,5 @@ access_sbu_project_budget_family_user,sbu.project.budget.family user,model_sbu_p
 access_sbu_project_budget_family_manager,sbu.project.budget.family manager,model_sbu_project_budget_family,base.group_system,1,1,1,1
 access_sbu_delivery_standard_user,sbu.delivery.standard user,model_sbu_delivery_standard,base.group_user,1,0,0,0
 access_sbu_delivery_standard_manager,sbu.delivery.standard manager,model_sbu_delivery_standard,base.group_system,1,1,1,1
+access_sbu_workflow_route_user,sbu.workflow.route user,model_sbu_workflow_route,base.group_user,1,0,0,0
+access_sbu_workflow_route_manager,sbu.workflow.route manager,model_sbu_workflow_route,purchase.group_purchase_manager,1,1,1,1

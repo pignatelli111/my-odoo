@@ -196,8 +196,10 @@
                                     <field name="cost_family" string="Categoria" optional="show"/>
                                     <field name="qty"/>
                                     <field name="manual_input_pending" column_invisible="1"/>
-                                    <field name="width_mm" string="B (mm)" optional="show"/>
-                                    <field name="height_mm" string="H (mm)" optional="show"/>
+                                    <field name="width_mm" string="B (mm)" optional="show"
+                                           decoration-warning="manual_input_pending and not width_mm"/>
+                                    <field name="height_mm" string="H (mm)" optional="show"
+                                           decoration-warning="manual_input_pending and not height_mm"/>
                                     <field name="sqm_per_piece" string="MQ/Cad." readonly="1"/>
                                     <field name="sqm" string="Mq tot." readonly="1"/>
                                     <field name="price_anaco_bs_cad" string="Prezzo unit. BS"/>
