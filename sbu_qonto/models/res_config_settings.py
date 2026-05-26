@@ -63,17 +63,14 @@ class ResConfigSettings(models.TransientModel):
 
     def set_values(self):
         """Do not erase stored secret when the password field is left blank."""
-        companies = self.mapped('company_id')
-        preserve = {
-            c.id: c.sbu_qonto_secret_key
-            for c in companies
-            if not self.filtered(lambda s, comp=c: s.company_id == comp).sbu_qonto_secret_key
-            and c.sbu_qonto_secret_key
-        }
+        preserve_secret = False
+        old_secret = False
+        if not self.sbu_qonto_secret_key and self.company_id.sbu_qonto_secret_key:
+            preserve_secret = True
+            old_secret = self.company_id.sbu_qonto_secret_key
         res = super().set_values()
-        for company in companies:
-            if preserve.get(company.id):
-                company.sbu_qonto_secret_key = preserve[company.id]
+        if preserve_secret and old_secret:
+            self.company_id.sbu_qonto_secret_key = old_secret
         return res
 
     def action_qonto_import_now(self):
