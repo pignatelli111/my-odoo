@@ -16,6 +16,10 @@ echo "=== Wrong Selection / ValidationError (common PR route bug) ==="
 grep -nE 'Wrong value for|ValidationError' "$LOG" | tail -15
 
 echo ""
+echo "=== Qonto / menu / dependency ==="
+grep -nE 'sbu_qonto|sbu_sal|External ID not found|depends on' "$LOG" | tail -20
+
+echo ""
 echo "=== Traceback line numbers ==="
 grep -n 'Traceback (most recent call last)' "$LOG" | tail -10
 

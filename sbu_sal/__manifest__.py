@@ -10,6 +10,7 @@
         'account',
         'project',
         'sbu_estimate',
+        'sbu_qonto',
     ],
     'data': [
         'security/ir.model.access.csv',
