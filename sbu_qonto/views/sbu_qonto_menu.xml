@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Primary entry: SBU app (easier to find than Accounting top bar). -->
+    <menuitem
+        id="menu_sbu_qonto_root"
+        name="Banking"
+        parent="sbu_estimate.menu_sbu_root"
+        sequence="45"
+    />
+    <menuitem
+        id="menu_sbu_qonto_movements_sbu"
+        name="Qonto movements"
+        parent="menu_sbu_qonto_root"
+        action="sbu_qonto.action_sbu_qonto_transaction"
+        sequence="10"
+        groups="account.group_account_user"
+    />
+</odoo>

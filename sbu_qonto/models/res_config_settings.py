@@ -117,3 +117,17 @@ class ResConfigSettings(models.TransientModel):
         self.ensure_one()
         company = self._sbu_qonto_persist_from_settings()
         return company.action_sbu_sync_qonto_partners()
+
+    def action_qonto_open_movements(self):
+        """Open imported Qonto movements (same list as SBU → Banking → Qonto movements)."""
+        self.ensure_one()
+        company = self.company_id
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Qonto movements'),
+            'res_model': 'sbu.qonto.transaction',
+            'view_mode': 'list,form',
+            'domain': [('company_id', '=', company.id)],
+            'context': {'default_company_id': company.id},
+            'target': 'current',
+        }

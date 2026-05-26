@@ -65,6 +65,13 @@
                         class="btn-secondary"
                         groups="account.group_account_user"
                     />
+                    <button
+                        name="action_qonto_open_movements"
+                        type="object"
+                        string="Open Qonto movements"
+                        class="btn-secondary"
+                        groups="account.group_account_user"
+                    />
                 </div>
             </xpath>
         </field>

@@ -12,14 +12,22 @@
 | IBAN | Copiato da Qonto (stesso conto dell’API) |
 | Menu giusto | **Contabilità → Movimenti Qonto** — non «Collega banca» |
 
-## 2. Ordine test dopo upgrade `sbu_qonto`
+## 2. Dove vedere i movimenti (dopo import OK)
+
+| Percorso | Note |
+|----------|------|
+| **SBU → Banking → Qonto movements** | Menu principale (≥ 19.0.1.0.11) |
+| **Impostazioni → Open Qonto movements** | Pulsante dopo import |
+| **Contabilità** (barra in alto) → **Qonto movements** | Può essere in fondo alla barra — scorrere a destra |
+| **Cerca** (lente) → digitare `Qonto movements` | |
+
+Non usare la card **Connect your bank** sulla dashboard Contabilità.
+
+## 3. Ordine test dopo upgrade `sbu_qonto`
 
 1. **Impostazioni** → blocco Qonto → **Test Qonto connection**  
-   - ✅ = credenziali OK  
-   - ❌ = leggere messaggio HTTP (401 = login/secret/sandbox errati)  
-2. **Sync Qonto suppliers**  
-3. **Import Qonto movements now**  
-4. **Contabilità → Movimenti Qonto**
+2. **Import Qonto movements now**  
+3. **Open Qonto movements** oppure **SBU → Banking → Qonto movements**
 
 ## 3. Shell Odoo.sh (se il pulsante non c’è ancora)
 
