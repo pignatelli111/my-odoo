@@ -132,6 +132,5 @@
         parent="account.menu_finance"
         action="action_sbu_qonto_transaction"
         sequence="120"
-        groups="account.group_account_user"
     />
 </odoo>

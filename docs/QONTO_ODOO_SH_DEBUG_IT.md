@@ -16,7 +16,8 @@
 
 | Percorso | Note |
 |----------|------|
-| **SBU → Banking → Qonto movements** | Menu principale (≥ 19.0.1.0.11) |
+| **SBU → Billing → Qonto movements** | Menu principale (≥ 19.0.1.0.12) |
+| **SBU → Banking → Qonto movements** | Alternativa |
 | **Impostazioni → Open Qonto movements** | Pulsante dopo import |
 | **Contabilità** (barra in alto) → **Qonto movements** | Può essere in fondo alla barra — scorrere a destra |
 | **Cerca** (lente) → digitare `Qonto movements` | |
