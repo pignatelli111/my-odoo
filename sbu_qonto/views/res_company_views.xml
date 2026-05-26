@@ -12,6 +12,8 @@
                         <field name="sbu_qonto_secret_key" password="True"/>
                         <field name="sbu_qonto_iban"/>
                         <field name="sbu_qonto_use_sandbox"/>
+                        <field name="sbu_qonto_staging_token" password="True"
+                               invisible="not sbu_qonto_use_sandbox"/>
                         <field name="sbu_qonto_import_enabled"/>
                         <field name="sbu_qonto_suggest_after_import"/>
                         <field name="sbu_qonto_sync_partners_on_import"/>
@@ -27,6 +29,12 @@
                         />
                     </group>
                     <div class="oe_button_box" groups="account.group_account_manager">
+                        <button
+                            name="action_sbu_test_qonto_connection"
+                            type="object"
+                            string="Test Qonto connection"
+                            class="btn-primary"
+                        />
                         <button
                             name="action_sbu_sync_qonto_partners"
                             type="object"

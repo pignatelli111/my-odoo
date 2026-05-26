@@ -8,8 +8,10 @@ from odoo.addons.sbu_qonto.models.sbu_qonto_helpers import (
     sbu_beneficiary_remote_id,
     sbu_normalize_iban,
 )
+from odoo.addons.sbu_qonto.models.sbu_qonto_helpers import sbu_qonto_user_error
 from odoo.addons.sbu_qonto.services.qonto_client import (
     QontoHttpError,
+    qonto_get_organization,
     qonto_list_legacy_beneficiaries,
     qonto_list_sepa_beneficiaries,
 )
@@ -34,6 +36,11 @@ class ResCompany(models.Model):
     sbu_qonto_use_sandbox = fields.Boolean(
         string='Qonto sandbox API',
         help='Use Qonto staging host for tests.',
+    )
+    sbu_qonto_staging_token = fields.Char(
+        string='Qonto staging token',
+        groups='account.group_account_manager',
+        help='Required when «Qonto sandbox» is on: X-Qonto-Staging-Token from the Qonto Developer Portal.',
     )
     sbu_qonto_webhook_token = fields.Char(
         string='Qonto webhook URL token',
@@ -96,20 +103,59 @@ class ResCompany(models.Model):
         self.ensure_one()
         return bool(self.sbu_qonto_login and self.sbu_qonto_secret_key and self.sbu_qonto_iban)
 
+    def _sbu_qonto_staging_token(self):
+        self.ensure_one()
+        return (self.sbu_qonto_staging_token or '').strip() or None
+
     def _sbu_fetch_qonto_beneficiaries(self):
         self.ensure_one()
+        token = self._sbu_qonto_staging_token()
         rows = qonto_list_sepa_beneficiaries(
             self.sbu_qonto_login,
             self.sbu_qonto_secret_key,
             self.sbu_qonto_use_sandbox,
+            staging_token=token,
         )
         if not rows:
             rows = qonto_list_legacy_beneficiaries(
                 self.sbu_qonto_login,
                 self.sbu_qonto_secret_key,
                 self.sbu_qonto_use_sandbox,
+                staging_token=token,
             )
         return rows
+
+    def action_sbu_test_qonto_connection(self):
+        """GET /v2/organization — validates credentials before import."""
+        self.ensure_one()
+        if not self._sbu_qonto_credentials_ok():
+            raise UserError(_('Configure Qonto login, secret key and IBAN on the company first.'))
+        try:
+            payload = qonto_get_organization(
+                self.sbu_qonto_login,
+                self.sbu_qonto_secret_key,
+                self.sbu_qonto_use_sandbox,
+                staging_token=self._sbu_qonto_staging_token(),
+            )
+        except QontoHttpError as err:
+            raise sbu_qonto_user_error(err) from err
+        org = payload.get('organization') or payload
+        name = (org.get('legal_name') or org.get('name') or '').strip() or _('(unknown)')
+        slug = (org.get('slug') or '').strip()
+        msg = _('Connected to Qonto organization «%(name)s»%(slug)s.') % {
+            'name': name,
+            'slug': f' ({slug})' if slug else '',
+        }
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Qonto connection OK'),
+                'message': msg,
+                'type': 'success',
+                'sticky': False,
+            },
+        }
 
     @api.model
     def _sbu_partner_bank_iban(self, partner):
@@ -141,7 +187,10 @@ class ResCompany(models.Model):
         self.ensure_one()
         if not self._sbu_qonto_credentials_ok():
             raise UserError(_('Configure Qonto login, secret key and IBAN on the company first.'))
-        stats = self._sbu_sync_qonto_partners()
+        try:
+            stats = self._sbu_sync_qonto_partners()
+        except QontoHttpError as err:
+            raise sbu_qonto_user_error(err) from err
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',

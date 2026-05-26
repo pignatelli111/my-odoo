@@ -8,7 +8,7 @@ from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 from odoo.tools import float_compare, float_is_zero
 
-from odoo.addons.sbu_qonto.models.sbu_qonto_helpers import sbu_normalize_iban
+from odoo.addons.sbu_qonto.models.sbu_qonto_helpers import sbu_normalize_iban, sbu_qonto_user_error
 from odoo.addons.sbu_qonto.services.qonto_client import QontoHttpError, qonto_list_transactions
 
 _logger = logging.getLogger(__name__)
@@ -316,6 +316,7 @@ class SbuQontoTransaction(models.Model):
                 company.sbu_qonto_use_sandbox,
                 page=page,
                 per_page=100,
+                staging_token=company._sbu_qonto_staging_token(),
             )
             for tx in txs:
                 self.qonto_upsert_from_dict(company, tx, 'api')
@@ -394,16 +395,28 @@ class SbuQontoTransaction(models.Model):
     @api.model
     def action_import_now(self):
         company = self.env.company
-        n = self.import_transactions_for_company(company, max_pages=3)
+        try:
+            n = self.import_transactions_for_company(company, max_pages=3)
+        except QontoHttpError as err:
+            raise sbu_qonto_user_error(err) from err
         self._sbu_post_import_process(company)
+        notif_type = 'success' if n else 'warning'
+        message = (
+            _('Imported or updated %(n)s movements.', n=n)
+            if n
+            else _(
+                'Qonto returned 0 movements for IBAN %(iban)s. '
+                'Check IBAN, account activity, and sandbox vs production keys.'
+            ) % {'iban': company.sbu_qonto_iban}
+        )
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
                 'title': _('Qonto'),
-                'message': _('Imported or updated %(n)s movements.', n=n),
-                'type': 'success',
-                'sticky': False,
+                'message': message,
+                'type': notif_type,
+                'sticky': bool(not n),
             },
         }
 

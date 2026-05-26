@@ -10,6 +10,7 @@ from odoo.addons.sbu_qonto.models.sbu_qonto_helpers import (
     sbu_beneficiary_remote_id,
     sbu_normalize_iban,
 )
+from odoo.addons.sbu_qonto.services.qonto_client import QontoHttpError, qonto_list_transactions
 
 
 @tagged('post_install', '-at_install')
@@ -37,6 +38,14 @@ class TestSbuQontoMatch(TransactionCase):
             'sbu_qonto_auto_register_outbound',
         ):
             self.assertIn(fname, company._fields)
+
+    def test_sandbox_requires_staging_token(self):
+        with self.assertRaises(QontoHttpError) as ctx:
+            qonto_list_transactions(
+                'login', 'secret', 'IT00X0000000000000000000000',
+                use_sandbox=True,
+            )
+        self.assertIn('Staging token', str(ctx.exception))
 
     def test_company_qonto_automation_defaults(self):
         company = self.env.company

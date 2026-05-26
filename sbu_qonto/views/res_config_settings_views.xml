@@ -18,6 +18,10 @@
                 <setting string="Qonto sandbox" help="Use staging API host for tests.">
                     <field name="sbu_qonto_use_sandbox"/>
                 </setting>
+                <setting string="Qonto staging token" help="Required for sandbox: X-Qonto-Staging-Token from Qonto Developer Portal."
+                         invisible="not sbu_qonto_use_sandbox">
+                    <field name="sbu_qonto_staging_token" password="True"/>
+                </setting>
                 <setting string="Qonto webhook token" help="Path segment for /qonto/webhook/&lt;token&gt;; must match Qonto webhook URL.">
                     <field name="sbu_qonto_webhook_token" password="True"/>
                 </setting>
@@ -40,6 +44,13 @@
                     <field name="sbu_qonto_auto_register_outbound"/>
                 </setting>
                 <div class="mt-2 d-flex gap-2 flex-wrap">
+                    <button
+                        name="action_qonto_test_connection"
+                        type="object"
+                        string="Test Qonto connection"
+                        class="btn-primary"
+                        groups="account.group_account_user"
+                    />
                     <button
                         name="action_qonto_import_now"
                         type="object"
