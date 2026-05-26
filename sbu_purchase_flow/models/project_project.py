@@ -181,10 +181,32 @@ class ProjectProject(models.Model):
             pr._load_lines_from_estimate_bom(clear=True, workflow_route=route)
             created |= pr
         if skipped and not created:
-            raise UserError(
-                _('Open purchase documents already exist for all workflow routes on this job: %s')
-                % ', '.join(skipped)
-            )
+            existing_prs = PurchaseRequest.search([
+                ('project_id', '=', self.id),
+                ('workflow_route', 'in', skipped),
+                ('state', 'not in', ('cancelled', 'done')),
+            ])
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Purchase requests'),
+                    'message': _(
+                        'Open documents already exist for route(s): %(routes)s. '
+                        'No duplicate was created.'
+                    ) % {'routes': ', '.join(skipped)},
+                    'type': 'warning',
+                    'sticky': False,
+                    'next': {
+                        'type': 'ir.actions.act_window',
+                        'name': _('Purchase requests'),
+                        'res_model': 'sbu.purchase.request',
+                        'view_mode': 'list,form',
+                        'domain': [('id', 'in', existing_prs.ids)],
+                        'target': 'current',
+                    },
+                },
+            }
         if len(created) == 1:
             return {
                 'type': 'ir.actions.act_window',
