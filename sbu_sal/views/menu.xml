@@ -16,4 +16,10 @@
               parent="menu_sbu_sal_root"
               action="action_sbu_sal_passive_sheet"
               sequence="20"/>
+
+    <menuitem id="menu_sbu_qonto_movements_billing"
+              name="Qonto movements"
+              parent="menu_sbu_sal_root"
+              action="sbu_qonto.action_sbu_qonto_transaction"
+              sequence="30"/>
 </odoo>

@@ -1,14 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Under Billing (visible in SBU navbar) — no accounting-only group. -->
-    <menuitem
-        id="menu_sbu_qonto_movements_billing"
-        name="Qonto movements"
-        parent="sbu_sal.menu_sbu_sal_root"
-        action="sbu_qonto.action_sbu_qonto_transaction"
-        sequence="30"
-    />
-    <!-- Extra entry: SBU → Banking (for users who prefer a dedicated section). -->
     <menuitem
         id="menu_sbu_qonto_root"
         name="Banking"
