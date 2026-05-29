@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Standard Odoo invoice PDF: show SAL + CDP when linked (Cosimo punto 13). -->
+    <template id="report_invoice_document_sbu_sal_header" inherit_id="account.report_invoice_document">
+        <xpath expr="//div[@id='informations']" position="inside">
+            <div class="col-12 mt-2" t-if="o.sbu_sal_sheet_id">
+                <strong>Riferimento SAL:</strong>
+                <span t-esc="o.sbu_sal_sheet_id.name"/>
+                <span t-if="o.sbu_sal_cdp_name"> — <strong>CDP:</strong>
+                    <span t-esc="o.sbu_sal_cdp_name"/>
+                </span>
+                <span t-if="o.sbu_sal_sheet_id.project_id"> — <strong>Commessa:</strong>
+                    <span t-esc="o.sbu_sal_sheet_id.project_id.sbu_revision_label or o.sbu_sal_sheet_id.project_id.display_name"/>
+                </span>
+            </div>
+        </xpath>
+    </template>
+</odoo>

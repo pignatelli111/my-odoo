@@ -1,0 +1,24 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_sbu_purchase_request_user,sbu.purchase.request user,model_sbu_purchase_request,base.group_user,1,1,1,0
+access_sbu_purchase_request_manager,sbu.purchase.request manager,model_sbu_purchase_request,base.group_system,1,1,1,1
+access_sbu_purchase_request_line_user,sbu.purchase.request.line user,model_sbu_purchase_request_line,base.group_user,1,1,1,1
+access_sbu_purchase_request_offer_user,sbu.purchase.request.offer user,model_sbu_purchase_request_offer,base.group_user,1,1,1,1
+access_sbu_purchase_request_offer_manager,sbu.purchase.request.offer manager,model_sbu_purchase_request_offer,base.group_system,1,1,1,1
+access_sbu_pr_line_bulk_wizard_user,sbu.purchase.request.line.bulk.wizard user,model_sbu_purchase_request_line_bulk_wizard,base.group_user,1,1,1,1
+access_sbu_pr_create_wizard_user,sbu.purchase.request.create.wizard user,model_sbu_purchase_request_create_wizard,base.group_user,1,1,1,1
+access_sbu_pr_excel_import_wizard_user,sbu.purchase.request.excel.import.wizard user,model_sbu_purchase_request_excel_import_wizard,base.group_user,1,1,1,1
+access_sbu_pr_bom_import_wizard_user,sbu.purchase.request.bom.import.wizard user,model_sbu_purchase_request_bom_import_wizard,base.group_user,1,1,1,1
+access_sbu_pr_bom_import_wizard_line_user,sbu.purchase.request.bom.import.wizard.line user,model_sbu_purchase_request_bom_import_wizard_line,base.group_user,1,1,1,1
+access_sbu_project_budget_family_user,sbu.project.budget.family user,model_sbu_project_budget_family,base.group_user,1,0,0,0
+access_sbu_project_budget_family_manager,sbu.project.budget.family manager,model_sbu_project_budget_family,base.group_system,1,1,1,1
+access_sbu_delivery_standard_user,sbu.delivery.standard user,model_sbu_delivery_standard,base.group_user,1,0,0,0
+access_sbu_delivery_standard_manager,sbu.delivery.standard manager,model_sbu_delivery_standard,base.group_system,1,1,1,1
+access_sbu_workflow_route_user,sbu.workflow.route user,model_sbu_workflow_route,base.group_user,1,0,0,0
+access_sbu_workflow_route_manager,sbu.workflow.route manager,model_sbu_workflow_route,purchase.group_purchase_manager,1,1,1,1
+access_sbu_vdc_catalog_user,sbu.vdc.catalog user,model_sbu_vdc_catalog,base.group_user,1,0,0,0
+access_sbu_vdc_catalog_manager,sbu.vdc.catalog manager,model_sbu_vdc_catalog,purchase.group_purchase_manager,1,1,1,1
+access_sbu_lds_entry_user,sbu.lds.entry user,model_sbu_lds_entry,base.group_user,1,1,1,0
+access_sbu_lds_entry_manager,sbu.lds.entry manager,model_sbu_lds_entry,purchase.group_purchase_manager,1,1,1,1
+access_sbu_drawing_register_user,sbu.drawing.register user,model_sbu_drawing_register,base.group_user,1,1,1,0
+access_sbu_drawing_register_manager,sbu.drawing.register manager,model_sbu_drawing_register,purchase.group_purchase_manager,1,1,1,1
+access_sbu_project_tms_import_wizard_user,sbu.project.tms.import.wizard user,model_sbu_project_tms_import_wizard,base.group_user,1,1,1,1

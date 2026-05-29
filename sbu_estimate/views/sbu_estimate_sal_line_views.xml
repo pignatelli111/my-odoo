@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Used by Many2one «Search more» on SAL sheets (not only inline on preventivo). -->
+    <record id="view_sbu_estimate_sal_line_list" model="ir.ui.view">
+        <field name="name">sbu.estimate.sal.line.list</field>
+        <field name="model">sbu.estimate.sal.line</field>
+        <field name="priority">1</field>
+        <field name="arch" type="xml">
+            <list string="Contractual SAL items" default_order="sequence, item_ref, id">
+                <field name="name" string="Voce contrattuale"/>
+                <field name="item_ref" string="Item"/>
+                <field name="estimate_id" string="Preventivo"/>
+                <field name="total_contract" string="Contract €"/>
+                <field name="qty_contract" string="Qty" optional="hide"/>
+                <field name="unit_price" string="Unit €" optional="hide"/>
+                <field name="cumulative_pct" string="Cum.%" optional="hide"/>
+                <field name="sal_status" widget="badge" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_sbu_estimate_sal_line_search" model="ir.ui.view">
+        <field name="name">sbu.estimate.sal.line.search</field>
+        <field name="model">sbu.estimate.sal.line</field>
+        <field name="arch" type="xml">
+            <search string="Contractual SAL items">
+                <field name="name" string="Voce"/>
+                <field name="item_ref" string="Item"/>
+                <field name="description"/>
+                <field name="estimate_id" string="Preventivo"/>
+                <separator/>
+                <filter name="sal_draft" string="Draft" domain="[('sal_status', '=', 'draft')]"/>
+                <filter name="sal_planning" string="Planned" domain="[('sal_status', '=', 'planning')]"/>
+                <filter name="sal_invoiced" string="Invoiced" domain="[('sal_status', '=', 'invoiced')]"/>
+                <filter name="sal_paid" string="Paid" domain="[('sal_status', '=', 'paid')]"/>
+                <separator/>
+                <filter string="Group by preventivo" name="group_estimate"
+                        context="{'group_by': 'estimate_id'}"/>
+                <filter string="Group by status" name="group_sal_status"
+                        context="{'group_by': 'sal_status'}"/>
+                <searchpanel>
+                    <field name="sal_status" string="Status" enable_counters="1"/>
+                    <field name="estimate_id" string="Preventivo" enable_counters="1" limit="40"/>
+                </searchpanel>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_sbu_estimate_sal_line_form" model="ir.ui.view">
+        <field name="name">sbu.estimate.sal.line.form</field>
+        <field name="model">sbu.estimate.sal.line</field>
+        <field name="arch" type="xml">
+            <form string="SAL contractual item">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_sal_sheet_lines"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-file-text-o"
+                                invisible="sal_sheet_line_count == 0">
+                            <field name="sal_sheet_line_count" widget="statinfo" string="SAL billing"/>
+                        </button>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="estimate_id" invisible="1"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="name" readonly="1"/>
+                            <field name="item_ref"/>
+                            <field name="description"/>
+                            <field name="uom_type"/>
+                            <field name="sal_status" widget="badge"/>
+                        </group>
+                        <group>
+                            <field name="qty_contract"/>
+                            <field name="unit_price"/>
+                            <field name="total_contract" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Progress billing">
+                        <field name="billing_progress_pct" readonly="1"/>
+                        <field name="amount_billed" readonly="1"/>
+                        <field name="amount_billed_planning" readonly="1"/>
+                        <field name="amount_remaining" readonly="1"/>
+                        <field name="amount_remaining_planning" readonly="1"/>
+                    </group>
+                    <group string="Retention (garanzia)">
+                        <field name="retention_percent"/>
+                        <field name="retention_amount" readonly="1"/>
+                        <field name="retention_withheld_to_date" readonly="1"/>
+                        <field name="retention_on_unbilled" readonly="1"/>
+                        <field name="retention_remaining" readonly="1"/>
+                    </group>
+                    <group string="Estimate link and billing">
+                        <field name="estimate_line_ids" widget="many2many_tags"
+                               options="{'no_create': True}"
+                               context="{'default_estimate_id': estimate_id}"/>
+                        <field name="certificate_ref"/>
+                    </group>
+                    <group string="SAL progress (estimate)">
+                        <field name="cumulative_pct" readonly="1"/>
+                        <group>
+                            <field name="sal_1_pct"/>
+                            <field name="sal_2_pct"/>
+                            <field name="sal_3_pct"/>
+                            <field name="sal_4_pct"/>
+                            <field name="sal_5_pct"/>
+                            <field name="sal_6_pct"/>
+                            <field name="sal_7_pct"/>
+                            <field name="sal_8_pct"/>
+                            <field name="sal_9_pct"/>
+                            <field name="sal_10_pct"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

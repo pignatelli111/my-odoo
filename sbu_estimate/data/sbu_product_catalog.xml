@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!--
+        Suburban / ANACO material catalog (purchase_ok, consu).
+        Used in Distinta Base and RDA «Add lines from estimate BOM».
+        Codes map to ANACO import columns (see sbu_anaco_bom.py).
+    -->
+
+    <record id="product_tmpl_sbu_serramento" model="product.template">
+        <field name="name">Serramento (listino CAD)</field>
+        <field name="default_code">SBU-SERR</field>
+        <field name="type">consu</field>
+        <field name="purchase_ok" eval="True"/>
+        <field name="sale_ok" eval="False"/>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+    </record>
+    <record id="product_tmpl_sbu_oscuramento" model="product.template">
+        <field name="name">Oscuramento / schermatura</field>
+        <field name="default_code">SBU-OSC</field>
+        <field name="type">consu</field>
+        <field name="purchase_ok" eval="True"/>
+        <field name="sale_ok" eval="False"/>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+    </record>
+    <record id="product_tmpl_sbu_accessori" model="product.template">
+        <field name="name">Accessori serramento</field>
+        <field name="default_code">SBU-ACC</field>
+        <field name="type">consu</field>
+        <field name="purchase_ok" eval="True"/>
+        <field name="sale_ok" eval="False"/>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+    </record>
+    <record id="product_tmpl_sbu_kit_avvolgimento" model="product.template">
+        <field name="name">Kit avvolgimento</field>
+        <field name="default_code">SBU-KIT-AVV</field>
+        <field name="type">consu</field>
+        <field name="purchase_ok" eval="True"/>
+        <field name="sale_ok" eval="False"/>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+    </record>
+    <record id="product_tmpl_sbu_cassonetto" model="product.template">
+        <field name="name">Cassonetto</field>
+        <field name="default_code">SBU-CASS</field>
+        <field name="type">consu</field>
+        <field name="purchase_ok" eval="True"/>
+        <field name="sale_ok" eval="False"/>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+    </record>
+    <record id="product_tmpl_sbu_automatismo" model="product.template">
+        <field name="name">Automatismo</field>
+        <field name="default_code">SBU-AUTO</field>
+        <field name="type">consu</field>
+        <field name="purchase_ok" eval="True"/>
+        <field name="sale_ok" eval="False"/>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+    </record>
+    <record id="product_tmpl_sbu_zanzariera" model="product.template">
+        <field name="name">Zanzariera</field>
+        <field name="default_code">SBU-ZANZ</field>
+        <field name="type">consu</field>
+        <field name="purchase_ok" eval="True"/>
+        <field name="sale_ok" eval="False"/>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+    </record>
+    <record id="product_tmpl_sbu_vetro" model="product.template">
+        <field name="name">Vetro</field>
+        <field name="default_code">SBU-VETRO</field>
+        <field name="type">consu</field>
+        <field name="purchase_ok" eval="True"/>
+        <field name="sale_ok" eval="False"/>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+    </record>
+    <record id="product_tmpl_sbu_pannello" model="product.template">
+        <field name="name">Pannello</field>
+        <field name="default_code">SBU-PANN</field>
+        <field name="type">consu</field>
+        <field name="purchase_ok" eval="True"/>
+        <field name="sale_ok" eval="False"/>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+    </record>
+    <record id="product_tmpl_sbu_controtelaio" model="product.template">
+        <field name="name">Controtelaio</field>
+        <field name="default_code">SBU-CT</field>
+        <field name="type">consu</field>
+        <field name="purchase_ok" eval="True"/>
+        <field name="sale_ok" eval="False"/>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+    </record>
+    <record id="product_tmpl_sbu_trasformazione" model="product.template">
+        <field name="name">Trasformazione</field>
+        <field name="default_code">SBU-TRAS</field>
+        <field name="type">consu</field>
+        <field name="purchase_ok" eval="True"/>
+        <field name="sale_ok" eval="False"/>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+    </record>
+    <record id="product_tmpl_sbu_smontaggio" model="product.template">
+        <field name="name">Smontaggio</field>
+        <field name="default_code">SBU-SMONT</field>
+        <field name="type">consu</field>
+        <field name="purchase_ok" eval="True"/>
+        <field name="sale_ok" eval="False"/>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+    </record>
+    <record id="product_tmpl_sbu_nolo" model="product.template">
+        <field name="name">Nolo / noleggio</field>
+        <field name="default_code">SBU-NOLO</field>
+        <field name="type">consu</field>
+        <field name="purchase_ok" eval="True"/>
+        <field name="sale_ok" eval="False"/>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+    </record>
+    <record id="product_tmpl_sbu_coibentazione" model="product.template">
+        <field name="name">Coibentazione / pacchetto</field>
+        <field name="default_code">SBU-COIB</field>
+        <field name="type">consu</field>
+        <field name="purchase_ok" eval="True"/>
+        <field name="sale_ok" eval="False"/>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+    </record>
+    <record id="product_tmpl_sbu_posa_lin" model="product.template">
+        <field name="name">Posa lamiera / lineare</field>
+        <field name="default_code">SBU-POSA-LIN</field>
+        <field name="type">consu</field>
+        <field name="purchase_ok" eval="True"/>
+        <field name="sale_ok" eval="False"/>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+    </record>
+    <record id="product_tmpl_sbu_trasporto" model="product.template">
+        <field name="name">Trasporto e imballo</field>
+        <field name="default_code">SBU-TRASP</field>
+        <field name="type">consu</field>
+        <field name="purchase_ok" eval="True"/>
+        <field name="sale_ok" eval="False"/>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+    </record>
+    <record id="product_tmpl_sbu_pm" model="product.template">
+        <field name="name">Sviluppo tecnico / PM</field>
+        <field name="default_code">SBU-PM</field>
+        <field name="type">consu</field>
+        <field name="purchase_ok" eval="True"/>
+        <field name="sale_ok" eval="False"/>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+    </record>
+    <record id="product_tmpl_sbu_cantiere" model="product.template">
+        <field name="name">Presidio cantiere / site management</field>
+        <field name="default_code">SBU-CANT</field>
+        <field name="type">consu</field>
+        <field name="purchase_ok" eval="True"/>
+        <field name="sale_ok" eval="False"/>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+    </record>
+    <record id="product_tmpl_sbu_extra" model="product.template">
+        <field name="name">Costi extra / voci aggiuntive</field>
+        <field name="default_code">SBU-EXTRA</field>
+        <field name="type">consu</field>
+        <field name="purchase_ok" eval="True"/>
+        <field name="sale_ok" eval="False"/>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+    </record>
+    <record id="product_tmpl_sbu_staffame" model="product.template">
+        <field name="name">Staffame (ST/LZ)</field>
+        <field name="default_code">SBU-STAFF</field>
+        <field name="type">consu</field>
+        <field name="purchase_ok" eval="True"/>
+        <field name="sale_ok" eval="False"/>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+    </record>
+    <record id="product_tmpl_sbu_maniglie" model="product.template">
+        <field name="name">Maniglie e maniglioni</field>
+        <field name="default_code">SBU-MAN</field>
+        <field name="type">consu</field>
+        <field name="purchase_ok" eval="True"/>
+        <field name="sale_ok" eval="False"/>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+    </record>
+    <record id="product_tmpl_sbu_la" model="product.template">
+        <field name="name">LA — lavorazioni accessorie</field>
+        <field name="default_code">SBU-LA</field>
+        <field name="type">consu</field>
+        <field name="purchase_ok" eval="True"/>
+        <field name="sale_ok" eval="False"/>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+    </record>
+    <record id="product_tmpl_sbu_all_sistema" model="product.template">
+        <field name="name">Sistema alluminio e accessori</field>
+        <field name="default_code">SBU-ALL-SYS</field>
+        <field name="type">consu</field>
+        <field name="purchase_ok" eval="True"/>
+        <field name="sale_ok" eval="False"/>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+    </record>
+    <record id="product_tmpl_sbu_acciaio_sistema" model="product.template">
+        <field name="name">Sistema acciaio EI e accessori</field>
+        <field name="default_code">SBU-ACC-SYS</field>
+        <field name="type">consu</field>
+        <field name="purchase_ok" eval="True"/>
+        <field name="sale_ok" eval="False"/>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+    </record>
+    <record id="product_tmpl_sbu_posa_ser" model="product.template">
+        <field name="name">Posa SER / FAC</field>
+        <field name="default_code">SBU-POSA-SER</field>
+        <field name="type">consu</field>
+        <field name="purchase_ok" eval="True"/>
+        <field name="sale_ok" eval="False"/>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+    </record>
+    <record id="product_tmpl_sbu_fw_finita" model="product.template">
+        <field name="name">Finestra finita (FW)</field>
+        <field name="default_code">SBU-FW</field>
+        <field name="type">consu</field>
+        <field name="purchase_ok" eval="True"/>
+        <field name="sale_ok" eval="False"/>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+    </record>
+    <record id="product_tmpl_sbu_profilo_all" model="product.template">
+        <field name="name">Profilo alluminio</field>
+        <field name="default_code">SBU-PROF-ALL</field>
+        <field name="type">consu</field>
+        <field name="purchase_ok" eval="True"/>
+        <field name="sale_ok" eval="False"/>
+        <field name="uom_id" ref="uom.product_uom_meter"/>
+    </record>
+    <record id="product_tmpl_sbu_vite" model="product.template">
+        <field name="name">Viti / ferramenta</field>
+        <field name="default_code">SBU-VITE</field>
+        <field name="type">consu</field>
+        <field name="purchase_ok" eval="True"/>
+        <field name="sale_ok" eval="False"/>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+    </record>
+</odoo>

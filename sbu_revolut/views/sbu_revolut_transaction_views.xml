@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sbu_revolut_transaction_list" model="ir.ui.view">
+        <field name="name">sbu.revolut.transaction.list</field>
+        <field name="model">sbu.revolut.transaction</field>
+        <field name="arch" type="xml">
+            <list string="Revolut movements">
+                <header>
+                    <button name="action_import_now" type="object" string="Import now" class="btn-secondary" display="always"/>
+                    <button name="action_export_csv_selection" type="object" string="Export CSV" class="btn-secondary" display="always"/>
+                </header>
+                <field name="settled_at"/>
+                <field name="revolut_remote_id"/>
+                <field name="revolut_type"/>
+                <field name="amount_signed"/>
+                <field name="currency_id"/>
+                <field name="label"/>
+                <field name="reference"/>
+                <field name="state" widget="badge"/>
+                <field name="match_payment_id" optional="show"/>
+                <field name="match_invoice_id" optional="show"/>
+                <field name="source"/>
+                <field name="company_id" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_sbu_revolut_transaction_form" model="ir.ui.view">
+        <field name="name">sbu.revolut.transaction.form</field>
+        <field name="model">sbu.revolut.transaction</field>
+        <field name="arch" type="xml">
+            <form string="Revolut movement">
+                <header>
+                    <button name="action_match_odoo" string="Match in Odoo" type="object" class="btn-primary" invisible="state != 'imported'"/>
+                    <button name="action_ignore" string="Ignore" type="object" class="btn-secondary" invisible="state != 'imported'"/>
+                    <button name="action_export_csv" string="Export CSV" type="object" class="btn-secondary"/>
+                    <field name="state" widget="statusbar" statusbar_visible="imported,matched,ignored"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="revolut_remote_id"/>
+                            <field name="source"/>
+                            <field name="revolut_type"/>
+                            <field name="revolut_state"/>
+                        </group>
+                        <group>
+                            <field name="amount"/>
+                            <field name="amount_signed"/>
+                            <field name="currency_id"/>
+                            <field name="settled_at"/>
+                            <field name="created_at_revolut"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="label"/>
+                        <field name="reference"/>
+                        <field name="note"/>
+                    </group>
+                    <group string="Odoo links (reconciliation aid)">
+                        <field name="match_payment_id"/>
+                        <field name="match_invoice_id"/>
+                    </group>
+                    <notebook>
+                        <page string="Raw Revolut payload" name="raw">
+                            <field name="raw_json" widget="text" nolabel="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sbu_revolut_transaction" model="ir.actions.act_window">
+        <field name="name">Revolut movements</field>
+        <field name="res_model">sbu.revolut.transaction</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Import movements from Revolut Business (API or webhook). Revolut stays the bank of record; use Match in Odoo to link customer payments or invoices, or Export CSV as a bridge to spreadsheets.
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="menu_sbu_revolut_movements"
+        name="Revolut movements"
+        parent="account.menu_finance"
+        action="action_sbu_revolut_transaction"
+        sequence="121"
+    />
+</odoo>

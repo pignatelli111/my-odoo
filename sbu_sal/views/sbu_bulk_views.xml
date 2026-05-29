@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sbu_sal_sheet_line_bulk_list" model="ir.ui.view">
+        <field name="name">sbu.sal.sheet.line.bulk.list</field>
+        <field name="model">sbu.sal.sheet.line</field>
+        <field name="arch" type="xml">
+            <list string="SAL sheet lines" create="0" delete="0">
+                <field name="sheet_id"/>
+                <field name="project_id" optional="show"/>
+                <field name="estimate_sal_line_id" optional="show"/>
+                <field name="description"/>
+                <field name="contract_amount" optional="show"/>
+                <field name="percent_this_sal"/>
+                <field name="amount_this_sal" optional="show"/>
+                <field name="sheet_state" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_sbu_sal_sheet_line_bulk_search" model="ir.ui.view">
+        <field name="name">sbu.sal.sheet.line.bulk.search</field>
+        <field name="model">sbu.sal.sheet.line</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="description"/>
+                <field name="sheet_id"/>
+                <field name="project_id"/>
+                <field name="estimate_sal_line_id"/>
+                <separator/>
+                <filter string="Group by sheet" name="grp_sheet" context="{'group_by': 'sheet_id'}"/>
+                <filter string="Group by project" name="grp_project" context="{'group_by': 'project_id'}"/>
+                <searchpanel>
+                    <field name="project_id" string="Project / Job" enable_counters="1" limit="40"/>
+                    <field name="sheet_state" string="Sheet status" enable_counters="1"/>
+                    <field name="estimate_id" string="Estimate" enable_counters="1" limit="30"/>
+                </searchpanel>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_sbu_sal_sheet_line_bulk_list" model="ir.actions.act_window">
+        <field name="name">SAL sheet lines (bulk edit)</field>
+        <field name="res_model">sbu.sal.sheet.line</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_sbu_sal_sheet_line_bulk_list"/>
+        <field name="search_view_id" ref="view_sbu_sal_sheet_line_bulk_search"/>
+    </record>
+
+    <record id="view_sbu_sal_passive_line_bulk_list" model="ir.ui.view">
+        <field name="name">sbu.sal.passive.line.bulk.list</field>
+        <field name="model">sbu.sal.passive.line</field>
+        <field name="arch" type="xml">
+            <list string="Passive SAL lines" create="0" delete="0">
+                <field name="sheet_id"/>
+                <field name="project_id" optional="show"/>
+                <field name="category"/>
+                <field name="description"/>
+                <field name="budget_amount" optional="show"/>
+                <field name="percent_this_sal"/>
+                <field name="amount_this_sal" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_sbu_sal_passive_line_bulk_search" model="ir.ui.view">
+        <field name="name">sbu.sal.passive.line.bulk.search</field>
+        <field name="model">sbu.sal.passive.line</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="description"/>
+                <field name="sheet_id"/>
+                <field name="project_id"/>
+                <separator/>
+                <filter string="Group by sheet" name="grp_sheet" context="{'group_by': 'sheet_id'}"/>
+                <searchpanel>
+                    <field name="project_id" string="Project / Job" enable_counters="1" limit="40"/>
+                    <field name="category" string="Cost type" enable_counters="1"/>
+                    <field name="sheet_state" string="Sheet status" enable_counters="1"/>
+                </searchpanel>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_sbu_sal_passive_line_bulk_list" model="ir.actions.act_window">
+        <field name="name">Passive SAL lines (bulk edit)</field>
+        <field name="res_model">sbu.sal.passive.line</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_sbu_sal_passive_line_bulk_list"/>
+        <field name="search_view_id" ref="view_sbu_sal_passive_line_bulk_search"/>
+    </record>
+
+    <record id="view_sbu_sal_sheet_line_bulk_wizard_form" model="ir.ui.view">
+        <field name="name">sbu.sal.sheet.line.bulk.wizard.form</field>
+        <field name="model">sbu.sal.sheet.line.bulk.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Apply to SAL lines">
+                <group>
+                    <field name="apply_scope" widget="radio"/>
+                    <field name="target_count" readonly="1"/>
+                    <field name="sheet_id" readonly="1" invisible="not sheet_id"/>
+                </group>
+                <group string="Fields to apply">
+                    <label for="apply_percent_this_sal"/>
+                    <div class="o_row">
+                        <field name="apply_percent_this_sal" nolabel="1"/>
+                        <field name="percent_this_sal" nolabel="1" invisible="not apply_percent_this_sal"
+                               required="apply_percent_this_sal"/>
+                    </div>
+                    <label for="apply_retention_on_sheet"/>
+                    <div class="o_row">
+                        <field name="apply_retention_on_sheet" nolabel="1"/>
+                        <field name="retention_percent" nolabel="1"
+                               invisible="not apply_retention_on_sheet"
+                               required="apply_retention_on_sheet"/>
+                    </div>
+                </group>
+                <footer>
+                    <button name="action_apply" string="Apply" type="object" class="btn-primary"/>
+                    <button string="Cancel" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sbu_sal_sheet_line_bulk_wizard" model="ir.actions.act_window">
+        <field name="name">Apply to selected lines</field>
+        <field name="res_model">sbu.sal.sheet.line.bulk.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="model_sbu_sal_sheet_line"/>
+        <field name="binding_view_types">list</field>
+    </record>
+    <record id="action_sbu_sal_sheet_line_bulk_wizard_filtered" model="ir.actions.act_window">
+        <field name="name">Apply to filtered result</field>
+        <field name="res_model">sbu.sal.sheet.line.bulk.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{'default_apply_scope': 'filtered'}</field>
+        <field name="binding_model_id" ref="model_sbu_sal_sheet_line"/>
+        <field name="binding_view_types">list</field>
+    </record>
+
+    <record id="view_sbu_sal_passive_line_bulk_wizard_form" model="ir.ui.view">
+        <field name="name">sbu.sal.passive.line.bulk.wizard.form</field>
+        <field name="model">sbu.sal.passive.line.bulk.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Apply to passive SAL lines">
+                <group>
+                    <field name="apply_scope" widget="radio"/>
+                    <field name="target_count" readonly="1"/>
+                    <field name="sheet_id" readonly="1" invisible="not sheet_id"/>
+                </group>
+                <group string="Fields to apply">
+                    <label for="apply_percent_this_sal"/>
+                    <div class="o_row">
+                        <field name="apply_percent_this_sal" nolabel="1"/>
+                        <field name="percent_this_sal" nolabel="1" invisible="not apply_percent_this_sal"
+                               required="apply_percent_this_sal"/>
+                    </div>
+                    <label for="apply_category"/>
+                    <div class="o_row">
+                        <field name="apply_category" nolabel="1"/>
+                        <field name="category" nolabel="1" invisible="not apply_category"
+                               required="apply_category"/>
+                    </div>
+                </group>
+                <footer>
+                    <button name="action_apply" string="Apply" type="object" class="btn-primary"/>
+                    <button string="Cancel" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sbu_sal_passive_line_bulk_wizard" model="ir.actions.act_window">
+        <field name="name">Apply to selected lines</field>
+        <field name="res_model">sbu.sal.passive.line.bulk.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="model_sbu_sal_passive_line"/>
+        <field name="binding_view_types">list</field>
+    </record>
+    <record id="action_sbu_sal_passive_line_bulk_wizard_filtered" model="ir.actions.act_window">
+        <field name="name">Apply to filtered result</field>
+        <field name="res_model">sbu.sal.passive.line.bulk.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{'default_apply_scope': 'filtered'}</field>
+        <field name="binding_model_id" ref="model_sbu_sal_passive_line"/>
+        <field name="binding_view_types">list</field>
+    </record>
+</odoo>

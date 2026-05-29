@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Estimate line detail form -->
+    <record id="view_sbu_estimate_line_form" model="ir.ui.view">
+        <field name="name">sbu.estimate.line.form</field>
+        <field name="model">sbu.estimate.line</field>
+        <field name="arch" type="xml">
+            <form string="Riga Preventivo">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="pos"/>
+                            <field name="item_code"/>
+                            <field name="description"/>
+                            <field name="note" placeholder="es. vetro da confermare; escluso ponteggio; listino 2026…"/>
+                            <field name="calc_uom_type"/>
+                            <field name="cost_family"/>
+                            <field name="workflow_route" readonly="1"/>
+                            <field name="qty"/>
+                            <field name="width_mm"/>
+                            <field name="height_mm"/>
+                            <field name="sqm_per_piece" readonly="1"/>
+                            <field name="sqm" readonly="1"/>
+                            <field name="uom_id"/>
+                        </group>
+                        <group string="Sconti a catena (ANACO)">
+                            <field name="price_gross_cad" readonly="1"/>
+                            <field name="discount_sc1"/>
+                            <field name="discount_sc2"/>
+                            <field name="discount_sc3"/>
+                            <field name="price_after_discounts_cad" readonly="1"/>
+                            <field name="price_after_discounts_tot" readonly="1"/>
+                            <field name="commission_pct"/>
+                            <field name="cost_anaco_bb_cad" optional="show"/>
+                            <field name="cost_anaco_bc_tot" optional="hide"/>
+                            <field name="price_anaco_bs_cad"
+                                   string="Prezzo unit. ANACO (BS)"/>
+                            <field name="price_total_cad" readonly="1"/>
+                            <field name="price_total_tot" readonly="1"/>
+                            <field name="price_per_sqm" readonly="1"/>
+                            <field name="unit_rate_label" readonly="1"/>
+                            <field name="price_unit_rate" readonly="1"/>
+                        </group>
+                        <group string="Sconti a catena costo (ANACO)">
+                            <field name="cost_gross_cad" readonly="1"/>
+                            <field name="cost_after_discounts_cad" readonly="1"/>
+                            <field name="cost_after_discounts_tot" readonly="1"/>
+                        </group>
+                        <group string="Componenti prezzo (dettaglio)">
+                            <field name="price_serramento_cad"/>
+                            <field name="price_oscuramento_cad"/>
+                            <field name="price_vetro_cad"/>
+                            <field name="price_pannello_cad"/>
+                            <field name="price_controtelaio_cad"/>
+                            <field name="price_accessori_cad"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="cost_coibentazione_cad"/>
+                            <field name="cost_posa_lamiera_lin_cad"/>
+                            <field name="cost_industrial_pct"/>
+                            <field name="cost_mol_pct"/>
+                            <field name="cost_tech_pm_cad"/>
+                            <field name="cost_trasporto_cad"/>
+                            <field name="cost_cantiere_cad"/>
+                            <field name="cost_staffame_cad"/>
+                            <field name="cost_extra_cad"/>
+                            <field name="cost_industrial_cad" readonly="1"/>
+                            <field name="cost_mol_amount_cad" readonly="1"/>
+                            <field name="cost_bom_total" readonly="1"/>
+                            <field name="cost_total_cad" readonly="1"/>
+                            <field name="cost_total_tot" readonly="1"/>
+                            <field name="cost_per_sqm" readonly="1"/>
+                            <field name="cost_unit_rate" readonly="1"/>
+                            <field name="margin_amount" readonly="1"/>
+                            <field name="margin_pct" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Distinta Base (ITEM)">
+                            <field name="bom_line_ids">
+                                <list editable="bottom"
+                                      decoration-success="manual_input_pending"
+                                      decoration-muted="manual_input_state == 'imported'">
+                                    <field name="product_id"/>
+                                    <field name="description"/>
+                                    <field name="calc_type"/>
+                                    <field name="width_mm_effective" optional="hide"/>
+                                    <field name="height_mm_effective" optional="hide"/>
+                                    <field name="sqm_per_piece_effective" optional="show"/>
+                                    <field name="sqm_coverage_factor" optional="hide"/>
+                                    <field name="height_adjust_mm" optional="hide"/>
+                                    <field name="qty_formula_factor"/>
+                                    <field name="manual_input_state" column_invisible="1"/>
+                                    <field name="manual_input_pending" column_invisible="1"/>
+                                    <field name="manual_dim_pending" column_invisible="1"/>
+                                    <field name="needs_technical_confirm" column_invisible="1"/>
+                                    <field name="dimension_display" optional="show"/>
+                                    <field name="depth_mm" optional="hide"/>
+                                    <field name="unit_cost"/>
+                                    <field name="technical_confirmed" optional="show"
+                                           decoration-warning="needs_technical_confirm and manual_input_pending and not technical_confirmed"/>
+                                    <field name="data_phase" optional="show"/>
+                                    <field name="pack_size"/>
+                                    <field name="demand_loss_pct" optional="show"/>
+                                    <field name="demand_moq" optional="show"/>
+                                    <field name="qty_theoretical" readonly="1"/>
+                                    <field name="qty_ordered" readonly="1"/>
+                                    <field name="uom_id"/>
+                                    <field name="total_cost" readonly="1"/>
+                                    <field name="note"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

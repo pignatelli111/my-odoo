@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_sbu_invoice_sal_detail" model="ir.actions.report">
+        <field name="name">Fattura con dettaglio SAL (SBU)</field>
+        <field name="model">account.move</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">sbu_sal.report_sbu_invoice_sal_detail_document</field>
+        <field name="report_file">sbu_sal.report_sbu_invoice_sal_detail_document</field>
+        <field name="print_report_name">'%s-dettaglio-SAL' % (object.name or 'fattura')</field>
+        <field name="binding_model_id" ref="account.model_account_move"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_sbu_invoice_sal_detail_document">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-set="sheet" t-value="o.sbu_sal_sheet_id"/>
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h2>Fattura cliente — dettaglio SAL</h2>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>Fattura:</strong>
+                                <span t-field="o.name"/>
+                                <br/>
+                                <strong>Cliente:</strong>
+                                <span t-field="o.partner_id"/>
+                                <br/>
+                                <strong>Data fattura:</strong>
+                                <span t-field="o.invoice_date" t-options="{'widget': 'date'}"/>
+                            </div>
+                            <div class="col-6">
+                                <strong>Commessa:</strong>
+                                <span t-esc="sheet.project_id.sbu_revision_label if sheet and sheet.project_id else (sheet.project_id.display_name if sheet and sheet.project_id else '—')"/>
+                                <br/>
+                                <strong>Preventivo:</strong>
+                                <span t-esc="sheet.estimate_id.display_name if sheet and sheet.estimate_id else '—'"/>
+                                <br/>
+                                <strong>Riferimento SAL:</strong>
+                                <span t-esc="sheet.name if sheet else (o.ref or o.invoice_origin or '—')"/>
+                                <br/>
+                                <strong>Periodo SAL:</strong>
+                                <span t-field="sheet.date" t-options="{'widget': 'date'}" t-if="sheet"/>
+                                <span t-if="not sheet">—</span>
+                                <br/>
+                                <strong>CDP:</strong>
+                                <span t-esc="o.sbu_sal_cdp_name or '—'"/>
+                            </div>
+                        </div>
+
+                        <t t-if="sheet and sheet.line_ids">
+                            <h4 class="mt-4">Voci contrattuali — periodo SAL</h4>
+                            <table class="table table-sm o_main_table">
+                                <thead>
+                                    <tr>
+                                        <th>Voce</th>
+                                        <th>Descrizione</th>
+                                        <th>U.M.</th>
+                                        <th class="text-end">Q.tà contratto</th>
+                                        <th class="text-end">Prezzo unit.</th>
+                                        <th class="text-end">% SAL</th>
+                                        <th class="text-end">Importo periodo</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="sheet.line_ids" t-as="line">
+                                        <tr>
+                                            <td><span t-esc="line.item_ref or ''"/></td>
+                                            <td><span t-esc="line.description"/></td>
+                                            <td><span t-esc="line.uom_label or ''"/></td>
+                                            <td class="text-end">
+                                                <span t-field="line.qty_display"
+                                                      t-options="{'widget': 'float', 'precision': 3}"/>
+                                            </td>
+                                            <td class="text-end">
+                                                <span t-field="line.unit_price_display"
+                                                      t-options="{'widget': 'monetary', 'display_currency': sheet.currency_id}"/>
+                                            </td>
+                                            <td class="text-end">
+                                                <span t-esc="'%.2f' % (line.percent_this_sal or 0.0)"/>%
+                                            </td>
+                                            <td class="text-end">
+                                                <span t-field="line.amount_this_sal"
+                                                      t-options="{'widget': 'monetary', 'display_currency': sheet.currency_id}"/>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="6" class="text-end"><strong>Lordo periodo</strong></td>
+                                        <td class="text-end">
+                                            <strong t-field="sheet.amount_gross"
+                                                    t-options="{'widget': 'monetary', 'display_currency': sheet.currency_id}"/>
+                                        </td>
+                                    </tr>
+                                    <tr t-if="sheet.amount_retention">
+                                        <td colspan="6" class="text-end">
+                                            Ritenuta (<span t-esc="'%.2f' % (sheet.retention_percent or 0.0)"/>%)
+                                        </td>
+                                        <td class="text-end">
+                                            <span t-field="sheet.amount_retention"
+                                                  t-options="{'widget': 'monetary', 'display_currency': sheet.currency_id}"/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="6" class="text-end"><strong>Netto da pagare (SAL)</strong></td>
+                                        <td class="text-end">
+                                            <strong t-field="sheet.amount_net"
+                                                    t-options="{'widget': 'monetary', 'display_currency': sheet.currency_id}"/>
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                            <p class="text-muted mt-2">
+                                Le righe contabili della fattura possono riassumere lordo e ritenuta;
+                                questo allegato elenca ogni voce contrattuale fatturata nel periodo SAL.
+                            </p>
+                        </t>
+                        <t t-else="">
+                            <p class="alert alert-warning">
+                                Nessun foglio SAL collegato a questa fattura. Usare la stampa standard Odoo
+                                oppure creare la fattura da un foglio SAL SBU.
+                            </p>
+                        </t>
+
+                        <h4 class="mt-4">Righe contabili fattura (IVA)</h4>
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Descrizione</th>
+                                    <th class="text-end">Q.tà</th>
+                                    <th class="text-end">Prezzo unit.</th>
+                                    <th class="text-end">Imponibile</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="o.invoice_line_ids" t-as="inv_line">
+                                    <tr t-if="inv_line.display_type not in ('line_section', 'line_note')">
+                                        <td><span t-esc="inv_line.name"/></td>
+                                        <td class="text-end"><span t-field="inv_line.quantity"/></td>
+                                        <td class="text-end">
+                                            <span t-field="inv_line.price_unit"
+                                                  t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
+                                        </td>
+                                        <td class="text-end">
+                                            <span t-field="inv_line.price_subtotal"
+                                                  t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                        <div class="row mt-3">
+                            <div class="col-6 offset-6">
+                                <table class="table table-sm">
+                                    <tr>
+                                        <td>Imponibile</td>
+                                        <td class="text-end">
+                                            <span t-field="o.amount_untaxed"
+                                                  t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>IVA</td>
+                                        <td class="text-end">
+                                            <span t-field="o.amount_tax"
+                                                  t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Totale</strong></td>
+                                        <td class="text-end">
+                                            <strong t-field="o.amount_total"
+                                                    t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

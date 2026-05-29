@@ -1,0 +1,36 @@
+Excel sources next to ANACO (same «New folder» tree)
+==============================================
+
+Scan command (from repo root):
+  python tools/dump_excel_workbooks.py
+Generates (local only, gitignored): docs/excel_workbooks_inventory.json
+
+Files found and Odoo mapping
+-----------------------------
+
+1) CARTELLA PREVENTIVO\ANALISI E PREVENTIVO\ANACO_REV7_111122.xlsx
+   Sheets: OFFERTA, ANACO, ITEM, Voci Contrattuali_SAL, Sommario-SAL01-DIC21, SUMMARY COSTI
+   -> sbu_estimate (+ docs/ANACO_REFERENCE.txt). Optional col.BS: price_anaco_bs_cad.
+
+2) Definizioni generali per ERP.xlsx
+   Sheets: DATI E FLUSSI, FA_FV, REPORT, MODULI ERP
+   -> Glossary / process map (RDA/ACP/ACO/LDS wording). Use as functional spec; no 1:1 import.
+
+3) 2_..._2_3_SOTTOMISSIONI\STD_SBB_SCHEDASOTTOMISSIONE.xlsx
+   Sheet: SOTTOMISSIONE N — Project, Job N°, Drawn/Checked/Approved by.
+   -> sbu_purchase_flow header fields (drawn_by, check_by) align labels; future sbu_documents.
+
+4) 4_..._4_10_1_RDA\P0105_20_RDA-044_00.xlsx
+   Sheets: esempio RDA, RDA — «RICHIESTA DI ACQUISTO MATERIALI PRIMARI - RDA»
+   Line header row ~11: POS., DESCRIZIONE, COD. ARTICOLO, DIMENSIONE mm, UTILIZZO, PESO Kg,
+   QUANTITA', UNITA', DATA CONSEGNA, note, DESTINATION, APPROVVIGIONAMENTO (MAGAZZINO/ACQUISTO).
+   -> sbu.purchase.request (type rda) + sbu.purchase.request.line extended fields.
+
+5) 4_..._4_10_2_ACP\P0105_2020 ACP 08_00.xlsx — ACCESSORI POSA- ACP (same family as RDA lines)
+6) 4_..._4_10_3_ACO\P0105_20_ACO-001_01.xlsx — ACO workshop accessories
+7) 4_..._4_10_4_LDS\P105-2020-LDS06_00.xlsx — shipping list
+   -> sbu.purchase.request request_type acp / aco / lds + same line layout as RDA template.
+
+8) 2_..._Etichetta per vetri Rev 00.xlsx — label printout; no calculation parity in Odoo.
+
+Note: only one .xlsx sits inside ANALISI E PREVENTIVO; other workbooks live under COMPLIANCE COMMESSA.

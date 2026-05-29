@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_inherit_sbu" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.sbu</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base_setup.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <!-- SBU blocks live under General Settings (one <app>) so the Settings client stays stable; Qonto/Revolut/Logikal xpaths still target named blocks. -->
+            <xpath expr="//app[@name='general_settings']" position="inside">
+                <block title="Microsoft Graph (SBU)" name="sbu_integration_block">
+                        <setting string="Enable Graph sync" help="Allows project users to run “Sync folder from Graph” when drive and item ids are set.">
+                            <field name="sbu_graph_sync_enabled"/>
+                        </setting>
+                        <setting string="Tenant ID" help="Azure AD / Entra ID tenant (directory) ID.">
+                            <field name="sbu_graph_tenant_id"/>
+                        </setting>
+                        <setting string="Application (client) ID" help="App registration client id with Sites.Read.All / Files.Read.All (or narrower) as required.">
+                            <field name="sbu_graph_client_id"/>
+                        </setting>
+                        <setting string="Client secret" help="From Certificates &amp; secrets in the app registration. Stored in system parameters; keep rotation discipline.">
+                            <field name="sbu_graph_client_secret" password="True" groups="base.group_system"/>
+                        </setting>
+                        <setting string="PDF handling" help="Index only keeps names and deep links in Odoo; fetching stores PDF binaries as project attachments (deduplicated by Graph item id).">
+                            <field name="sbu_graph_pdf_mode"/>
+                        </setting>
+                        <setting string="PDF max size (bytes)" help="Hard limit per file when fetch mode is enabled.">
+                            <field name="sbu_graph_pdf_max_bytes"/>
+                        </setting>
+                        <div class="mt-2">
+                            <button name="action_sbu_test_graph_connection" type="object"
+                                    string="Test Graph connection" class="btn-secondary"
+                                    icon="fa-plug"/>
+                        </div>
+                </block>
+                <block title="OneDrive / SharePoint (SBU convention)" name="sbu_onedrive_block">
+                        <setting string="Folder name prefix" help="Suggested job folder names use: prefix + Codice Commessa + separator + name slug (see project Document hub).">
+                            <field name="sbu_onedrive_folder_prefix" placeholder="SBU-"/>
+                        </setting>
+                        <setting string="Code / slug separator" help="Single character between job code and project name slug.">
+                            <field name="sbu_onedrive_folder_separator" placeholder="_"/>
+                        </setting>
+                        <setting string="Name slug max length" help="Limits the project-name portion for Microsoft 365 path length.">
+                            <field name="sbu_onedrive_folder_slug_max"/>
+                        </setting>
+                        <setting string="Root library URL" help="Where SBU staff create project folders (team site or document library).">
+                            <field name="sbu_onedrive_root_url" widget="url"/>
+                        </setting>
+                        <setting string="Ownership policy" help="Internal rules: custodian role, M365 group, who may rename or archive folders.">
+                            <field name="sbu_onedrive_ownership_policy" widget="text" placeholder="e.g. Folders owned by Engineering-Projects M365 group; PM sets custodian on each job."/>
+                        </setting>
+                        <setting string="Teams / Planner / Outlook policy" help="When to use Odoo tasks vs Planner; shared channel naming; deep links only (no duplicate task sync).">
+                            <field name="sbu_m365_collaboration_policy" widget="text" placeholder="e.g. Execution in Planner; Odoo task optional with link to Planner item; Teams shared channel per job."/>
+                        </setting>
+                </block>
+                <block title="Other integrations" name="sbu_integration_block_other">
+                        <setting string="Qonto organisation" help="Placeholder for a future Qonto bridge.">
+                            <field name="sbu_qonto_org"/>
+                        </setting>
+                        <setting string="Logikal API base URL" help="Middleware root URL for JSON imports (module sbu_logikal). Example: https://bridge.example.com">
+                            <field name="sbu_logikal_base_url"/>
+                        </setting>
+                </block>
+            </xpath>
+        </field>
+    </record>
+</odoo>

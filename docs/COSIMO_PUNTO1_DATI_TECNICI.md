@@ -1,0 +1,103 @@
+# Cosimo — Punto 1: ANACO stima vs documenti tecnici
+
+## Modello concordato
+
+| Fase | Fonte | Uso |
+|------|--------|-----|
+| **Stima** | ANACO / distinta preventivo | Preventivo, contratto, bozza RDA |
+| **Revisione tecnica** | RDA/ACO/ACP/VT… (Excel o DWG/DF consulenti) | Misure e costi **reali** |
+| **Pronto per PO** | Righe confermate in Odoo | RFQ / ordine fornitore |
+
+## Regole distinta (da ANACO)
+
+| Prodotto | Regola |
+|----------|--------|
+| **SBU-VETRO** | MQ = **90%** di B×H posizione (mq/cad); richiede conferma tecnica |
+| **SBU-ZANZ** | Altezza effettiva = H posizione **+ 300 mm**; mq da B×H effettivi |
+| **SBU-OSC** | Come zanzariere (+300 mm H) |
+
+Campi in **Distinta (ITEM)**: `Dimensioni`, `MQ/cad eff.`, `Confermato per PO`, `Fase dati`.
+
+## Flusso RDA
+
+1. **Aggiungi righe da distinta** → stima con dimensioni calcolate.  
+2. **Avvia revisione tecnica** → aggiornare misure da documento consulente (righe distinta o RDA).  
+3. Spuntare **Confermato per PO** sulle righe vetro/zanzariere/oscuranti.  
+4. **Pronto per RFQ/PO** → abilita **Create draft RFQ(s)**.  
+
+Senza passo 4, la creazione RFQ è bloccata con messaggio esplicativo.
+
+## Prossimi passi (non in questo commit)
+
+- Import Excel RDA/ACO/ACP per sovrascrivere righe.  
+- Logikal → flag «bozza Logikal» + applica mq.  
+- Costi reali su **offerte fornitore** (già separati da costo CAD ANACO).
+
+---
+
+## Punto 2 — Dimensioni su RFQ / PO
+
+Colonne su **righe RFQ/ordine acquisto** (oltre alla RDA):
+
+| Colonna | Campo |
+|---------|--------|
+| L mm | `sbu_width_mm` |
+| H mm | `sbu_height_mm` |
+| P mm | `sbu_depth_mm` (profondità non unitaria, da documento tecnico) |
+| MQ/cad | `sbu_sqm_per_piece` |
+| MQ tot. | `sbu_sqm_total` |
+| Dimensioni | riepilogo testuale |
+
+Copiate automaticamente alla **Create draft RFQ(s)**. Se aggiorni misure sulla RDA, usa **Refresh BOM quantities** per aggiornare anche le righe RFQ in bozza.
+
+---
+
+## Punto 3 — Filtri a tendina + applica a tutto il filtrato
+
+**Menu:** SBU → Acquisti → **Righe richiesta (modifica massiva)**
+
+### Filtri sezionabili (pannello sinistro)
+
+Come in area Acquisti Odoo: clic su **Tipo documento**, **Approvvigionamento**, **Priorità**, **Dati tecnici**, **Commessa** — con contatori.
+
+In alto: filtri rapidi (senza data, data consegna per periodo, RDA/VT/ST, priorità alta, …) e raggruppamenti.
+
+### Applicare un valore a tutto il filtrato
+
+1. Imposta i filtri (es. solo **RDA**, solo righe **senza data consegna**).  
+2. **Azione → Applica al risultato filtrato** (non serve selezionare ogni riga).  
+3. Nel wizard scegli **Tutto il risultato filtrato** (oppure solo righe selezionate).  
+4. Spunta i campi: **data consegna**, **destinazione**, **magazzino/acquisto**, **priorità**, **need-by testata RDA**.
+
+Alternativa: seleziona righe → **Applica alle righe selezionate**. Da testata RDA: **Applica a tutte le righe RDA**.
+
+Moduli: `sbu_purchase_flow` **19.0.1.0.28+**.
+
+---
+
+## Punto 5 — Route LA / LZ / ST / PAN / OSC negli elenchi
+
+**Menu:** SBU → Acquisti → **Nuovo documento acquisto** (wizard guidato)
+
+### Elenchi (filtri + pannello sinistro)
+
+Su **Richieste acquisto** e **Righe richiesta** compaiono filtri rapidi e facet **Route** per:
+
+| Route | Significato | Tipo Odoo |
+|-------|-------------|-----------|
+| LA | Lamiera alluminio | RDA |
+| LZ | Lamiera zincata / carpenteria | FE |
+| ST | Staffe | ST |
+| PAN | Pannelli | RDA |
+| OSC | Oscuranti (distinta SBU-OSC) | VT |
+| VC/VS | Vetro | VT |
+
+### Creazione guidata (anti-immondizia)
+
+1. Scegli commessa e **route** dall’elenco chiuso (no testo libero).  
+2. Campi obbligatori per route (es. **Topic** su LA/PAN, **data fabbisogno** su LA/LZ/ST/PAN/OSC).  
+3. Blocco se esiste già un documento **aperto** con stessa commessa + route.  
+4. Opzione **Carica righe da distinta** (preventivo vinto).  
+5. Da commessa: **By workflow** crea un documento per ogni route del preventivo (incluso OSC/ZANZ se in distinta).
+
+Moduli: `sbu_purchase_flow` **19.0.1.0.29+**.

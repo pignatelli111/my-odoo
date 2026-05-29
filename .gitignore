@@ -1,0 +1,6 @@
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Regenerate with: python tools/dump_excel_workbooks.py
+docs/excel_workbooks_inventory.json

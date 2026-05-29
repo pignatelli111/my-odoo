@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- TMS «Elenco elementi» route owners (origin Excel system). -->
+    <record id="route_ass" model="sbu.workflow.route">
+        <field name="default_drawn_by">Tecnomont</field>
+        <field name="default_author">Tecnomont</field>
+    </record>
+    <record id="route_acc" model="sbu.workflow.route">
+        <field name="default_drawn_by">Tecnomont</field>
+        <field name="default_author">Tecnomont</field>
+    </record>
+    <record id="route_gua" model="sbu.workflow.route">
+        <field name="default_drawn_by">Tecnomont</field>
+        <field name="default_author">Tecnomont</field>
+    </record>
+    <record id="route_pos" model="sbu.workflow.route">
+        <field name="default_drawn_by">TEU DESIGN</field>
+        <field name="default_author">TEU DESIGN</field>
+    </record>
+    <record id="route_lz" model="sbu.workflow.route">
+        <field name="default_drawn_by">Spini</field>
+        <field name="default_author">Spini</field>
+    </record>
+</odoo>

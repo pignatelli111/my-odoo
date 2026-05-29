@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_project_form_sbu_sal" model="ir.ui.view">
+        <field name="name">project.project.form.sbu.sal</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.edit_project"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="before">
+                <field name="sbu_estimate_id" invisible="1"/>
+            </xpath>
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_sbu_sal_sheets" type="object" class="oe_stat_button" icon="fa-book">
+                    <div class="o_stat_info">
+                        <span class="o_stat_value">
+                            <field name="sbu_sal_sheet_count"/>
+                        </span>
+                        <span class="o_stat_text">SAL cliente</span>
+                    </div>
+                </button>
+                <button name="action_view_sbu_sal_passive_sheets" type="object" class="oe_stat_button" icon="fa-wrench">
+                    <div class="o_stat_info">
+                        <span class="o_stat_value">
+                            <field name="sbu_sal_passive_sheet_count"/>
+                        </span>
+                        <span class="o_stat_text">SAL passivi</span>
+                    </div>
+                </button>
+                <button name="action_sbu_contractual_billing_overview" type="object"
+                        class="oe_stat_button" icon="fa-money"
+                        invisible="not sbu_estimate_id">
+                    <div class="o_stat_info">
+                        <span class="o_stat_text">Fatturazione contratto</span>
+                    </div>
+                </button>
+                <button name="action_sbu_customer_invoices" type="object"
+                        class="oe_stat_button" icon="fa-pencil-square-o"
+                        invisible="not sbu_estimate_id">
+                    <div class="o_stat_info">
+                        <span class="o_stat_text">Fatture cliente</span>
+                    </div>
+                </button>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="Avanzamento fatturazione" name="sbu_billing_dashboard"
+                      invisible="not sbu_estimate_id">
+                    <group>
+                        <group string="Riepilogo contratto">
+                            <field name="sbu_billing_contract_total" widget="monetary"/>
+                            <field name="sbu_billing_billed" widget="monetary"/>
+                            <field name="sbu_billing_remaining" widget="monetary"/>
+                            <field name="sbu_billing_progress_pct"/>
+                        </group>
+                        <group string="Documenti recenti">
+                            <field name="sbu_billing_open_sal_count"/>
+                            <field name="sbu_billing_last_cdp_id"/>
+                            <field name="sbu_billing_last_invoice_id"/>
+                        </group>
+                    </group>
+                    <div class="oe_button_box mb-2">
+                        <button name="action_sbu_contractual_billing_overview" type="object"
+                                string="Voci contrattuali SAL" class="btn-link" icon="fa-list"/>
+                        <button name="action_view_sbu_sal_sheets" type="object"
+                                string="Fogli SAL" class="btn-link" icon="fa-book"/>
+                        <button name="action_sbu_customer_invoices" type="object"
+                                string="Fatture cliente" class="btn-link" icon="fa-file-text-o"/>
+                    </div>
+                    <p class="text-muted">
+                        I totali derivano dalle voci contrattuali SAL del preventivo collegato alla commessa.
+                        Per il dettaglio per periodo usare i fogli SAL e la stampa «Fattura con dettaglio SAL (SBU)».
+                    </p>
+                </page>
+                <page string="Avanzamento posa (passivo)" name="sbu_passive_dashboard"
+                      invisible="not sbu_estimate_id">
+                    <group>
+                        <group string="Subappalto / posa">
+                            <field name="sbu_passive_budget_total" widget="monetary"/>
+                            <field name="sbu_passive_invoiced_total" widget="monetary"/>
+                            <field name="sbu_passive_progress_pct"/>
+                            <field name="sbu_sal_passive_sheet_count"/>
+                        </group>
+                    </group>
+                    <div class="oe_button_box mb-2">
+                        <button name="action_view_sbu_sal_passive_sheets" type="object"
+                                string="Fogli SAL passivi" class="btn-link" icon="fa-wrench"/>
+                    </div>
+                    <p class="text-muted">
+                        Budget da fogli SAL passivi (caricati dal preventivo ANACO).
+                        La % avanzamento usa gli importi dei SAL confermati/fatturati sul budget.
+                    </p>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

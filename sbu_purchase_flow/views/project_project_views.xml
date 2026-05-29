@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_project_form_sbu_purchase" model="ir.ui.view">
+        <field name="name">project.project.form.sbu.purchase</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.edit_project"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_sbu_open_tms_import_wizard" type="object"
+                        class="oe_stat_button" icon="fa-file-excel-o"
+                        title="Import origin TMS Excel (RDA, ACO, ACP, LDS, drawings).">
+                    <div class="o_stat_info">
+                        <span class="o_stat_text">TMS import</span>
+                    </div>
+                </button>
+                <button name="action_view_sbu_lds_entries" type="object"
+                        class="oe_stat_button" icon="fa-list-alt"
+                        invisible="sbu_lds_entry_count == 0">
+                    <div class="o_stat_info">
+                        <span class="o_stat_value">
+                            <field name="sbu_lds_entry_count"/>
+                        </span>
+                        <span class="o_stat_text">LDS</span>
+                    </div>
+                </button>
+                <button name="action_view_sbu_drawing_register" type="object"
+                        class="oe_stat_button" icon="fa-pencil-square-o"
+                        invisible="sbu_drawing_register_count == 0">
+                    <div class="o_stat_info">
+                        <span class="o_stat_value">
+                            <field name="sbu_drawing_register_count"/>
+                        </span>
+                        <span class="o_stat_text">Drawings</span>
+                    </div>
+                </button>
+                <button name="action_view_sbu_purchase_requests" type="object" class="oe_stat_button" icon="fa-truck">
+                    <div class="o_stat_info">
+                        <span class="o_stat_value">
+                            <field name="sbu_purchase_request_count"/>
+                        </span>
+                        <span class="o_stat_text">Purchase req.</span>
+                    </div>
+                </button>
+                <button name="action_sbu_create_demand_rda_from_estimate" type="object"
+                        class="oe_stat_button" icon="fa-cubes"
+                        invisible="not sbu_estimate_id or sbu_estimate_id.state != 'won'"
+                        title="Create an RDA and load demand lines from the won estimate BOM (loss %%, packs, MOQ).">
+                    <div class="o_stat_info">
+                        <span class="o_stat_text">Demand RDA</span>
+                    </div>
+                </button>
+                <button name="action_sbu_create_purchase_requests_by_workflow" type="object"
+                        class="oe_stat_button" icon="fa-sitemap"
+                        invisible="not sbu_estimate_id or sbu_estimate_id.state != 'won'"
+                        title="Create one purchase request per ANACO workflow route (VC/VS, ST, PAN, LA, …).">
+                    <div class="o_stat_info">
+                        <span class="o_stat_text">By workflow</span>
+                    </div>
+                </button>
+                <button name="action_sbu_open_budget_dashboard" type="object"
+                        class="oe_stat_button" icon="fa-pie-chart"
+                        invisible="not sbu_estimate_id"
+                        title="Estimate vs committed by cost family (ITEM traffic lights).">
+                    <div class="o_stat_info">
+                        <span class="o_stat_text">Purchase budget</span>
+                    </div>
+                </button>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="Logistica / delivery" name="sbu_delivery_logistics">
+                    <group>
+                        <group string="Site">
+                            <field name="sbu_site_subcontractor_id"/>
+                            <field name="sbu_system_supplier_id"/>
+                        </group>
+                        <group string="Glass">
+                            <field name="sbu_glass_delivery_mode" widget="radio"/>
+                        </group>
+                    </group>
+                    <div class="mb-2">
+                        <button name="action_sbu_apply_delivery_on_all_prs" type="object"
+                                string="Apply delivery standard on all purchase requests"
+                                class="btn-secondary"
+                                title="Recalculate DESTINATION on all purchase request lines for this job."/>
+                    </div>
+                    <p class="text-muted">
+                        Aluminium and ACO: typical route fabricator → site subcontractor (4–5 stops) → site.
+                        Glass: choose direct to site or the same subcontractor as aluminium.
+                    </p>
+                </page>
+                <page string="Purchase budget" name="sbu_budget_families"
+                      invisible="not sbu_estimate_id">
+                    <group>
+                        <field name="sbu_budget_po_unlock"
+                               groups="sbu_purchase_flow.group_sbu_budget_unlock,base.group_system"
+                               widget="boolean_toggle"/>
+                    </group>
+                    <div class="mb-2">
+                        <button name="action_sbu_refresh_budget_families" type="object"
+                                string="Refresh from estimate and purchases" class="btn-primary"/>
+                        <button name="action_sbu_open_budget_dashboard" type="object"
+                                string="Open dashboard" class="btn-secondary ms-1"/>
+                    </div>
+                    <field name="sbu_budget_family_ids" nolabel="1" readonly="1"
+                           context="{'default_project_id': id}">
+                        <list decoration-success="traffic_light == 'ok'"
+                              decoration-warning="traffic_light == 'warning'"
+                              decoration-danger="traffic_light == 'over'"
+                              create="false" delete="false">
+                            <field name="cost_family_label" string="Famiglia"/>
+                            <field name="budget_planned" string="Estimate"/>
+                            <field name="amount_open_pr" string="RDA"/>
+                            <field name="amount_po_draft" string="PO bozza"/>
+                            <field name="amount_po_confirmed" string="Ordini emessi"/>
+                            <field name="amount_actual" string="Costi sostenuti"/>
+                            <field name="amount_engaged" string="Impegnato tot."/>
+                            <field name="amount_residual" string="Residuo (impegnato)"/>
+                            <field name="amount_residual_actual" string="Residuo (consuntivo)" optional="hide"/>
+                            <field name="pct_engaged" string="Impegnato %"/>
+                            <field name="pct_actual" string="Consuntivo %"/>
+                            <field name="pct_residual" string="Residuo %"/>
+                            <field name="traffic_light" string="Semaforo" widget="badge"
+                                   decoration-success="traffic_light == 'ok'"
+                                   decoration-warning="traffic_light == 'warning'"
+                                   decoration-danger="traffic_light == 'over'"/>
+                        </list>
+                    </field>
+                </page>
+                <page string="TMS registers" name="sbu_tms_registers">
+                    <div class="mb-2">
+                        <button name="action_sbu_open_tms_import_wizard" type="object"
+                                string="Import TMS Excel" class="btn-primary"/>
+                    </div>
+                    <group string="LDS shipping register">
+                        <field name="sbu_lds_entry_ids" nolabel="1" context="{'default_project_id': id}">
+                            <list editable="bottom">
+                                <field name="lds_number"/>
+                                <field name="delivery_date"/>
+                                <field name="pos"/>
+                                <field name="description"/>
+                                <field name="article_code"/>
+                                <field name="product_qty"/>
+                                <field name="reference_rda"/>
+                                <field name="state"/>
+                            </list>
+                        </field>
+                    </group>
+                    <group string="Drawing approval register">
+                        <field name="sbu_drawing_register_ids" nolabel="1" context="{'default_project_id': id}">
+                            <list editable="bottom">
+                                <field name="drawing_code"/>
+                                <field name="name"/>
+                                <field name="revision"/>
+                                <field name="approval_state"/>
+                                <field name="last_emission_date"/>
+                                <field name="block_purchase"/>
+                            </list>
+                        </field>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,17 @@
+Phase 2 — index & when to push
+===============================
+
+Same as Phase 1: **no `git push` for each small step** unless you choose to.
+**Push** when Phase 2 milestone is reached (e.g. after Step 2.4) or when you want
+remote/Odoo.sh to see the full Phase 2 doc set.
+
+Runbooks:
+  docs/PHASE2_STEP2_1_anaco_field_formula_parity.txt  — Step 2.1
+  docs/PHASE2_STEP2_2_revisions_commercial_scenario.txt — Step 2.2
+  docs/PHASE2_STEP2_3_attachments_references.txt        — Step 2.3
+  docs/PHASE2_STEP2_4_optional_excel_import.txt           — Step 2.4
+
+Prerequisites: Phase 0 + Phase 1 complete in practice; ANACO workbook available
+(see docs/ANACO_REFERENCE.txt, docs/EXCEL_SOURCE_INDEX.txt).
+
+Next after Phase 2: Phase 3 — see docs/PHASE3_INDEX.txt (BOM → demand → procurement).

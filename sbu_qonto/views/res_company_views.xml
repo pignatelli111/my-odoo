@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_company_form_inherit_sbu_qonto" model="ir.ui.view">
+        <field name="name">res.company.form.inherit.sbu.qonto</field>
+        <field name="model">res.company</field>
+        <field name="inherit_id" ref="base.view_company_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Qonto (SBU)" name="sbu_qonto_company">
+                    <group string="API (bank of record stays in Qonto)" groups="account.group_account_manager">
+                        <field name="sbu_qonto_login"/>
+                        <field name="sbu_qonto_secret_key" password="True"/>
+                        <field name="sbu_qonto_iban"/>
+                        <field name="sbu_qonto_use_sandbox"/>
+                        <field name="sbu_qonto_staging_token" password="True"
+                               invisible="not sbu_qonto_use_sandbox"/>
+                        <field name="sbu_qonto_import_enabled"/>
+                        <field name="sbu_qonto_suggest_after_import"/>
+                        <field name="sbu_qonto_sync_partners_on_import"/>
+                        <field name="sbu_qonto_auto_match_high"/>
+                        <field name="sbu_qonto_auto_register_inbound"/>
+                        <field name="sbu_qonto_auto_register_outbound"/>
+                    </group>
+                    <group string="Webhook" groups="account.group_account_manager">
+                        <field
+                            name="sbu_qonto_webhook_token"
+                            password="True"
+                            placeholder="Same value as the &lt;token&gt; segment in /qonto/webhook/&lt;token&gt;"
+                        />
+                    </group>
+                    <div class="oe_button_box" groups="account.group_account_manager">
+                        <button
+                            name="action_sbu_test_qonto_connection"
+                            type="object"
+                            string="Test Qonto connection"
+                            class="btn-primary"
+                        />
+                        <button
+                            name="action_sbu_sync_qonto_partners"
+                            type="object"
+                            string="Sync Qonto suppliers"
+                            class="btn-secondary"
+                        />
+                    </div>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

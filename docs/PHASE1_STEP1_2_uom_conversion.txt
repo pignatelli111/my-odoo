@@ -1,0 +1,81 @@
+Phase 1 — Step 1.2: UoM & conversion policy (runbook)
+====================================================
+
+Goal: One **canonical** policy for **mm / m / m² / pcs** (and any extra units you
+use), with **pack / MOQ** defined at product or supplier level, and **defaults
+per category** aligned with Step 1.1.
+
+Prerequisite: Step 1.1 category tree agreed (or in progress for v1).
+
+Git: **no remote push for this step alone** — batch push when you leave Phase 1
+or hit an agreed milestone (see docs/PHASE1_INDEX.txt).
+
+A) Canonical units (pick one primary per dimension)
+---------------------------------------------------
+Recommended **primary** units in Odoo for SBU-style work:
+
+| Dimension   | Primary UoM | Typical use              |
+|-------------|---------------|--------------------------|
+| Length      | **m**         | Profiles, linear gasket  |
+| Small length| **mm**        | B, H on estimate (field) |
+| Area        | **m²**        | Panels, glass area       |
+| Count       | **Units (pz)**| Handles, kits as “each” |
+
+Rules to write in stone (edit):
+
+[ ] **B/H on estimate** stay in **mm** in SBU module; **mq** computed in **m²** — OK.
+[ ] **Purchasing profiles**: store and buy in **m** or **mm**? Decision: ________
+[ ] **Glass / panels**: buy in **m²** or **m** of height? Decision: ______________
+
+Avoid maintaining **both** m and mm for the **same** stock product without a clear
+conversion — pick the **stock UoM** and convert purchase quotes in spreadsheets
+only until Odoo packaging is filled.
+
+B) Odoo UoM setup (Inventory → Configuration → Units of Measure)
+-----------------------------------------------------------------
+[ ] Ensure categories exist: **Length**, **Area**, **Unit** (Odoo defaults).
+[ ] Under each, define only the units you need (e.g. mm, m, m², Unit).
+[ ] **Relative factors** must be exact (e.g. 1 m = 1000 mm). Double-check rounding.
+[ ] Odoo 19 note: if you use **relative UoM** links, follow the version’s model for
+    “reference unit” vs “bigger/smaller” — one reference per category line.
+
+C) Pack size & MOQ — where to store what
+----------------------------------------
+| Concept              | Where in Odoo (typical)              | Notes |
+|----------------------|--------------------------------------|-------|
+| Buy in packs of 6 m  | **Product packaging** (`product.packaging`) | Links to product UoM |
+| Supplier MOQ / pack  | **Vendor pricelist** line / packaging| Per supplier |
+| Min qty internal rule | Product **reordering rules** (later) | Phase 3+ |
+
+[ ] For **top 20 purchased** items: set packaging or vendor MOQ so RFQ/PO lines
+    default sensibly (even before automated demand).
+
+D) Defaults **per category** (link to 1.1)
+------------------------------------------
+For each **leaf category** from Step 1.1:
+
+[ ] Default **product UoM** (inventory) = _________________________________
+[ ] Default **purchase UoM** (if different) = _______________________________
+[ ] Default **sales UoM** (if you sell in m² but buy in m — document): _______
+
+E) Conversion discipline (human + system)
+-----------------------------------------
+[ ] Estimators use **only** agreed units on BOM lines (no ad-hoc “ml” vs “m”).
+[ ] Buyers use **supplier catalog unit** on PO with **packaging** when Odoo supports it.
+[ ] Document **rounding**: ceiling to pack vs floor — default: ________________
+
+F) Smoke test (staging)
+-----------------------
+[ ] Create product “TEST-PROFILE” in **m**, purchase packaging **6 m bar**.
+[ ] Create PO line 17 m → expect **3 × 6 m** or manual adjustment per your rule;
+    document what Odoo did vs what you want.
+[ ] Create product “TEST-PANEL” in **m²**; PO in m²; receipt in m².
+
+G) Sign-off
+-----------
+Date: ____________
+Verified by: ____________
+Buyer + estimator sign-off on unit policy: Y / N
+Notes: ______________________________________________________________________
+
+Next: docs/PHASE1_STEP1_3_supplier_master.txt — no push for this step alone; see docs/PHASE1_INDEX.txt

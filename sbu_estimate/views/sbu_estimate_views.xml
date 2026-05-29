@@ -1,0 +1,549 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ── List view ──────────────────────────────────────────────────────── -->
+    <record id="view_sbu_estimate_list" model="ir.ui.view">
+        <field name="name">sbu.estimate.list</field>
+        <field name="model">sbu.estimate</field>
+        <field name="arch" type="xml">
+            <list string="Estimates"
+                  delete="1"
+                  decoration-success="state == 'won'"
+                  decoration-danger="state == 'lost'"
+                  decoration-muted="state == 'cancelled'">
+                <field name="sbu_display_label"/>
+                <field name="sbu_is_latest_revision"
+                       decoration-success="sbu_is_latest_revision == True"
+                       decoration-muted="sbu_is_latest_revision == False"/>
+                <field name="name" optional="hide"/>
+                <field name="revision" optional="show"/>
+                <field name="date"/>
+                <field name="partner_id"/>
+                <field name="job_site"/>
+                <field name="total_sqm"/>
+                <field name="total_price" widget="monetary"/>
+                <field name="total_contract_sal" widget="monetary"/>
+                <field name="total_cost" widget="monetary"/>
+                <field name="expected_margin_pct"/>
+                <field name="probability"/>
+                <field name="commercial_scenario" optional="show"/>
+                <field name="approval_state" optional="hide"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'won'"
+                       decoration-danger="state == 'lost'"
+                       decoration-info="state == 'sent'"
+                       decoration-warning="state == 'draft'"/>
+                <field name="currency_id" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ── Form view ──────────────────────────────────────────────────────── -->
+    <record id="view_sbu_estimate_form" model="ir.ui.view">
+        <field name="name">sbu.estimate.form</field>
+        <field name="model">sbu.estimate</field>
+        <field name="arch" type="xml">
+            <form string="Estimate" delete="1">
+                <header>
+                    <button name="action_delete_preventivo"
+                            string="Delete"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="not can_delete_preventivo"
+                            title="Delete this estimate (draft only, no linked job)"/>
+                    <button name="action_send"
+                            string="Send"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state != 'draft' or (approval_required and approval_state != 'approved')"/>
+                    <button name="action_request_internal_approval"
+                            string="Request approval"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="state != 'draft' or not approval_required or approval_state not in ('na', 'rejected')"/>
+                    <button name="action_approve_internal"
+                            string="Approve"
+                            type="object"
+                            class="btn-success"
+                            groups="sbu_estimate.group_sbu_estimate_approver"
+                            invisible="approval_state != 'pending'"/>
+                    <button name="action_reject_internal"
+                            string="Reject"
+                            type="object"
+                            class="btn-danger"
+                            groups="sbu_estimate.group_sbu_estimate_approver"
+                            invisible="approval_state != 'pending'"/>
+                    <button name="action_won"
+                            string="Won"
+                            type="object"
+                            class="btn-success"
+                            invisible="state not in ('draft','sent')"/>
+                    <button name="action_lost"
+                            string="Lost"
+                            type="object"
+                            invisible="state not in ('draft','sent')"/>
+                    <button name="action_new_revision"
+                            string="New revision"
+                            type="object"
+                            invisible="state == 'cancelled'"/>
+                    <button name="action_reset_draft"
+                            string="Reset to draft"
+                            type="object"
+                            invisible="state not in ('sent','lost')"/>
+                    <button name="action_open_anaco_import_wizard"
+                            string="Import ANACO Excel"
+                            type="object"
+                            class="btn-secondary"/>
+                    <button name="action_print_offer"
+                            string="Print offer"
+                            type="object"
+                            class="btn-secondary"
+                            title="Offer PDF with lines and commercial terms"/>
+                    <button name="action_load_default_commercial_terms"
+                            string="Standard terms"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="state in ('won', 'cancelled')"
+                            title="Load default commercial terms (payment, retention, inclusions)"/>
+                    <field name="state"
+                           widget="statusbar"
+                           statusbar_visible="draft,sent,won"/>
+                </header>
+
+                <sheet>
+                    <field name="line_ids" invisible="1"/>
+                    <field name="can_delete_preventivo" invisible="1"/>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_revision_chain"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-code-fork"
+                                invisible="revision_same_name_count == 0">
+                            <field name="revision_same_name_count" widget="statinfo" string="Revisions"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                            <span> — </span>
+                            <field name="revision"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group string="Header">
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="partner_id"/>
+                            <field name="opportunity_id" groups="sbu_estimate.group_sbu_estimate_user"/>
+                            <field name="job_site"/>
+                            <field name="user_id"/>
+                        </group>
+                        <group string="Dates and commercial">
+                            <field name="date"/>
+                            <field name="validity_date"/>
+                            <field name="validity_days"/>
+                            <field name="probability"/>
+                            <field name="commercial_scenario"/>
+                        </group>
+                    </group>
+
+                    <group string="Revision and approval">
+                        <group string="Revision chain">
+                            <field name="previous_revision_id" readonly="1"/>
+                            <field name="revision_root_id" readonly="1"/>
+                        </group>
+                        <group string="Internal approval (optional)">
+                            <field name="approval_required"/>
+                            <field name="approval_state"/>
+                            <field name="approved_by_id" invisible="approval_state != 'approved'"/>
+                            <field name="approved_on" invisible="approval_state != 'approved'"/>
+                        </group>
+                    </group>
+
+                    <group string="Economic summary">
+                        <group>
+                            <field name="total_sqm"/>
+                            <field name="total_price" widget="monetary"/>
+                            <field name="client_price_per_sqm"/>
+                            <field name="total_contract_sal" widget="monetary"/>
+                            <field name="sal_amount_billed" widget="monetary"/>
+                            <field name="sal_amount_remaining" widget="monetary"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="sal_retention_cap" widget="monetary"/>
+                            <field name="sal_retention_withheld" widget="monetary"/>
+                            <field name="sal_retention_remaining" widget="monetary"/>
+                            <field name="total_cost" widget="monetary"/>
+                            <field name="margin_amount" widget="monetary"/>
+                            <field name="expected_margin_pct"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Estimate lines (ANACO)" name="anaco_lines">
+                            <field name="line_ids"
+                                   mode="list,form"
+                                   context="{'default_estimate_id': id}">
+                                <list editable="bottom"
+                                      delete="true"
+                                      default_order="sequence, pos"
+                                      decoration-success="manual_input_pending">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="pos" optional="show"/>
+                                    <field name="description"/>
+                                    <field name="calc_uom_type" string="U.M. calcolo"/>
+                                    <field name="cost_family" string="Categoria" optional="show"/>
+                                    <field name="qty"/>
+                                    <field name="manual_input_pending" column_invisible="1"/>
+                                    <field name="width_mm" string="B (mm)" optional="show"
+                                           decoration-warning="manual_input_pending and not width_mm"/>
+                                    <field name="height_mm" string="H (mm)" optional="show"
+                                           decoration-warning="manual_input_pending and not height_mm"/>
+                                    <field name="sqm_per_piece" string="MQ/Cad." readonly="1"/>
+                                    <field name="sqm" string="Mq tot." readonly="1"/>
+                                    <field name="price_anaco_bs_cad" string="Prezzo unit. BS"/>
+                                    <field name="price_serramento_cad" string="Serramento CAD" optional="hide"/>
+                                    <field name="cost_coibentazione_cad" string="Coib. CAD" optional="show"/>
+                                    <field name="discount_sc1" string="Sc1 %" optional="show"/>
+                                    <field name="discount_sc2" string="Sc2 %" optional="hide"/>
+                                    <field name="discount_sc3" string="Sc3 %" optional="hide"/>
+                                    <field name="price_total_tot" string="Prezzo TOT" readonly="1"/>
+                                    <field name="cost_total_tot" string="Costo TOT" readonly="1"/>
+                                    <field name="margin_pct" string="Margine %" readonly="1"/>
+                                    <field name="note" string="Assunzioni" optional="hide"/>
+                                    <field name="workflow_route" string="Workflow" optional="hide"/>
+                                    <field name="price_gross_cad" string="Listino CAD" readonly="1" optional="hide"/>
+                                    <field name="cost_gross_cad" string="Listino costo CAD" readonly="1" optional="hide"/>
+                                    <field name="price_after_discounts_cad" string="Prezzo dopo sc." readonly="1" optional="hide"/>
+                                    <field name="cost_after_discounts_cad" string="Costo dopo sc." readonly="1" optional="hide"/>
+                                    <field name="price_unit_rate" string="Prezzo unit." readonly="1" optional="hide"/>
+                                    <field name="cost_unit_rate" string="Costo unit." readonly="1" optional="hide"/>
+                                    <field name="price_per_sqm" string="€/MQ vend." readonly="1" optional="hide"/>
+                                    <field name="cost_per_sqm" string="€/MQ costo" readonly="1" optional="hide"/>
+                                    <field name="margin_amount" string="Margine €" readonly="1" optional="hide"/>
+                                </list>
+                                <form string="Estimate line">
+                                    <sheet>
+                                        <group>
+                                            <group>
+                                                <field name="pos"/>
+                                                <field name="description"/>
+                                                <field name="calc_uom_type"/>
+                                                <field name="cost_family"/>
+                                                <field name="workflow_route" readonly="1"/>
+                                                <field name="qty"/>
+                                                <field name="width_mm"/>
+                                                <field name="height_mm"/>
+                                                <field name="sqm_per_piece" readonly="1"/>
+                                                <field name="sqm" readonly="1"/>
+                                            </group>
+                                            <group string="Price">
+                                                <field name="price_anaco_bs_cad"/>
+                                                <field name="price_serramento_cad"/>
+                                                <field name="discount_sc1"/>
+                                                <field name="discount_sc2"/>
+                                                <field name="discount_sc3"/>
+                                                <field name="price_total_tot" readonly="1"/>
+                                                <field name="margin_pct" readonly="1"/>
+                                            </group>
+                                            <group string="Cost">
+                                                <field name="cost_coibentazione_cad"/>
+                                                <field name="cost_posa_lamiera_lin_cad"/>
+                                                <field name="cost_bom_total" readonly="1"/>
+                                                <field name="cost_total_tot" readonly="1"/>
+                                            </group>
+                                        </group>
+                                        <notebook>
+                                            <page string="BOM (ITEM)" name="bom_lines">
+                                                <field name="bom_line_ids">
+                                                    <list editable="bottom"
+                                                          decoration-success="manual_input_pending"
+                                                          decoration-muted="manual_input_state == 'imported'">
+                                                        <field name="product_id"
+                                                               domain="[('purchase_ok', '=', True), ('type', '=', 'consu')]"/>
+                                                        <field name="description"/>
+                                                        <field name="calc_type"/>
+                                                        <field name="sqm_per_piece_effective" optional="show"/>
+                                                        <field name="qty_formula_factor"/>
+                                                        <field name="manual_input_state" column_invisible="1"/>
+                                                        <field name="manual_input_pending" column_invisible="1"/>
+                                                        <field name="manual_dim_pending" column_invisible="1"/>
+                                                        <field name="needs_technical_confirm" column_invisible="1"/>
+                                                        <field name="dimension_display" optional="show"/>
+                                                        <field name="depth_mm" optional="hide"/>
+                                                        <field name="unit_cost"/>
+                                                        <field name="technical_confirmed" optional="show"
+                                                               decoration-warning="needs_technical_confirm and manual_input_pending and not technical_confirmed"/>
+                                                        <field name="data_phase" optional="show"/>
+                                                        <field name="pack_size"/>
+                                                        <field name="demand_loss_pct" optional="show"/>
+                                                        <field name="demand_moq" optional="show"/>
+                                                        <field name="qty_theoretical" readonly="1"/>
+                                                        <field name="qty_ordered" readonly="1"/>
+                                                        <field name="uom_id"/>
+                                                        <field name="total_cost" readonly="1"/>
+                                                        <field name="note"/>
+                                                    </list>
+                                                </field>
+                                            </page>
+                                        </notebook>
+                                    </sheet>
+                                </form>
+                            </field>
+                        </page>
+
+                        <page string="BOM (ITEM)" name="estimate_item_bom">
+                            <div class="mb-2">
+                                <button name="action_generate_bom_from_anaco_costs"
+                                        type="object"
+                                        string="Generate BOM from ANACO"
+                                        class="btn-secondary"
+                                        invisible="not line_ids"
+                                        title="Create BOM components from CAD costs/prices on ANACO lines"/>
+                            </div>
+                            <field name="item_bom_line_count" invisible="1"/>
+                            <field name="item_bom_line_ids"
+                                   context="{'default_estimate_id': id}">
+                                <list editable="bottom"
+                                      decoration-success="manual_input_pending"
+                                      decoration-muted="manual_input_state == 'imported'">
+                                    <field name="estimate_line_id"
+                                           string="ANACO line"
+                                           options="{'no_create': True}"/>
+                                    <field name="product_id"
+                                           domain="[('purchase_ok', '=', True), ('type', '=', 'consu')]"/>
+                                    <field name="description"/>
+                                    <field name="calc_type"/>
+                                    <field name="sqm_per_piece_effective" optional="show"/>
+                                    <field name="qty_formula_factor"/>
+                                    <field name="manual_input_state" column_invisible="1"/>
+                                    <field name="manual_input_pending" column_invisible="1"/>
+                                    <field name="manual_dim_pending" column_invisible="1"/>
+                                    <field name="needs_technical_confirm" column_invisible="1"/>
+                                    <field name="dimension_display" optional="show"/>
+                                    <field name="depth_mm" optional="hide"/>
+                                    <field name="unit_cost"/>
+                                    <field name="technical_confirmed" optional="show"
+                                           decoration-warning="needs_technical_confirm and manual_input_pending and not technical_confirmed"/>
+                                    <field name="data_phase" optional="show"/>
+                                    <field name="pack_size"/>
+                                    <field name="demand_loss_pct" optional="show"/>
+                                    <field name="demand_moq" optional="show"/>
+                                    <field name="qty_theoretical" readonly="1"/>
+                                    <field name="qty_ordered" readonly="1"/>
+                                    <field name="uom_id"/>
+                                    <field name="total_cost" readonly="1"/>
+                                    <field name="note"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <page string="Contractual SAL lines" name="sal_lines">
+                            <field name="sal_line_ids" context="{'default_estimate_id': id}">
+                                <list editable="bottom" delete="true">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="item_ref"/>
+                                    <field name="description" optional="show"/>
+                                    <field name="estimate_line_ids" widget="many2many_tags"
+                                           string="Linked estimate lines"/>
+                                    <field name="uom_type" optional="hide"/>
+                                    <field name="qty_contract"/>
+                                    <field name="unit_price"/>
+                                    <field name="total_contract" readonly="1"/>
+                                    <field name="billing_progress_pct" readonly="1" optional="show"/>
+                                    <field name="amount_billed" readonly="1"/>
+                                    <field name="amount_billed_planning" readonly="1" optional="show"/>
+                                    <field name="amount_remaining" readonly="1"/>
+                                    <field name="amount_remaining_planning" readonly="1" optional="show"/>
+                                    <field name="retention_percent"/>
+                                    <field name="retention_amount" readonly="1" string="Retention amount"/>
+                                    <field name="retention_withheld_to_date" readonly="1"/>
+                                    <field name="retention_on_unbilled" readonly="1" optional="hide"/>
+                                    <field name="retention_remaining" readonly="1"/>
+                                    <field name="certificate_ref" optional="hide"/>
+                                    <field name="sal_status" widget="badge"/>
+                                    <field name="sal_1_pct" string="SAL-1%" optional="hide"/>
+                                    <field name="sal_2_pct" string="SAL-2%" optional="hide"/>
+                                    <field name="sal_3_pct" string="SAL-3%" optional="hide"/>
+                                    <field name="cumulative_pct" string="Cum.%" readonly="1"/>
+                                </list>
+                                <form string="SAL contractual item">
+                                    <sheet>
+                                        <group>
+                                            <group>
+                                                <field name="item_ref"/>
+                                                <field name="description"/>
+                                                <field name="uom_type"/>
+                                                <field name="sal_status" widget="badge"/>
+                                            </group>
+                                            <group>
+                                                <field name="qty_contract"/>
+                                                <field name="unit_price"/>
+                                                <field name="total_contract" readonly="1"/>
+                                            </group>
+                                        </group>
+                                        <group string="Progress billing">
+                                            <field name="billing_progress_pct" readonly="1"/>
+                                            <field name="amount_billed" readonly="1"/>
+                                            <field name="amount_billed_planning" readonly="1"/>
+                                            <field name="amount_remaining" readonly="1"/>
+                                            <field name="amount_remaining_planning" readonly="1"/>
+                                        </group>
+                                        <group string="Retention (garanzia)">
+                                            <field name="retention_percent"/>
+                                            <field name="retention_amount" readonly="1"/>
+                                            <field name="retention_withheld_to_date" readonly="1"/>
+                                            <field name="retention_on_unbilled" readonly="1"/>
+                                            <field name="retention_remaining" readonly="1"/>
+                                        </group>
+                                        <group string="Estimate link and billing">
+                                            <field name="estimate_line_ids" widget="many2many_tags"
+                                                   options="{'no_create': True}"/>
+                                            <field name="certificate_ref"/>
+                                        </group>
+                                    </sheet>
+                                </form>
+                            </field>
+                        </page>
+
+                        <page string="Attachments and references" name="estimate_references">
+                            <field name="reference_ids"
+                                   context="{'default_estimate_id': id}">
+                                <list string="References" editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="ref_type"/>
+                                    <field name="name"/>
+                                    <field name="url" widget="url" optional="show"/>
+                                    <field name="document_file" filename="document_filename" optional="show"/>
+                                    <field name="document_filename" column_invisible="1"/>
+                                    <field name="note" optional="hide"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <page string="Supply conditions" name="conditions">
+                            <div class="mb-2">
+                                <button name="action_sync_conditions_from_terms"
+                                        string="Update text from lines"
+                                        type="object"
+                                        class="btn-secondary"
+                                        invisible="not commercial_term_ids"/>
+                            </div>
+                            <group>
+                                <group string="Riepilogo offerta">
+                                    <field name="offer_retention_percent"
+                                           help="Allineata alla riga verde «Ritenuta»; usata in stampa offerta e SAL."/>
+                                    <field name="delivery_terms"/>
+                                    <field name="delivery_timing"/>
+                                    <field name="validity_days"/>
+                                </group>
+                                <group string="Testo legacy (sincronizzato)">
+                                    <field name="payment_terms_synced" readonly="1" nolabel="1"/>
+                                    <field name="payment_terms_text" invisible="1"/>
+                                </group>
+                            </group>
+                            <field name="commercial_term_ids"
+                                   readonly="state in ('won', 'cancelled')">
+                                <list editable="bottom" string="Condizioni commerciali">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="term_category"/>
+                                    <field name="choice" widget="badge"
+                                           decoration-success="choice == 'included'"
+                                           decoration-danger="choice == 'excluded'"
+                                           decoration-muted="choice == 'note'"/>
+                                    <field name="name"/>
+                                    <field name="percent_value" optional="show"/>
+                                    <field name="detail" optional="hide"/>
+                                </list>
+                            </field>
+                            <group string="Inclusioni / esclusioni (testo)">
+                                <field name="inclusions" nolabel="1" placeholder="Bullet inclusioni…"/>
+                                <field name="exclusions" nolabel="1" placeholder="Bullet esclusioni…"/>
+                            </group>
+                            <group string="Specifiche Particolari">
+                                <field name="special_notes" nolabel="1"/>
+                            </group>
+                        </page>
+
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ── Search view ────────────────────────────────────────────────────── -->
+    <record id="view_sbu_estimate_search" model="ir.ui.view">
+        <field name="name">sbu.estimate.search</field>
+        <field name="model">sbu.estimate</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="sbu_display_label"/>
+                <field name="name"/>
+                <field name="revision"/>
+                <field name="partner_id"/>
+                <field name="job_site"/>
+                <filter name="sbu_latest_revision" string="Latest revision only"
+                        domain="[('sbu_is_latest_revision', '=', True)]"/>
+                <separator/>
+                <filter name="draft"
+                        string="Draft"
+                        domain="[('state','=','draft')]"/>
+                <filter name="sent"
+                        string="Sent"
+                        domain="[('state','=','sent')]"/>
+                <filter name="won"
+                        string="Won"
+                        domain="[('state','=','won')]"/>
+                <filter name="lost"
+                        string="Lost"
+                        domain="[('state','=','lost')]"/>
+                <filter name="my_estimates"
+                        string="My estimates"
+                        domain="[('user_id','=',uid)]"/>
+                <filter name="approval_pending"
+                        string="Internal approval pending"
+                        domain="[('approval_state','=','pending')]"/>
+                <separator/>
+                <filter name="scenario_base"
+                        string="Scenario: Base"
+                        domain="[('commercial_scenario','=','base')]"/>
+                <filter name="scenario_aggressive"
+                        string="Scenario: Aggressive"
+                        domain="[('commercial_scenario','=','aggressive')]"/>
+                <filter name="scenario_risk"
+                        string="Scenario: Risk"
+                        domain="[('commercial_scenario','=','risk')]"/>
+                <filter name="group_partner"
+                        string="Group by customer"
+                        context="{'group_by': 'partner_id'}"/>
+                <filter name="group_state"
+                        string="Group by status"
+                        context="{'group_by': 'state'}"/>
+                <filter name="group_month"
+                        string="Group by month"
+                        context="{'group_by': 'date:month'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ── Action ─────────────────────────────────────────────────────────── -->
+    <record id="action_sbu_estimate" model="ir.actions.act_window">
+        <field name="name">Estimates</field>
+        <field name="res_model">sbu.estimate</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_sbu_estimate_search"/>
+        <field name="context">{'search_default_my_estimates': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first estimate
+            </p>
+            <p>
+                Enter width and height for each item and the system
+                automatically calculates sqm, quantities and costs.
+            </p>
+        </field>
+    </record>
+
+</odoo>

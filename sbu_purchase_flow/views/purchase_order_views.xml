@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="purchase_order_form_inherit_sbu_pr" model="ir.ui.view">
+        <field name="name">purchase.order.form.inherit.sbu.pr</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="before">
+                <div class="alert alert-warning mb-0" role="alert"
+                     invisible="not sbu_budget_over_limit">
+                    <strong>SBU budget alert:</strong>
+                    this RFQ/PO untaxed amount is more than 5% above the linked preventivo cost reference
+                    (<field name="sbu_budget_reference" readonly="1" nolabel="1" class="oe_inline"/>
+                    — variance <field name="sbu_budget_variance_pct" readonly="1" nolabel="1" class="oe_inline"/>%).
+                </div>
+            </xpath>
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="sbu_purchase_request_id" optional="show"/>
+                <field name="sbu_budget_over_limit" invisible="1"/>
+                <field name="sbu_budget_reference" invisible="1"/>
+                <field name="sbu_budget_variance_pct" invisible="1"/>
+            </xpath>
+            <xpath expr="//header" position="inside">
+                <button name="action_sbu_refresh_dimensions_from_pr"
+                        string="Refresh dimensions from PR"
+                        type="object"
+                        class="btn-secondary"
+                        invisible="not sbu_purchase_request_id"
+                        title="Copia L/H/P e mq dalle righe RDA collegate (righe con riga RDA)."/>
+            </xpath>
+            <xpath expr="//field[@name='order_line']/list" position="attributes">
+                <attribute name="decoration-success">sbu_manual_input_pending</attribute>
+                <attribute name="decoration-muted">sbu_manual_input_state == 'imported'</attribute>
+            </xpath>
+            <xpath expr="//field[@name='order_line']//field[@name='product_qty']" position="before">
+                <field name="sbu_manual_input_pending" column_invisible="1"/>
+                <field name="sbu_manual_input_state" column_invisible="1"/>
+                <field name="sbu_dimension_summary" string="Dimensions"/>
+                <field name="sbu_width_mm" string="L (mm)"/>
+                <field name="sbu_height_mm" string="H (mm)"/>
+                <field name="sbu_depth_mm" string="P (mm)"/>
+                <field name="sbu_sqm_per_piece" string="Sqm/pc"/>
+                <field name="sbu_sqm_total" string="MQ tot."/>
+                <field name="sbu_utilization" string="Utilization"/>
+            </xpath>
+            <xpath expr="//field[@name='order_line']//field[@name='product_qty']" position="after">
+                <field name="sbu_pr_line_id" optional="show" readonly="1"/>
+            </xpath>
+            <xpath expr="//field[@name='order_line']//field[@name='price_unit']" position="after">
+                <field name="sbu_offer_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

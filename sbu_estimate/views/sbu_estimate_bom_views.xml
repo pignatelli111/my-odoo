@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Search / Many2one picker for distinta ITEM (RDA source_bom_line_id, etc.) -->
+    <record id="view_sbu_estimate_bom_line_list_picker" model="ir.ui.view">
+        <field name="name">sbu.estimate.bom.line.list.picker</field>
+        <field name="model">sbu.estimate.bom.line</field>
+        <field name="priority">20</field>
+        <field name="arch" type="xml">
+            <list string="Distinta ITEM" create="0" delete="0">
+                <field name="name" string="Componente"/>
+                <field name="estimate_line_id" optional="show"/>
+                <field name="product_id" optional="hide"/>
+                <field name="dimension_display" string="Dimensioni" optional="show"/>
+                <field name="qty_theoretical" string="Qtà teorica" optional="show"/>
+                <field name="calc_type" optional="hide"/>
+                <field name="estimate_id" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_sbu_estimate_bom_line_search" model="ir.ui.view">
+        <field name="name">sbu.estimate.bom.line.search</field>
+        <field name="model">sbu.estimate.bom.line</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="description"/>
+                <field name="product_id"/>
+                <field name="estimate_line_id"/>
+                <field name="estimate_id"/>
+                <filter name="needs_confirm" string="Needs technical confirm"
+                        domain="[('needs_technical_confirm', '=', True), ('technical_confirmed', '=', False)]"/>
+                <separator/>
+                <filter string="Preventivo" name="grp_estimate" context="{'group_by': 'estimate_id'}"/>
+                <filter string="Posizione" name="grp_pos" context="{'group_by': 'estimate_line_id'}"/>
+            </search>
+        </field>
+    </record>
+</odoo>

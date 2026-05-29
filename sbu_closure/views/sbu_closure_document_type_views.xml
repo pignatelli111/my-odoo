@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sbu_closure_document_type_list" model="ir.ui.view">
+        <field name="name">sbu.closure.document.type.list</field>
+        <field name="model">sbu.closure.document.type</field>
+        <field name="arch" type="xml">
+            <list string="Closure document types" editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="code"/>
+                <field name="name"/>
+                <field name="init_on_project"/>
+                <field name="default_required"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_sbu_closure_document_type_form" model="ir.ui.view">
+        <field name="name">sbu.closure.document.type.form</field>
+        <field name="model">sbu.closure.document.type</field>
+        <field name="arch" type="xml">
+            <form string="Closure document type">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="code"/>
+                        <field name="sequence"/>
+                        <field name="active"/>
+                        <field name="init_on_project"/>
+                        <field name="default_required"/>
+                    </group>
+                    <group>
+                        <field name="description" colspan="2" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sbu_closure_document_type" model="ir.actions.act_window">
+        <field name="name">Closure document types</field>
+        <field name="res_model">sbu.closure.document.type</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem
+        id="menu_sbu_closure_document_types"
+        name="Closure document types"
+        parent="sbu_estimate.menu_sbu_root"
+        action="action_sbu_closure_document_type"
+        sequence="35"
+        groups="project.group_project_manager"
+    />
+</odoo>

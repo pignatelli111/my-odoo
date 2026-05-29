@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_sbu_purchase_root"
+              name="Purchasing"
+              parent="sbu_estimate.menu_sbu_root"
+              sequence="30"/>
+
+    <menuitem id="menu_sbu_purchase_request_create"
+              name="New purchase document"
+              parent="menu_sbu_purchase_root"
+              action="action_sbu_purchase_request_create_wizard"
+              sequence="5"/>
+
+    <menuitem id="menu_sbu_vdc_catalog"
+              name="VdC budget catalog"
+              parent="menu_sbu_purchase_root"
+              action="action_sbu_vdc_catalog"
+              sequence="15"/>
+
+    <menuitem id="menu_sbu_lds_entry"
+              name="LDS register"
+              parent="menu_sbu_purchase_root"
+              action="action_sbu_lds_entry"
+              sequence="18"/>
+
+    <menuitem id="menu_sbu_drawing_register"
+              name="Drawing register"
+              parent="menu_sbu_purchase_root"
+              action="action_sbu_drawing_register"
+              sequence="19"/>
+
+    <menuitem id="menu_sbu_project_tms_import"
+              name="Import TMS Excel"
+              parent="menu_sbu_purchase_root"
+              action="action_sbu_project_tms_import_wizard"
+              sequence="6"/>
+
+    <menuitem id="menu_sbu_purchase_request"
+              name="Purchase requests"
+              parent="menu_sbu_purchase_root"
+              action="action_sbu_purchase_request"
+              sequence="10"/>
+
+    <menuitem id="menu_sbu_project_budget_family"
+              name="Budget by family"
+              parent="menu_sbu_purchase_root"
+              action="action_sbu_project_budget_family"
+              sequence="20"/>
+
+    <menuitem id="menu_sbu_workflow_route"
+              name="Workflow routes"
+              parent="menu_sbu_purchase_root"
+              action="action_sbu_workflow_route"
+              sequence="8"
+              groups="purchase.group_purchase_manager"/>
+
+    <menuitem id="menu_sbu_delivery_standard"
+              name="Delivery standard"
+              parent="menu_sbu_purchase_root"
+              action="action_sbu_delivery_standard"
+              sequence="25"
+              groups="base.group_system"/>
+</odoo>

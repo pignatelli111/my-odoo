@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        UoM records are NOT created here.
+        uom.category and uom.uom are managed by the 'uom' module.
+        Custom UoM units (mm, mq, rot) are created via post_init_hook
+        or manually after installation.
+        This file is intentionally empty to avoid load-order issues.
+    -->
+</odoo>

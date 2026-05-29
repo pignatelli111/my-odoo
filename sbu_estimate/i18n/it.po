@@ -1,0 +1,641 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# * sbu_estimate
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 19.0\n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: 2026-05-20 14:00+0000\n"
+"Last-Translator: SBU Development\n"
+"Language-Team: Italian\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: it\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. module: sbu_estimate
+#: model:ir.ui.menu,name:sbu_estimate.menu_sbu_estimate_root
+msgid "Estimates"
+msgstr "Preventivi"
+
+#. module: sbu_estimate
+#: model:ir.ui.menu,name:sbu_estimate.menu_sbu_estimate_list
+msgid "All estimates"
+msgstr "Tutti i preventivi"
+
+#. module: sbu_estimate
+#: model:ir.actions.act_window,name:sbu_estimate.action_sbu_estimate
+msgid "Estimates"
+msgstr "Preventivi"
+
+#. module: sbu_estimate
+#: model_terms:ir.actions.act_window,help:sbu_estimate.action_sbu_estimate
+msgid "Create your first estimate"
+msgstr "Crea il tuo primo preventivo"
+
+#. module: sbu_estimate
+#: model_terms:ir.actions.act_window,help:sbu_estimate.action_sbu_estimate
+msgid "Enter width and height for each item and the system automatically calculates sqm, quantities and costs."
+msgstr "Inserisci le dimensioni B e H per ogni item e il sistema calcola automaticamente mq, quantità e costi."
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_list
+msgid "Estimates"
+msgstr "Preventivi"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_search
+msgid "Latest revision only"
+msgstr "Solo revisione più recente"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_search
+msgid "My estimates"
+msgstr "Miei preventivi"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_search
+msgid "Internal approval pending"
+msgstr "In approvazione interna"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_search
+msgid "Scenario: Aggressive"
+msgstr "Scenario: Aggressivo"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_search
+msgid "Scenario: Risk"
+msgstr "Scenario: Rischio"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_search
+msgid "Group by customer"
+msgstr "Raggruppa cliente"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_search
+msgid "Group by status"
+msgstr "Raggruppa stato"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_search
+msgid "Group by month"
+msgstr "Raggruppa mese"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__name
+msgid "Quote no."
+msgstr "Ns. preventivo"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__revision
+msgid "Revision"
+msgstr "Revisione"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__sbu_display_label
+msgid "Display label"
+msgstr "Preventivo"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__sbu_is_latest_revision
+msgid "Latest revision"
+msgstr "Ultima REV"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__date
+msgid "Date"
+msgstr "Data"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__partner_id
+msgid "Customer"
+msgstr "Cliente"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__job_site
+msgid "Job site / property"
+msgstr "Cantiere / immobile"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__total_sqm
+msgid "Total sqm"
+msgstr "MQ totali"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__total_price
+msgid "Total customer price"
+msgstr "Prezzo cliente totale"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__total_contract_sal
+msgid "Contract SAL total"
+msgstr "Totale contrattuale SAL"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__total_cost
+msgid "Total cost"
+msgstr "Costo totale"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__expected_margin_pct
+msgid "Expected margin (%)"
+msgstr "Margine atteso (%)"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__probability
+msgid "Win probability (%)"
+msgstr "Probabilità chiusura (%)"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__commercial_scenario
+msgid "Commercial scenario"
+msgstr "Scenario commerciale"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__state
+msgid "Status"
+msgstr "Stato"
+
+#. module: sbu_estimate
+#: model:ir.model.fields.selection,name:sbu_estimate.selection__sbu_estimate__state__draft
+msgid "Draft"
+msgstr "Bozza"
+
+#. module: sbu_estimate
+#: model:ir.model.fields.selection,name:sbu_estimate.selection__sbu_estimate__state__sent
+msgid "Sent"
+msgstr "Inviato"
+
+#. module: sbu_estimate
+#: model:ir.model.fields.selection,name:sbu_estimate.selection__sbu_estimate__state__won
+msgid "Won"
+msgstr "Vinto"
+
+#. module: sbu_estimate
+#: model:ir.model.fields.selection,name:sbu_estimate.selection__sbu_estimate__state__lost
+msgid "Lost"
+msgstr "Perso"
+
+#. module: sbu_estimate
+#: model:ir.model.fields.selection,name:sbu_estimate.selection__sbu_estimate__state__cancelled
+msgid "Cancelled"
+msgstr "Annullato"
+
+#. module: sbu_estimate
+#: model:ir.model.fields.selection,name:sbu_estimate.selection__sbu_estimate__commercial_scenario__base
+msgid "Base (standard list)"
+msgstr "Base (listino / standard)"
+
+#. module: sbu_estimate
+#: model:ir.model.fields.selection,name:sbu_estimate.selection__sbu_estimate__commercial_scenario__aggressive
+msgid "Aggressive"
+msgstr "Aggressivo"
+
+#. module: sbu_estimate
+#: model:ir.model.fields.selection,name:sbu_estimate.selection__sbu_estimate__commercial_scenario__risk
+msgid "Risk / contingency"
+msgstr "Rischio / contingency"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_project_project__sbu_state
+msgid "Job status"
+msgstr "Stato commessa"
+
+#. module: sbu_estimate
+#: model:ir.model.fields.selection,name:sbu_estimate.selection__project_project__sbu_state__setup
+msgid "Setup"
+msgstr "In impostazione"
+
+#. module: sbu_estimate
+#: model:ir.model.fields.selection,name:sbu_estimate.selection__project_project__sbu_state__active
+msgid "Active"
+msgstr "In corso"
+
+#. module: sbu_estimate
+#: model:ir.model.fields.selection,name:sbu_estimate.selection__project_project__sbu_state__closing
+msgid "Closing"
+msgstr "In chiusura"
+
+#. module: sbu_estimate
+#: model:ir.model.fields.selection,name:sbu_estimate.selection__project_project__sbu_state__closed
+msgid "Closed"
+msgstr "Chiusa"
+
+#. module: sbu_estimate
+#: model:ir.model.fields.selection,name:sbu_estimate.selection__project_project__sbu_state__archived
+msgid "Archived"
+msgstr "Archiviata"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_project_project__sbu_revision_label
+msgid "Job reference"
+msgstr "Riferimento commessa"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_project_project__sbu_is_latest_revision
+msgid "Latest revision"
+msgstr "Ultima REV"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_project_project__sbu_estimate_date
+msgid "Estimate date"
+msgstr "Data preventivo"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "Estimate"
+msgstr "Preventivo"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "New revision"
+msgstr "Nuova revisione"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "Import ANACO Excel"
+msgstr "Importa Excel ANACO"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "Generate BOM from ANACO"
+msgstr "Genera distinta da ANACO"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "Print offer"
+msgstr "Stampa offerta"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "Revisions"
+msgstr "Revisioni"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "Estimate lines (ANACO)"
+msgstr "Righe preventivo (ANACO)"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "BOM (ITEM)"
+msgstr "Distinta base (ITEM)"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "Contractual SAL lines"
+msgstr "Voci contrattuali SAL"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "Supply conditions"
+msgstr "Condizioni di fornitura"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__line_ids
+msgid "Estimate lines (ANACO)"
+msgstr "Righe preventivo (ANACO)"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__item_bom_line_ids
+msgid "BOM (ITEM)"
+msgstr "Distinta base (ITEM)"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__item_bom_line_count
+msgid "BOM lines"
+msgstr "Righe distinta"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__sal_line_ids
+msgid "Contractual SAL lines"
+msgstr "Voci contrattuali SAL"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__reference_ids
+msgid "Attachments and references"
+msgstr "Allegati e riferimenti"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate_line__bom_line_ids
+msgid "BOM (ITEM)"
+msgstr "Distinta base (ITEM)"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "References"
+msgstr "Riferimenti"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate_bom_line__calc_type
+msgid "Calculation type"
+msgstr "Tipo calcolo"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate_bom_line__dimension_display
+msgid "Dimensions"
+msgstr "Dimensioni"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate_bom_line__data_phase
+msgid "Data phase"
+msgstr "Fase dati"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate_bom_line__pack_size
+msgid "Minimum pack"
+msgstr "Confezione minima"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate_bom_line__demand_loss_pct
+msgid "Demand loss %"
+msgstr "Perdita demand %"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate_bom_line__unit_cost
+msgid "Unit cost"
+msgstr "Costo unitario"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "Delete"
+msgstr "Elimina"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "Delete this estimate (draft only, no linked job)"
+msgstr "Elimina questo preventivo (solo bozza, senza commessa collegata)"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "Send"
+msgstr "Invia"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "Won"
+msgstr "Vinto"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "Lost"
+msgstr "Perso"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "Request approval"
+msgstr "Richiedi approvazione"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "Approve"
+msgstr "Approva"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "Reject"
+msgstr "Rifiuta"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "Reset to draft"
+msgstr "Riporta a bozza"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "Standard terms"
+msgstr "Condizioni standard"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "Load default commercial terms (payment, retention, inclusions)"
+msgstr "Carica condizioni commerciali predefinite (pagamento, garanzia, inclusioni)"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "Offer PDF with lines and commercial terms"
+msgstr "PDF offerta con righe e condizioni commerciali"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "Create BOM lines from CAD costs/prices on ANACO lines"
+msgstr "Crea righe distinta dai costi/prezzi CAD sulle righe ANACO"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "Header"
+msgstr "Testata"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "Dates and commercial"
+msgstr "Date e commerciale"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "Revision and approval"
+msgstr "Revisione e approvazione"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "Revision chain"
+msgstr "Catena revisioni"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "Internal approval (optional)"
+msgstr "Approvazione interna (opzionale)"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "Economic summary"
+msgstr "Riepilogo economico"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "Price"
+msgstr "Prezzo"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "Cost"
+msgstr "Costo"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "Progress billing"
+msgstr "Avanzamento fatturazione"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "Retention (garanzia)"
+msgstr "Ritenuta (garanzia)"
+
+#. module: sbu_estimate
+#: model_terms:ir.ui.view,arch_db:sbu_estimate.view_sbu_estimate_form
+msgid "Estimate link and billing"
+msgstr "Collegamento preventivo e fatturazione"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__company_id
+msgid "Company"
+msgstr "Azienda"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__validity_date
+msgid "Offer validity"
+msgstr "Validità offerta"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__user_id
+msgid "Responsible"
+msgstr "Responsabile"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__opportunity_id
+msgid "CRM opportunity"
+msgstr "Opportunità CRM"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__previous_revision_id
+msgid "Previous revision"
+msgstr "Revisione precedente"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__revision_root_id
+msgid "Revision root"
+msgstr "Revisione radice"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__sbu_full_reference
+msgid "Full reference"
+msgstr "Riferimento completo"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__validity_days
+msgid "Validità (gg solari)"
+msgstr "Validità (gg solari)"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__delivery_terms
+msgid "Resa"
+msgstr "Resa"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__delivery_timing
+msgid "Tempi di Consegna / Planning"
+msgstr "Tempi di consegna / planning"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__payment_terms_text
+msgid "Modalità di Pagamento"
+msgstr "Modalità di pagamento"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__inclusions
+msgid "Inclusioni"
+msgstr "Inclusioni"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__exclusions
+msgid "Esclusioni"
+msgstr "Esclusioni"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__special_notes
+msgid "Specifiche Particolari"
+msgstr "Specifiche particolari"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__approval_required
+msgid "Requires internal approval"
+msgstr "Richiede approvazione interna"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__approval_state
+msgid "Approval status"
+msgstr "Stato approvazione"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__approved_by_id
+msgid "Approved by"
+msgstr "Approvato da"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__approved_on
+msgid "Approved on"
+msgstr "Approvato il"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__revision_same_name_count
+msgid "Revisions (same quote no.)"
+msgstr "Revisioni (stesso Ns. preventivo)"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__client_price_per_sqm
+msgid "Customer price / sqm"
+msgstr "Prezzo cliente / mq"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__sal_amount_billed
+msgid "SAL billed to date"
+msgstr "SAL fatturato a oggi"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__sal_amount_remaining
+msgid "SAL remaining to bill"
+msgstr "SAL residuo da fatturare"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__sal_retention_cap
+msgid "SAL retention amount (cap)"
+msgstr "Importo ritenuta SAL (cap)"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__sal_retention_withheld
+msgid "SAL retention withheld"
+msgstr "Ritenuta SAL trattenuta"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__sal_retention_remaining
+msgid "SAL retention remaining"
+msgstr "Ritenuta SAL residua"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__margin_amount
+msgid "Margin €"
+msgstr "Margine €"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__project_id
+msgid "Project"
+msgstr "Commessa"
+
+#. module: sbu_estimate
+#: model:ir.model.fields,field_description:sbu_estimate.field_sbu_estimate__can_delete_preventivo
+msgid "Can delete"
+msgstr "Eliminabile"
+
+#. module: sbu_estimate
+#: model:ir.model.fields.selection,name:sbu_estimate.selection__sbu_estimate__approval_state__na
+msgid "N/A"
+msgstr "N/D"
+
+#. module: sbu_estimate
+#: model:ir.model.fields.selection,name:sbu_estimate.selection__sbu_estimate__approval_state__pending
+msgid "Pending approval"
+msgstr "In attesa di approvazione"
+
+#. module: sbu_estimate
+#: model:ir.model.fields.selection,name:sbu_estimate.selection__sbu_estimate__approval_state__approved
+msgid "Approved"
+msgstr "Approvato"
+
+#. module: sbu_estimate
+#: model:ir.model.fields.selection,name:sbu_estimate.selection__sbu_estimate__approval_state__rejected
+msgid "Rejected"
+msgstr "Rifiutato"

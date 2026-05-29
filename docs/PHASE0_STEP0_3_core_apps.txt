@@ -1,0 +1,87 @@
+Phase 0 — Step 0.3: Core apps on + naming conventions (runbook)
+===============================================================
+
+Goal: Standard Odoo apps needed for SBU are installed and minimally configured;
+naming rules for projects, documents, and references are agreed so master data
+(Step 0.4) and custom modules stay consistent.
+
+Prerequisites: Steps 0.1–0.2 done on staging/production as appropriate.
+
+Push: batch with “move to next phase” (see docs/PHASE0_INDEX.txt), not after each checkbox.
+
+A) Apps to install (Apps menu — confirm one by one)
+---------------------------------------------------
+[ ] **CRM** — opportunities; pipeline stages aligned with your sales process (e.g.
+    New / Qualified / Quote / Won / Lost). Rename default stages if needed.
+[ ] **Sales** (optional “bridge”):
+    - If you still send **standard Odoo quotations** alongside SBU estimates: ON.
+    - If **100% SBU estimate** is the only commercial object: Sales can stay OFF
+      or minimal; document the decision here: _________________________________
+[ ] **Project** — project stages / task types for job execution; later SBU jobs
+    link here (estimate → project already in custom module).
+[ ] **Inventory** — locations, unit of measure consistency with Step 0.4; stock
+    if you track physical goods (recommended for façade / profiles business).
+[ ] **Purchase** — required for RFQ/PO and vendor bills.
+[ ] **Accounting** — already from 0.2; confirm app visible and no duplicate install.
+[ ] **Documents** (optional):
+    - ON if you want **Odoo** as a second repository for PDFs attached to records.
+    - OFF if **OneDrive only** for files: keep using chatter attachments + OneDrive
+      URLs on project; document: _______________________________________________
+
+B) Minimal configuration per app
+--------------------------------
+[ ] CRM: default team, assignation rules, lost reasons (optional).
+[ ] Project: task templates off until needed; project privacy (internal vs portal).
+[ ] Inventory: stock locations (WH/Stock); routes only if buyer uses MTO etc.
+[ ] Purchase: vendor portal OFF until security reviewed (keep OFF for v1 if unsure).
+[ ] Documents (if ON): workspace or rules so files do not duplicate OneDrive blindly.
+
+C) Document & reference naming conventions (write your rules — examples)
+------------------------------------------------------------------------
+Use a single pattern so exports, folders, and Odoo `origin` fields stay readable.
+
+Suggested patterns (edit to taste):
+
+  **Projects / jobs**  
+    `COMM-{year}-{seq}` or `{ClienteAbbrev}-{CantiereAbbrev}-{REV}`  
+    Example: `COMM-2026-0042` or `ACME-CORNATE-REV01`
+
+  **SBU estimates (custom module)**  
+    Sequence already in Odoo; align verbal name with: `PRV-{number}-{REV}`
+
+  **Purchase requests / RDA**  
+    `RDA-{project}-{seq}` — match Excel if possible.
+
+  **SAL / billing**  
+    `SAL-{project}-{period}-{n}` e.g. `SAL-COMM-2026-0042-2026-05-01`
+
+  **Chatter attachments (generic)**  
+    Prefix: `{DocType}_{Ref}_{YYYYMMDD}_{shortdesc}.pdf`  
+    Example: `RDA_COMM20260042_20260513_profili.pdf`
+
+  **OneDrive folders (human)**  
+    Same root as today; subfolder = project code above.
+
+Your agreed rules (free text):
+  Projects: _________________________________________________________________
+  Estimates: ______________________________________________________________
+  Purchasing: _____________________________________________________________
+  SAL / finance: ___________________________________________________________
+  Attachments: _____________________________________________________________
+
+D) Smoke test (staging)
+-----------------------
+[ ] Create one **opportunity** → link to partner.
+[ ] Create one **project** with the chosen naming pattern.
+[ ] Create one **product** (will be refined in 0.4) and a **draft PO** line.
+[ ] Confirm **Documents** (if ON): upload file linked to project or PO.
+
+E) Sign-off
+-----------
+Date: ____________
+Verified by: ____________
+Sales app decision (on/off/bridge): _________________________________________
+Documents app decision (on/off): ___________________________________________
+Notes: ______________________________________________________________________
+
+Next: docs/PHASE0_STEP0_4_data_migration.txt — Index: docs/PHASE0_INDEX.txt

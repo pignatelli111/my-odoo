@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_project_sbu_jobs_search" model="ir.ui.view">
+        <field name="name">project.project.search.sbu.jobs</field>
+        <field name="model">project.project</field>
+        <field name="priority">20</field>
+        <field name="arch" type="xml">
+            <search string="SBU jobs">
+                <field name="sbu_revision_label" string="Job"
+                       filter_domain="['|', ('sbu_revision_label', 'ilike', self), ('name', 'ilike', self)]"/>
+                <field name="sbu_project_code"/>
+                <field name="sbu_estimate_revision"/>
+                <field name="partner_id"/>
+                <filter name="sbu_latest_revision" string="Latest revision only"
+                        domain="[('sbu_is_latest_revision', '=', True)]"/>
+                <separator/>
+                <filter name="sbu_active" string="Active"
+                        domain="[('sbu_state', '=', 'active')]"/>
+                <group>
+                    <filter name="group_revision" string="Revision" context="{'group_by': 'sbu_estimate_revision'}"/>
+                    <filter name="group_partner" string="Customer" context="{'group_by': 'partner_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_project_sbu_jobs_list" model="ir.ui.view">
+        <field name="name">project.project.list.sbu.jobs</field>
+        <field name="model">project.project</field>
+        <field name="priority">20</field>
+        <field name="arch" type="xml">
+            <list string="SBU jobs" default_order="sbu_estimate_date desc, id desc">
+                <field name="sbu_revision_label" string="Job"/>
+                <field name="sbu_is_latest_revision" string="Latest REV"
+                       decoration-success="sbu_is_latest_revision == True"
+                       decoration-muted="sbu_is_latest_revision == False"/>
+                <field name="sbu_estimate_revision" string="REV" optional="show"/>
+                <field name="sbu_estimate_date" string="Estimate date" optional="show"/>
+                <field name="partner_id" optional="show"/>
+                <field name="sbu_state" optional="show"/>
+                <field name="user_id" widget="many2one_avatar_user" optional="hide"/>
+                <field name="name" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_sbu_jobs" model="ir.actions.act_window">
+        <field name="name">SBU jobs</field>
+        <field name="res_model">project.project</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="domain">[('sbu_estimate_id', '!=', False)]</field>
+        <field name="search_view_id" ref="view_project_sbu_jobs_search"/>
+        <field name="context">{'search_default_sbu_latest_revision': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No SBU job yet</p>
+            <p>Win an estimate to create a project linked to SBU.</p>
+            <p>Each line shows <strong>code · REV · date</strong> so you can tell revisions apart.</p>
+        </field>
+    </record>
+
+    <record id="action_sbu_jobs_view_list" model="ir.actions.act_window.view">
+        <field name="sequence">2</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_project_sbu_jobs_list"/>
+        <field name="act_window_id" ref="action_sbu_jobs"/>
+    </record>
+
+    <menuitem id="menu_sbu_jobs"
+              name="Jobs"
+              parent="sbu_estimate.menu_sbu_root"
+              action="action_sbu_jobs"
+              sequence="20"/>
+
+    <record id="view_project_form_sbu_fields" model="ir.ui.view">
+        <field name="name">project.project.form.sbu.fields</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.edit_project"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="SBU" name="sbu_project">
+                    <group>
+                        <field name="sbu_revision_label" readonly="1"/>
+                        <field name="sbu_is_latest_revision" readonly="1"/>
+                        <field name="sbu_estimate_id"/>
+                        <field name="sbu_estimate_revision"/>
+                        <field name="sbu_estimate_date"/>
+                        <field name="sbu_project_code"/>
+                        <field name="sbu_job_site"/>
+                        <field name="sbu_state"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

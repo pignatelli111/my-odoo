@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="seq_sbu_sal_sheet" model="ir.sequence">
+        <field name="name">SBU SAL sheet</field>
+        <field name="code">sbu.sal.sheet</field>
+        <field name="prefix">SAL/%(y)s/</field>
+        <field name="padding">4</field>
+        <field name="company_id" eval="False"/>
+    </record>
+    <record id="seq_sbu_sal_passive_sheet" model="ir.sequence">
+        <field name="name">SBU passive SAL sheet</field>
+        <field name="code">sbu.sal.passive.sheet</field>
+        <field name="prefix">SAL-P/%(y)s/</field>
+        <field name="padding">4</field>
+        <field name="company_id" eval="False"/>
+    </record>
+    <record id="seq_sbu_payment_certificate" model="ir.sequence">
+        <field name="name">SBU Payment certificate</field>
+        <field name="code">sbu.payment.certificate</field>
+        <field name="prefix">CDP/%(y)s/</field>
+        <field name="padding">4</field>
+        <field name="company_id" eval="False"/>
+    </record>
+</odoo>

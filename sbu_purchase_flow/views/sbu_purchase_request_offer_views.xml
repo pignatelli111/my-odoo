@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sbu_purchase_request_offer_pivot" model="ir.ui.view">
+        <field name="name">sbu.purchase.request.offer.pivot</field>
+        <field name="model">sbu.purchase.request.offer</field>
+        <field name="arch" type="xml">
+            <pivot string="Supplier comparison">
+                <field name="request_line_id" type="row"/>
+                <field name="vendor_id" type="col"/>
+                <field name="unit_price" type="measure"/>
+                <field name="price_evaluated" type="measure"/>
+                <field name="lead_time_days" type="measure"/>
+                <field name="moq" type="measure"/>
+                <field name="technical_fit_score" type="measure"/>
+                <field name="margin_impact_pct" type="measure"/>
+                <field name="margin_impact_evaluated" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_sbu_purchase_request_offer_list_matrix" model="ir.ui.view">
+        <field name="name">sbu.purchase.request.offer.list.matrix</field>
+        <field name="model">sbu.purchase.request.offer</field>
+        <field name="priority">32</field>
+        <field name="arch" type="xml">
+            <list string="Supplier offers" editable="bottom"
+                  decoration-success="pr_manual_input_pending"
+                  decoration-muted="pr_manual_input_state == 'imported'">
+                <field name="request_id" column_invisible="1"/>
+                <field name="pr_manual_input_pending" column_invisible="1"/>
+                <field name="pr_manual_input_state" column_invisible="1"/>
+                <field name="request_line_id"/>
+                <field name="vendor_id"/>
+                <field name="is_chosen" widget="boolean_toggle"/>
+                <field name="unit_price"/>
+                <field name="currency_id" optional="hide"/>
+                <field name="price_evaluated" optional="show"/>
+                <field name="lead_time_days" optional="show"/>
+                <field name="moq" optional="show"/>
+                <field name="offer_uom_id" optional="show"/>
+                <field name="payment_delivery_terms" optional="hide"/>
+                <field name="technical_fit_score" optional="show"/>
+                <field name="margin_impact_pct" optional="show"/>
+                <field name="margin_impact_evaluated" optional="show"/>
+                <field name="offer_date" optional="hide"/>
+                <field name="name" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_sbu_purchase_request_offer_search" model="ir.ui.view">
+        <field name="name">sbu.purchase.request.offer.search</field>
+        <field name="model">sbu.purchase.request.offer</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="vendor_id"/>
+                <field name="request_line_id"/>
+                <field name="request_id"/>
+                <filter name="chosen" string="Chosen for PO" domain="[('is_chosen', '=', True)]"/>
+            </search>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,4 @@
+# Client workbooks — keep local / confidential; do not commit by default
+*.xlsx
+*.xlsm
+*.xls

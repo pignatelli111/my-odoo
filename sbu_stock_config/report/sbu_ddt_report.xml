@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_sbu_ddt" model="ir.actions.report">
+        <field name="name">DDT (SBU)</field>
+        <field name="model">stock.picking</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">sbu_stock_config.report_sbu_ddt_document</field>
+        <field name="report_file">sbu_stock_config.report_sbu_ddt_document</field>
+        <field name="print_report_name">'DDT-%s' % (object.sbu_ddt_number or object.name)</field>
+        <field name="binding_model_id" ref="stock.model_stock_picking"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_sbu_ddt_document">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h2>Documento di trasporto (DDT)</h2>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>Numero DDT:</strong>
+                                <span t-esc="o.sbu_ddt_number or o.name"/>
+                                <br/>
+                                <strong>Data:</strong>
+                                <span t-field="o.scheduled_date" t-options="{'widget': 'date'}"/>
+                                <br/>
+                                <strong>Trasferimento Odoo:</strong>
+                                <span t-esc="o.name"/>
+                            </div>
+                            <div class="col-6">
+                                <strong>Commessa / Job:</strong>
+                                <span t-esc="o.project_id.display_name or '—'"/>
+                                <br/>
+                                <strong>Causale:</strong>
+                                <span t-esc="dict(o._fields['sbu_transport_reason'].selection).get(o.sbu_transport_reason, '')"/>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>Mittente</strong>
+                                <div t-field="o.company_id.partner_id"
+                                     t-options="{'widget': 'contact', 'fields': ['name', 'address', 'phone', 'vat']}"/>
+                            </div>
+                            <div class="col-6">
+                                <strong>Destinatario</strong>
+                                <div t-field="o.partner_id"
+                                     t-options="{'widget': 'contact', 'fields': ['name', 'address', 'phone', 'vat']}"/>
+                            </div>
+                        </div>
+                        <p t-if="o.sbu_carrier_name or o.sbu_vehicle_plate">
+                            <strong>Vettore:</strong> <span t-esc="o.sbu_carrier_name or ''"/>
+                            <span t-if="o.sbu_vehicle_plate"> — Targa: <t t-esc="o.sbu_vehicle_plate"/></span>
+                        </p>
+                        <table class="table table-sm o_main_table">
+                            <thead>
+                                <tr>
+                                    <th>Codice</th>
+                                    <th>Descrizione</th>
+                                    <th class="text-end">Qtà</th>
+                                    <th>U.M.</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="o.move_ids" t-as="move">
+                                    <tr>
+                                        <td><span t-esc="move.product_id.default_code or ''"/></td>
+                                        <td><span t-esc="move.product_id.display_name"/></td>
+                                        <td class="text-end"><span t-field="move.product_uom_qty"/></td>
+                                        <td><span t-esc="move.product_uom.name"/></td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                        <div class="row mt-5">
+                            <div class="col-6">
+                                <p>Firma mittente / vettore</p>
+                                <p style="border-top: 1px solid #000; margin-top: 3rem;"/>
+                            </div>
+                            <div class="col-6">
+                                <p>Firma destinatario</p>
+                                <p style="border-top: 1px solid #000; margin-top: 3rem;"/>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

@@ -1,0 +1,83 @@
+Phase 3 — Step 3.1: Single BOM truth
+=====================================
+
+Goal: **One** `sbu.estimate.bom.line` (ITEM / distinta) drives:
+1. **Estimate cost roll-up** — `sbu.estimate.line.cost_bom_total` = Σ `bom_line.total_cost`
+   (qty ordinata × costo unitario).
+2. **Theoretical / order quantity** — `qty_theoretical` and `qty_ordered` (confezione)
+   on the same BOM row.
+3. **Procurement suggestions / RDA lines** — `sbu.purchase.request.line` can link to
+   that BOM row and keep **quantity** aligned (optional «sync» flag).
+
+Avoid maintaining **three** independent grids (preventivo costi, foglio «domanda»,
+righe RDA duplicate) that diverge.
+
+References:
+  - `sbu_estimate/models/sbu_estimate_bom_line.py`
+  - `sbu_estimate/models/sbu_estimate_line.py` (`cost_bom_total`, `bom_line_ids`)
+  - `sbu_purchase_flow/models/sbu_purchase_request_line.py` (`source_bom_line_id`,
+    `bom_qty_sync`)
+  - `sbu_purchase_flow/models/sbu_purchase_request.py` (load / refresh actions)
+  - `sbu_purchase_flow/models/sbu_estimate_bom_line_ext.py`,
+    `sbu_estimate_line_ext.py` (propagation hooks)
+
+A) Data model (Odoo)
+--------------------
+| Concept | Model / field |
+|---------|----------------|
+| BOM row | `sbu.estimate.bom.line` |
+| Cost from distinta | `sbu.estimate.line.cost_bom_total` (computed from BOM) |
+| Richiesta acquisto | `sbu.purchase.request` (`estimate_id` via project) |
+| Collegamento | `sbu.purchase.request.line.source_bom_line_id` → BOM row |
+| Sync quantità | `bom_qty_sync` = True → `product_qty` follows `qty_ordered` |
+
+Unicità: **una sola** riga richiesta per stessa `source_bom_line_id` nella stessa
+richiesta (vincolo Python).
+
+B) Operatività (UI)
+-------------------
+Su **Purchase request** (progetto con preventivo vinto collegato):
+
+1. **Add lines from estimate BOM** — aggiunge righe da tutte le `bom_line_ids` del
+   preventivo (salta righe senza prodotto o già collegate).
+2. **Replace lines from estimate BOM** — svuota le righe richiesta e ricarica dalla distinta.
+3. **Refresh BOM quantities** — riallinea `product_qty` dalle distinte per le righe
+   con `bom_qty_sync` attivo.
+4. **Create draft RFQ** — prima del passaggio a `purchase.order`, le quantità sono
+   riallineate automaticamente dalla distinta.
+
+Per modificare manualmente la quantità su una riga collegata: disattivare
+**Sync qty with BOM**, poi editare `Quantity`.
+
+C) Propagazione automatica
+---------------------------
+- Modifica **B**, **H**, **Qt.** su `sbu.estimate.line` → invalidazione campi calcolati BOM
+  poi aggiornamento `product_qty` sulle righe richiesta con sync attivo.
+- Modifica parametri sulla **riga BOM** → `write` su `sbu.estimate.bom.line` ripropaga le quantità.
+
+Nota UI: in lista richiesta la colonna **Quantity** è in sola lettura quando **Sync qty with BOM**
+è attivo (non usare il campo Many2one distinta nei modificatori OWL: può mandare in errore il client).
+
+Nota: alcuni ricalcoli ORM su campi `store=True` calcolati possono non passare sempre
+da `write` sulla BOM; usare **Refresh BOM quantities** prima di RFQ critiche.
+
+D) Cosa resta fuori da 3.1 (silos accettati o step futuri)
+-----------------------------------------------------------
+- **Costi manuali** colonne ANACO su `sbu.estimate.line` restano per parity / override
+  finché non si decide di legare tutto al solo BOM.
+- **Odoo MRP `mrp.bom`** non è sostituito da questo step: la «verità» qui è la distinta
+  preventivo SBU.
+- **Stock rules / reordering** automatici Odoo standard non sono ancora pilotati da
+  `sbu.estimate.bom.line` (possibile 3.2+).
+
+E) Deliverable
+----------------
+[ ] Processo: nuove RDA materiali primari = partenza da **Replace/Add from estimate BOM**.
+[ ] Formazione: chi può spegnere `bom_qty_sync` (solo buyer / PM?).
+
+F) Sign-off
+-----------
+Date: ____________
+Owner: ______________________________________________________________________
+
+Next: docs/PHASE3_STEP3_2_demand_roll_up.txt (when starting 3.2) or backlog item.

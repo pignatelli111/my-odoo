@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_sbu_closure_document_type_manager,access_sbu_closure_document_type_manager,model_sbu_closure_document_type,project.group_project_manager,1,1,1,1
+access_sbu_closure_requirement_user,access_sbu_closure_requirement_user,model_sbu_closure_requirement,project.group_project_user,1,1,1,1
+access_sbu_closure_requirement_bulk_wizard,sbu.closure.requirement.bulk.wizard,model_sbu_closure_requirement_bulk_wizard,base.group_user,1,1,1,1

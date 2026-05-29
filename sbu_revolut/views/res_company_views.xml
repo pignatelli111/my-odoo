@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_company_form_inherit_sbu_revolut" model="ir.ui.view">
+        <field name="name">res.company.form.inherit.sbu.revolut</field>
+        <field name="model">res.company</field>
+        <field name="inherit_id" ref="base.view_company_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Revolut (SBU)" name="sbu_revolut_company">
+                    <group string="API (Revolut remains bank of record)" groups="account.group_account_manager">
+                        <field name="sbu_revolut_access_token" password="True"/>
+                        <field name="sbu_revolut_account_id"/>
+                        <field name="sbu_revolut_use_sandbox"/>
+                        <field name="sbu_revolut_import_lookback_days"/>
+                        <field name="sbu_revolut_import_enabled"/>
+                    </group>
+                    <group string="Webhook" groups="account.group_account_manager">
+                        <field
+                            name="sbu_revolut_webhook_token"
+                            password="True"
+                            placeholder="Same value as the &lt;token&gt; segment in /revolut/webhook/&lt;token&gt;"
+                        />
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

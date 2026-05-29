@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sbu_purchase_request_line_bulk_wizard_form" model="ir.ui.view">
+        <field name="name">sbu.purchase.request.line.bulk.wizard.form</field>
+        <field name="model">sbu.purchase.request.line.bulk.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Apply to lines">
+                <group>
+                    <field name="apply_scope" widget="radio"/>
+                    <field name="target_count" readonly="1"/>
+                    <field name="request_id" readonly="1" invisible="not request_id"/>
+                    <field name="line_ids" widget="many2many_tags" readonly="1"
+                           invisible="apply_scope != 'selection' or target_count &gt; 40"/>
+                </group>
+                <p class="text-muted">
+                    Use <b>left-panel filters</b>, choose <b>All lines matching list filters</b>
+                    or select rows, tick fields to apply, then confirm.
+                </p>
+                <group string="Fields to apply (check + value)">
+                    <label for="apply_date_required"/>
+                    <div class="o_row">
+                        <field name="apply_date_required" nolabel="1"/>
+                        <field name="date_required" nolabel="1" invisible="not apply_date_required"
+                               required="apply_date_required"/>
+                    </div>
+                    <label for="apply_destination"/>
+                    <div class="o_row">
+                        <field name="apply_destination" nolabel="1"/>
+                        <field name="destination" nolabel="1" invisible="not apply_destination"
+                               required="apply_destination"/>
+                    </div>
+                    <label for="apply_procurement_mode"/>
+                    <div class="o_row">
+                        <field name="apply_procurement_mode" nolabel="1"/>
+                        <field name="procurement_mode" nolabel="1" invisible="not apply_procurement_mode"
+                               required="apply_procurement_mode"/>
+                    </div>
+                    <label for="apply_line_priority"/>
+                    <div class="o_row">
+                        <field name="apply_line_priority" nolabel="1"/>
+                        <field name="line_priority" nolabel="1" invisible="not apply_line_priority"
+                               required="apply_line_priority"/>
+                    </div>
+                    <label for="apply_need_by_header"/>
+                    <div class="o_row">
+                        <field name="apply_need_by_header" nolabel="1"/>
+                        <field name="need_by_date" nolabel="1" invisible="not apply_need_by_header"
+                               required="apply_need_by_header"/>
+                    </div>
+                </group>
+                <footer>
+                    <button name="action_apply" string="Apply" type="object" class="btn-primary"/>
+                    <button string="Cancel" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sbu_purchase_request_line_bulk_wizard" model="ir.actions.act_window">
+        <field name="name">Apply to selected lines</field>
+        <field name="res_model">sbu.purchase.request.line.bulk.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="model_sbu_purchase_request_line"/>
+        <field name="binding_view_types">list</field>
+    </record>
+
+    <record id="action_sbu_purchase_request_line_bulk_wizard_filtered" model="ir.actions.act_window">
+        <field name="name">Apply to filtered result</field>
+        <field name="res_model">sbu.purchase.request.line.bulk.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{'default_apply_scope': 'filtered'}</field>
+        <field name="binding_model_id" ref="model_sbu_purchase_request_line"/>
+        <field name="binding_view_types">list</field>
+    </record>
+
+    <record id="action_sbu_purchase_request_bulk_lines_wizard" model="ir.actions.act_window">
+        <field name="name">Apply to all request lines</field>
+        <field name="res_model">sbu.purchase.request.line.bulk.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="model_sbu_purchase_request"/>
+        <field name="binding_view_types">form,list</field>
+    </record>
+</odoo>

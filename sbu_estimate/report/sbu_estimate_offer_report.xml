@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_sbu_estimate_offer" model="ir.actions.report">
+        <field name="name">Offerta / Preventivo (SBU)</field>
+        <field name="model">sbu.estimate</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">sbu_estimate.report_sbu_estimate_offer_document</field>
+        <field name="report_file">sbu_estimate.report_sbu_estimate_offer_document</field>
+        <field name="print_report_name">'Offerta-%s' % (object.full_name or object.name or 'preventivo')</field>
+        <field name="binding_model_id" ref="model_sbu_estimate"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_sbu_estimate_offer_document">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-set="offer_lines" t-value="o._sbu_offer_lines_for_report()"/>
+                <t t-call="web.external_layout">
+                    <div class="page sbu-offer-report">
+                        <style>
+                            .sbu-flag-included { color: #198754; font-weight: bold; }
+                            .sbu-flag-excluded { color: #dc3545; font-weight: bold; }
+                            .sbu-flag-note { color: #6c757d; }
+                            .sbu-term-included td { background-color: #f0fff4; }
+                            .sbu-term-excluded td { background-color: #fff5f5; }
+                        </style>
+                        <h2>Offerta commerciale</h2>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>Preventivo:</strong>
+                                <span t-esc="o.full_name or o.name"/>
+                                <br/>
+                                <strong>Cliente:</strong>
+                                <span t-field="o.partner_id"/>
+                                <br/>
+                                <strong>Cantiere:</strong>
+                                <span t-esc="o.job_site or '—'"/>
+                            </div>
+                            <div class="col-6">
+                                <strong>Data:</strong>
+                                <span t-field="o.date" t-options="{'widget': 'date'}"/>
+                                <br/>
+                                <strong>Validità:</strong>
+                                <span t-esc="'%s giorni solari' % (o.validity_days or 15)"/>
+                                <br/>
+                                <strong>Resa:</strong>
+                                <span t-esc="o.delivery_terms or '—'"/>
+                            </div>
+                        </div>
+
+                        <t t-if="offer_lines">
+                            <h4 class="mt-3">Descrizione offerta</h4>
+                            <table class="table table-sm o_main_table">
+                                <thead>
+                                    <tr>
+                                        <th>Pos.</th>
+                                        <th>Descrizione</th>
+                                        <th>U.M.</th>
+                                        <th class="text-end">Qtà</th>
+                                        <th class="text-end">Prezzo unit.</th>
+                                        <th class="text-end">Importo</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="offer_lines" t-as="row">
+                                        <tr>
+                                            <td><span t-esc="row['pos']"/></td>
+                                            <td><span t-esc="row['description']"/></td>
+                                            <td><span t-esc="row['uom']"/></td>
+                                            <td class="text-end">
+                                                <span t-esc="'%.2f' % row['qty']"/>
+                                            </td>
+                                            <td class="text-end">
+                                                <span t-esc="'%.2f' % row['unit_price']"/> €
+                                            </td>
+                                            <td class="text-end">
+                                                <span t-esc="'%.2f' % row['total']"/> €
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="5" class="text-end"><strong>Totale offerta</strong></td>
+                                        <td class="text-end">
+                                            <strong>
+                                                <span t-field="o.total_price"
+                                                      t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
+                                            </strong>
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </t>
+
+                        <h4 class="mt-4">Condizioni commerciali</h4>
+                        <p class="text-muted small">
+                            Legenda: <span class="sbu-flag-included">■ Incluso</span>
+                            · <span class="sbu-flag-excluded">■ Escluso</span>
+                            · <span class="sbu-flag-note">■ Nota</span>
+                        </p>
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th style="width: 8%">Flag</th>
+                                    <th style="width: 22%">Categoria</th>
+                                    <th>Condizione</th>
+                                    <th class="text-end" style="width: 10%">%</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="o.commercial_term_ids.sorted('sequence')" t-as="term">
+                                    <tr t-attf-class="sbu-term-#{term.choice}">
+                                        <td>
+                                            <t t-if="term.choice == 'included'">
+                                                <span class="sbu-flag-included">Incluso</span>
+                                            </t>
+                                            <t t-elif="term.choice == 'excluded'">
+                                                <span class="sbu-flag-excluded">Escluso</span>
+                                            </t>
+                                            <t t-else="">
+                                                <span class="sbu-flag-note">Nota</span>
+                                            </t>
+                                        </td>
+                                        <td><span t-field="term.term_category"/></td>
+                                        <td>
+                                            <span t-esc="term.name"/>
+                                            <t t-if="term.detail">
+                                                <br/><span class="text-muted small" t-esc="term.detail"/>
+                                            </t>
+                                        </td>
+                                        <td class="text-end">
+                                            <t t-if="term.percent_value">
+                                                <span t-esc="'%.2f' % term.percent_value"/>%
+                                            </t>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+
+                        <t t-set="retention_terms" t-value="o._sbu_commercial_terms_by_category('retention')"/>
+                        <t t-set="retention_pct" t-value="o._sbu_effective_offer_retention_percent()"/>
+                        <t t-if="retention_terms or retention_pct">
+                            <p class="mt-2">
+                                <strong>Ritenuta / garanzia:</strong>
+                                <span t-esc="'%.2f' % retention_pct"/>%
+                                <t t-if="o.sal_retention_cap">
+                                    — cap contrattuale SAL
+                                    <span t-field="o.sal_retention_cap"
+                                          t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
+                                </t>
+                            </p>
+                        </t>
+
+                        <t t-if="o.delivery_timing">
+                            <p><strong>Tempi di consegna:</strong> <span t-field="o.delivery_timing"/></p>
+                        </t>
+
+                        <t t-if="o.special_notes">
+                            <h5 class="mt-3">Specifiche particolari</h5>
+                            <p t-field="o.special_notes"/>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

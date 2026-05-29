@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_inherit_sbu_logikal" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.sbu.logikal</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="sbu_integrations.res_config_settings_view_form_inherit_sbu"/>
+        <field name="arch" type="xml">
+            <!-- Match setting that contains this field (descendant), not only direct child — avoids Settings view ParseError if layout wraps the field. -->
+            <xpath expr="//setting[.//field[@name='sbu_logikal_base_url']]" position="after">
+                <setting string="Logikal / ReynaPro API bearer" help="Bearer token for your middleware (GET JSON positions). Optional for file-only imports.">
+                    <field name="sbu_logikal_api_bearer" password="True" groups="base.group_system"/>
+                </setting>
+                <setting string="Logikal API path" help="Appended to base URL. Default /positions — middleware receives ?project=«External project ref».">
+                    <field name="sbu_logikal_api_path" placeholder="/positions"/>
+                </setting>
+            </xpath>
+        </field>
+    </record>
+</odoo>

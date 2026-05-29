@@ -1,0 +1,19 @@
+Phase 3 — index (BOM → demand → procurement)
+============================================
+
+Target maturity: **~80%** (with Phase 0–2 baseline).
+
+Runbooks:
+  docs/PHASE3_STEP3_1_single_bom_truth.txt  — Step 3.1
+
+Prerequisites: Phase 2 complete in practice; `sbu_estimate` + `sbu_purchase_flow`
+installed; project linked to won estimate (`sbu_estimate_id`).
+
+Push habit: same as Phase 2 — push at **Phase 3 milestone** or when remote must see
+the full doc/code set.
+
+Next steps (placeholders for later runbooks):
+  - 3.2 Demand roll-up / visibility (optional dedicated doc)
+  - 3.3 RFQ / PO traceability back to BOM line (optional extension)
+
+Next after Phase 3: hardening, reporting, or integration per backlog.

@@ -1,0 +1,79 @@
+Phase 1 — Step 1.3: Supplier master (runbook)
+============================================
+
+Goal: Every **active supplier** is a clean `res.partner` record with **supplier
+rank**, **payment terms**, **lead time** data, and (light) **reliability /
+comparison** fields so Phase 3 RFQ comparison does not start from empty data.
+
+Prerequisite: Steps 1.1–1.2 (categories, UoM policy).
+
+Git: **no `git push` for this step alone** — batch push when leaving Phase 1 or
+at your milestone (docs/PHASE1_INDEX.txt).
+
+A) Supplier vs contact hierarchy
+--------------------------------
+[ ] **One commercial supplier** = one `res.partner` with `company_type=company`
+    (recommended) or clear parent/child if you use branches.
+[ ] **Delivery / order contacts** as child contacts; purchasing defaults to the
+    company partner for POs.
+
+B) Supplier rank & flags
+-------------------------
+[ ] **Supplier rank** > 0 for anyone you can buy from; **Customer rank** only if
+    they are also a client.
+[ ] Deactivate (`active=False`) legacy duplicates after merging references.
+
+C) Payment terms
+----------------
+[ ] On each supplier: **Vendor payment terms** (`property_supplier_payment_term_id`
+    or equivalent on partner / accounting tab depending on version).
+[ ] Align with real contracts (e.g. 30 end of month, 60/90). Same terms in Qonto
+    narrative later (Phase 6).
+
+D) Lead times (for RFQ / PO promises)
+-------------------------------------
+Typical Odoo sources (use what your version exposes):
+
+[ ] **Delivery lead time** on supplier (days) — default expectation before line-specific overrides.
+[ ] **Vendor pricelist** (`product.supplierinfo`): **Delivery time** per product /
+    variant where it differs from default (e.g. glass vs profiles).
+
+Document default global rule: _______________________________________________
+
+E) Reliability & comparison prep (lightweight in Phase 1)
+---------------------------------------------------------
+Until a custom model exists, pick **one** lightweight approach:
+
+  (1) **Tags** on partner: `Affidabile`, `Sotto osservazione`, `Nuovo fornitore`.
+  (2) **Priority** integer or `comment` / internal notes with a short scorecard.
+  (3) **Custom fields** on `res.partner` (module) later: quality %, on-time %.
+
+Decision for v1: (1) / (2) / (3) ____________________________________________
+
+[ ] Optional numeric **Reliability score 1–5** in internal notes table (spreadsheet)
+    until coded — if so, who updates monthly: ___________________________________
+
+F) Fiscal & logistics on supplier
+----------------------------------
+[ ] **Fiscal position** or VAT if foreign suppliers (align with Step 0.2).
+[ ] **Incoterms / default purchase incoterm** if you use them on POs.
+
+G) Bank & legal (minimum for paying)
+-------------------------------------
+[ ] Bank account on supplier if you pay by wire (reduces friction later).
+[ ] P.IVA / Codice fiscale for Italian suppliers where required for bills.
+
+H) Smoke test (staging)
+-----------------------
+[ ] Create **draft PO** to 3 suppliers; confirm payment term and lead time appear.
+[ ] Confirm **vendor bill** can be created with correct payable account.
+
+I) Sign-off
+-----------
+Date: ____________
+Verified by: ____________
+Purchasing owner: ___________________________________________________________
+Notes: ______________________________________________________________________
+
+Phase 1 exit: after 1.1–1.3 are done in Odoo + sign-offs, **push** repo and start
+Phase 2 (estimating / ANACO parity) or add PHASE2_INDEX.txt when you begin.

@@ -1,0 +1,52 @@
+Phase 0 — Step 0.1: Environment & roles (runbook)
+==============================================
+
+Goal: Odoo.sh (or equivalent) is stable; companies, users, groups, and audit
+visibility are defined; you know how backup/restore works before heavy custom work.
+
+A) Odoo.sh environment (platform)
+---------------------------------
+[ ] Branch strategy: production = protected branch (e.g. main); development = dev branch.
+[ ] Each push: build succeeds; open Apps and Settings after deploy to confirm no error.
+[ ] Duplicate database (staging): Odoo.sh → branch → Databases → Duplicate → use for tests.
+[ ] Backup: Odoo.sh → branch → Backups (or Databases) → note automatic schedule + manual backup.
+[ ] Restore test: on a DUPLICATE/staging DB only, restore a backup once to prove the procedure.
+[ ] Shell access: confirm you can open Odoo.sh Shell and run: odoo-bin shell -d "$PGDATABASE"
+[ ] Logs: open LOGS tab; know how to filter for ERROR after each upgrade.
+
+B) Companies (Odoo)
+---------------------
+[ ] Settings → Companies → set legal name, address, VAT, currency, fiscal country.
+[ ] If multi-company: each entity has its own company; users have Allowed Companies set.
+[ ] Document which company owns which bank account (before Qonto phase).
+
+C) Users & access (Odoo)
+------------------------
+[ ] Settings → Users: invite real users (email); never share admin password broadly.
+[ ] Per user: set Language, Allowed Companies, Default Company.
+[ ] Assign groups (examples — adjust to your org):
+    - Internal: Sales / Purchase / Accounting / Project / Inventory as needed.
+    - Restrict Accounting to people who post invoices and payments.
+[ ] Optional: create "SBU Estimator" / "SBU Buyer" later via custom groups when modules need it.
+
+D) Audit & traceability (Odoo)
+------------------------------
+[ ] Mail / chatter: ensure SBU apps (estimate, purchase request, SAL) use chatter where enabled.
+[ ] Settings → Technical → Parameters → System Parameters: do not store secrets in plain text
+    without agreement; prefer Odoo.sh / vault patterns for API keys later.
+[ ] Decide who may use Developer Mode (usually admins only).
+
+E) Record rules (only if multi-company)
+---------------------------------------
+[ ] If more than one company: verify users only see their company’s records
+    (standard record rules); fix any custom models missing company_id.
+
+F) Sign-off for Step 0.1
+------------------------
+Date: ____________
+Verified by: ____________
+Staging DB name (duplicate): ____________
+Notes: _______________________________________________
+
+Next runbook: docs/PHASE0_STEP0_2_accounting_fiscal.txt
+See docs/PHASE0_INDEX.txt for phase index and when to push.

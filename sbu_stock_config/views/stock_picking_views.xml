@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_picking_search_sbu_job" model="ir.ui.view">
+        <field name="name">stock.picking.search.sbu.job</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_internal_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <separator/>
+                <filter name="sbu_has_project" string="Linked to job"
+                        domain="[('project_id', '!=', False)]"/>
+                <filter name="sbu_incoming" string="Receipts"
+                        domain="[('picking_type_code', '=', 'incoming')]"/>
+                <filter name="sbu_outgoing" string="Deliveries"
+                        domain="[('picking_type_code', '=', 'outgoing')]"/>
+                <filter name="sbu_internal" string="Internal"
+                        domain="[('picking_type_code', '=', 'internal')]"/>
+                <filter name="grp_sbu_project" string="Group: Job"
+                        context="{'group_by': 'project_id'}"/>
+                <searchpanel>
+                    <field name="picking_type_id" string="Operation" enable_counters="1"/>
+                    <field name="state" string="Status" enable_counters="1"/>
+                    <field name="project_id" string="Project / Job" enable_counters="1" limit="40"/>
+                </searchpanel>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="stock_picking_form_inherit_sbu_project" model="ir.ui.view">
+        <field name="name">stock.picking.form.inherit.sbu.project</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet//field[@name='partner_id'][@nolabel='1']" position="after">
+                <field name="project_id"/>
+            </xpath>
+            <xpath expr="//header" position="inside">
+                <button name="action_sbu_print_ddt" type="object" string="Print DDT (SBU)"
+                        class="btn-secondary" groups="stock.group_stock_user"
+                        invisible="state == 'cancel'"/>
+                <button name="action_sbu_deliver_to_site" type="object" string="Deliver to site"
+                        class="btn-secondary" groups="stock.group_stock_user"
+                        invisible="state != 'done' or picking_type_code != 'incoming'"/>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="DDT / transport" name="sbu_ddt_page" groups="stock.group_stock_user">
+                    <group>
+                        <group>
+                            <field name="sbu_ddt_number" readonly="state == 'done'"/>
+                            <field name="sbu_transport_reason"/>
+                        </group>
+                        <group>
+                            <field name="sbu_carrier_name"/>
+                            <field name="sbu_vehicle_plate"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sbu_sal_sheet_list" model="ir.ui.view">
+        <field name="name">sbu.sal.sheet.list</field>
+        <field name="model">sbu.sal.sheet</field>
+        <field name="arch" type="xml">
+            <list string="SAL sheets">
+                <field name="sbu_display_label" string="SAL"/>
+                <field name="name" optional="hide"/>
+                <field name="project_id"/>
+                <field name="date"/>
+                <field name="amount_gross"/>
+                <field name="amount_net"/>
+                <field name="state" widget="badge"/>
+                <field name="company_id" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_sbu_sal_sheet_form" model="ir.ui.view">
+        <field name="name">sbu.sal.sheet.form</field>
+        <field name="model">sbu.sal.sheet</field>
+        <field name="arch" type="xml">
+            <form string="SAL sheet">
+                <field name="certificate_count" invisible="1"/>
+                <header>
+                    <button name="action_confirm" string="Confirm" type="object" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_create_draft_invoice" string="Customer invoice" type="object" class="btn-secondary" invisible="state != 'confirmed' or invoice_id"/>
+                    <button name="action_view_invoice" string="Open invoice" type="object" invisible="not invoice_id"/>
+                    <button name="action_print_invoice_sal_detail" string="PDF dettaglio SAL" type="object"
+                            class="btn-secondary" invisible="not invoice_id"/>
+                    <button name="action_create_certificate" string="Payment certificate" type="object"
+                            invisible="state not in ('confirmed', 'invoiced')"/>
+                    <button name="action_view_certificates" string="Manage certificates" type="object"
+                            class="btn-secondary" invisible="certificate_count == 0"/>
+                    <button name="action_cleanup_duplicate_certificates" string="Remove duplicate CDPs" type="object"
+                            class="btn-secondary" invisible="certificate_count &lt;= 1"/>
+                    <button name="action_reset_draft" string="Reset to draft" type="object" invisible="state not in ('confirmed','cancelled')"/>
+                    <button name="action_cancel" string="Cancel" type="object" invisible="state == 'cancelled'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,invoiced"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_certificates" type="object" class="oe_stat_button" icon="fa-file-text-o"
+                                invisible="certificate_count == 0">
+                            <field name="certificate_count" widget="statinfo" string="CDPs"/>
+                        </button>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="sbu_display_label" readonly="1" invisible="not sbu_revision_label"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="project_id"/>
+                            <field name="estimate_id"/>
+                            <field name="partner_id"/>
+                            <field name="invoice_id" readonly="1"/>
+                            <field name="date"/>
+                        </group>
+                        <group>
+                            <field name="retention_percent"/>
+                            <field name="amount_gross"/>
+                            <field name="amount_retention"/>
+                            <field name="amount_net"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group string="Accounting (Phase 6.1)" groups="account.group_account_invoice">
+                            <field name="invoice_post_override"/>
+                            <field name="invoice_tax_ids" widget="many2many_tags" options="{'no_create': True}"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Lines">
+                            <div class="mb-2" invisible="state != 'draft'">
+                                <button name="action_add_lines_from_contract"
+                                        string="Add lines from contract"
+                                        type="object"
+                                        class="btn-primary"/>
+                                <button name="action_replace_lines_from_contract"
+                                        string="Replace lines from contract"
+                                        type="object"
+                                        class="btn-secondary ms-1"
+                                        confirm="Remove all current SAL lines and reload from your selection?"/>
+                            </div>
+                            <field name="line_ids">
+                                <list editable="bottom" create="0">
+                                    <field name="estimate_id" column_invisible="1"/>
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="estimate_sal_line_id"
+                                           domain="[('estimate_id', '=', estimate_id)]"
+                                           options="{'no_create': True}"
+                                           context="{
+                                               'list_view_ref': 'sbu_estimate.view_sbu_estimate_sal_line_list',
+                                               'search_view_ref': 'sbu_estimate.view_sbu_estimate_sal_line_search',
+                                           }"
+                                           placeholder="e.g. F1"/>
+                                    <field name="description"/>
+                                    <field name="contract_amount"/>
+                                    <field name="percent_this_sal"/>
+                                    <field name="amount_this_sal" readonly="1"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Certificates">
+                            <field name="certificate_ids">
+                                <list create="false" delete="true">
+                                    <field name="name"/>
+                                    <field name="date"/>
+                                    <field name="amount_gross"/>
+                                    <field name="amount_net"/>
+                                    <field name="invoice_payment_state" optional="show" widget="badge"/>
+                                    <field name="payment_id" optional="show"/>
+                                    <field name="state"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sbu_payment_certificate_list" model="ir.ui.view">
+        <field name="name">sbu.payment.certificate.list</field>
+        <field name="model">sbu.payment.certificate</field>
+        <field name="arch" type="xml">
+            <list string="Payment certificates" create="false" delete="true">
+                <field name="name"/>
+                <field name="sal_sheet_id"/>
+                <field name="project_id" optional="show"/>
+                <field name="date"/>
+                <field name="amount_gross"/>
+                <field name="amount_net"/>
+                <field name="invoice_payment_state" widget="badge" optional="show"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_sbu_payment_certificate_form" model="ir.ui.view">
+        <field name="name">sbu.payment.certificate.form</field>
+        <field name="model">sbu.payment.certificate</field>
+        <field name="arch" type="xml">
+            <form string="Payment certificate">
+                <header>
+                    <button name="action_issue" string="Issue" type="object" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_sync_payment_from_invoice" string="Sync payment link" type="object"
+                            class="btn-secondary" invisible="not invoice_id"/>
+                    <button name="action_mark_paid" string="Mark paid" type="object" invisible="state != 'issued' or invoice_payment_state == 'paid'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,issued,paid"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="sal_sheet_id"/>
+                        <field name="company_id" groups="base.group_multi_company"/>
+                        <field name="project_id"/>
+                        <field name="invoice_id" readonly="1"/>
+                        <field name="invoice_payment_state" widget="badge" readonly="1"/>
+                        <field name="payment_id"/>
+                        <field name="date"/>
+                        <field name="currency_id" invisible="1"/>
+                        <field name="amount_gross"/>
+                        <field name="retention_percent"/>
+                        <field name="amount_retention"/>
+                        <field name="amount_net"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sbu_sal_sheet_search" model="ir.ui.view">
+        <field name="name">sbu.sal.sheet.search</field>
+        <field name="model">sbu.sal.sheet</field>
+        <field name="arch" type="xml">
+            <search string="Customer SAL">
+                <field name="name"/>
+                <field name="sbu_display_label"/>
+                <field name="project_id"/>
+                <field name="partner_id"/>
+                <field name="estimate_id"/>
+                <separator/>
+                <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+                <filter name="confirmed" string="Confirmed" domain="[('state', '=', 'confirmed')]"/>
+                <filter name="invoiced" string="Invoiced" domain="[('state', '=', 'invoiced')]"/>
+                <filter name="cancelled" string="Cancelled" domain="[('state', '=', 'cancelled')]"/>
+                <filter name="has_invoice" string="Has invoice" domain="[('invoice_id', '!=', False)]"/>
+                <separator/>
+                <filter name="grp_project" string="Group: Project" context="{'group_by': 'project_id'}"/>
+                <filter name="grp_state" string="Group: Status" context="{'group_by': 'state'}"/>
+                <searchpanel>
+                    <field name="state" string="Status" enable_counters="1"/>
+                    <field name="project_id" string="Project / Job" enable_counters="1" limit="40"/>
+                    <field name="partner_id" string="Customer" enable_counters="1" limit="40"/>
+                </searchpanel>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_sbu_sal_sheet" model="ir.actions.act_window">
+        <field name="name">SAL sheets</field>
+        <field name="res_model">sbu.sal.sheet</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_sbu_sal_sheet_search"/>
+    </record>
+</odoo>

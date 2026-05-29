@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="group_sbu_budget_unlock" model="res.groups">
+        <field name="name">SBU — Sblocco budget acquisti</field>
+        <field name="comment">Può abilitare lo sblocco PO su commessa e confermare ordini d'acquisto oltre budget (famiglia in rosso). Assegnare solo a responsabili acquisti / admin.</field>
+    </record>
+</odoo>

@@ -1,0 +1,13 @@
+// Let all stat buttons stay visible (no "More" overflow) and wrap to extra rows.
+.o_control_panel .o-form-buttonbox,
+.o_form_view .o-form-buttonbox {
+    flex-wrap: wrap;
+    width: 100% !important;
+    max-width: 100%;
+
+    > .oe_stat_button,
+    > div > .oe_stat_button {
+        flex-grow: 0;
+        flex-shrink: 0;
+    }
+}

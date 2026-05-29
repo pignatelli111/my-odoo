@@ -1,0 +1,831 @@
+from odoo import api, fields, models, _
+from odoo.exceptions import UserError
+from odoo.tools.float_utils import float_is_zero
+
+from .sbu_budget_helpers import PO_DRAFT_STATES, sbu_cost_family_label
+
+from odoo.addons.sbu_estimate.models.sbu_revision_display import sbu_doc_name_with_revision
+
+from .sbu_workflow_routing import (
+    SBU_WORKFLOW_ROUTE_SELECTION,
+    bom_product_workflow_route,
+    estimate_line_matches_route,
+    workflow_route_to_request_type,
+)
+
+
+class SbuPurchaseRequest(models.Model):
+    _name = 'sbu.purchase.request'
+    _description = 'SBU Purchase Request (RDA / ACO / ACP / …)'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
+    _order = 'priority desc, id desc'
+
+    name = fields.Char(
+        string='Reference',
+        required=True,
+        copy=False,
+        readonly=True,
+        default=lambda self: _('New'),
+        tracking=True,
+    )
+    workflow_route = fields.Selection(
+        selection='_sbu_workflow_route_selection',
+        string='Route ANACO',
+        index=True,
+        tracking=True,
+        help='ANACO route code (LA, LZ, ST, PAN, OSC, VC/VS, …). Use «New purchase document» wizard '
+             'or configure routes under SBU → Purchasing → Workflow routes.',
+    )
+
+    @api.model
+    def _sbu_workflow_route_selection(self):
+        return self.env['sbu.workflow.route']._selection_for_field()
+    request_type = fields.Selection(
+        selection=[
+            ('rda', 'RDA — Primary materials'),
+            ('aco', 'ACO — Workshop accessories'),
+            ('acp', 'ACP — Installation accessories'),
+            ('lds', 'LDS — Shipping list'),
+            ('fe', 'FE — Steel workshop'),
+            ('st', 'ST — Brackets'),
+            ('vt', 'VT — Glass'),
+            ('other', 'Other'),
+        ],
+        string='Document type',
+        required=True,
+        default='rda',
+        tracking=True,
+    )
+    priority = fields.Selection(
+        [
+            ('0', 'Normal'),
+            ('1', 'Medium'),
+            ('2', 'High'),
+            ('3', 'Critical'),
+        ],
+        string='Header priority',
+        default='0',
+        required=True,
+        tracking=True,
+        index=True,
+        help='Operational priority for RDA / ACP / ACO / LDS follow-up.',
+    )
+    need_by_date = fields.Date(
+        string='Need by (1st delivery)',
+        tracking=True,
+        index=True,
+        help='PRIMA CONSEGNA — target date for materials / deliverables on this request.',
+    )
+    delivery_date_2 = fields.Date(
+        string='2nd delivery',
+        tracking=True,
+        help='SECONDA CONSEGNA from TMS template.',
+    )
+    delivery_date_3 = fields.Date(
+        string='3rd delivery',
+        tracking=True,
+        help='TERZA CONSEGNA from TMS template.',
+    )
+    delivery_date_4 = fields.Date(
+        string='4th delivery',
+        tracking=True,
+        help='QUARTA CONSEGNA from TMS template.',
+    )
+    site_required_date = fields.Date(
+        string='Site / install date',
+        tracking=True,
+        help='Optional date when goods must be on site (ACP / ACO / LDS).',
+    )
+    company_id = fields.Many2one(
+        'res.company',
+        string='Company',
+        required=True,
+        default=lambda self: self.env.company,
+        index=True,
+    )
+    project_id = fields.Many2one(
+        'project.project',
+        string='Project / Job',
+        required=True,
+        ondelete='cascade',
+        index=True,
+        tracking=True,
+    )
+    estimate_id = fields.Many2one(
+        'sbu.estimate',
+        string='Source estimate',
+        readonly=True,
+        related='project_id.sbu_estimate_id',
+        store=True,
+    )
+    sbu_revision_label = fields.Char(
+        string='Job REV label',
+        related='project_id.sbu_revision_label',
+        store=True,
+        readonly=True,
+    )
+    sbu_display_label = fields.Char(
+        string='Display label',
+        compute='_compute_sbu_display_label',
+        store=True,
+    )
+    vendor_id = fields.Many2one(
+        'res.partner',
+        string='Preferred vendor',
+        domain=[('supplier_rank', '>', 0)],
+        tracking=True,
+        help='Used when «RFQ vendors» is empty: one draft RFQ is created for this supplier.',
+    )
+    vendor_ids = fields.Many2many(
+        'res.partner',
+        'sbu_purchase_request_vendor_rel',
+        'request_id',
+        'partner_id',
+        string='RFQ vendors',
+        domain=[('supplier_rank', '>', 0)],
+        help='Multi-vendor RFQ: one draft purchase order per supplier. If empty, the preferred vendor is used.',
+    )
+    offer_comparison_markup_pct = fields.Float(
+        string='Offer comparison markup %',
+        default=4.0,
+        digits=(16, 2),
+        tracking=True,
+        help='Applied to captured unit prices in «Evaluated price» for comparison (+4%% buffer).',
+    )
+    comparison_margin_buffer_pct = fields.Float(
+        string='Comparison margin buffer %',
+        default=3.0,
+        digits=(16, 2),
+        tracking=True,
+        help='Added to «Margin impact (pp)» for side-by-side comparison (+3%% typical buffer).',
+    )
+    offer_ids = fields.One2many(
+        'sbu.purchase.request.offer',
+        'request_id',
+        string='Supplier offers',
+    )
+    # Header fields aligned with RDA/ACP/ACO Excel templates (row «Project», signatures, topic)
+    excel_item = fields.Char(
+        string='Item (Excel sheet)',
+        help='Excel template item column (e.g. FT, LA01).',
+    )
+    topic = fields.Char(
+        string='Topic',
+        help='Topic / subject as on the RDA template (façade, zone, etc.).',
+    )
+    drawn_by = fields.Char(
+        string='Drawn by',
+        help='Drawn by (RDA / submission sheet).',
+    )
+    check_by = fields.Char(
+        string='Checked by',
+        help='Checked by (RDA / submission sheet).',
+    )
+    project_code = fields.Char(
+        string='Project code (TMS)',
+        help='CODICE COMMESSA / Project from TMS Excel header.',
+    )
+    tms_document_number = fields.Char(
+        string='TMS document n°',
+        help='n°RDA / n°ACO / n°ACP from TMS template header.',
+    )
+    tms_template_name = fields.Char(
+        string='TMS template',
+        help='Template file name from TMS header row (M.4.3.x).',
+    )
+    document_date = fields.Date(
+        string='Document date',
+        help='Data / Date from TMS Excel header.',
+    )
+    leed_scheme = fields.Selection(
+        [
+            ('leed', 'LEED'),
+            ('bream', 'BREAM'),
+        ],
+        string='Certification scheme',
+        help='LEED / BREAM flag from TMS template.',
+    )
+    area_code = fields.Char(
+        string='Area / zone',
+        help='Area or zone code from TMS template (e.g. F01).',
+    )
+    state = fields.Selection(
+        [
+            ('draft', 'Draft'),
+            ('submitted', 'Submitted'),
+            ('approved', 'Approved'),
+            ('done', 'Done'),
+            ('cancelled', 'Cancelled'),
+        ],
+        string='Status',
+        default='draft',
+        tracking=True,
+    )
+    demand_loss_pct = fields.Float(
+        string='Default demand loss %',
+        default=3.0,
+        digits=(16, 2),
+        tracking=True,
+        help='Wastage %% applied when exploding BOM to demand lines (used for BOM components with loss %% = 0).',
+    )
+    user_id = fields.Many2one(
+        'res.users',
+        string='Responsible',
+        default=lambda self: self.env.user,
+        tracking=True,
+    )
+    line_ids = fields.One2many(
+        'sbu.purchase.request.line',
+        'request_id',
+        string='Request lines',
+    )
+    purchase_order_ids = fields.Many2many(
+        'purchase.order',
+        'sbu_purchase_request_purchase_order_rel',
+        'request_id',
+        'purchase_order_id',
+        string='Related RFQs / POs',
+        help='Linked draft/confirmed RFQs and POs (also set purchase.order.sbu_purchase_request_id).',
+    )
+    attachment_ids = fields.Many2many(
+        'ir.attachment',
+        'sbu_purchase_request_attachment_rel',
+        'request_id',
+        'attachment_id',
+        string='Supporting files',
+        help='Drawings, supplier PDFs, e-mail extracts (in addition to chatter).',
+    )
+    submitted_date = fields.Datetime(
+        string='Submitted on',
+        readonly=True,
+        copy=False,
+    )
+    approved_by_id = fields.Many2one(
+        'res.users',
+        string='Approved by',
+        readonly=True,
+        copy=False,
+    )
+    approved_date = fields.Datetime(
+        string='Approved on',
+        readonly=True,
+        copy=False,
+    )
+    date_done = fields.Datetime(
+        string='Closed on',
+        readonly=True,
+        copy=False,
+    )
+    cancel_reason = fields.Text(
+        string='Cancel / reject notes',
+        copy=False,
+        help='Reason when cancelling or rolling back (operational audit).',
+    )
+    technical_data_state = fields.Selection(
+        [
+            ('estimate_bom', 'From estimate BOM'),
+            ('excel_imported', 'From technical Excel'),
+            ('technical_review', 'Technical document review'),
+            ('ready_for_po', 'Ready for RFQ/PO'),
+        ],
+        string='Technical data',
+        default='estimate_bom',
+        tracking=True,
+        help='Estimate BOM → consultant document (RDA/ACO/ACP…) → ready to order.',
+    )
+
+    def _sbu_loss_pct_for_bom_line(self, bom):
+        """Per-component loss overrides request default when > 0."""
+        self.ensure_one()
+        if bom.demand_loss_pct and bom.demand_loss_pct > 0:
+            return bom.demand_loss_pct
+        return self.demand_loss_pct or 0.0
+
+    def _sbu_supplier_moq(self, product):
+        """Minimum order qty from product supplierinfo (optional preferred vendor)."""
+        self.ensure_one()
+        if not product:
+            return 0.0
+        company = self.company_id
+        tmpl = product.product_tmpl_id
+        sellers = tmpl.seller_ids.filtered(
+            lambda s: (not s.company_id or s.company_id == company) and s.min_qty
+        )
+        if self.vendor_id:
+            sellers = sellers.filtered(lambda s: s.partner_id == self.vendor_id)
+        if not sellers:
+            return 0.0
+        return max(sellers.mapped('min_qty'))
+
+    def _sbu_demand_qty_from_bom(self, bom):
+        """Same ITEM rules as distinta; request loss %% when BOM line loss is 0."""
+        self.ensure_one()
+        BomLine = self.env['sbu.estimate.bom.line']
+        loss_pct = self._sbu_loss_pct_for_bom_line(bom)
+        moq = bom.demand_moq or 0.0
+        if moq <= 0:
+            moq = self._sbu_supplier_moq(bom.product_id) or 0.0
+        return BomLine._sbu_apply_demand_qty_rules(
+            bom.qty_theoretical,
+            loss_pct=loss_pct,
+            moq=moq,
+            pack_size=bom.pack_size or 0.0,
+        )
+
+    @api.onchange('workflow_route')
+    def _onchange_workflow_route(self):
+        if self.workflow_route:
+            self.request_type = workflow_route_to_request_type(self.workflow_route)
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('name', _('New')) == _('New'):
+                vals['name'] = self.env['ir.sequence'].next_by_code('sbu.purchase.request') or _('New')
+            route = vals.get('workflow_route')
+            if route and not vals.get('request_type'):
+                vals['request_type'] = workflow_route_to_request_type(route)
+        return super().create(vals_list)
+
+    @api.depends('name', 'sbu_revision_label')
+    def _compute_sbu_display_label(self):
+        for req in self:
+            req.sbu_display_label = sbu_doc_name_with_revision(
+                req.name,
+                req.sbu_revision_label,
+            ) or req.name
+
+    def name_get(self):
+        if self.env.context.get('sbu_use_document_name_only'):
+            return super().name_get()
+        return [(rec.id, rec.sbu_display_label or rec.name) for rec in self]
+
+    def action_submit(self):
+        self.write({
+            'state': 'submitted',
+            'submitted_date': fields.Datetime.now(),
+        })
+
+    def action_approve(self):
+        self.write({
+            'state': 'approved',
+            'approved_by_id': self.env.user.id,
+            'approved_date': fields.Datetime.now(),
+        })
+
+    def action_done(self):
+        self.write({
+            'state': 'done',
+            'date_done': fields.Datetime.now(),
+        })
+
+    def action_cancel(self):
+        self.write({'state': 'cancelled'})
+
+    def action_reset_draft(self):
+        self.write({
+            'state': 'draft',
+            'approved_by_id': False,
+            'approved_date': False,
+            'submitted_date': False,
+            'date_done': False,
+            'cancel_reason': False,
+        })
+
+    def action_start_technical_review(self):
+        self.write({'technical_data_state': 'technical_review'})
+        self.message_post(
+            body=_(
+                'Revisione tecnica avviata: aggiornare misure/costi da documento consulente '
+                '(Excel RDA/ACO/ACP o DWG/DF) e confermare le righe distinta collegate.'
+            ),
+        )
+
+    def action_mark_ready_for_po(self):
+        for req in self:
+            pending = req.line_ids.filtered(
+                lambda l: l.source_bom_line_id
+                and l.source_bom_line_id.needs_technical_confirm
+                and not l.source_bom_line_id.technical_confirmed
+            )
+            if pending:
+                names = ', '.join(pending.mapped('display_name')[:5])
+                raise UserError(
+                    _(
+                        'Confirm BOM lines before PO. '
+                        'Pending lines: %(names)s',
+                        names=names,
+                    )
+                )
+            req.write({'technical_data_state': 'ready_for_po'})
+            req.message_post(
+                body=_('Technical data confirmed: RFQ/PO can be created with final dimensions.'),
+            )
+
+    def _sbu_check_ready_for_po(self):
+        self.ensure_one()
+        if self.technical_data_state == 'ready_for_po':
+            return
+        raise UserError(
+            _(
+                'Technical documents (PR/ACO/ACP/VT…) must be completed before PO. '
+                'Use Start technical review, update dimensions on BOM lines, '
+                'check Confirmed for PO, then Ready for RFQ/PO.'
+            )
+        )
+
+    def action_view_project(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': self.project_id.display_name,
+            'res_model': 'project.project',
+            'res_id': self.project_id.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
+
+    def action_load_lines_from_estimate_bom_append(self):
+        return self._action_open_bom_import_wizard(replace=False)
+
+    def action_load_lines_from_estimate_bom_replace(self):
+        return self._action_open_bom_import_wizard(replace=True)
+
+    def _action_open_bom_import_wizard(self, replace=False):
+        self.ensure_one()
+        if not self.estimate_id:
+            raise UserError(_('The project has no linked source estimate (won estimate).'))
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Load from estimate BOM'),
+            'res_model': 'sbu.purchase.request.bom.import.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_request_id': self.id,
+                'default_replace_existing': replace,
+            },
+        }
+
+    def _bom_line_matches_pr_route(self, bom, route_filter):
+        """Whether this ITEM row belongs on a PR with the given ANACO route."""
+        if not route_filter or not bom.product_id:
+            return False
+        eline = bom.estimate_line_id
+        if route_filter in ('OSC', 'ZANZ', 'VC/VS'):
+            bom_route = bom_product_workflow_route(bom)
+            if bom_route and bom_route != route_filter:
+                return False
+            if route_filter == 'VC/VS' and bom_route in ('OSC', 'ZANZ'):
+                return False
+            return estimate_line_matches_route(eline, route_filter)
+        if not eline or (eline.workflow_route or '') != route_filter:
+            return False
+        return True
+
+    def _candidate_bom_lines_for_import(self, scope='route'):
+        """BOM lines offered in the import wizard."""
+        self.ensure_one()
+        estimate = self.estimate_id
+        Bom = self.env['sbu.estimate.bom.line']
+        if not estimate:
+            return Bom.browse()
+        lines = Bom.browse()
+        for eline in estimate.line_ids:
+            for bom in eline.bom_line_ids:
+                if not bom.product_id:
+                    continue
+                if scope == 'all' or self._bom_line_matches_pr_route(bom, self.workflow_route):
+                    lines |= bom
+        return lines
+
+    def _load_selected_bom_lines(self, bom_lines, clear=False):
+        """Create PR lines from a chosen set of estimate BOM rows."""
+        self.ensure_one()
+        if not self.estimate_id:
+            raise UserError(_('The project has no linked source estimate (won estimate).'))
+        if clear:
+            self.line_ids.unlink()
+        existing_bom = {bid for bid in self.line_ids.mapped('source_bom_line_id').ids if bid}
+        Line = self.env['sbu.purchase.request.line']
+        created = 0
+        for bom in bom_lines.sorted(lambda b: (b.estimate_line_id.sequence, b.sequence, b.id)):
+            if bom.id in existing_bom:
+                continue
+            if bom.estimate_id != self.estimate_id:
+                continue
+            if not bom.product_id:
+                continue
+            existing_bom.add(bom.id)
+            eline = bom.estimate_line_id
+            pos = eline.pos if eline else ''
+            line_vals = {
+                'request_id': self.id,
+                'source_bom_line_id': bom.id,
+                'bom_qty_sync': True,
+                'product_id': bom.product_id.id,
+                'product_uom': bom.uom_id.id,
+                'product_qty': self._sbu_demand_qty_from_bom(bom),
+                'name': bom.description or bom.product_id.display_name,
+                'pos': pos,
+                'article_code': bom.product_id.default_code or '',
+                'procurement_mode': 'purchase',
+                'line_priority': self.priority,
+            }
+            if hasattr(bom, '_sbu_purchase_line_dimension_vals'):
+                line_vals.update(bom._sbu_purchase_line_dimension_vals())
+            Line.create(line_vals)
+            created += 1
+        route_filter = self.workflow_route
+        if created and not self.excel_item and route_filter:
+            self.excel_item = route_filter
+        if created and not self.topic and route_filter in ('LA', 'LZ', 'PAN', 'OSC', 'PRF', 'SE'):
+            self.topic = _('Route %s') % route_filter
+        self.message_post(
+            body=_('Loaded %(n)d demand line(s) from estimate BOM (loss %%, packs, MOQ).')
+            % {'n': created},
+        )
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': self._name,
+            'res_id': self.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
+
+    def action_remove_lines_from_estimate_bom(self):
+        """Remove demand lines that were loaded from the estimate BOM (keep manual lines)."""
+        self.ensure_one()
+        bom_linked = self.line_ids.filtered('source_bom_line_id')
+        count = len(bom_linked)
+        bom_linked.unlink()
+        self.message_post(
+            body=_('Removed %(count)d line(s) linked to estimate BOM.') % {'count': count},
+        )
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': self._name,
+            'res_id': self.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
+
+    def copy(self, default=None):
+        """New document must not inherit lines from a duplicated request."""
+        default = dict(default or {}, line_ids=[])
+        return super().copy(default)
+
+    def action_apply_delivery_standards(self):
+        """Apply default delivery routes to all lines (overwrite existing destinations)."""
+        self.ensure_one()
+        count, skipped = self.line_ids._sbu_apply_delivery_standard(overwrite=True)
+        body_parts = [
+            _('Applied delivery standard rules to <b>%(n)d</b> line(s).') % {'n': count},
+        ]
+        if not self.project_id:
+            body_parts.append(
+                _('No project on this document: link a job so subcontractor / glass settings apply.')
+            )
+        elif not self.project_id.sbu_site_subcontractor_id:
+            body_parts.append(
+                _('Tip: set <b>Site subcontractor</b> on the job tab «Logistica / delivery» '
+                  'so destination text shows real partner names.')
+            )
+        no_rule = [s for s in skipped if s.get('reason') == 'no_rule']
+        if no_rule:
+            body_parts.append(
+                _('No matching rule for <b>%(n)d</b> line(s):') % {'n': len(no_rule)}
+            )
+            for item in no_rule[:8]:
+                body_parts.append(
+                    '• %(name)s — family <i>%(family)s</i>, document route <i>%(route)s</i>'
+                    % {
+                        'name': item.get('name') or '—',
+                        'family': item.get('cost_family_label') or item.get('cost_family') or '—',
+                        'route': item.get('route') or '—',
+                    }
+                )
+            if len(no_rule) > 8:
+                body_parts.append(_('… and %(n)d more.') % {'n': len(no_rule) - 8})
+            body_parts.append(
+                _('Add or edit rules under <b>SBU → Purchasing → Delivery standard</b> '
+                  '(match cost family and workflow route).')
+            )
+        if count and self.line_ids:
+            sample = self.line_ids.filtered('destination')[:3]
+            for line in sample:
+                body_parts.append(
+                    '• %(pos)s %(name)s → <i>%(dest)s</i>'
+                    % {
+                        'pos': (line.pos or '').strip() or '—',
+                        'name': (line.name or '')[:40],
+                        'dest': (line.destination or '')[:120],
+                    }
+                )
+        self.message_post(body='<br/>'.join(body_parts))
+        return True
+
+    def action_open_excel_import_wizard(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Import lines from Excel'),
+            'res_model': 'sbu.purchase.request.excel.import.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_request_id': self.id},
+        }
+
+    def action_bulk_update_lines(self):
+        """Open bulk wizard for all lines on this request."""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Apply to selected lines'),
+            'res_model': 'sbu.purchase.request.line.bulk.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_request_id': self.id,
+                'default_line_ids': [(6, 0, self.line_ids.ids)],
+            },
+        }
+
+    def action_open_offer_comparison_matrix(self):
+        """Pivot/list on supplier offers (matrix: line × vendor, measures)."""
+        self.ensure_one()
+        pivot_id = self.env.ref('sbu_purchase_flow.view_sbu_purchase_request_offer_pivot').id
+        list_id = self.env.ref('sbu_purchase_flow.view_sbu_purchase_request_offer_list_matrix').id
+        search_id = self.env.ref('sbu_purchase_flow.view_sbu_purchase_request_offer_search').id
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Supplier comparison'),
+            'res_model': 'sbu.purchase.request.offer',
+            'view_mode': 'pivot,list',
+            'views': [(pivot_id, 'pivot'), (list_id, 'list')],
+            'search_view_id': search_id,
+            'domain': [('request_id', '=', self.id)],
+            'context': {
+                'default_request_id': self.id,
+            },
+        }
+
+    def _load_lines_from_estimate_bom(self, clear=False, workflow_route=None):
+        """Programmatic load (wizard, project actions): all BOM rows for route."""
+        self.ensure_one()
+        route_filter = workflow_route or self.workflow_route
+        if route_filter and route_filter != self.workflow_route:
+            bom_lines = self.env['sbu.estimate.bom.line']
+            estimate = self.estimate_id
+            if estimate:
+                for eline in estimate.line_ids:
+                    if not estimate_line_matches_route(eline, route_filter):
+                        continue
+                    for bom in eline.bom_line_ids:
+                        if not bom.product_id:
+                            continue
+                        if route_filter in ('OSC', 'ZANZ', 'VC/VS'):
+                            bom_route = bom_product_workflow_route(bom)
+                            if bom_route and bom_route != route_filter:
+                                continue
+                            if route_filter == 'VC/VS' and bom_route in ('OSC', 'ZANZ'):
+                                continue
+                        bom_lines |= bom
+        else:
+            bom_lines = self._candidate_bom_lines_for_import(scope='route')
+            if not bom_lines:
+                bom_lines = self._candidate_bom_lines_for_import(scope='all')
+        return self._load_selected_bom_lines(bom_lines, clear=clear)
+
+    def _sbu_offer_for_po_line(self, partner, pr_line):
+        """Prefer chosen offer for this vendor & line, else any offer from that vendor."""
+        self.ensure_one()
+        Offer = self.env['sbu.purchase.request.offer']
+        base = [
+            ('request_line_id', '=', pr_line.id),
+            ('vendor_id', '=', partner.id),
+        ]
+        chosen = Offer.search(base + [('is_chosen', '=', True)], limit=1)
+        if chosen:
+            return chosen
+        return Offer.search(base, limit=1)
+
+    def _sbu_find_or_create_draft_po(self, vendor):
+        """Reuse one draft RFQ per vendor+request (avoid duplicate PO headers)."""
+        self.ensure_one()
+        Po = self.env['purchase.order']
+        domain = [
+            ('partner_id', '=', vendor.id),
+            ('sbu_purchase_request_id', '=', self.id),
+            ('state', 'in', PO_DRAFT_STATES),
+            ('company_id', '=', self.company_id.id),
+        ]
+        po = Po.search(domain, order='id desc', limit=1)
+        if po:
+            return po
+        po_vals = {
+            'partner_id': vendor.id,
+            'origin': _('%s — %s') % (self.name, vendor.name),
+            'company_id': self.company_id.id,
+            'sbu_purchase_request_id': self.id,
+        }
+        if 'project_id' in Po._fields:
+            po_vals['project_id'] = self.project_id.id
+        return Po.create(po_vals)
+
+    def _sbu_create_rfq_po_lines(self, po, pr_lines):
+        """Create/update draft PO lines with **qty remaining** (Cosimo punto 15)."""
+        for line in pr_lines:
+            if not line.product_id:
+                continue
+            qty = line._sbu_qty_remaining_to_order()
+            if float_is_zero(qty, precision_rounding=line.product_uom.rounding):
+                continue
+            line._sbu_upsert_rfq_po_line(po, qty)
+
+    def _sbu_rfq_vendor_partners(self):
+        """Partners to receive draft RFQs (explicit PR choice wins over supplier_rank filter)."""
+        self.ensure_one()
+        vendors = (self.vendor_ids | self.vendor_id).filtered('id')
+        if vendors:
+            # Quick-created UAT contacts may lack supplier_rank; trust explicit PR selection.
+            to_fix = vendors.filtered(lambda p: not p.supplier_rank)
+            if to_fix:
+                to_fix.write({'supplier_rank': 1})
+            return vendors
+        return self.env['res.partner'].search([('supplier_rank', '>', 0)], limit=1)
+
+    def _sbu_check_drawing_approval_blocked(self):
+        """Block RFQ when linked drawing register rows require approval (TMS tav appr)."""
+        self.ensure_one()
+        if not self.excel_item:
+            return
+        blocked = self.env['sbu.drawing.register'].search([
+            ('project_id', '=', self.project_id.id),
+            ('block_purchase', '=', True),
+            ('approval_state', '!=', 'approved'),
+            '|',
+            ('item', '=', self.excel_item),
+            ('drawing_code', 'ilike', self.excel_item),
+        ])
+        if blocked:
+            codes = ', '.join(blocked.mapped('drawing_code'))
+            raise UserError(
+                _('Drawing approval required before RFQ: %(codes)s. '
+                  'Approve the drawing or clear «Block RFQ until approved» on the register.')
+                % {'codes': codes},
+            )
+
+    def action_create_rfq(self):
+        """Create one draft purchase.order per RFQ vendor (multi-vendor RFQ)."""
+        self.ensure_one()
+        self._sbu_check_drawing_approval_blocked()
+        self._sbu_check_ready_for_po()
+        self.line_ids.action_refresh_qty_from_bom()
+        if not self.line_ids:
+            raise UserError(_('Add at least one line before creating an RFQ.'))
+        if not self.line_ids.filtered('product_id'):
+            raise UserError(_('At least one line must have a product to generate purchase lines.'))
+        vendors = self._sbu_rfq_vendor_partners()
+        if not vendors:
+            raise UserError(
+                _('Set «RFQ vendors» and/or a preferred vendor on this request, '
+                  'or create a supplier contact (Purchase tab: Vendor) before generating RFQs.')
+            )
+        lines_to_order = self.line_ids.filtered(
+            lambda line: line.product_id and not float_is_zero(
+                line._sbu_qty_remaining_to_order(),
+                precision_rounding=line.product_uom.rounding,
+            )
+        )
+        if not lines_to_order:
+            raise UserError(
+                _(
+                    'All request lines are already fully covered on RFQ/PO '
+                    '(remaining quantity is zero). Adjust RFQ quantities or increase '
+                    'the requested quantity on the RDA line.'
+                )
+            )
+        Po = self.env['purchase.order']
+        created = Po.browse()
+        for vendor in vendors:
+            po = self._sbu_find_or_create_draft_po(vendor)
+            self._sbu_create_rfq_po_lines(po, lines_to_order)
+            created |= po
+        for po in created:
+            self.purchase_order_ids = [(4, po.id)]
+        if len(created) == 1:
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'purchase.order',
+                'res_id': created.id,
+                'view_mode': 'form',
+            }
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Draft RFQs'),
+            'res_model': 'purchase.order',
+            'view_mode': 'list,form',
+            'domain': [('id', 'in', created.ids)],
+            'target': 'current',
+        }

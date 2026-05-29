@@ -1,0 +1,67 @@
+# Translation of Odoo Server.
+# * sbu_project
+#
+msgid ""
+msgstr ""
+"Language: it\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+#. module: sbu_project
+#: model:ir.ui.menu,name:sbu_project.menu_sbu_jobs
+msgid "Jobs"
+msgstr "Commesse"
+
+#. module: sbu_project
+#: model:ir.actions.act_window,name:sbu_project.action_sbu_jobs
+msgid "SBU jobs"
+msgstr "Commesse SBU"
+
+#. module: sbu_project
+#: model_terms:ir.ui.view,arch_db:sbu_project.view_project_sbu_jobs_search
+msgid "SBU jobs"
+msgstr "Commesse SBU"
+
+#. module: sbu_project
+#: model_terms:ir.ui.view,arch_db:sbu_project.view_project_sbu_jobs_list
+msgid "SBU jobs"
+msgstr "Commesse SBU"
+
+#. module: sbu_project
+#: model_terms:ir.ui.view,arch_db:sbu_project.view_project_sbu_jobs_search
+msgid "Job"
+msgstr "Commessa"
+
+#. module: sbu_project
+#: model_terms:ir.ui.view,arch_db:sbu_project.view_project_sbu_jobs_list
+msgid "Job"
+msgstr "Commessa"
+
+#. module: sbu_project
+#: model_terms:ir.ui.view,arch_db:sbu_project.view_project_sbu_jobs_search
+msgid "Latest revision only"
+msgstr "Solo revisione più recente"
+
+#. module: sbu_project
+#: model_terms:ir.ui.view,arch_db:sbu_project.view_project_sbu_jobs_list
+msgid "Latest REV"
+msgstr "Ultima REV"
+
+#. module: sbu_project
+#: model_terms:ir.ui.view,arch_db:sbu_project.view_project_sbu_jobs_list
+msgid "Estimate date"
+msgstr "Data prev."
+
+#. module: sbu_project
+#: model_terms:ir.ui.view,arch_db:sbu_project.view_project_sbu_jobs_search
+msgid "Active"
+msgstr "In corso"
+
+#. module: sbu_project
+#: model_terms:ir.ui.view,arch_db:sbu_project.view_project_sbu_jobs_search
+msgid "Revision"
+msgstr "Revisione"
+
+#. module: sbu_project
+#: model_terms:ir.ui.view,arch_db:sbu_project.view_project_sbu_jobs_search
+msgid "Customer"
+msgstr "Cliente"

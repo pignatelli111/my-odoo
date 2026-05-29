@@ -1,0 +1,88 @@
+Phase 0 — Step 0.2: Accounting & fiscal skeleton (runbook)
+===========================================================
+
+Goal: Chart of accounts, journals, taxes, bank journals, and payment methods
+are defined; basic policies for customer invoices and vendor bills are agreed
+and configured so SBU flows (SAL, RFQ, certificates) can post cleanly later.
+
+Prerequisite: Step 0.1 complete (companies, users, staging duplicate).
+
+When this step is done in Odoo: fill sign-off below; push is batched when moving
+to the next phase (see docs/PHASE0_INDEX.txt).
+
+A) Localisation (Italy — Suburban context)
+------------------------------------------
+[ ] Apps: install **Italy - Accounting** (`l10n_it`) for the Italian company(ies).
+[ ] Company: Fiscal Country = Italy; currency EUR unless otherwise required.
+[ ] Verify **Chart of accounts** loaded (Italian PCG via localisation).
+[ ] **Taxes**: confirm default sale/purchase VAT groups exist; note reduced/exempt
+    rates you actually use (consult your accountant).
+
+B) Core accounting configuration
+--------------------------------
+[ ] Settings → Accounting → **Default accounts** (or company accounting settings):
+    - Customer receivable, Supplier payable defaults.
+    - Income / expense accounts for manual invoice lines if used before products
+      are fully mapped (SBU SAL draft invoice uses journal default income account).
+[ ] **Journals**:
+    - Customer Invoices (sale type) — exists; confirm sequence prefix.
+    - Vendor Bills (purchase type).
+    - Bank / Cash journals — one per real bank account (see D).
+    - Optional: Miscellaneous journal for adjustments (as per accountant).
+
+C) Taxes & fiscal positions
+---------------------------
+[ ] Map product categories / products to correct **customer taxes** and **vendor taxes**.
+[ ] **Fiscal positions** (EU B2B, export, intra-EU) — enable only if you trade
+    outside Italy; otherwise document “Italy only for v1”.
+[ ] Rounding and cash basis: only if accountant requires (document decision).
+
+D) Banks, Qonto, payment methods
+--------------------------------
+[ ] **Bank accounts** linked to company; create **Bank** journal per account.
+[ ] **Qonto** (bank of record): for Phase 0.2, at minimum:
+    - Manual: periodic statement import or manual **bank statement** lines in Odoo,
+      OR prepare CSV import template agreed with accountant.
+    - Later phase: API bridge (do not block 0.2 on automation).
+[ ] **Payment methods** (Accounting → Configuration → Payment Methods):
+    - Align with how you pay/receive (wire, SEPA, card); restrict to real use.
+[ ] **Outstanding receipts/payments** accounts (Odoo 16+ style) — confirm defaults
+    after l10n_it (Italian chart often sets these).
+
+E) Policies — customer invoices (sales / SAL)
+-----------------------------------------------
+[ ] **Invoice policy** on products: ordered quantities vs delivered — decide default
+    for manufactured / project business (often **delivered** for goods; **ordered**
+    for fixed-fee services — document the rule).
+[ ] **SAL / progress billing**: agree rule with accountant:
+    - Draft customer invoice from SAL (custom) → who posts, when, and analytic tag
+      to project (Phase 6 will harden).
+[ ] **Down payments / deposits** (if used): deposit product and tax handling.
+
+F) Policies — vendor bills (purchase / subcontract)
+-----------------------------------------------------
+[ ] **Bill control** policy: received quantities vs ordered — match how you receive
+    on site vs in warehouse.
+[ ] **3-way match** (PO / receipt / bill) if you use stock: enable if applicable.
+[ ] Default **expense account** for PO lines without product (avoid suspense).
+
+G) Sequences & fiscal year
+-------------------------
+[ ] Invoice/bill **sequences** and **lock dates** (reporting): set **tax lock date**
+    when accountant closes first month.
+[ ] **Fiscal year** last day (Italy often 31/12); align Odoo company setting.
+
+H) Smoke test (staging DB)
+-------------------------
+[ ] Create a **test customer invoice** (draft → post → payment register) on staging.
+[ ] Create a **test vendor bill** and register payment on staging.
+[ ] Confirm **trial balance** opens without errors.
+
+I) Sign-off
+-----------
+Date: ____________
+Verified by: ____________
+Accountant consulted: Y / N   Name: ____________
+Notes: _______________________________________________
+
+Next: docs/PHASE0_STEP0_3_core_apps.txt — Index: docs/PHASE0_INDEX.txt

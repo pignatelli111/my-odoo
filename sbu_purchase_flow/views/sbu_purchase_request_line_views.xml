@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sbu_purchase_request_line_list" model="ir.ui.view">
+        <field name="name">sbu.purchase.request.line.list</field>
+        <field name="model">sbu.purchase.request.line</field>
+        <field name="arch" type="xml">
+            <list string="Purchase request lines"
+                  decoration-success="manual_input_pending"
+                  decoration-muted="manual_input_state == 'imported'">
+                <field name="request_id"/>
+                <field name="request_type" optional="show"/>
+                <field name="workflow_route" optional="show"/>
+                <field name="project_id" optional="show"/>
+                <field name="pos" optional="show"/>
+                <field name="name"/>
+                <field name="article_code" optional="show"/>
+                <field name="product_id"/>
+                <field name="manual_input_state" column_invisible="1"/>
+                <field name="manual_input_pending" column_invisible="1"/>
+                <field name="width_mm" string="L (mm)"/>
+                <field name="height_mm" string="H (mm)"/>
+                <field name="depth_mm" string="P (mm)"/>
+                <field name="sqm_per_piece" string="Sqm/pc"/>
+                <field name="sqm_total" string="Sqm total"/>
+                <field name="dimension_mm" string="Dimensions"/>
+                <field name="vdc_code" optional="hide"/>
+                <field name="reference_rda" optional="hide"/>
+                <field name="order_number" optional="hide"/>
+                <field name="logistics_supplier" optional="hide"/>
+                <field name="logistics_site" optional="hide"/>
+                <field name="note" optional="hide"/>
+                <field name="utilization" optional="hide"/>
+                <field name="qty_ordered" optional="show"/>
+                <field name="qty_remaining" optional="show"/>
+                <field name="product_qty" string="Qty requested"/>
+                <field name="product_uom" string="UoM" optional="show"/>
+                <field name="date_required" optional="show"/>
+                <field name="destination" optional="show"/>
+                <field name="procurement_mode" optional="show"/>
+                <field name="line_priority" optional="show"/>
+                <field name="technical_confirmed" optional="hide"/>
+                <field name="request_state" column_invisible="1"/>
+                <field name="technical_data_state" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_sbu_purchase_request_line_search" model="ir.ui.view">
+        <field name="name">sbu.purchase.request.line.search</field>
+        <field name="model">sbu.purchase.request.line</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="request_id"/>
+                <field name="project_id"/>
+                <field name="product_id"/>
+                <field name="pos"/>
+                <field name="article_code"/>
+                <field name="request_type"/>
+                <field name="workflow_route"/>
+                <field name="destination"/>
+                <separator/>
+                <filter name="no_delivery_date" string="No delivery date"
+                        domain="[('date_required', '=', False)]"/>
+                <filter name="has_delivery_date" string="With delivery date"
+                        domain="[('date_required', '!=', False)]"/>
+                <filter name="date_required_period" string="Delivery date" date="date_required"/>
+                <separator/>
+                <filter name="pending_technical" string="Pending technical confirm"
+                        domain="[('source_bom_line_id.needs_technical_confirm', '=', True), ('source_bom_line_id.technical_confirmed', '=', False)]"/>
+                <filter name="manual_input_pending" string="Manual entry pending (green)"
+                        domain="[('manual_input_pending', '=', True)]"/>
+                <filter name="manual_input_imported" string="From import / Logikal (grey)"
+                        domain="[('manual_input_state', '=', 'imported')]"/>
+                <filter name="procurement_purchase" string="Procurement: purchase"
+                        domain="[('procurement_mode', '=', 'purchase')]"/>
+                <filter name="procurement_wh" string="Procurement: warehouse"
+                        domain="[('procurement_mode', '=', 'warehouse')]"/>
+                <filter name="has_qty_remaining" string="Qty remaining to order"
+                        domain="[('qty_remaining', '&gt;', 0)]"/>
+                <filter name="fully_ordered" string="Fully on RFQ/PO"
+                        domain="[('qty_fully_ordered', '=', True)]"/>
+                <filter name="prio_high" string="High / critical priority"
+                        domain="[('line_priority', 'in', ('2', '3'))]"/>
+                <separator/>
+                <filter name="type_rda" string="RDA" domain="[('request_type', '=', 'rda')]"/>
+                <filter name="type_aco" string="ACO" domain="[('request_type', '=', 'aco')]"/>
+                <filter name="type_acp" string="ACP" domain="[('request_type', '=', 'acp')]"/>
+                <filter name="type_vt" string="VT / Glass" domain="[('request_type', '=', 'vt')]"/>
+                <filter name="type_st" string="ST" domain="[('request_type', '=', 'st')]"/>
+                <filter name="type_fe" string="FE / Steel workshop" domain="[('request_type', '=', 'fe')]"/>
+                <separator/>
+                <filter name="route_la" string="LA" domain="[('workflow_route', '=', 'LA')]"/>
+                <filter name="route_lz" string="LZ" domain="[('workflow_route', '=', 'LZ')]"/>
+                <filter name="route_st" string="ST" domain="[('workflow_route', '=', 'ST')]"/>
+                <filter name="route_pan" string="PAN" domain="[('workflow_route', '=', 'PAN')]"/>
+                <filter name="route_osc" string="OSC" domain="[('workflow_route', '=', 'OSC')]"/>
+                <filter name="route_zanz" string="Screens" domain="[('workflow_route', '=', 'ZANZ')]"/>
+                <filter name="route_vt" string="VT / VC-VS" domain="[('workflow_route', '=', 'VC/VS')]"/>
+                <separator/>
+                <filter name="tech_estimate" string="Data: estimate BOM"
+                        domain="[('technical_data_state', '=', 'estimate_bom')]"/>
+                <filter name="tech_review" string="Data: technical review"
+                        domain="[('technical_data_state', '=', 'technical_review')]"/>
+                <filter name="tech_ready" string="Data: ready for PO"
+                        domain="[('technical_data_state', '=', 'ready_for_po')]"/>
+                <separator/>
+                <filter string="Group by request" name="grp_request" context="{'group_by': 'request_id'}"/>
+                <filter string="Group by project" name="grp_project" context="{'group_by': 'project_id'}"/>
+                <filter string="Group by type" name="grp_type" context="{'group_by': 'request_type'}"/>
+                <filter string="Group by product" name="grp_product" context="{'group_by': 'product_id'}"/>
+                <filter string="Group by delivery date" name="grp_date" context="{'group_by': 'date_required'}"/>
+                <filter string="Group by priority" name="grp_prio" context="{'group_by': 'line_priority'}"/>
+                <searchpanel>
+                    <field name="workflow_route" string="Route (LA/LZ/ST/PAN/OSC)" enable_counters="1"/>
+                    <field name="request_type" string="Document type" enable_counters="1"/>
+                    <field name="procurement_mode" string="Procurement" enable_counters="1"/>
+                    <field name="line_priority" string="Line priority" enable_counters="1"/>
+                    <field name="technical_data_state" string="Technical data" enable_counters="1"/>
+                    <field name="project_id" string="Project / Job" enable_counters="1" limit="40"/>
+                </searchpanel>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_sbu_purchase_request_line" model="ir.actions.act_window">
+        <field name="name">Purchase request lines</field>
+        <field name="res_model">sbu.purchase.request.line</field>
+        <field name="view_mode">list</field>
+        <field name="search_view_id" ref="view_sbu_purchase_request_line_search"/>
+        <field name="help" type="html">
+            <p>Use the <b>left filters</b> (request type, priority, delivery date, …), then
+               <b>Action → Apply to filtered result</b> to set date, destination,
+               warehouse/purchase and priority on all filtered lines (without selecting them one by one).</p>
+        </field>
+    </record>
+</odoo>

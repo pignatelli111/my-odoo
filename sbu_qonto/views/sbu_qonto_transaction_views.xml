@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sbu_qonto_transaction_list" model="ir.ui.view">
+        <field name="name">sbu.qonto.transaction.list</field>
+        <field name="model">sbu.qonto.transaction</field>
+        <field name="arch" type="xml">
+            <list string="Qonto movements">
+                <header>
+                    <button name="action_import_now" type="object" string="Import now" class="btn-secondary" display="always"/>
+                    <button name="action_suggest_match" type="object" string="Suggest match" class="btn-secondary"/>
+                    <button name="action_match_odoo" type="object" string="Match (high confidence)" class="btn-primary"/>
+                    <button name="action_sync_qonto_partners" type="object" string="Sync suppliers" class="btn-secondary"/>
+                </header>
+                <field name="settled_at"/>
+                <field name="qonto_remote_id"/>
+                <field name="side"/>
+                <field name="amount_signed"/>
+                <field name="currency_id"/>
+                <field name="counterparty_name" optional="show"/>
+                <field name="partner_id" optional="show"/>
+                <field name="label"/>
+                <field name="reference"/>
+                <field name="match_document_type" optional="show"/>
+                <field name="sbu_match_confidence" widget="badge" optional="show"/>
+                <field name="state" widget="badge"/>
+                <field name="suggested_invoice_id" optional="hide"/>
+                <field name="suggested_vendor_bill_id" optional="hide"/>
+                <field name="match_invoice_id" optional="show"/>
+                <field name="match_vendor_bill_id" optional="show"/>
+                <field name="match_payment_id" optional="show"/>
+                <field name="source"/>
+                <field name="company_id" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_sbu_qonto_transaction_form" model="ir.ui.view">
+        <field name="name">sbu.qonto.transaction.form</field>
+        <field name="model">sbu.qonto.transaction</field>
+        <field name="arch" type="xml">
+            <form string="Qonto movement">
+                <header>
+                    <button name="action_suggest_match" string="Suggest match" type="object" class="btn-secondary" invisible="state != 'imported'"/>
+                    <button name="action_apply_suggestion" string="Apply suggestion" type="object" class="btn-primary"
+                            invisible="state != 'imported' or sbu_match_confidence == 'none'"/>
+                    <button name="action_match_odoo" string="Match (high confidence)" type="object" class="btn-primary" invisible="state != 'imported'"/>
+                    <button name="action_register_invoice_payment" string="Register customer payment" type="object"
+                            class="btn-primary"
+                            invisible="state != 'imported' or amount_signed &lt;= 0 or (not suggested_invoice_id and not match_invoice_id)"
+                            groups="account.group_account_invoice"/>
+                    <button name="action_register_vendor_payment" string="Register vendor payment" type="object"
+                            class="btn-primary"
+                            invisible="state != 'imported' or amount_signed &gt;= 0 or (not suggested_vendor_bill_id and not match_vendor_bill_id)"
+                            groups="account.group_account_invoice"/>
+                    <button name="action_ignore" string="Ignore" type="object" class="btn-secondary" invisible="state != 'imported'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="imported,matched,ignored"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="qonto_remote_id"/>
+                            <field name="source"/>
+                            <field name="side"/>
+                            <field name="operation_type"/>
+                            <field name="status"/>
+                        </group>
+                        <group>
+                            <field name="amount"/>
+                            <field name="amount_signed"/>
+                            <field name="currency_id"/>
+                            <field name="settled_at"/>
+                            <field name="emitted_at"/>
+                        </group>
+                    </group>
+                    <group string="Counterparty">
+                        <field name="counterparty_name"/>
+                        <field name="counterparty_iban"/>
+                        <field name="partner_id"/>
+                    </group>
+                    <group>
+                        <field name="label"/>
+                        <field name="reference"/>
+                        <field name="note"/>
+                    </group>
+                    <group string="Match suggestion (review)">
+                        <field name="sbu_match_confidence" widget="badge"/>
+                        <field name="sbu_match_hint"/>
+                        <field name="suggested_payment_id"/>
+                        <field name="suggested_invoice_id"/>
+                        <field name="suggested_vendor_bill_id"/>
+                    </group>
+                    <group string="Confirmed Odoo link">
+                        <field name="match_document_type"/>
+                        <field name="match_payment_id"/>
+                        <field name="match_invoice_id"/>
+                        <field name="match_vendor_bill_id"/>
+                        <div class="text-muted" colspan="2">
+                            <b>Customer inbound:</b> Register payment reconciles the invoice in Odoo (Cosimo punto 10).
+                            <b>Vendor outbound:</b> same for vendor bills when enabled.
+                            Bank statement line reconciliation with the Qonto journal remains optional in Accounting.
+                        </div>
+                    </group>
+                    <notebook>
+                        <page string="Raw Qonto payload" name="raw">
+                            <field name="raw_json" widget="text" nolabel="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sbu_qonto_transaction" model="ir.actions.act_window">
+        <field name="name">Qonto movements</field>
+        <field name="res_model">sbu.qonto.transaction</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Import movements from Qonto (cron, manual, or webhook). Beneficiaries sync creates suppliers in Odoo.
+                High-confidence <b>inbound</b> movements can auto-register customer payments (invoice reconciled in Odoo).
+                Use Qonto only as the bank account—not for invoice what-if scenarios.
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="menu_sbu_qonto_movements"
+        name="Qonto movements"
+        parent="account.menu_finance"
+        action="action_sbu_qonto_transaction"
+        sequence="120"
+    />
+</odoo>
