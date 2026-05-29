@@ -2,7 +2,7 @@
 
 **Cliente:** Suburban SRL  
 **Destinatario:** Cosimo (operativo)  
-**Data report:** maggio 2026 (agg. TMS Excel — `sbu_purchase_flow` 19.0.1.0.99)  
+**Data report:** maggio 2026 (agg. `sbu_purchase_flow` **19.0.1.0.101**, `sbu_estimate` **19.0.1.0.112**)  
 **Ambiente:** Odoo 19 — Odoo.sh (`pignatelli111-my-odoo.odoo.com`)  
 **Repository:** `pignatelli111/my-odoo` — ramo **`real`** / **`production`**
 
@@ -38,17 +38,17 @@ ANACO = stima per preventivo/contratto. I documenti dei consulenti tecnici (Exce
 - Regole automatiche su prodotti distinta: **SBU-VETRO** (90% mq posizione), **SBU-ZANZ** / **SBU-OSC** (+300 mm altezza).  
 - Campi **Confermato per PO**, **Fase dati** (stima / Logikal / tecnico).  
 - RDA da distinta; blocco RFQ se non in stato «pronto».  
-- **Import Excel TMS completo** (file tecnici `M.4.3.x` / `M.4.4.x`): RDA, ACO, ACP, LDS, registro tavole, catalogo VdC, Elenco elementi, date consegna 1–4, N° ordine, logistica DDT. Wizard **Import TMS Excel** su commessa e **Import from Excel** su singola RDA. Modulo ≥ **19.0.1.0.99**.  
+- **Import Excel TMS completo** (file tecnici `M.4.3.x` / `M.4.4.x`): RDA, ACO, ACP, LDS, registro tavole, catalogo VdC, Elenco elementi, date consegna 1–4, N° ordine, logistica DDT. Wizard **Import TMS Excel** su commessa e **Import from Excel** su singola RDA. Modulo ≥ **19.0.1.0.101**.  
 - **Fuori scope:** DWG cartigli; Logikal resta pre-fill (punto 9), non verità finale PO.
 
 **Come verificare**  
-1. Upgrade `sbu_purchase_flow` → **19.0.1.0.99**.  
+1. Upgrade `sbu_purchase_flow` → **19.0.1.0.101**, `sbu_estimate` → **19.0.1.0.112**.  
 2. Commessa → **TMS import** → file `M.4.3.C_TMS_RDA_LEED (...)_02.xlsx`.  
 3. Preventivo vinto → commessa → RDA da distinta **oppure** import Excel tecnico.  
 4. Distinta ITEM: righe vetro/zanzariere → MQ e flag tecnico.  
 5. RDA → **Pronto per RFQ/PO** → RFQ; senza passaggio → blocco.
 
-📖 [TMS_EXCEL_INTEGRATION_ROADMAP.md](TMS_EXCEL_INTEGRATION_ROADMAP.md) — Moduli: `sbu_estimate`, `sbu_purchase_flow` ≥ 19.0.1.0.99
+📖 [TMS_EXCEL_INTEGRATION_ROADMAP.md](TMS_EXCEL_INTEGRATION_ROADMAP.md) — Moduli: `sbu_estimate` ≥ **19.0.1.0.112**, `sbu_purchase_flow` ≥ **19.0.1.0.101**
 
 ---
 
@@ -259,18 +259,20 @@ Come foglio ITEM: preventivo, acquistato, residui, %; semafori; solo admin sbloc
 **Feedback Cosimo**  
 Dopo import, costi, margini % e retention risultano sbagliati.
 
-**Risposta — cosa abbiamo fatto** ⚠️  
-- Miglioramenti import: colonna **BS**, staffame ST/LZ, **ritenuta %** da foglio SAL, avviso se BS mancante.  
+**Risposta — cosa abbiamo fatto** ⚠️ (UI schema costi ✅ — parità numerica da UAT)  
+- Miglioramenti import: colonna **BS**, **BB/BC**, staffame ST/LZ, **ritenuta %** da foglio SAL, avviso se BS mancante.  
+- **Schema costi ANACO in interfaccia** (riga + totali testata): materiale lavorato → add-on CAD/TOT → subtotale → industriali → MOL → prezzo cliente (come foglio Excel).  
 - Margine e costo totale sono **ricalcolati** in Odoo (non copia 1:1 ogni formula Excel).  
-- **MOL** non incluso nel costo totale come in alcuni fogli Excel.  
-- Validazione numerica automatica P1002 = ancora da consolidare in UAT.
+- **MOL** non incluso nel costo totale (indicatore, come ANACO).  
+- Validazione numerica automatica P1002 = ancora da consolidare in UAT con Cosimo.
 
 **Come verificare**  
-1. Re-import file P1002 → controllare **Prezzo unit. ANACO (col. BS)** su righe campione.  
-2. Tab **Voci contrattuali SAL** → **Retention %** se diversa da contratto.  
-3. Confrontare 1 riga pilota Excel vs Odoo (prezzo TOT, costo TOT, margine %).
+1. Upgrade **`sbu_estimate` 19.0.1.0.112** → riga preventivo → **PREVENTIVO IMPORTATO DA ANACO — schema costi**.  
+2. Re-import file P1002 → controllare **Prezzo unit. ANACO (col. BS)** su righe campione.  
+3. Tab **Voci contrattuali SAL** → **Retention %** se diversa da contratto.  
+4. Confrontare 1 riga pilota Excel vs Odoo (prezzo TOT, costo TOT, margine %).
 
-📖 [COSIMO_PUNTO12_COSTI_MARGINI_RETENTION.md](COSIMO_PUNTO12_COSTI_MARGINI_RETENTION.md) — Modulo: `sbu_estimate` ≥ 19.0.1.0.109+
+📖 [COSIMO_PUNTO12_COSTI_MARGINI_RETENTION.md](COSIMO_PUNTO12_COSTI_MARGINI_RETENTION.md) — Modulo: `sbu_estimate` ≥ **19.0.1.0.112**
 
 ---
 
@@ -414,7 +416,7 @@ Su Jobs non è chiaro quale REV sia la più recente; stessa confusione su SAL, R
 
 ## Prossimi passi consigliati (con Suburban)
 
-1. **Upgrade moduli SBU** su database produzione dopo ogni deploy (**`sbu_purchase_flow` 19.0.1.0.99**).  
+1. **Upgrade moduli SBU** su database produzione dopo ogni deploy (**`sbu_purchase_flow` 19.0.1.0.101**, **`sbu_estimate` 19.0.1.0.112**).  
 2. **UAT a campione** su una commessa reale: punti 1→2→5→11→10→13 (import TMS Excel incluso).  
 3. **Logikal** (punto 9): pianificare con file campione e licenza ERP Logikal.  
 4. **Punto 12**: sessione 2h su una riga ANACO Excel vs Odoo con file P1002.

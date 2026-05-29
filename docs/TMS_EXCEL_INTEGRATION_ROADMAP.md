@@ -47,7 +47,7 @@ Origin files: `file base che usano i tecnici_riservato/`
 
 ## Verify on Odoo.sh
 
-1. Upgrade `sbu_purchase_flow` to **19.0.1.0.99**
+1. Upgrade `sbu_purchase_flow` to **19.0.1.0.101** and `sbu_estimate` to **19.0.1.0.112**
 2. Import origin files from `file base che usano i tecnici_riservato/`
 3. Confirm new fields: order n°, logistics supplier/site, project code, LEED, area/zone, LDS order n°, drawing RIF/emission 3
 

@@ -5,7 +5,7 @@
 La ringraziamo per il tempo dedicato e per il feedback dettagliato sui 18 punti. Questo documento riassume, punto per punto, cosa abbiamo già implementato in Odoo, cosa è parzialmente disponibile e come può verificarlo autonomamente sul sistema.
 
 **Cliente:** Suburban SRL a Socio Unico  
-**Data:** maggio 2026 (aggiornamento TMS Excel — `sbu_purchase_flow` 19.0.1.0.99)  
+**Data:** maggio 2026 (agg. `sbu_purchase_flow` **19.0.1.0.101**, `sbu_estimate` **19.0.1.0.112**)  
 **Sistema:** Odoo 19 — moduli SBU custom  
 
 ---
@@ -46,7 +46,7 @@ Le chiediamo gentilmente di eseguire questi passaggi **una sola volta**, prima d
 | 9 | Logikal | ⚠️ |
 | 10 | Qonto pagamenti automatici | ✅ |
 | 11 | Budget semafori + sblocco admin | ✅ |
-| 12 | Import costi / margini / retention | ⚠️ |
+| 12 | Import costi / margini / retention | ⚠️ (schema costi ANACO in UI — UAT numerico) |
 | 13 | Fattura per voce + SAL/CDP | ✅ |
 | 14 | Fornitori da Qonto | ✅ |
 | 15 | Residuo RDA e qty 1,03 | ✅ |
@@ -82,14 +82,14 @@ ANACO resta la stima per preventivo e contratto. I documenti dei consulenti tecn
 - **Logikal**: pre-compilazione distinta, non sostituto della conferma tecnica finale (punto 9).
 
 **Come può verificare**
-1. Aggiornare `sbu_purchase_flow` a **19.0.1.0.99** su Odoo.sh.
+1. Aggiornare su Odoo.sh: **`sbu_purchase_flow` 19.0.1.0.101**, **`sbu_estimate` 19.0.1.0.112**.
 2. Aprire una commessa → **TMS import** → caricare `M.4.3.C_TMS_RDA_LEED (...)_02.xlsx`.
 3. Controllare testata RDA (Item, Topic, date consegna) e righe (dimensioni, VdC, destinazione).
 4. Ripetere con file ACO, ACP, LDS e Report tav appr dalla cartella tecnici.
 5. Distinta ITEM: righe vetro → verificare MQ 90% e righe verdi da confermare.
 6. Passare RDA a **Pronto per RFQ/PO** → creare RFQ; senza passaggio → messaggio di blocco.
 
-**Moduli:** `sbu_estimate`, `sbu_purchase_flow` ≥ 19.0.1.0.99  
+**Moduli:** `sbu_estimate` ≥ **19.0.1.0.112**, `sbu_purchase_flow` ≥ **19.0.1.0.101**  
 **Guida tecnica:** `docs/TMS_EXCEL_INTEGRATION_ROADMAP.md`
 
 ---
@@ -321,22 +321,27 @@ Desiderava un controllo budget come nel foglio ITEM, con semafori e sblocco acqu
 **Il Suo feedback**  
 Dopo l’import, costi, margini e retention non coincidevano con Excel.
 
-**Stato attuale:** ⚠️ **Migliorato, da validare insieme su file reale**
+**Stato attuale:** ⚠️ **Migliorato — schema costi ANACO in schermata + UAT numerico**
 
 **Cosa abbiamo già corretto**
 - Import colonna **BS** (prezzo), **BB/BC** (costo), staffame ST/LZ, ritenuta % da foglio SAL.
 - Avviso se manca BS.
+- **Interfaccia costi ANACO** (feedback maggio 2026): su riga preventivo e totali testata, sequenza come in Excel:
+  - **Costo materiale lavorato e posato** (CAD / TOT)
+  - **A cui sommare**: trasporto, PM, cantiere, extra (CAD / TOT)
+  - **Subtotale** → **oneri industriali** → **MOL** (indicatore) → **prezzo cliente**
 
 **Cosa Le chiediamo di verificare con noi**
 - Odoo ricalcola alcuni valori con regole simili ma non identiche a ogni formula Excel.
 - Una sessione di confronto su **una riga pilota** del file P1002 ci aiuterà a chiudere eventuali scostamenti residui.
 
 **Come può verificare**
-1. Import P1002 → controllare riga **F1**: BS ≈ 4443,06 €.
-2. Tab **Voci contrattuali SAL** → **Retention %**.
-3. Confrontare una riga Excel vs Odoo (prezzo TOT, costo TOT, margine %).
+1. Aggiornare **`sbu_estimate` 19.0.1.0.112** → aprire riga preventivo → sezione **PREVENTIVO IMPORTATO DA ANACO — schema costi**.
+2. Import P1002 → controllare riga **F1**: BS ≈ 4443,06 €; costi BB/BC.
+3. Tab **Voci contrattuali SAL** → **Retention %**.
+4. Confrontare una riga Excel vs Odoo (prezzo TOT, costo TOT, margine %).
 
-**Modulo:** `sbu_estimate`
+**Modulo:** `sbu_estimate` ≥ **19.0.1.0.112**
 
 ---
 
@@ -474,8 +479,8 @@ Non era chiaro quale revisione fosse la più recente su Jobs, SAL, RDA, ecc.
 
 ## Prossimi passi — con il Suo supporto
 
-1. Aggiornare i moduli SBU su Odoo.sh dopo ogni rilascio (**`sbu_purchase_flow` 19.0.1.0.99** per TMS Excel).
-2. Verificare insieme i punti ⚠️ residui (8 Planner, 9 Logikal, 12 margini ANACO) su una commessa reale.
+1. Aggiornare i moduli SBU su Odoo.sh dopo ogni rilascio (**`sbu_purchase_flow` 19.0.1.0.101**, **`sbu_estimate` 19.0.1.0.112**).
+2. Verificare insieme i **3 punti parziali** residui: **8** Planner, **9** Logikal, **12** margini ANACO (UI costi ok; parità numerica Excel da UAT).
 3. **Punto 1 (TMS Excel):** test UAT con i file in `file base che usano i tecnici_riservato/`.
 4. Sessione breve (circa 2 ore) su file P1002 per chiudere il punto 12.
 
