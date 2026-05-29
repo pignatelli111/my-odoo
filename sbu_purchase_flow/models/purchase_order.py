@@ -196,6 +196,7 @@ class PurchaseOrderLine(models.Model):
         readonly=True,
     )
     sbu_manual_input_state = fields.Selection(
+        string='Manual input status',
         related='sbu_pr_line_id.manual_input_state',
         store=True,
         readonly=True,

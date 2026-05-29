@@ -32,10 +32,11 @@ def scan_file(py_path, by_model):
 def main():
     by_model = defaultdict(lambda: defaultdict(list))
     for pkg in sorted(ROOT.glob('sbu_*')):
-        models_dir = pkg / 'models'
-        if models_dir.is_dir():
-            for py in models_dir.rglob('*.py'):
-                scan_file(py, by_model)
+        for sub in ('models', 'wizards'):
+            sub_dir = pkg / sub
+            if sub_dir.is_dir():
+                for py in sub_dir.rglob('*.py'):
+                    scan_file(py, by_model)
     found = False
     for model in sorted(by_model):
         dups = {k: v for k, v in by_model[model].items() if len(v) > 1}

@@ -28,9 +28,31 @@ class TestSbuPurchaseFieldLabels(TransactionCase):
             'sbu.purchase.request.create.wizard',
             'sbu.purchase.request.excel.import.wizard',
             'sbu.purchase.request.bom.import.wizard',
+            'sbu.project.tms.import.wizard',
         ):
             dups = duplicate_custom_field_labels(self.env, model)
             self.assertEqual(dups, {}, f'{model}: {dups}')
+
+    def test_tms_origin_model_labels_distinct(self):
+        for model in (
+            'sbu.vdc.catalog',
+            'sbu.lds.entry',
+            'sbu.drawing.register',
+        ):
+            dups = duplicate_custom_field_labels(self.env, model)
+            self.assertEqual(dups, {}, f'{model}: {dups}')
+
+    def test_project_tms_stat_count_labels_distinct(self):
+        """Regression: stat button counts must not share labels with One2many fields."""
+        project = self.env['project.project']
+        labels = [
+            project._fields['sbu_lds_entry_ids'].string,
+            project._fields['sbu_lds_entry_count'].string,
+            project._fields['sbu_drawing_register_ids'].string,
+            project._fields['sbu_drawing_register_count'].string,
+            project._fields['sbu_purchase_request_count'].string,
+        ]
+        self.assertEqual(len(labels), len(set(labels)), labels)
 
     def test_project_budget_family_labels_distinct(self):
         dups = duplicate_custom_field_labels(self.env, 'sbu.project.budget.family')

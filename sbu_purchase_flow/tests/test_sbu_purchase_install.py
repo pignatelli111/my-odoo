@@ -42,3 +42,10 @@ class TestSbuPurchaseInstall(TransactionCase):
             self.env['sbu.purchase.request']._fields['purchase_order_ids'].type,
             'many2many',
         )
+        for model in (
+            'sbu.vdc.catalog',
+            'sbu.lds.entry',
+            'sbu.drawing.register',
+            'sbu.project.tms.import.wizard',
+        ):
+            self.assertTrue(self.env[model]._name, model)

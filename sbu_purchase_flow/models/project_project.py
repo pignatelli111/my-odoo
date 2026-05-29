@@ -31,7 +31,8 @@ class ProjectProject(models.Model):
         string='LDS register',
     )
     sbu_lds_entry_count = fields.Integer(
-        compute='_compute_sbu_tms_register_counts',
+        string='LDS entries',
+        compute='_compute_sbu_lds_entry_count',
     )
     sbu_drawing_register_ids = fields.One2many(
         'sbu.drawing.register',
@@ -39,7 +40,8 @@ class ProjectProject(models.Model):
         string='Drawing register',
     )
     sbu_drawing_register_count = fields.Integer(
-        compute='_compute_sbu_tms_register_counts',
+        string='Drawings tracked',
+        compute='_compute_sbu_drawing_register_count',
     )
     sbu_site_subcontractor_id = fields.Many2one(
         'res.partner',
@@ -69,11 +71,14 @@ class ProjectProject(models.Model):
         for project in self:
             project.sbu_purchase_request_count = pr.search_count([('project_id', '=', project.id)])
 
-    def _compute_sbu_tms_register_counts(self):
+    def _compute_sbu_lds_entry_count(self):
         Lds = self.env['sbu.lds.entry'].sudo()
-        Draw = self.env['sbu.drawing.register'].sudo()
         for project in self:
             project.sbu_lds_entry_count = Lds.search_count([('project_id', '=', project.id)])
+
+    def _compute_sbu_drawing_register_count(self):
+        Draw = self.env['sbu.drawing.register'].sudo()
+        for project in self:
             project.sbu_drawing_register_count = Draw.search_count([('project_id', '=', project.id)])
 
     def action_sbu_open_tms_import_wizard(self):
