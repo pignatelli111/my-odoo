@@ -45,7 +45,7 @@ class ResCompany(models.Model):
     sbu_qonto_webhook_token = fields.Char(
         string='Qonto webhook URL token',
         copy=False,
-        help='Secret path segment for /qonto/webhook/<token>. Set in Qonto webhook URL on their side.',
+        help='Secret path segment for /qonto/webhook/{token}. Set in Qonto webhook URL on their side.',
     )
     sbu_qonto_import_enabled = fields.Boolean(
         string='Enable Qonto import cron',

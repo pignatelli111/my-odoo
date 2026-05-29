@@ -32,7 +32,7 @@ class PurchaseOrder(models.Model):
         string='Over budget %',
         compute='_compute_sbu_budget_alert',
         digits=(16, 2),
-        help='(PO untaxed − reference) / reference × 100 when reference > 0.',
+        help='(PO untaxed − reference) / reference × 100 when reference is positive.',
     )
     sbu_budget_over_limit = fields.Boolean(
         string='Over budget (SBU)',

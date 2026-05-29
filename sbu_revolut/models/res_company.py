@@ -21,7 +21,7 @@ class ResCompany(models.Model):
     sbu_revolut_webhook_token = fields.Char(
         string='Revolut webhook URL token',
         copy=False,
-        help='Secret path segment for POST /revolut/webhook/<token>.',
+        help='Secret path segment for POST /revolut/webhook/{token}.',
     )
     sbu_revolut_import_enabled = fields.Boolean(
         string='Enable Revolut import cron',

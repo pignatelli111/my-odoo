@@ -73,7 +73,9 @@ class TestSbuP1002Workbook(TransactionCase):
         path = self._p1002_path()
         if not path:
             self.skipTest('P1002 workbook not on disk')
-        wb = openpyxl.load_workbook(path, data_only=True, read_only=True)
+        from odoo.addons.sbu_estimate.wizards.sbu_openpyxl_utils import load_openpyxl_workbook
+
+        wb = load_openpyxl_workbook(path, data_only=True, read_only=True)
         anaco = wb['ANACO']
         excel_bs = float(anaco.cell(13, 71).value or 0)
         excel_bb = float(anaco.cell(13, 54).value or 0)

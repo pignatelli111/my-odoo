@@ -134,8 +134,10 @@ class SbuPurchaseRequestExcelImportWizard(models.TransientModel):
         self.ensure_one()
         if not openpyxl:
             raise UserError(_('Install the openpyxl Python library on the Odoo server.'))
+        from odoo.addons.sbu_estimate.wizards.sbu_openpyxl_utils import load_openpyxl_workbook
+
         raw = base64.b64decode(self.data_file)
-        wb = openpyxl.load_workbook(io.BytesIO(raw), data_only=True, read_only=True)
+        wb = load_openpyxl_workbook(raw, data_only=True, read_only=True)
         try:
             if self.template_format == 'generic':
                 ws = wb[self.sheet_name] if self.sheet_name else wb[wb.sheetnames[0]]

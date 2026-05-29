@@ -288,10 +288,10 @@ def _detect_sal_contract_retention_percent(sh_vals, sh_form=None):
 
 def _get_workbook_sheet_pair(raw):
     """Return (values_sheet, formula_sheet) for ANACO — merge literals from formula book."""
-    buf = io.BytesIO(raw)
-    wb_vals = openpyxl.load_workbook(buf, data_only=True, read_only=False)
-    buf.seek(0)
-    wb_form = openpyxl.load_workbook(buf, data_only=False, read_only=False)
+    from .sbu_openpyxl_utils import load_openpyxl_workbook
+
+    wb_vals = load_openpyxl_workbook(raw, data_only=True, read_only=False)
+    wb_form = load_openpyxl_workbook(raw, data_only=False, read_only=False)
     return wb_vals, wb_form
 
 

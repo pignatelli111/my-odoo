@@ -7,14 +7,25 @@ if [[ ! -f "$LOG" ]]; then
   exit 1
 fi
 echo "=== SBU / user addon WARNING lines (excluding Odoo core noise) ==="
+SBU_LINES=$(grep WARNING "$LOG" \
+  | grep -v 'odoo.tools.config: missing --http-interface' \
+  | grep -v 'werkzeug' \
+  | grep -E 'sbu_|/home/odoo/src/user|Fields with the same label|have the same label|compute method|should not be' \
+  | tail -80)
+if [[ -n "$SBU_LINES" ]]; then
+  echo "$SBU_LINES"
+else
+  echo "(none — SBU looks clean)"
+fi
+echo ""
+echo "=== Counts ==="
+echo -n "SBU/custom WARNING: "
 grep WARNING "$LOG" \
   | grep -v 'odoo.tools.config: missing --http-interface' \
   | grep -v 'werkzeug' \
-  | grep -E 'sbu_|/home/odoo/src/user|Fields with the same label|compute method|should not be' \
-  | tail -80
-echo ""
-echo "=== Count ==="
-grep WARNING "$LOG" \
-  | grep -v 'odoo.tools.config: missing --http-interface' \
-  | grep -E 'sbu_|/home/odoo/src/user|Fields with the same label|compute method|should not be' \
+  | grep -E 'sbu_|/home/odoo/src/user|Fields with the same label|have the same label|compute method|should not be' \
   | wc -l
+echo -n "Total WARNING in log: "
+grep -c WARNING "$LOG" 2>/dev/null || echo 0
+echo ""
+echo "If SBU=0 but Odoo.sh is yellow, run: bash ~/src/user/tools/odoo_sh_why_build_warning.sh"

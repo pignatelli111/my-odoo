@@ -78,8 +78,10 @@ class SbuProjectTmsImportWizard(models.TransientModel):
         self.ensure_one()
         if not openpyxl:
             raise UserError(_('Install the openpyxl Python library on the Odoo server.'))
+        from odoo.addons.sbu_estimate.wizards.sbu_openpyxl_utils import load_openpyxl_workbook
+
         raw = base64.b64decode(self.data_file)
-        return openpyxl.load_workbook(io.BytesIO(raw), data_only=True, read_only=True)
+        return load_openpyxl_workbook(raw, data_only=True, read_only=True)
 
     def _resolve_kind(self, wb):
         if self.import_kind != 'auto':

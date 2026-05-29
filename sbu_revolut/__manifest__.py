@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'SBU Revolut',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.0.1',
     'summary': 'Revolut Business movements import and webhooks; match to Odoo payments/invoices; optional CSV export (Phase 6.4)',
     'author': 'SBU Development',
     'category': 'Accounting',
