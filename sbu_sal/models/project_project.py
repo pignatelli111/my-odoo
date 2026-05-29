@@ -6,6 +6,7 @@ class ProjectProject(models.Model):
     _inherit = 'project.project'
 
     sbu_sal_sheet_count = fields.Integer(
+        string='Active SAL sheets',
         compute='_compute_sbu_sal_sheet_count',
     )
     sbu_sal_passive_sheet_count = fields.Integer(

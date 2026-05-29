@@ -56,41 +56,21 @@
                         </group>
                     </group>
                     <group string="PREVENTIVO IMPORTATO DA ANACO — schema costi">
-                        <group>
-                            <label for="cost_material_worked_cad" string="Costo materiale lavorato e posato"/>
-                            <div class="o_row">
-                                <span class="o_form_label oe_inline">CAD</span>
-                                <field name="cost_material_worked_cad" readonly="1" nolabel="1" class="oe_inline"/>
-                                <span class="o_form_label oe_inline">TOT</span>
-                                <field name="cost_material_worked_tot" readonly="1" nolabel="1" class="oe_inline"/>
-                            </div>
+                        <group string="Base materiale">
+                            <field name="cost_material_worked_cad" readonly="1"/>
+                            <field name="cost_material_worked_tot" readonly="1"/>
                         </group>
-                        <group string="A cui sommare">
-                            <label for="cost_trasporto_cad" string="Trasporto e imballo"/>
-                            <div class="o_row">
-                                <field name="cost_trasporto_cad" nolabel="1" class="oe_inline"/>
-                                <field name="cost_trasporto_tot" readonly="1" nolabel="1" class="oe_inline"/>
-                            </div>
-                            <label for="cost_tech_pm_cad" string="Sviluppo tecnico e PM"/>
-                            <div class="o_row">
-                                <field name="cost_tech_pm_cad" nolabel="1" class="oe_inline"/>
-                                <field name="cost_tech_pm_tot" readonly="1" nolabel="1" class="oe_inline"/>
-                            </div>
-                            <label for="cost_cantiere_cad" string="Presidio cantiere / site mng"/>
-                            <div class="o_row">
-                                <field name="cost_cantiere_cad" nolabel="1" class="oe_inline"/>
-                                <field name="cost_cantiere_tot" readonly="1" nolabel="1" class="oe_inline"/>
-                            </div>
-                            <label for="cost_extra_cad" string="Extra"/>
-                            <div class="o_row">
-                                <field name="cost_extra_cad" nolabel="1" class="oe_inline"/>
-                                <field name="cost_extra_tot" readonly="1" nolabel="1" class="oe_inline"/>
-                            </div>
-                            <label for="cost_staffame_cad" string="ST/LZ staffame"/>
-                            <div class="o_row">
-                                <field name="cost_staffame_cad" nolabel="1" class="oe_inline"/>
-                                <field name="cost_staffame_tot" readonly="1" nolabel="1" class="oe_inline"/>
-                            </div>
+                        <group string="A cui sommare (CAD / TOT)">
+                            <field name="cost_trasporto_cad"/>
+                            <field name="cost_trasporto_tot" readonly="1"/>
+                            <field name="cost_tech_pm_cad"/>
+                            <field name="cost_tech_pm_tot" readonly="1"/>
+                            <field name="cost_cantiere_cad"/>
+                            <field name="cost_cantiere_tot" readonly="1"/>
+                            <field name="cost_extra_cad"/>
+                            <field name="cost_extra_tot" readonly="1"/>
+                            <field name="cost_staffame_cad"/>
+                            <field name="cost_staffame_tot" readonly="1"/>
                         </group>
                         <group string="Subtotale e oneri">
                             <field name="cost_subtotal_cad" readonly="1"/>

@@ -14,6 +14,7 @@ class SbuEstimateCommercial(models.Model):
         copy=True,
     )
     commercial_term_count = fields.Integer(
+        string='Commercial terms count',
         compute='_compute_commercial_term_count',
     )
     offer_retention_percent = fields.Float(

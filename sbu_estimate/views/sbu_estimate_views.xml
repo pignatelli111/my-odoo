@@ -189,9 +189,9 @@
                         </group>
                         <group>
                             <field name="anaco_mol_total" widget="monetary" readonly="1"/>
-                            <field name="total_price" string="Prezzo cliente TOT" widget="monetary" readonly="1"/>
-                            <field name="total_cost" string="Costo totale TOT" widget="monetary" readonly="1"/>
-                            <field name="margin_amount" string="Margine €" widget="monetary" readonly="1"/>
+                            <field name="anaco_display_total_price" widget="monetary" readonly="1"/>
+                            <field name="anaco_display_total_cost" widget="monetary" readonly="1"/>
+                            <field name="anaco_display_margin_amount" widget="monetary" readonly="1"/>
                         </group>
                     </group>
 

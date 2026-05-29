@@ -28,3 +28,14 @@ class TestSbuEstimateFieldLabels(TransactionCase):
             self.env, 'project.project', field_prefix='sbu_',
         )
         self.assertEqual(dups, {}, dups)
+
+    def test_all_sbu_registry_models_labels_distinct(self):
+        """Catch duplicate labels on any sbu.* model (Odoo.sh install WARNING)."""
+        failures = {}
+        for model_name in sorted(self.env.registry):
+            if not model_name.startswith('sbu.'):
+                continue
+            dups = duplicate_custom_field_labels(self.env, model_name)
+            if dups:
+                failures[model_name] = dups
+        self.assertEqual(failures, {}, failures)

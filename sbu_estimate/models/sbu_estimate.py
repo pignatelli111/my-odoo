@@ -268,6 +268,24 @@ class SbuEstimate(models.Model):
         currency_field='currency_id',
         help='Indicatore ANACO — non incluso nel costo totale.',
     )
+    anaco_display_total_price = fields.Monetary(
+        related='total_price',
+        string='Prezzo cliente TOT',
+        currency_field='currency_id',
+        readonly=True,
+    )
+    anaco_display_total_cost = fields.Monetary(
+        related='total_cost',
+        string='Costo totale TOT (ANACO)',
+        currency_field='currency_id',
+        readonly=True,
+    )
+    anaco_display_margin_amount = fields.Monetary(
+        related='margin_amount',
+        string='Margine € (ANACO)',
+        currency_field='currency_id',
+        readonly=True,
+    )
     total_contract_sal = fields.Monetary(
         string='Contract SAL total',
         compute='_compute_totals',
@@ -326,6 +344,7 @@ class SbuEstimate(models.Model):
         copy=False,
     )
     project_count = fields.Integer(
+        string='Linked projects',
         compute='_compute_project_count',
     )
 
