@@ -143,8 +143,8 @@ class SbuProjectTmsImportWizard(models.TransientModel):
             vdc_rows = parse_vdc_sheet_rows(self._sheet_rows(wb, 'Vdc'))
             stats = self.env['sbu.vdc.catalog'].sync_from_sheet_rows(vdc_rows)
             parts.append(
-                _('VdC catalog: %(c)s created, %(u)s updated.')
-                % {'c': stats['created'], 'u': stats['updated']},
+                _('VdC catalog: %(created)s created, %(updated)s updated.',
+                  created=stats['created'], updated=stats['updated']),
             )
         elenco_sheet = next(
             (n for n in wb.sheetnames if 'elenco elementi' in n.lower()),
@@ -165,8 +165,8 @@ class SbuProjectTmsImportWizard(models.TransientModel):
             if kind in ('rda', 'aco', 'acp'):
                 pr, n_lines = self._import_pr_document(wb, kind)
                 parts.append(
-                    _('%(typ)s → %(ref)s (%(n)s lines).')
-                    % {'typ': kind.upper(), 'ref': pr.display_name, 'n': n_lines},
+                    _('%(typ)s → %(ref)s (%(n)s lines).',
+                      typ=kind.upper(), ref=pr.display_name, n=n_lines),
                 )
                 parts.extend(self._sync_workbook_extras(wb))
             elif kind == 'lds':
@@ -182,8 +182,8 @@ class SbuProjectTmsImportWizard(models.TransientModel):
                     self.project_id, rows, self.update_mode,
                 )
                 parts.append(
-                    _('LDS register: %(c)s created, %(u)s updated.')
-                    % stats,
+                    _('LDS register: %(created)s created, %(updated)s updated.',
+                      created=stats['created'], updated=stats['updated']),
                 )
                 parts.extend(self._sync_workbook_extras(wb))
             elif kind == 'drawings':
@@ -202,8 +202,8 @@ class SbuProjectTmsImportWizard(models.TransientModel):
                     self.project_id, rows, self.update_mode,
                 )
                 parts.append(
-                    _('Drawings: %(c)s created, %(u)s updated.')
-                    % stats,
+                    _('Drawings: %(created)s created, %(updated)s updated.',
+                      created=stats['created'], updated=stats['updated']),
                 )
             elif kind == 'vdc':
                 if 'Vdc' not in wb.sheetnames:
@@ -212,8 +212,8 @@ class SbuProjectTmsImportWizard(models.TransientModel):
                     parse_vdc_sheet_rows(self._sheet_rows(wb, 'Vdc')),
                 )
                 parts.append(
-                    _('VdC catalog: %(c)s created, %(u)s updated.')
-                    % stats,
+                    _('VdC catalog: %(created)s created, %(updated)s updated.',
+                      created=stats['created'], updated=stats['updated']),
                 )
             elif kind == 'elenco':
                 sheet = next(

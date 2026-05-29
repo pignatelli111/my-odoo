@@ -129,9 +129,9 @@ class TestSbuTmsExcelParser(TransactionCase):
         self.assertEqual(stats['created'], 1)
         cat = self.env['sbu.vdc.catalog'].search([('code', '=', 'B_GAMMISTA_ALLUMINIO')], limit=1)
         self.assertTrue(cat)
-        self.assertEqual(cat.cost_family, 'profile')
+        self.assertEqual(cat.cost_family, 'aluminum_sheet')
         fam = self.env['sbu.vdc.catalog'].resolve_cost_family('B_GAMMISTA_ALLUMINIO')
-        self.assertEqual(fam, 'profile')
+        self.assertEqual(fam, 'aluminum_sheet')
 
 
 @tagged('post_install', '-at_install')
