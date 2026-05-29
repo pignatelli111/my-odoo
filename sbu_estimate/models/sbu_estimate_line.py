@@ -225,6 +225,77 @@ class SbuEstimateLine(models.Model):
     cost_staffame_cad = fields.Float(string='ST/LZ Staffame CAD', digits=(16, 2))
     cost_extra_cad = fields.Float(string='Extra CAD', digits=(16, 2))
 
+    # ANACO cost rollup (Cosimo schema: materiale → add-on → subtotale → industriali → MOL)
+    cost_material_worked_cad = fields.Float(
+        string='Costo materiale lavorato e posato CAD',
+        compute='_compute_cost_totals',
+        store=True,
+        digits=(16, 2),
+        help='Coibentazione + posa lamiera LIN dopo sconti a catena (base ANACO col. BB).',
+    )
+    cost_material_worked_tot = fields.Float(
+        string='Costo materiale lavorato e posato TOT',
+        compute='_compute_cost_totals',
+        store=True,
+        digits=(16, 2),
+    )
+    cost_trasporto_tot = fields.Float(
+        string='Trasporto e imballo TOT',
+        compute='_compute_cost_totals',
+        store=True,
+        digits=(16, 2),
+    )
+    cost_tech_pm_tot = fields.Float(
+        string='Sviluppo tecnico e PM TOT',
+        compute='_compute_cost_totals',
+        store=True,
+        digits=(16, 2),
+    )
+    cost_cantiere_tot = fields.Float(
+        string='Presidio cantiere / site mng TOT',
+        compute='_compute_cost_totals',
+        store=True,
+        digits=(16, 2),
+    )
+    cost_staffame_tot = fields.Float(
+        string='ST/LZ staffame TOT',
+        compute='_compute_cost_totals',
+        store=True,
+        digits=(16, 2),
+    )
+    cost_extra_tot = fields.Float(
+        string='Extra TOT',
+        compute='_compute_cost_totals',
+        store=True,
+        digits=(16, 2),
+    )
+    cost_subtotal_cad = fields.Float(
+        string='Subtotale costo CAD',
+        compute='_compute_cost_totals',
+        store=True,
+        digits=(16, 2),
+        help='Materiale lavorato + trasporto + PM + cantiere + extra (prima oneri industriali).',
+    )
+    cost_subtotal_tot = fields.Float(
+        string='Subtotale costo TOT',
+        compute='_compute_cost_totals',
+        store=True,
+        digits=(16, 2),
+    )
+    cost_industrial_tot = fields.Float(
+        string='Oneri industriali TOT',
+        compute='_compute_cost_totals',
+        store=True,
+        digits=(16, 2),
+    )
+    cost_mol_amount_tot = fields.Float(
+        string='MOL su materiale TOT',
+        compute='_compute_cost_totals',
+        store=True,
+        digits=(16, 2),
+        help='Indicatore ANACO: non sommato al costo totale.',
+    )
+
     cost_gross_cad = fields.Float(
         string='List cost / base CAD',
         compute='_compute_cost_discount_chain',
@@ -268,15 +339,16 @@ class SbuEstimateLine(models.Model):
         help='Somma Σ (qty da distinta × costo unit.) delle righe sbu.estimate.bom.line: unica '
              '«verità» distinta per confronto costi; acquisti collegati usano le stesse righe.',
     )
-    # Computed cost totals
+    # Computed cost totals (final, includes oneri industriali)
     cost_total_cad = fields.Float(
-        string='Costo Materiale Lavorato e Posato CAD',
+        string='Costo totale CAD',
         compute='_compute_cost_totals',
         store=True,
         digits=(16, 2),
+        help='Subtotale CAD + oneri industriali (parità col. BC Excel quando importato).',
     )
     cost_total_tot = fields.Float(
-        string='Costo Materiale Lavorato e Posato TOT',
+        string='Costo totale TOT',
         compute='_compute_cost_totals',
         store=True,
         digits=(16, 2),
@@ -301,7 +373,7 @@ class SbuEstimateLine(models.Model):
         compute='_compute_line_margin',
         store=True,
         digits=(16, 2),
-        help='Prezzo cliente TOT − costo materiale lavorato e posato TOT.',
+        help='Prezzo cliente TOT − costo totale TOT.',
     )
     margin_pct = fields.Float(
         string='Margine %',
@@ -517,49 +589,77 @@ class SbuEstimateLine(models.Model):
         'discount_sc1', 'discount_sc2', 'discount_sc3',
     )
     def _compute_cost_totals(self):
-        """Total cost uses chained discounts on list cost, then industrial % on discounted material."""
+        """ANACO rollup: materiale → add-on → subtotale → industriali (+ MOL indicatore)."""
+        addon_cad_fields = (
+            'cost_trasporto_cad',
+            'cost_tech_pm_cad',
+            'cost_cantiere_cad',
+            'cost_staffame_cad',
+            'cost_extra_cad',
+        )
+        addon_tot_fields = (
+            'cost_trasporto_tot',
+            'cost_tech_pm_tot',
+            'cost_cantiere_tot',
+            'cost_staffame_tot',
+            'cost_extra_tot',
+        )
         for line in self:
-            if line.cost_anaco_bb_cad:
-                cad = line.cost_anaco_bb_cad
-                line.cost_industrial_cad = 0.0
-                line.cost_mol_amount_cad = 0.0
-                line.cost_total_cad = cad
-                qty = line.qty or 1.0
-                line.cost_total_tot = (
-                    line.cost_anaco_bc_tot
-                    if line.cost_anaco_bc_tot
-                    else cad * qty
-                )
-                if line.calc_uom_type == 'mq' and line.sqm:
-                    line.cost_per_sqm = line.cost_total_tot / line.sqm
-                else:
-                    line.cost_per_sqm = 0.0
-                continue
-            material = (
-                (line.cost_coibentazione_cad or 0.0)
-                + (line.cost_posa_lamiera_lin_cad or 0.0)
-            )
-            other = (
-                (line.cost_tech_pm_cad or 0.0)
-                + (line.cost_trasporto_cad or 0.0)
-                + (line.cost_cantiere_cad or 0.0)
-                + (line.cost_staffame_cad or 0.0)
-                + (line.cost_extra_cad or 0.0)
-            )
+            qty = line.qty or 1.0
             disc_factor = _successive_discount_factor(
                 line.discount_sc1,
                 line.discount_sc2,
                 line.discount_sc3,
             )
-            material_net = material * disc_factor
-            other_net = other * disc_factor
-            ind_pct = line.cost_industrial_pct or 0.0
-            line.cost_industrial_cad = material_net * (ind_pct / 100.0)
-            mol_pct = line.cost_mol_pct or 0.0
-            line.cost_mol_amount_cad = material_net * (mol_pct / 100.0)
-            cad = material_net + other_net + line.cost_industrial_cad
-            line.cost_total_cad = cad
-            line.cost_total_tot = cad * (line.qty or 1)
+            if line.cost_anaco_bb_cad:
+                material_net = line.cost_anaco_bb_cad
+                line.cost_material_worked_cad = material_net
+                line.cost_material_worked_tot = material_net * qty
+                other_net = 0.0
+                for cad_name, tot_name in zip(addon_cad_fields, addon_tot_fields):
+                    net_cad = (getattr(line, cad_name) or 0.0) * disc_factor
+                    setattr(line, tot_name, net_cad * qty)
+                    other_net += net_cad
+                line.cost_subtotal_cad = material_net + other_net
+                line.cost_subtotal_tot = line.cost_material_worked_tot + sum(
+                    getattr(line, tot_name) for tot_name in addon_tot_fields
+                )
+                line.cost_industrial_cad = 0.0
+                line.cost_industrial_tot = 0.0
+                line.cost_mol_amount_cad = 0.0
+                line.cost_mol_amount_tot = 0.0
+                # BB/BC Excel: unit costo certificato = BB; totale riga = BC (col. BC).
+                line.cost_total_cad = material_net
+                line.cost_total_tot = (
+                    line.cost_anaco_bc_tot
+                    if line.cost_anaco_bc_tot
+                    else material_net * qty
+                )
+            else:
+                material = (
+                    (line.cost_coibentazione_cad or 0.0)
+                    + (line.cost_posa_lamiera_lin_cad or 0.0)
+                )
+                material_net = material * disc_factor
+                line.cost_material_worked_cad = material_net
+                line.cost_material_worked_tot = material_net * qty
+                other_net = 0.0
+                for cad_name, tot_name in zip(addon_cad_fields, addon_tot_fields):
+                    net_cad = (getattr(line, cad_name) or 0.0) * disc_factor
+                    setattr(line, tot_name, net_cad * qty)
+                    other_net += net_cad
+                line.cost_subtotal_cad = material_net + other_net
+                line.cost_subtotal_tot = line.cost_material_worked_tot + sum(
+                    getattr(line, tot_name) for tot_name in addon_tot_fields
+                )
+                ind_pct = line.cost_industrial_pct or 0.0
+                line.cost_industrial_cad = material_net * (ind_pct / 100.0)
+                line.cost_industrial_tot = line.cost_industrial_cad * qty
+                mol_pct = line.cost_mol_pct or 0.0
+                line.cost_mol_amount_cad = material_net * (mol_pct / 100.0)
+                line.cost_mol_amount_tot = line.cost_mol_amount_cad * qty
+                line.cost_total_cad = line.cost_subtotal_cad + line.cost_industrial_cad
+                line.cost_total_tot = line.cost_subtotal_tot + line.cost_industrial_tot
             if line.calc_uom_type == 'mq' and line.sqm:
                 line.cost_per_sqm = line.cost_total_tot / line.sqm
             else:

@@ -242,6 +242,32 @@ class SbuEstimate(models.Model):
         store=True,
         currency_field='currency_id',
     )
+    anaco_material_worked_total = fields.Monetary(
+        string='Costo materiale lavorato e posato TOT',
+        compute='_compute_totals',
+        store=True,
+        currency_field='currency_id',
+        help='Somma righe ANACO — base materiale (schema Cosimo / col. BB).',
+    )
+    anaco_cost_subtotal = fields.Monetary(
+        string='Subtotale costo (prima industriali)',
+        compute='_compute_totals',
+        store=True,
+        currency_field='currency_id',
+    )
+    anaco_industrial_total = fields.Monetary(
+        string='Oneri industriali TOT',
+        compute='_compute_totals',
+        store=True,
+        currency_field='currency_id',
+    )
+    anaco_mol_total = fields.Monetary(
+        string='MOL indicatore TOT',
+        compute='_compute_totals',
+        store=True,
+        currency_field='currency_id',
+        help='Indicatore ANACO — non incluso nel costo totale.',
+    )
     total_contract_sal = fields.Monetary(
         string='Contract SAL total',
         compute='_compute_totals',
@@ -357,6 +383,10 @@ class SbuEstimate(models.Model):
     @api.depends(
         'line_ids.price_total_tot',
         'line_ids.cost_total_tot',
+        'line_ids.cost_material_worked_tot',
+        'line_ids.cost_subtotal_tot',
+        'line_ids.cost_industrial_tot',
+        'line_ids.cost_mol_amount_tot',
         'line_ids.sqm',
         'sal_line_ids.total_contract',
         'sal_line_ids.amount_billed',
@@ -370,6 +400,12 @@ class SbuEstimate(models.Model):
             rec.total_sqm = sum(rec.line_ids.mapped('sqm'))
             rec.total_price = sum(rec.line_ids.mapped('price_total_tot'))
             rec.total_cost = sum(rec.line_ids.mapped('cost_total_tot'))
+            rec.anaco_material_worked_total = sum(
+                rec.line_ids.mapped('cost_material_worked_tot'),
+            )
+            rec.anaco_cost_subtotal = sum(rec.line_ids.mapped('cost_subtotal_tot'))
+            rec.anaco_industrial_total = sum(rec.line_ids.mapped('cost_industrial_tot'))
+            rec.anaco_mol_total = sum(rec.line_ids.mapped('cost_mol_amount_tot'))
             rec.total_contract_sal = sum(rec.sal_line_ids.mapped('total_contract'))
             rec.sal_amount_billed = sum(rec.sal_line_ids.mapped('amount_billed'))
             rec.sal_amount_remaining = sum(rec.sal_line_ids.mapped('amount_remaining'))

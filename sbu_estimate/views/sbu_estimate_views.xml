@@ -180,6 +180,21 @@
                         </group>
                     </group>
 
+                    <group string="PREVENTIVO IMPORTATO DA ANACO — totali costi"
+                           invisible="not line_ids">
+                        <group>
+                            <field name="anaco_material_worked_total" widget="monetary" readonly="1"/>
+                            <field name="anaco_cost_subtotal" widget="monetary" readonly="1"/>
+                            <field name="anaco_industrial_total" widget="monetary" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="anaco_mol_total" widget="monetary" readonly="1"/>
+                            <field name="total_price" string="Prezzo cliente TOT" widget="monetary" readonly="1"/>
+                            <field name="total_cost" string="Costo totale TOT" widget="monetary" readonly="1"/>
+                            <field name="margin_amount" string="Margine €" widget="monetary" readonly="1"/>
+                        </group>
+                    </group>
+
                     <notebook>
                         <page string="Estimate lines (ANACO)" name="anaco_lines">
                             <field name="line_ids"
@@ -247,10 +262,19 @@
                                                 <field name="price_total_tot" readonly="1"/>
                                                 <field name="margin_pct" readonly="1"/>
                                             </group>
-                                            <group string="Cost">
-                                                <field name="cost_coibentazione_cad"/>
-                                                <field name="cost_posa_lamiera_lin_cad"/>
-                                                <field name="cost_bom_total" readonly="1"/>
+                                            <group string="Cost (ANACO schema)">
+                                                <field name="cost_material_worked_tot" readonly="1"/>
+                                                <field name="cost_trasporto_cad"/>
+                                                <field name="cost_trasporto_tot" readonly="1"/>
+                                                <field name="cost_tech_pm_cad"/>
+                                                <field name="cost_tech_pm_tot" readonly="1"/>
+                                                <field name="cost_cantiere_cad"/>
+                                                <field name="cost_cantiere_tot" readonly="1"/>
+                                                <field name="cost_extra_cad"/>
+                                                <field name="cost_extra_tot" readonly="1"/>
+                                                <field name="cost_subtotal_tot" readonly="1"/>
+                                                <field name="cost_industrial_tot" readonly="1"/>
+                                                <field name="cost_mol_amount_tot" readonly="1"/>
                                                 <field name="cost_total_tot" readonly="1"/>
                                             </group>
                                         </group>
