@@ -101,20 +101,22 @@ class TestSbuQontoMatch(TransactionCase):
 
     def test_parse_qonto_datetime_iso_z(self):
         Tx = self.env['sbu.qonto.transaction']
-        parsed = Tx._parse_qonto_datetime('2024-08-01T10:35:09.027Z')
-        self.assertTrue(parsed)
-        self.assertIn('2024-08-01', parsed)
         self.assertEqual(
-            Tx._normalize_qonto_datetime_string('2024-06-25T00:00:00.000Z'),
-            '2024-06-25 00:00:00',
+            Tx._normalize_qonto_datetime_string('2024-08-01T10:35:09.027Z'),
+            '2024-08-01 10:35:09',
         )
-        self.assertTrue(
+        self.assertEqual(
+            Tx._parse_qonto_datetime('2024-08-01T10:35:09.027Z'),
+            '2024-08-01 10:35:09',
+        )
+        self.assertEqual(
             Tx._parse_qonto_datetime('2024-06-25T00:00:00.000Z'),
+            '2024-06-25 00:00:00',
         )
 
     def test_transfer_date_uses_emitted_when_not_settled(self):
         company = self.env.company
-        emitted = fields.Datetime.from_string('2024-06-25 14:30:00')
+        emitted = '2024-06-25 14:30:00'
         tx = self.env['sbu.qonto.transaction'].create({
             'company_id': company.id,
             'qonto_remote_id': 'tx-pending-1',
@@ -124,30 +126,25 @@ class TestSbuQontoMatch(TransactionCase):
             'emitted_at': emitted,
         })
         self.assertFalse(tx.settled_at)
-        self.assertEqual(tx.transfer_at, emitted)
-        self.assertEqual(
-            tx.transfer_date,
-            fields.Datetime.context_timestamp(tx, emitted).date(),
-        )
+        self.assertEqual(fields.Datetime.to_string(tx.transfer_at), emitted)
+        self.assertEqual(tx.transfer_date, fields.Date.from_string('2024-06-25'))
 
     def test_transfer_date_prefers_settled(self):
         company = self.env.company
-        emitted = fields.Datetime.from_string('2024-06-20 10:00:00')
-        settled = fields.Datetime.from_string('2024-06-25 12:00:00')
         tx = self.env['sbu.qonto.transaction'].create({
             'company_id': company.id,
             'qonto_remote_id': 'tx-done-1',
             'amount': 100.0,
             'amount_signed': 100.0,
             'currency_id': company.currency_id.id,
-            'emitted_at': emitted,
-            'settled_at': settled,
+            'emitted_at': '2024-06-20 10:00:00',
+            'settled_at': '2024-06-25 12:00:00',
         })
-        self.assertEqual(tx.transfer_at, settled)
         self.assertEqual(
-            tx.transfer_date,
-            fields.Datetime.context_timestamp(tx, settled).date(),
+            fields.Datetime.to_string(tx.transfer_at),
+            '2024-06-25 12:00:00',
         )
+        self.assertEqual(tx.transfer_date, fields.Date.from_string('2024-06-25'))
 
     def test_vals_from_qonto_maps_transfer_dates(self):
         company = self.env.company

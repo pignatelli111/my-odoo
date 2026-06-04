@@ -2,6 +2,7 @@
 import json
 import logging
 import re
+from datetime import datetime as py_datetime
 from datetime import timedelta
 
 from odoo import api, fields, models, _
@@ -210,11 +211,11 @@ class SbuQontoTransaction(models.Model):
             normalized = self._normalize_qonto_datetime_string(val)
             if not normalized:
                 return False
-            for candidate in (normalized, val.strip()):
-                try:
-                    return fields.Datetime.to_string(fields.Datetime.from_string(candidate))
-                except (ValueError, TypeError, OverflowError):
-                    continue
+            try:
+                dt = py_datetime.strptime(normalized, '%Y-%m-%d %H:%M:%S')
+                return fields.Datetime.to_string(dt)
+            except ValueError:
+                return False
         try:
             return fields.Datetime.to_string(fields.Datetime.to_datetime(val))
         except (ValueError, TypeError, OverflowError):
@@ -225,10 +226,7 @@ class SbuQontoTransaction(models.Model):
         for rec in self:
             dt = rec.settled_at or rec.emitted_at or False
             rec.transfer_at = dt
-            if dt:
-                rec.transfer_date = fields.Datetime.context_timestamp(rec, dt).date()
-            else:
-                rec.transfer_date = False
+            rec.transfer_date = fields.Date.to_date(dt) if dt else False
 
     def _sbu_transfer_datetime(self):
         """Effective movement datetime (settled, else emitted)."""
@@ -492,7 +490,7 @@ class SbuQontoTransaction(models.Model):
         self.ensure_one()
         dt = self._sbu_transfer_datetime()
         if dt:
-            return fields.Datetime.context_timestamp(self, dt).date()
+            return fields.Date.to_date(dt)
         return fields.Date.context_today(self)
 
     def _sbu_search_texts(self):
@@ -878,7 +876,7 @@ class SbuQontoTransaction(models.Model):
         self.ensure_one()
         dt = self._sbu_transfer_datetime()
         if dt:
-            return fields.Datetime.context_timestamp(self, dt).date()
+            return fields.Date.to_date(dt)
         return fields.Date.context_today(self)
 
     def action_register_invoice_payment(self):
