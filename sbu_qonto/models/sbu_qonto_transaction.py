@@ -67,16 +67,14 @@ class SbuQontoTransaction(models.Model):
     )
     transfer_at = fields.Datetime(
         string='Transfer time',
-        compute='_compute_transfer_at',
-        store=True,
         index=True,
+        readonly=True,
         help='Settled time when available, otherwise emitted (payment) time — matches Qonto list.',
     )
     transfer_date = fields.Date(
         string='Transfer date',
-        compute='_compute_transfer_at',
-        store=True,
         index=True,
+        readonly=True,
         help='Date shown in Qonto (settled, or emitted while pending).',
     )
     raw_json = fields.Text(string='Raw payload')
@@ -205,8 +203,15 @@ class SbuQontoTransaction(models.Model):
     @api.model
     def _parse_qonto_datetime(self, val):
         """Parse Qonto ISO timestamps (e.g. 2024-08-01T10:35:09.027Z) for Odoo Datetime."""
-        if not val:
+        if val is None or val is False:
             return False
+        if isinstance(val, (int, float)):
+            try:
+                return fields.Datetime.to_string(
+                    py_datetime.utcfromtimestamp(val)
+                )
+            except (ValueError, TypeError, OverflowError, OSError):
+                return False
         if isinstance(val, str):
             normalized = self._normalize_qonto_datetime_string(val)
             if not normalized:
@@ -221,12 +226,107 @@ class SbuQontoTransaction(models.Model):
         except (ValueError, TypeError, OverflowError):
             return False
 
-    @api.depends('settled_at', 'emitted_at')
-    def _compute_transfer_at(self):
-        for rec in self:
-            dt = rec.settled_at or rec.emitted_at or False
-            rec.transfer_at = dt
-            rec.transfer_date = fields.Date.to_date(dt) if dt else False
+    @api.model
+    def _sbu_qonto_date_vals(self, tx):
+        """Map Qonto transaction dict → settled/emitted/transfer date fields."""
+        settled = self._parse_qonto_datetime(
+            tx.get('settled_at') or tx.get('settledAt')
+        )
+        emitted = self._parse_qonto_datetime(
+            tx.get('emitted_at') or tx.get('emittedAt')
+        )
+        if not emitted:
+            emitted = self._parse_qonto_datetime(
+                tx.get('updated_at') or tx.get('updatedAt')
+            )
+        if not emitted:
+            emitted = self._parse_qonto_datetime(
+                tx.get('created_at') or tx.get('createdAt')
+            )
+        transfer_at = settled or emitted or False
+        transfer_date = False
+        if transfer_at:
+            transfer_date = fields.Date.to_date(
+                fields.Datetime.to_datetime(transfer_at)
+            )
+        return {
+            'settled_at': settled or False,
+            'emitted_at': emitted or False,
+            'transfer_at': transfer_at,
+            'transfer_date': transfer_date,
+        }
+
+    @api.model
+    def _sbu_transfer_vals_from_settled_emitted(self, settled_at, emitted_at):
+        transfer_at = settled_at or emitted_at or False
+        transfer_date = False
+        if transfer_at:
+            transfer_date = fields.Date.to_date(
+                fields.Datetime.to_datetime(transfer_at)
+            )
+        return {
+            'transfer_at': transfer_at,
+            'transfer_date': transfer_date,
+        }
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if 'transfer_date' not in vals and (
+                vals.get('settled_at') or vals.get('emitted_at')
+            ):
+                vals.update(
+                    self._sbu_transfer_vals_from_settled_emitted(
+                        vals.get('settled_at'),
+                        vals.get('emitted_at'),
+                    )
+                )
+        return super().create(vals_list)
+
+    def write(self, vals):
+        res = super().write(vals)
+        if 'settled_at' in vals or 'emitted_at' in vals:
+            for rec in self:
+                sync = rec._sbu_transfer_vals_from_settled_emitted(
+                    rec.settled_at, rec.emitted_at
+                )
+                if (
+                    rec.transfer_at != sync['transfer_at']
+                    or rec.transfer_date != sync['transfer_date']
+                ):
+                    super(SbuQontoTransaction, rec).write(sync)
+        return res
+
+    def _sbu_rebuild_dates_from_raw_json(self):
+        """Re-parse raw Qonto JSON (fixes rows imported before date mapping)."""
+        txs = self if self else self.search([('raw_json', '!=', False)])
+        updated = 0
+        for tx in txs:
+            try:
+                data = json.loads(tx.raw_json)
+            except (TypeError, json.JSONDecodeError):
+                continue
+            if not isinstance(data, dict):
+                continue
+            patch = self._sbu_qonto_date_vals(data)
+            if patch.get('transfer_date') or patch.get('emitted_at') or patch.get('settled_at'):
+                tx.write(patch)
+                updated += 1
+        return updated
+
+    def action_refresh_dates_from_raw_json(self):
+        targets = self if self else self.search([('raw_json', '!=', False)])
+        n = targets._sbu_rebuild_dates_from_raw_json()
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Qonto'),
+                'message': _('Refreshed transfer dates on %(n)s movement(s).', n=n),
+                'type': 'success' if n else 'warning',
+                'sticky': False,
+            },
+        }
 
     def _sbu_transfer_datetime(self):
         """Effective movement datetime (settled, else emitted)."""
@@ -302,12 +402,7 @@ class SbuQontoTransaction(models.Model):
             'reference': tx.get('reference'),
             'note': tx.get('note'),
             'status': tx.get('status'),
-            'settled_at': self._parse_qonto_datetime(
-                tx.get('settled_at') or tx.get('settledAt')
-            ),
-            'emitted_at': self._parse_qonto_datetime(
-                tx.get('emitted_at') or tx.get('emittedAt')
-            ),
+            **self._sbu_qonto_date_vals(tx),
             'counterparty_name': cp_name,
             'counterparty_iban': cp_iban or False,
             'partner_id': partner_id,

@@ -163,6 +163,42 @@ class TestSbuQontoMatch(TransactionCase):
         )
         self.assertTrue(vals['emitted_at'])
         self.assertFalse(vals['settled_at'])
+        self.assertEqual(vals['transfer_date'], fields.Date.from_string('2024-06-25'))
+
+    def test_vals_from_qonto_created_at_fallback(self):
+        company = self.env.company
+        vals = self.env['sbu.qonto.transaction']._vals_from_qonto_dict(
+            company,
+            {
+                'id': 'tx-created-1',
+                'side': 'credit',
+                'amount': 10.0,
+                'currency': company.currency_id.name,
+                'created_at': '2024-07-10T08:15:00.000Z',
+            },
+            'api',
+        )
+        self.assertEqual(vals['transfer_date'], fields.Date.from_string('2024-07-10'))
+
+    def test_rebuild_dates_from_raw_json(self):
+        company = self.env.company
+        tx = self.env['sbu.qonto.transaction'].create({
+            'company_id': company.id,
+            'qonto_remote_id': 'tx-raw-rebuild',
+            'amount': 1.0,
+            'amount_signed': 1.0,
+            'currency_id': company.currency_id.id,
+            'raw_json': '{"id": "tx-raw-rebuild", "side": "credit", "amount": 1, '
+                        '"currency": "%s", "emitted_at": "2024-05-01T12:00:00.000Z"}'
+                        % company.currency_id.name,
+        })
+        self.assertFalse(tx.transfer_date)
+        n = self.env['sbu.qonto.transaction'].search([
+            ('id', '=', tx.id),
+        ])._sbu_rebuild_dates_from_raw_json()
+        self.assertEqual(n, 1)
+        tx.invalidate_recordset()
+        self.assertEqual(tx.transfer_date, fields.Date.from_string('2024-05-01'))
 
     def test_transaction_links_partner_by_iban(self):
         partner = self.env['res.partner'].create({
