@@ -165,6 +165,43 @@ class TestSbuQontoMatch(TransactionCase):
         self.assertFalse(vals['settled_at'])
         self.assertEqual(vals['transfer_date'], fields.Date.from_string('2024-06-25'))
 
+    def test_parse_qonto_datetime_date_only(self):
+        Tx = self.env['sbu.qonto.transaction']
+        self.assertEqual(
+            Tx._parse_qonto_datetime('2024-06-25'),
+            '2024-06-25 00:00:00',
+        )
+
+    def test_vals_from_qonto_value_date_utc(self):
+        company = self.env.company
+        vals = self.env['sbu.qonto.transaction']._vals_from_qonto_dict(
+            company,
+            {
+                'transaction_id': 'tx-value-1',
+                'side': 'credit',
+                'amount': 10.0,
+                'currency': company.currency_id.name,
+                'value_date_utc': '2024-08-15T00:00:00.000Z',
+            },
+            'api',
+        )
+        self.assertEqual(vals['transfer_date'], fields.Date.from_string('2024-08-15'))
+
+    def test_sync_transfer_date_from_stored_emitted(self):
+        company = self.env.company
+        tx = self.env['sbu.qonto.transaction'].create({
+            'company_id': company.id,
+            'qonto_remote_id': 'tx-sync-emitted',
+            'amount': 1.0,
+            'amount_signed': 1.0,
+            'currency_id': company.currency_id.id,
+            'emitted_at': '2024-03-10 09:00:00',
+        })
+        tx.write({'transfer_at': False, 'transfer_date': False})
+        n = tx._sbu_sync_transfer_dates_from_stored_datetimes()
+        self.assertEqual(n, 1)
+        self.assertEqual(tx.transfer_date, fields.Date.from_string('2024-03-10'))
+
     def test_vals_from_qonto_created_at_fallback(self):
         company = self.env.company
         vals = self.env['sbu.qonto.transaction']._vals_from_qonto_dict(
