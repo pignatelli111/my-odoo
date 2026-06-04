@@ -23,7 +23,7 @@ class SbuQontoTransaction(models.Model):
     _name = 'sbu.qonto.transaction'
     _description = 'SBU Qonto bank movement (reference copy)'
     _inherit = ['mail.thread', 'mail.activity.mixin']
-    _order = 'settled_at desc, id desc'
+    _order = 'transfer_at desc, id desc'
 
     company_id = fields.Many2one(
         'res.company',
@@ -56,8 +56,27 @@ class SbuQontoTransaction(models.Model):
     reference = fields.Char(string='Reference')
     note = fields.Char(string='Note')
     status = fields.Char(string='Qonto status')
-    settled_at = fields.Datetime(string='Settled at')
-    emitted_at = fields.Datetime(string='Emitted at')
+    settled_at = fields.Datetime(
+        string='Settled at',
+        help='Qonto settlement timestamp (completed transfers only; empty while pending).',
+    )
+    emitted_at = fields.Datetime(
+        string='Emitted at',
+        help='Qonto value / payment date (shown in Qonto UI for pending transfers).',
+    )
+    transfer_at = fields.Datetime(
+        string='Transfer date',
+        compute='_compute_transfer_at',
+        store=True,
+        index=True,
+        help='Settled date when available, otherwise emitted (payment) date — matches Qonto list.',
+    )
+    transfer_date = fields.Date(
+        string='Transfer date',
+        compute='_compute_transfer_at',
+        store=True,
+        index=True,
+    )
     raw_json = fields.Text(string='Raw payload')
     state = fields.Selection(
         [
@@ -163,6 +182,34 @@ class SbuQontoTransaction(models.Model):
         return (self.amount_signed or 0.0) > 0
 
     @api.model
+    def _parse_qonto_datetime(self, val):
+        """Parse Qonto ISO timestamps (e.g. 2024-08-01T10:35:09.027Z) for Odoo Datetime."""
+        if not val:
+            return False
+        if isinstance(val, str):
+            val = val.strip()
+            if val.endswith('Z'):
+                val = val[:-1] + '+00:00'
+        try:
+            dt = fields.Datetime.to_datetime(val)
+            return fields.Datetime.to_string(dt)
+        except (ValueError, TypeError, OverflowError):
+            return False
+
+    @api.depends('settled_at', 'emitted_at')
+    def _compute_transfer_at(self):
+        for rec in self:
+            rec.transfer_at = rec.settled_at or rec.emitted_at or False
+            rec.transfer_date = (
+                fields.Date.to_date(rec.transfer_at) if rec.transfer_at else False
+            )
+
+    def _sbu_transfer_datetime(self):
+        """Effective movement datetime (settled, else emitted)."""
+        self.ensure_one()
+        return self.transfer_at or self.settled_at or self.emitted_at
+
+    @api.model
     def _parse_qonto_amount(self, tx):
         if tx.get('amount_cents') is not None:
             try:
@@ -192,15 +239,6 @@ class SbuQontoTransaction(models.Model):
             amount_signed = abs(amount)
         cur_code = tx.get('currency') or company.currency_id.name
         currency = self.env['res.currency'].search([('name', '=', cur_code)], limit=1) or company.currency_id
-
-        def _parse_dt(val):
-            if not val:
-                return False
-            try:
-                dt = fields.Datetime.to_datetime(val)
-                return fields.Datetime.to_string(dt)
-            except (ValueError, TypeError, OverflowError):
-                return False
 
         cp_iban = sbu_normalize_iban(
             tx.get('counterparty_account_number')
@@ -426,8 +464,9 @@ class SbuQontoTransaction(models.Model):
 
     def _sbu_settled_date(self):
         self.ensure_one()
-        if self.settled_at:
-            return fields.Date.to_date(self.settled_at)
+        dt = self._sbu_transfer_datetime()
+        if dt:
+            return fields.Date.to_date(dt)
         return fields.Date.context_today(self)
 
     def _sbu_search_texts(self):
@@ -811,8 +850,9 @@ class SbuQontoTransaction(models.Model):
 
     def _sbu_payment_register_date(self):
         self.ensure_one()
-        if self.settled_at:
-            return fields.Date.to_date(self.settled_at)
+        dt = self._sbu_transfer_datetime()
+        if dt:
+            return fields.Date.to_date(dt)
         return fields.Date.context_today(self)
 
     def action_register_invoice_payment(self):

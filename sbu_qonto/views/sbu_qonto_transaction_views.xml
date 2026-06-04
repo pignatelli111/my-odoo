@@ -11,7 +11,10 @@
                     <button name="action_match_odoo" type="object" string="Match (high confidence)" class="btn-primary"/>
                     <button name="action_sync_qonto_partners" type="object" string="Sync suppliers" class="btn-secondary"/>
                 </header>
-                <field name="settled_at"/>
+                <field name="transfer_date"/>
+                <field name="transfer_at" optional="hide"/>
+                <field name="settled_at" optional="hide"/>
+                <field name="emitted_at" optional="hide"/>
                 <field name="qonto_remote_id"/>
                 <field name="side"/>
                 <field name="amount_signed"/>
@@ -69,6 +72,8 @@
                             <field name="amount"/>
                             <field name="amount_signed"/>
                             <field name="currency_id"/>
+                            <field name="transfer_date"/>
+                            <field name="transfer_at"/>
                             <field name="settled_at"/>
                             <field name="emitted_at"/>
                         </group>

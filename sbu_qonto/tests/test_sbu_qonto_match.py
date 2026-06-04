@@ -28,6 +28,8 @@ class TestSbuQontoMatch(TransactionCase):
             'match_vendor_bill_id',
             'counterparty_iban',
             'partner_id',
+            'transfer_date',
+            'transfer_at',
         ):
             self.assertIn(fname, tx._fields)
         company = self.env.company
@@ -89,6 +91,57 @@ class TestSbuQontoMatch(TransactionCase):
             'sbu_qonto_partner_synced': True,
         })
         self.assertEqual(partner.sbu_qonto_beneficiary_id, 'ben-test-1')
+
+    def test_parse_qonto_datetime_iso_z(self):
+        parsed = self.env['sbu.qonto.transaction']._parse_qonto_datetime(
+            '2024-08-01T10:35:09.027Z',
+        )
+        self.assertTrue(parsed)
+        self.assertIn('2024-08-01', parsed)
+
+    def test_transfer_date_uses_emitted_when_not_settled(self):
+        company = self.env.company
+        tx = self.env['sbu.qonto.transaction'].create({
+            'company_id': company.id,
+            'qonto_remote_id': 'tx-pending-1',
+            'amount': 250.0,
+            'amount_signed': 250.0,
+            'currency_id': company.currency_id.id,
+            'emitted_at': '2024-06-25 00:00:00',
+        })
+        self.assertFalse(tx.settled_at)
+        self.assertEqual(str(tx.transfer_date), '2024-06-25')
+
+    def test_transfer_date_prefers_settled(self):
+        company = self.env.company
+        tx = self.env['sbu.qonto.transaction'].create({
+            'company_id': company.id,
+            'qonto_remote_id': 'tx-done-1',
+            'amount': 100.0,
+            'amount_signed': 100.0,
+            'currency_id': company.currency_id.id,
+            'emitted_at': '2024-06-20 10:00:00',
+            'settled_at': '2024-06-25 12:00:00',
+        })
+        self.assertEqual(str(tx.transfer_date), '2024-06-25')
+
+    def test_vals_from_qonto_maps_transfer_dates(self):
+        company = self.env.company
+        vals = self.env['sbu.qonto.transaction']._vals_from_qonto_dict(
+            company,
+            {
+                'id': 'tx-date-1',
+                'side': 'credit',
+                'amount': 50.0,
+                'currency': company.currency_id.name,
+                'emitted_at': '2024-06-25T00:00:00.000Z',
+                'settled_at': None,
+                'status': 'pending',
+            },
+            'api',
+        )
+        self.assertTrue(vals['emitted_at'])
+        self.assertFalse(vals['settled_at'])
 
     def test_transaction_links_partner_by_iban(self):
         partner = self.env['res.partner'].create({
