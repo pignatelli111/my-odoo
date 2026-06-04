@@ -65,17 +65,18 @@ class SbuQontoTransaction(models.Model):
         help='Qonto value / payment date (shown in Qonto UI for pending transfers).',
     )
     transfer_at = fields.Datetime(
-        string='Transfer date',
+        string='Transfer time',
         compute='_compute_transfer_at',
         store=True,
         index=True,
-        help='Settled date when available, otherwise emitted (payment) date — matches Qonto list.',
+        help='Settled time when available, otherwise emitted (payment) time — matches Qonto list.',
     )
     transfer_date = fields.Date(
         string='Transfer date',
         compute='_compute_transfer_at',
         store=True,
         index=True,
+        help='Date shown in Qonto (settled, or emitted while pending).',
     )
     raw_json = fields.Text(string='Raw payload')
     state = fields.Selection(

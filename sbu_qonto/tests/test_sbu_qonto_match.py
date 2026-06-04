@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from unittest.mock import patch
 
+from odoo import fields
 from odoo.tests import tagged
 from odoo.tests.common import TransactionCase
 
@@ -110,7 +111,7 @@ class TestSbuQontoMatch(TransactionCase):
             'emitted_at': '2024-06-25 00:00:00',
         })
         self.assertFalse(tx.settled_at)
-        self.assertEqual(str(tx.transfer_date), '2024-06-25')
+        self.assertEqual(tx.transfer_date, fields.Date.from_string('2024-06-25'))
 
     def test_transfer_date_prefers_settled(self):
         company = self.env.company
@@ -123,7 +124,7 @@ class TestSbuQontoMatch(TransactionCase):
             'emitted_at': '2024-06-20 10:00:00',
             'settled_at': '2024-06-25 12:00:00',
         })
-        self.assertEqual(str(tx.transfer_date), '2024-06-25')
+        self.assertEqual(tx.transfer_date, fields.Date.from_string('2024-06-25'))
 
     def test_vals_from_qonto_maps_transfer_dates(self):
         company = self.env.company
