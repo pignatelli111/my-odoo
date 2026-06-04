@@ -3,8 +3,7 @@
 
 def _sbu_qonto_refresh_transfer_dates(env):
     """Backfill transfer_date (runs on install; upgrade uses migrations/)."""
-    Tx = env['sbu.qonto.transaction'].sudo()
-    Tx.search([])._sbu_qonto_refresh_all_dates()
+    env['sbu.qonto.transaction'].sudo()._sbu_qonto_refresh_all_dates()
     env.cr.execute(
         """
         UPDATE sbu_qonto_transaction

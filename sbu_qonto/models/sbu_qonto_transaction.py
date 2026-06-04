@@ -19,6 +19,18 @@ _INVOICE_REF_RE = re.compile(
     re.IGNORECASE,
 )
 
+_SBU_QONTO_SETTLED_KEYS = (
+    'settled_at', 'settledAt', 'settlement_date_utc',
+    'settlement_date_local', 'settlement_date',
+)
+_SBU_QONTO_EMITTED_KEYS = (
+    'emitted_at', 'emittedAt', 'value_date_utc', 'value_date_local',
+    'value_date', 'payment_date', 'payment_date_local',
+)
+_SBU_QONTO_FALLBACK_KEYS = (
+    'updated_at', 'updatedAt', 'created_at', 'createdAt',
+)
+
 
 class SbuQontoTransaction(models.Model):
     _name = 'sbu.qonto.transaction'
@@ -230,18 +242,6 @@ class SbuQontoTransaction(models.Model):
         except (ValueError, TypeError, OverflowError):
             return False
 
-    _SBU_QONTO_SETTLED_KEYS = (
-        'settled_at', 'settledAt', 'settlement_date_utc',
-        'settlement_date_local', 'settlement_date',
-    )
-    _SBU_QONTO_EMITTED_KEYS = (
-        'emitted_at', 'emittedAt', 'value_date_utc', 'value_date_local',
-        'value_date', 'payment_date', 'payment_date_local',
-    )
-    _SBU_QONTO_FALLBACK_KEYS = (
-        'updated_at', 'updatedAt', 'created_at', 'createdAt',
-    )
-
     @api.model
     def _sbu_unwrap_qonto_tx(self, tx):
         """Normalize API / webhook / stored JSON shapes to a flat transaction dict."""
@@ -277,10 +277,10 @@ class SbuQontoTransaction(models.Model):
     def _sbu_qonto_date_vals(self, tx):
         """Map Qonto transaction dict → settled/emitted/transfer date fields."""
         tx = self._sbu_unwrap_qonto_tx(tx)
-        settled = self._sbu_qonto_first_parsed_datetime(tx, self._SBU_QONTO_SETTLED_KEYS)
-        emitted = self._sbu_qonto_first_parsed_datetime(tx, self._SBU_QONTO_EMITTED_KEYS)
+        settled = self._sbu_qonto_first_parsed_datetime(tx, _SBU_QONTO_SETTLED_KEYS)
+        emitted = self._sbu_qonto_first_parsed_datetime(tx, _SBU_QONTO_EMITTED_KEYS)
         if not emitted:
-            emitted = self._sbu_qonto_first_parsed_datetime(tx, self._SBU_QONTO_FALLBACK_KEYS)
+            emitted = self._sbu_qonto_first_parsed_datetime(tx, _SBU_QONTO_FALLBACK_KEYS)
         transfer_at = settled or emitted or False
         transfer_date = False
         if transfer_at:
@@ -338,14 +338,19 @@ class SbuQontoTransaction(models.Model):
     def _sbu_sync_transfer_dates_from_stored_datetimes(self):
         """Fill transfer_date when emitted_at/settled_at exist but transfer_date is empty."""
         updated = 0
-        domain = [
-            ('transfer_date', '=', False),
-            '|',
-            ('settled_at', '!=', False),
-            ('emitted_at', '!=', False),
-        ]
-        txs = self if self else self.search(domain)
-        for tx in txs.filtered_domain(domain):
+        if len(self):
+            self.invalidate_recordset(['transfer_date', 'settled_at', 'emitted_at'])
+            candidates = self.filtered(
+                lambda t: not t.transfer_date and (t.settled_at or t.emitted_at)
+            )
+        else:
+            candidates = self.search([
+                ('transfer_date', '=', False),
+                '|',
+                ('settled_at', '!=', False),
+                ('emitted_at', '!=', False),
+            ])
+        for tx in candidates:
             patch = self._sbu_transfer_vals_from_settled_emitted(
                 tx.settled_at, tx.emitted_at,
             )
@@ -356,7 +361,10 @@ class SbuQontoTransaction(models.Model):
 
     def _sbu_rebuild_dates_from_raw_json(self):
         """Re-parse raw Qonto JSON (fixes rows imported before date mapping)."""
-        txs = self if self else self.search([('raw_json', '!=', False)])
+        if len(self):
+            txs = self.filtered(lambda t: t.raw_json)
+        else:
+            txs = self.search([('raw_json', '!=', False)])
         updated = 0
         for tx in txs:
             try:
@@ -369,14 +377,18 @@ class SbuQontoTransaction(models.Model):
                 updated += 1
         return updated
 
+    @api.model
     def _sbu_qonto_refresh_all_dates(self):
+        """Backfill transfer dates for all movements (upgrade / Refresh dates button)."""
+        return self.env['sbu.qonto.transaction'].sudo().search([])._sbu_qonto_refresh_dates_recordset()
+
+    def _sbu_qonto_refresh_dates_recordset(self):
         n_raw = self._sbu_rebuild_dates_from_raw_json()
         n_stored = self._sbu_sync_transfer_dates_from_stored_datetimes()
         return n_raw + n_stored
 
     def action_refresh_dates_from_raw_json(self):
-        targets = self if self else self.search([])
-        n = targets._sbu_qonto_refresh_all_dates()
+        n = self._sbu_qonto_refresh_all_dates()
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
@@ -561,7 +573,7 @@ class SbuQontoTransaction(models.Model):
             ('transfer_date', '=', False),
         ])
         if missing:
-            missing._sbu_qonto_refresh_all_dates()
+            missing._sbu_qonto_refresh_dates_recordset()
         return total
 
     @api.model

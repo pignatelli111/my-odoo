@@ -198,6 +198,7 @@ class TestSbuQontoMatch(TransactionCase):
             'emitted_at': '2024-03-10 09:00:00',
         })
         tx.write({'transfer_at': False, 'transfer_date': False})
+        tx.invalidate_recordset(['transfer_at', 'transfer_date'])
         n = tx._sbu_sync_transfer_dates_from_stored_datetimes()
         self.assertEqual(n, 1)
         self.assertEqual(tx.transfer_date, fields.Date.from_string('2024-03-10'))
