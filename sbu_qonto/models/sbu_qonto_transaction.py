@@ -302,8 +302,12 @@ class SbuQontoTransaction(models.Model):
             'reference': tx.get('reference'),
             'note': tx.get('note'),
             'status': tx.get('status'),
-            'settled_at': _parse_dt(tx.get('settled_at')),
-            'emitted_at': _parse_dt(tx.get('emitted_at')),
+            'settled_at': self._parse_qonto_datetime(
+                tx.get('settled_at') or tx.get('settledAt')
+            ),
+            'emitted_at': self._parse_qonto_datetime(
+                tx.get('emitted_at') or tx.get('emittedAt')
+            ),
             'counterparty_name': cp_name,
             'counterparty_iban': cp_iban or False,
             'partner_id': partner_id,
