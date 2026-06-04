@@ -196,6 +196,9 @@ class SbuQontoTransaction(models.Model):
             s = s.replace('T', ' ', 1)
         # Drop trailing timezone offset (+00:00) — Qonto normally uses Z (handled above).
         s = re.sub(r'[+-]\d{2}:\d{2}(?::\d{2})?$', '', s).strip()
+        # Odoo Datetime fields use YYYY-MM-DD HH:MM:SS (no fractional seconds).
+        if '.' in s:
+            s = s.split('.', 1)[0]
         return s
 
     @api.model

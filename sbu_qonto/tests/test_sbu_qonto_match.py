@@ -106,7 +106,7 @@ class TestSbuQontoMatch(TransactionCase):
         self.assertIn('2024-08-01', parsed)
         self.assertEqual(
             Tx._normalize_qonto_datetime_string('2024-06-25T00:00:00.000Z'),
-            '2024-06-25 00:00:00.000',
+            '2024-06-25 00:00:00',
         )
         self.assertTrue(
             Tx._parse_qonto_datetime('2024-06-25T00:00:00.000Z'),
