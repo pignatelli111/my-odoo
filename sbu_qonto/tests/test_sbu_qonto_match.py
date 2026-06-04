@@ -60,6 +60,10 @@ class TestSbuQontoMatch(TransactionCase):
     def test_cron_active_follows_company_import_flag(self):
         cron = self.env.ref('sbu_qonto.ir_cron_qonto_import')
         company = self.env.company
+        other_enabled = bool(self.env['res.company'].search_count([
+            ('sbu_qonto_import_enabled', '=', True),
+            ('id', '!=', company.id),
+        ]))
         previous = company.sbu_qonto_import_enabled
         try:
             company.sbu_qonto_import_enabled = True
@@ -67,7 +71,9 @@ class TestSbuQontoMatch(TransactionCase):
             self.assertTrue(cron.active)
             company.sbu_qonto_import_enabled = False
             self.env['res.company']._sbu_sync_qonto_cron_active()
-            if not self.env['res.company'].search_count([('sbu_qonto_import_enabled', '=', True)]):
+            if other_enabled:
+                self.assertTrue(cron.active)
+            else:
                 self.assertFalse(cron.active)
         finally:
             company.sbu_qonto_import_enabled = previous
@@ -94,37 +100,54 @@ class TestSbuQontoMatch(TransactionCase):
         self.assertEqual(partner.sbu_qonto_beneficiary_id, 'ben-test-1')
 
     def test_parse_qonto_datetime_iso_z(self):
-        parsed = self.env['sbu.qonto.transaction']._parse_qonto_datetime(
-            '2024-08-01T10:35:09.027Z',
-        )
+        Tx = self.env['sbu.qonto.transaction']
+        parsed = Tx._parse_qonto_datetime('2024-08-01T10:35:09.027Z')
         self.assertTrue(parsed)
         self.assertIn('2024-08-01', parsed)
+        self.assertEqual(
+            Tx._normalize_qonto_datetime_string('2024-06-25T00:00:00.000Z'),
+            '2024-06-25 00:00:00.000',
+        )
+        self.assertTrue(
+            Tx._parse_qonto_datetime('2024-06-25T00:00:00.000Z'),
+        )
 
     def test_transfer_date_uses_emitted_when_not_settled(self):
         company = self.env.company
+        emitted = fields.Datetime.from_string('2024-06-25 14:30:00')
         tx = self.env['sbu.qonto.transaction'].create({
             'company_id': company.id,
             'qonto_remote_id': 'tx-pending-1',
             'amount': 250.0,
             'amount_signed': 250.0,
             'currency_id': company.currency_id.id,
-            'emitted_at': '2024-06-25 00:00:00',
+            'emitted_at': emitted,
         })
         self.assertFalse(tx.settled_at)
-        self.assertEqual(tx.transfer_date, fields.Date.from_string('2024-06-25'))
+        self.assertEqual(tx.transfer_at, emitted)
+        self.assertEqual(
+            tx.transfer_date,
+            fields.Datetime.context_timestamp(tx, emitted).date(),
+        )
 
     def test_transfer_date_prefers_settled(self):
         company = self.env.company
+        emitted = fields.Datetime.from_string('2024-06-20 10:00:00')
+        settled = fields.Datetime.from_string('2024-06-25 12:00:00')
         tx = self.env['sbu.qonto.transaction'].create({
             'company_id': company.id,
             'qonto_remote_id': 'tx-done-1',
             'amount': 100.0,
             'amount_signed': 100.0,
             'currency_id': company.currency_id.id,
-            'emitted_at': '2024-06-20 10:00:00',
-            'settled_at': '2024-06-25 12:00:00',
+            'emitted_at': emitted,
+            'settled_at': settled,
         })
-        self.assertEqual(tx.transfer_date, fields.Date.from_string('2024-06-25'))
+        self.assertEqual(tx.transfer_at, settled)
+        self.assertEqual(
+            tx.transfer_date,
+            fields.Datetime.context_timestamp(tx, settled).date(),
+        )
 
     def test_vals_from_qonto_maps_transfer_dates(self):
         company = self.env.company

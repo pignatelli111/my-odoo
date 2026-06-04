@@ -23,7 +23,7 @@ class SbuQontoTransaction(models.Model):
     _name = 'sbu.qonto.transaction'
     _description = 'SBU Qonto bank movement (reference copy)'
     _inherit = ['mail.thread', 'mail.activity.mixin']
-    _order = 'transfer_at desc, id desc'
+    _order = 'transfer_date desc, transfer_at desc, id desc'
 
     company_id = fields.Many2one(
         'res.company',
@@ -51,7 +51,7 @@ class SbuQontoTransaction(models.Model):
         currency_field='currency_id',
         help='Credit (in) positive, debit (out) negative for matching heuristics.',
     )
-    currency_id = fields.Many2one('res.currency', required=True)
+    currency_id = fields.Many2one('res.currency', string='Currency', required=True)
     label = fields.Char(string='Label')
     reference = fields.Char(string='Reference')
     note = fields.Char(string='Note')
@@ -183,27 +183,49 @@ class SbuQontoTransaction(models.Model):
         return (self.amount_signed or 0.0) > 0
 
     @api.model
+    def _normalize_qonto_datetime_string(self, val):
+        """Turn Qonto ISO-8601 into Odoo from_string format (naive UTC)."""
+        if not isinstance(val, str):
+            return val
+        s = val.strip()
+        if not s:
+            return False
+        if s.endswith('Z'):
+            s = s[:-1]
+        if 'T' in s:
+            s = s.replace('T', ' ', 1)
+        # Drop trailing timezone offset (+00:00) — Qonto normally uses Z (handled above).
+        s = re.sub(r'[+-]\d{2}:\d{2}(?::\d{2})?$', '', s).strip()
+        return s
+
+    @api.model
     def _parse_qonto_datetime(self, val):
         """Parse Qonto ISO timestamps (e.g. 2024-08-01T10:35:09.027Z) for Odoo Datetime."""
         if not val:
             return False
         if isinstance(val, str):
-            val = val.strip()
-            if val.endswith('Z'):
-                val = val[:-1] + '+00:00'
+            normalized = self._normalize_qonto_datetime_string(val)
+            if not normalized:
+                return False
+            for candidate in (normalized, val.strip()):
+                try:
+                    return fields.Datetime.to_string(fields.Datetime.from_string(candidate))
+                except (ValueError, TypeError, OverflowError):
+                    continue
         try:
-            dt = fields.Datetime.to_datetime(val)
-            return fields.Datetime.to_string(dt)
+            return fields.Datetime.to_string(fields.Datetime.to_datetime(val))
         except (ValueError, TypeError, OverflowError):
             return False
 
     @api.depends('settled_at', 'emitted_at')
     def _compute_transfer_at(self):
         for rec in self:
-            rec.transfer_at = rec.settled_at or rec.emitted_at or False
-            rec.transfer_date = (
-                fields.Date.to_date(rec.transfer_at) if rec.transfer_at else False
-            )
+            dt = rec.settled_at or rec.emitted_at or False
+            rec.transfer_at = dt
+            if dt:
+                rec.transfer_date = fields.Datetime.context_timestamp(rec, dt).date()
+            else:
+                rec.transfer_date = False
 
     def _sbu_transfer_datetime(self):
         """Effective movement datetime (settled, else emitted)."""
@@ -467,7 +489,7 @@ class SbuQontoTransaction(models.Model):
         self.ensure_one()
         dt = self._sbu_transfer_datetime()
         if dt:
-            return fields.Date.to_date(dt)
+            return fields.Datetime.context_timestamp(self, dt).date()
         return fields.Date.context_today(self)
 
     def _sbu_search_texts(self):
@@ -853,7 +875,7 @@ class SbuQontoTransaction(models.Model):
         self.ensure_one()
         dt = self._sbu_transfer_datetime()
         if dt:
-            return fields.Date.to_date(dt)
+            return fields.Datetime.context_timestamp(self, dt).date()
         return fields.Date.context_today(self)
 
     def action_register_invoice_payment(self):
