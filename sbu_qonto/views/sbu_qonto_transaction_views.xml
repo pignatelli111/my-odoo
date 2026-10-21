@@ -13,12 +13,16 @@
                     <button name="action_refresh_dates_from_raw_json" type="object"
                             string="Refresh dates" class="btn-secondary"
                             title="Re-read transfer dates from stored Qonto JSON (after upgrade)"/>
+                    <button name="%(sbu_qonto.action_sbu_qonto_export_import_wizard)d" type="action"
+                            string="Import export file" class="btn-secondary" display="always"
+                            groups="account.group_account_manager"/>
                 </header>
                 <field name="transfer_date"/>
                 <field name="transfer_at" optional="hide"/>
                 <field name="settled_at" optional="hide"/>
                 <field name="emitted_at" optional="hide"/>
                 <field name="qonto_remote_id"/>
+                <field name="qonto_account_name" optional="show"/>
                 <field name="side"/>
                 <field name="amount_signed"/>
                 <field name="currency_id"/>
@@ -67,6 +71,7 @@
                             <field name="company_id" groups="base.group_multi_company"/>
                             <field name="qonto_remote_id"/>
                             <field name="source"/>
+                            <field name="qonto_account_name"/>
                             <field name="side"/>
                             <field name="operation_type"/>
                             <field name="status"/>

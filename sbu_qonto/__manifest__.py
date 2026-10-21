@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'SBU Qonto',
-    'version': '19.0.1.0.22',
+    'version': '19.0.1.0.23',
     'summary': 'Qonto import, partner sync, auto customer payment register (Cosimo 10/14)',
     'author': 'SBU Development',
     'category': 'Accounting',
@@ -18,6 +18,7 @@
         'data/ir_cron_data.xml',
         'views/res_company_views.xml',
         'views/res_config_settings_views.xml',
+        'wizards/sbu_qonto_export_import_wizard_views.xml',
         'views/sbu_qonto_transaction_views.xml',
         'views/sbu_qonto_menu.xml',
     ],
