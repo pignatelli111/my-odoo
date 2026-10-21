@@ -13,4 +13,12 @@
         action="sbu_qonto.action_sbu_qonto_transaction"
         sequence="10"
     />
+    <menuitem
+        id="menu_sbu_qonto_export_import"
+        name="Import Qonto export"
+        parent="menu_sbu_qonto_root"
+        action="sbu_qonto.action_sbu_qonto_export_import_wizard"
+        groups="account.group_account_manager"
+        sequence="20"
+    />
 </odoo>

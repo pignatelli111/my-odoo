@@ -47,10 +47,14 @@ class SbuQontoTransaction(models.Model):
     )
     qonto_remote_id = fields.Char(string='Qonto id', required=True, index=True)
     source = fields.Selection(
-        [('api', 'API import'), ('webhook', 'Webhook')],
+        [('api', 'API import'), ('webhook', 'Webhook'), ('export', 'Export file')],
         string='Source',
         default='api',
         required=True,
+    )
+    qonto_account_name = fields.Char(
+        string='Qonto account',
+        help='Qonto bank account of the movement (filled by the export file import).',
     )
     side = fields.Char(string='Side')
     operation_type = fields.Char(string='Operation type')
