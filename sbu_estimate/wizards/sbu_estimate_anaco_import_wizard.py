@@ -2,8 +2,12 @@
 """Import ANACO / Voci Contrattuali_SAL from ANACO_REV7-style .xlsx (openpyxl, data_only)."""
 import base64
 import io
+import json
 import math
 import re
+
+from markupsafe import Markup
+
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
@@ -16,6 +20,7 @@ from ..models.sbu_cost_family import (
     infer_cost_family_from_pos,
     infer_cost_family_from_price_cost_vals,
 )
+from ..models.sbu_anaco_engine import ANACO_COL_BB, ANACO_COL_BC, ANACO_COL_BS, ANACO_COMPONENTS
 from .sbu_anaco_p1002_layout import (
     is_p1002_anaco_layout,
     p1002_anaco_import_maps,
@@ -493,6 +498,67 @@ def _norm_pct(val):
     return v
 
 
+def _col(letter):
+    """Excel column letter → 1-based index ('N' → 14, 'BS' → 71)."""
+    index = 0
+    for char in letter.upper():
+        index = index * 26 + ord(char) - 64
+    return index
+
+
+_NUM = r'(\$?[A-Z]{1,2}\$?\d+|[\d.,]+)'
+
+
+def _rule_number(token, param):
+    """A formula operand: a number, or a reference to a row-5 parameter such as $P$5."""
+    token = token.replace('$', '')
+    match = re.fullmatch(r'([A-Z]{1,2})5', token)
+    if match:
+        return param(match.group(1))
+    try:
+        return float(token.replace(',', '.'))
+    except ValueError:
+        return None
+
+
+def _anaco_staffame_rule(formula, param):
+    """€/ml from a column P formula like =2*(D13+F13)/1000*9 (or *$P$5). None if not a perimeter rule."""
+    if not (isinstance(formula, str) and formula.startswith('=')):
+        return None
+    text = formula[1:].replace(' ', '').upper()
+    patterns = (
+        rf'2\*\(D\d+\+F\d+\)/1000\*{_NUM}',
+        rf'\(D\d+\+F\d+\)\*2/1000\*{_NUM}',
+        rf'{_NUM}\*2\*\(D\d+\+F\d+\)/1000',
+    )
+    for pattern in patterns:
+        match = re.fullmatch(pattern, text)
+        if match:
+            return _rule_number(match.group(1), param)
+    return None
+
+
+def _anaco_posa_rule(formula, param):
+    """(min m², €/m²) from a column AV formula: =MAX(G13,1.8)*60 or =$AV$5*G13. None otherwise."""
+    if not (isinstance(formula, str) and formula.startswith('=')):
+        return None
+    text = formula[1:].replace(' ', '').upper()
+    match = re.fullmatch(rf'MAX\(G\d+[,;]{_NUM}\)\*{_NUM}', text) or re.fullmatch(
+        rf'{_NUM}\*MAX\(G\d+[,;]{_NUM}\)', text)
+    if match:
+        groups = match.groups()
+        if text.startswith('MAX'):
+            minimum, rate = _rule_number(groups[0], param), _rule_number(groups[1], param)
+        else:
+            rate, minimum = _rule_number(groups[0], param), _rule_number(groups[1], param)
+        return (minimum or 0.0, rate) if rate else None
+    match = re.fullmatch(rf'{_NUM}\*G\d+', text) or re.fullmatch(rf'G\d+\*{_NUM}', text)
+    if match:
+        rate = _rule_number(match.group(1), param)
+        return (0.0, rate) if rate else None
+    return None
+
+
 def _mult_to_discount_pct(mult):
     """K5/L5/M5 style multiplier 1 = 0% discount, 0.85 = 15%."""
     if mult is None:
@@ -613,26 +679,34 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
         self, estimate, anaco_sh, anaco_sh_form, Line, first_row,
         price_map=None, cost_map=None, bb_col=None, bc_col=None,
     ):
-        """Import ANACO sheet rows; returns (count, optional chatter note)."""
+        """Import ANACO rows with the 16 cost columns at their Excel position (N, R, V … AZ).
+
+        Odoo recomputes BB, overheads, MOL and BS with the workbook formulas; the Excel BB / BS
+        values are kept for the parity check. Returns (count, optional chatter note).
+        """
         sh_form = anaco_sh_form or anaco_sh
-        if price_map is None or cost_map is None:
-            price_map, cost_map, bb_col, bc_col = _resolve_anaco_column_maps(anaco_sh, sh_form)
 
         def _num(row, col):
             return _cell_num_merged(anaco_sh, sh_form, row, col)
 
+        def _cached(row, col):
+            """Excel value as saved (0 included); None when the cell has no saved value."""
+            return _cell_num(anaco_sh, row, _col(col))
+
         def _str(row, col):
             return _cell_str_merged(anaco_sh, sh_form, row, col)
 
-        sc1 = _mult_to_discount_pct(_num(ANACO_ROW_PARAMS, ANACO_COL_SC_MULT[0]))
-        sc2 = _mult_to_discount_pct(_num(ANACO_ROW_PARAMS, ANACO_COL_SC_MULT[1]))
-        sc3 = _mult_to_discount_pct(_num(ANACO_ROW_PARAMS, ANACO_COL_SC_MULT[2]))
-        ind_pct = _norm_pct(_num(ANACO_ROW_PARAMS, ANACO_COL_COST_IND_PCT))
-        mol_pct = _norm_pct(_num(ANACO_ROW_PARAMS, ANACO_COL_COST_MOL_PCT))
+        params = {letter: _cell_num(anaco_sh, ANACO_ROW_PARAMS, _col(letter)) for letter in (
+            'K', 'L', 'M', 'Q', 'R')}
+        serramento_mult = 1.0
+        for letter in ('K', 'L', 'M'):
+            serramento_mult *= params[letter] if params[letter] not in (None, 0.0) else 1.0
+        sc1, sc2, sc3 = (_mult_to_discount_pct(params[letter]) for letter in ('K', 'L', 'M'))
 
         seq = 10
         empty_run = 0
         count = 0
+        mismatches = 0
         max_row = anaco_sh.max_row or first_row
         note = False
 
@@ -646,20 +720,16 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
 
             pos = _str(r, ANACO_COL_POS)
             desc = _str(r, ANACO_COL_DESC)
+            b_mm = _num(r, ANACO_COL_B_MM) or 0.0
+            h_mm = _num(r, ANACO_COL_H_MM) or 0.0
             if not desc:
                 if pos:
                     desc = pos
+                elif b_mm and h_mm:
+                    desc = _('Item %(w)s×%(h)s mm') % {'w': int(b_mm), 'h': int(h_mm)}
                 else:
-                    b_mm = _num(r, ANACO_COL_B_MM) or 0.0
-                    h_mm = _num(r, ANACO_COL_H_MM) or 0.0
-                    if b_mm and h_mm:
-                        desc = _('Item %(w)s×%(h)s mm') % {'w': int(b_mm), 'h': int(h_mm)}
-                    else:
-                        desc = _('Riga Excel %(row)s') % {'row': r}
-
-            b_mm = _num(r, ANACO_COL_B_MM) or 0.0
-            h_mm = _num(r, ANACO_COL_H_MM) or 0.0
-            calc_uom = 'mq' if b_mm and h_mm else 'nr'
+                    desc = _('Riga Excel %(row)s') % {'row': r}
+            qty = _cached(r, 'H')
 
             line_vals = {
                 'estimate_id': estimate.id,
@@ -667,61 +737,135 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
                 'pos': pos or False,
                 'item_code': pos or False,
                 'description': desc,
-                'calc_uom_type': calc_uom,
-                'qty': _num(r, ANACO_COL_QTY) or 1.0,
+                'calc_uom_type': 'mq' if b_mm and h_mm else 'nr',
+                'qty': qty if qty is not None else 1.0,
                 'width_mm': b_mm,
                 'height_mm': h_mm,
                 'discount_sc1': sc1,
                 'discount_sc2': sc2,
                 'discount_sc3': sc3,
                 'commission_pct': self.default_commission_pct or 0.0,
-                'cost_industrial_pct': ind_pct,
-                'cost_mol_pct': mol_pct,
             }
-            note_parts = []
-            for fname, col in price_map.items():
-                v = _num(r, col)
-                if v is not None and v != 0:
-                    line_vals[fname] = v
-            for fname, col in cost_map.items():
-                v = _num(r, col)
-                if v is not None and v != 0:
-                    line_vals[fname] = v
-            if bb_col:
-                bb = _num(r, bb_col)
-                bc = _num(r, bc_col) if bc_col else None
-                if bb is not None and bb > 0:
-                    line_vals['cost_anaco_bb_cad'] = bb
-                if bc is not None and bc > 0:
-                    line_vals['cost_anaco_bc_tot'] = bc
-
-            bs = _num(r, ANACO_COL_BS_UNIT)
+            for fname, cad_col, _tot_col, _label in ANACO_COMPONENTS:
+                value = _cached(r, cad_col)
+                if value is not None:
+                    line_vals[fname] = value
+            # Rows saved without computed values (no cache): rebuild N and R from their inputs.
+            if 'price_serramento_cad' not in line_vals and _cached(r, 'J') is not None:
+                line_vals['price_serramento_cad'] = _cached(r, 'J') * serramento_mult
+            if 'cost_staffame_cad' not in line_vals and _cached(r, 'P') is not None:
+                staff_mult = 1.0
+                for letter in ('Q', 'R'):
+                    staff_mult *= params[letter] if params[letter] not in (None, 0.0) else 1.0
+                line_vals['cost_staffame_cad'] = _cached(r, 'P') * staff_mult
+            for fname, letter in (('cost_industrial_pct', 'BM'), ('cost_mol_pct', 'BP')):
+                value = _cached(r, letter)
+                if value is not None:
+                    line_vals[fname] = _norm_pct(value)
+            bb = _cached(r, ANACO_COL_BB)
+            if bb is not None:
+                line_vals['cost_anaco_bb_cad'] = bb
+            bc = _cached(r, ANACO_COL_BC)
+            if bc is not None:
+                line_vals['cost_anaco_bc_tot'] = bc
+            bs = _cached(r, ANACO_COL_BS)
             if bs is not None:
-                line_vals['price_anaco_bs_cad'] = bs
+                line_vals['anaco_excel_bs_cad'] = bs
+                bs_raw = sh_form.cell(r, _col(ANACO_COL_BS)).value
+                if not (isinstance(bs_raw, str) and bs_raw.strip().startswith('=')):
+                    line_vals['price_anaco_bs_cad'] = bs  # typed by hand in Excel: keep it
 
             ntxt = _str(r, ANACO_COL_NOTE)
             if ntxt:
-                note_parts.append(ntxt)
-            if note_parts:
-                line_vals['note'] = '\n'.join(note_parts)
+                line_vals['note'] = ntxt
 
             cost_family = infer_cost_family_from_pos(pos) or infer_cost_family_from_price_cost_vals(line_vals)
             if cost_family:
                 line_vals['cost_family'] = cost_family
 
             try:
-                Line.create(_filter_model_fields(Line, line_vals))
+                line = Line.create(_filter_model_fields(Line, line_vals))
             except Exception as err:  # pylint: disable=broad-except
                 raise UserError(
                     _('Errore import riga ANACO Excel %(row)s (pos. %(pos)s): %(err)s')
                     % {'row': r, 'pos': pos or '—', 'err': err}
                 ) from err
+            mismatches += bool(line.anaco_check_warning)
             count += 1
             seq += 10
 
+        notes = []
         if count and first_row != self.anaco_first_row:
-            note = _('Import ANACO: prima riga dati rilevata alla riga %(row)s.', row=first_row)
+            notes.append(_('Import ANACO: prima riga dati rilevata alla riga %(row)s.', row=first_row))
+        if mismatches:
+            notes.append(_(
+                'Import ANACO: %(n)s righe con BB o BS diversi dal calcolo Odoo (vedi «Controllo Excel» sulle righe).',
+                n=mismatches,
+            ))
+        if notes:
+            note = Markup('<br/>').join(notes)
         return count, note
+
+    def _sbu_anaco_import_summary(self, estimate):
+        rules = []
+        if estimate.anaco_staffame_rate_ml:
+            rules.append(_('staffame %(rate)s €/ml perimetro', rate=f'{estimate.anaco_staffame_rate_ml:g}'))
+        if estimate.anaco_posa_rate_sqm:
+            rules.append(_('posa %(rate)s €/m² (minimo %(min)s m²)', rate=f'{estimate.anaco_posa_rate_sqm:g}',
+                           min=f'{estimate.anaco_posa_min_sqm:g}'))
+        return _(
+            'Import ANACO (%(layout)s): costo materiale lavorato e posato %(bc)s, posa %(posa)s, '
+            'prezzo cliente %(price)s. Percentuali riga 5: trasporto %(t)s%%, sviluppo tecnico/PM %(pm)s%%, '
+            'cantiere %(site)s%%, extra %(extra)s%%, MOL %(mol)s%%. Regole: %(rules)s.',
+            layout=dict(estimate._fields['anaco_layout'].selection).get(estimate.anaco_layout),
+            bc=estimate._sbu_anaco_format_amount(estimate.anaco_material_worked_total),
+            posa=estimate._sbu_anaco_format_amount(estimate.anaco_installation_total),
+            price=estimate._sbu_anaco_format_amount(estimate.total_price),
+            t=f'{estimate.anaco_pct_transport:g}', pm=f'{estimate.anaco_pct_tech_pm:g}',
+            site=f'{estimate.anaco_pct_site:g}', extra=f'{estimate.anaco_pct_extra:g}',
+            mol=f'{estimate.anaco_pct_mol:g}', rules=', '.join(rules) or _('nessuna'),
+        )
+
+    def _sbu_anaco_header_vals(self, anaco_sh, anaco_sh_form, first_row, wb_vals):
+        """Estimate values from the workbook: row 5 percentages, P / AV rules, row 4 labels, C26."""
+        sh_form = anaco_sh_form or anaco_sh
+
+        def _param(letter):
+            return _cell_num(anaco_sh, ANACO_ROW_PARAMS, _col(letter))
+
+        vals = {
+            'anaco_layout': 'p1002' if is_p1002_anaco_layout(_cell_str_merged, anaco_sh, sh_form) else 'rev7',
+            'anaco_pct_transport': _norm_pct(_param('BE')),
+            'anaco_pct_tech_pm': _norm_pct(_param('BG')),
+            'anaco_pct_site': _norm_pct(_param('BI')),
+            'anaco_pct_extra': _norm_pct(_param('BK')),
+            'anaco_pct_industrial': _norm_pct(_param('BM')),
+            'anaco_pct_mol': _norm_pct(_param('BP')),
+            'anaco_staffame_rate_ml': 0.0,
+            'anaco_posa_rate_sqm': 0.0,
+            'anaco_posa_min_sqm': 0.0,
+        }
+        multiplier = 1.0
+        for letter in ('Q', 'R'):
+            value = _param(letter)
+            multiplier *= value if value not in (None, 0.0) else 1.0
+        vals['anaco_staffame_multiplier'] = multiplier
+        staffame = _anaco_staffame_rule(sh_form.cell(first_row, _col('P')).value, _param)
+        if staffame:
+            vals['anaco_staffame_rate_ml'] = staffame
+        posa = _anaco_posa_rule(sh_form.cell(first_row, _col('AV')).value, _param)
+        if posa:
+            vals['anaco_posa_min_sqm'], vals['anaco_posa_rate_sqm'] = posa
+        labels = {}
+        for fname, cad_col, _tot_col, default in ANACO_COMPONENTS:
+            text = ' '.join((_cell_str(anaco_sh, 4, _col(cad_col)) or '').split())
+            text = re.sub(r'\s*(CAD\.?|CAD:)\s*$', '', text, flags=re.IGNORECASE).strip()
+            labels[fname] = text or default
+        vals['anaco_column_labels'] = json.dumps(labels, ensure_ascii=False)
+        summary = _sheet_by_aliases(wb_vals, ('SUMMARY COSTI', 'Summary costi'))
+        if summary:
+            vals['anaco_discount_after_sign'] = _norm_pct(_cell_num(summary, 26, 3))
+        return vals
 
     def _import_offerta_sheet_rows(self, estimate, offerta_sh, offerta_form, Line):
         """Import client offer grid when ANACO identity columns are empty."""
@@ -851,7 +995,7 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
                     first_row = detected
 
             price_map, cost_map, bb_col, bc_col = _resolve_anaco_column_maps(anaco_sh, anaco_sh_form)
-            p1002 = is_p1002_anaco_layout(_cell_str_merged, anaco_sh, anaco_sh_form)
+            estimate.write(self._sbu_anaco_header_vals(anaco_sh, anaco_sh_form, first_row, wb_vals))
             n_anaco, import_note = self._import_anaco_sheet_rows(
                 estimate, anaco_sh, anaco_sh_form, Line, first_row,
                 price_map=price_map, cost_map=cost_map, bb_col=bb_col, bc_col=bc_col,
@@ -906,14 +1050,8 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
                         'Compilare «Prezzo unit. ANACO (col. BS)» o verificare le colonne prezzo. '
                         'Esempi: %(sample)s'
                     ) % {'n': len(missing_bs), 'sample': sample})
-            if n_anaco and p1002:
-                estimate.message_post(body=_(
-                    'Import ANACO P1002: mappatura colonne REV03 (staffame col. %(staff)d, '
-                    'posa col. %(posa)d, costo certificato BB/BC, prezzo BS).'
-                ) % {
-                    'staff': cost_map.get('cost_staffame_cad', ANACO_COL_COST_STAFFAME),
-                    'posa': cost_map.get('cost_posa_lamiera_lin_cad', ANACO_COL_COST_POSA_LIN),
-                })
+            if n_anaco:
+                estimate.message_post(body=self._sbu_anaco_import_summary(estimate))
             if self.import_distinta_bom and n_anaco:
                 if self.replace_anaco_lines:
                     estimate.line_ids.mapped('bom_line_ids').unlink()
@@ -1085,13 +1223,14 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
         body = _(
             'Import Excel completato: %(anaco)d righe ANACO, %(sal)d righe SAL.'
         ) % {'anaco': n_anaco, 'sal': n_sal}
+        parts = [body]
         if self.import_sal and sal_pct_col_used:
-            body += '<br/>' + _(
+            parts.append(_(
                 'Colonne SAL-1…10: colonna Excel %(col)d (REV7 predefinita: %(rev7)d).'
-            ) % {'col': sal_pct_col_used, 'rev7': SAL_COL_SAL_START}
+            ) % {'col': sal_pct_col_used, 'rev7': SAL_COL_SAL_START})
         if self.import_sal and self.import_sal_retention and sal_ret_col:
-            body += '<br/>' + _('Ritenuta %%: colonna Excel %(col)d.') % {'col': sal_ret_col}
-        estimate.message_post(body=body)
+            parts.append(_('Ritenuta %%: colonna Excel %(col)d.') % {'col': sal_ret_col})
+        estimate.message_post(body=Markup('<br/>').join(parts))
         return {
             'type': 'ir.actions.act_window',
             'name': _('Preventivo'),

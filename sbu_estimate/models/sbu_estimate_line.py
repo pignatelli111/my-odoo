@@ -1,5 +1,6 @@
 from odoo import _, api, fields, models
 
+from .sbu_anaco_engine import ANACO_COMPONENT_FIELDS, ANACO_OVERHEADS
 from .sbu_contract_uom import SBU_CONTRACT_UOM_SELECTION
 from .sbu_cost_family import COST_FAMILY_WORKFLOW_ROUTE, SBU_COST_FAMILY_SELECTION
 
@@ -14,6 +15,7 @@ def _successive_discount_factor(*percents):
 
 
 class SbuEstimateLine(models.Model):
+    """One ANACO row. Amounts are stored at full precision (like Excel) and shown with 2 decimals."""
     _name = 'sbu.estimate.line'
     _description = 'SBU Estimate Line (ANACO row)'
     _rec_name = 'name'
@@ -50,21 +52,19 @@ class SbuEstimateLine(models.Model):
     )
 
     # ── Dimensions (from ANACO: B, H, Mq) ────────────────────────────────────
-    qty = fields.Float(string='Qt.', default=1.0, digits=(16, 2))
+    qty = fields.Float(string='Qt.', default=1.0)
     width_mm = fields.Float(string='B (mm)', digits=(16, 0))
     height_mm = fields.Float(string='H (mm)', digits=(16, 0))
     sqm_per_piece = fields.Float(
         string='MQ/Cad.',
         compute='_compute_sqm_dimensions',
         store=True,
-        digits=(16, 3),
         help='Superficie di un solo pezzo: B (mm) × H (mm) / 1.000.000.',
     )
     sqm = fields.Float(
         string='Mq tot.',
         compute='_compute_sqm_dimensions',
         store=True,
-        digits=(16, 3),
         help='MQ totali riga: MQ/Cad. × Qt. (equiv. ANACO colonna I, MQ TOTALI).',
     )
     calc_uom_type = fields.Selection(
@@ -101,53 +101,65 @@ class SbuEstimateLine(models.Model):
     # ── Discount / commission ─────────────────────────────────────────────────
     commission_pct = fields.Float(
         string='Comm. %',
-        digits=(16, 2),
-        help='Applicato dopo i tre sconti successivi sul listino (moltiplicativo, come da ANACO).',
+        help='Commissione opzionale sul prezzo cliente (0 = prezzo ANACO BS invariato).',
     )
     discount_sc1 = fields.Float(
         string='Sconto 1 %',
-        digits=(16, 2),
-        help='Primo sconto successivo sul listino / base CAD.',
+        help='Informativo: sconto fornitore ANACO K5, già incluso nel costo serramento scontato (col. N).',
     )
     discount_sc2 = fields.Float(
         string='Sconto 2 %',
-        digits=(16, 2),
-        help='Secondo sconto successivo (dopo Sconto 1).',
+        help='Informativo: sconto fornitore ANACO L5, già incluso nel costo serramento scontato (col. N).',
     )
     discount_sc3 = fields.Float(
         string='Sconto 3 %',
-        digits=(16, 2),
-        help='Terzo sconto successivo (dopo Sconto 2).',
+        help='Informativo: sconto fornitore ANACO M5, già incluso nel costo serramento scontato (col. N).',
     )
 
     # ── PRICE columns (selling side — from ANACO) ─────────────────────────────
-    price_serramento_cad = fields.Float(string='Serramento Scontato CAD', digits=(16, 2))
-    price_oscuramento_cad = fields.Float(string='Oscuramento Scontato CAD', digits=(16, 2))
-    price_automatismo_cad = fields.Float(string='Automatismo CAD', digits=(16, 2))
-    price_zanzariera_cad = fields.Float(string='Zanzariera CAD', digits=(16, 2))
-    price_vetro_cad = fields.Float(string='Vetro CAD', digits=(16, 2))
-    price_pannello_cad = fields.Float(string='Pannello CAD', digits=(16, 2))
-    price_controtelaio_cad = fields.Float(string='Controtelaio CAD', digits=(16, 2))
-    price_trasformazione_cad = fields.Float(string='Trasformazione CAD', digits=(16, 2))
-    price_accessori_cad = fields.Float(string='Accessori Maniglie CAD', digits=(16, 2))
-    price_kit_avvolgimento_cad = fields.Float(string='Kit Avvolgimento CAD', digits=(16, 2))
-    price_smontaggio_cad = fields.Float(string='Smontaggio/Posa CAD', digits=(16, 2))
-    price_nolo_cad = fields.Float(string='Nolo CAD', digits=(16, 2))
-    price_cassonetto_cad = fields.Float(string='Cassonetto CAD', digits=(16, 2))
+    price_serramento_cad = fields.Float(string='Serramento Scontato CAD')
+    price_oscuramento_cad = fields.Float(string='Oscuramento Scontato CAD')
+    price_automatismo_cad = fields.Float(string='Automatismo CAD')
+    price_zanzariera_cad = fields.Float(string='Zanzariera CAD')
+    price_vetro_cad = fields.Float(string='Vetro CAD')
+    price_pannello_cad = fields.Float(string='Pannello CAD')
+    price_controtelaio_cad = fields.Float(string='Controtelaio CAD')
+    price_trasformazione_cad = fields.Float(string='Trasformazione CAD')
+    price_accessori_cad = fields.Float(string='Accessori Maniglie CAD')
+    price_kit_avvolgimento_cad = fields.Float(string='Kit Avvolgimento CAD')
+    price_smontaggio_cad = fields.Float(string='Smontaggio/Posa CAD')
+    price_nolo_cad = fields.Float(string='Nolo CAD')
+    price_cassonetto_cad = fields.Float(string='Cassonetto CAD')
     price_anaco_bs_cad = fields.Float(
         string='Prezzo unit. ANACO (col. BS)',
-        digits=(16, 2),
-        help='Se valorizzato, equivale alla cella ANACO BS (PREZZO su OFFERTA): prezzo unitario finale da Excel; ignora somma componenti e sconti Odoo.',
+        help='Prezzo unitario manuale: sostituisce il prezzo calcolato BS (in Excel: cella BS digitata a mano, '
+             'oppure righe solo OFFERTA). Vuoto = prezzo calcolato come in ANACO.',
+    )
+    anaco_price_cad = fields.Float(
+        string='Prezzo calcolato ANACO (BS)',
+        compute='_compute_cost_totals',
+        store=True,
+        help='BB + trasporto + sviluppo tecnico/PM + presidio cantiere + extra + oneri industriali + MOL (col. BS).',
+    )
+    anaco_excel_bs_cad = fields.Float(
+        string='BS letto da Excel',
+        readonly=True,
+        help='Valore della cella BS al momento dell\'import (controllo di parità con il calcolo Odoo).',
+    )
+    anaco_check_warning = fields.Char(
+        string='Controllo Excel',
+        compute='_compute_anaco_check_warning',
+        help='Differenze tra il calcolo Odoo e i valori BB / BS letti da Excel.',
     )
     cost_anaco_bb_cad = fields.Float(
         string='Costo unit. ANACO (col. BB)',
-        digits=(16, 2),
-        help='Se valorizzato, equivale alla cella ANACO BB «Costo materiale lavorato e posato» CAD: costo unitario certificato da Excel (P1002).',
+        readonly=True,
+        help='Valore della cella BB al momento dell\'import (controllo di parità con il calcolo Odoo).',
     )
     cost_anaco_bc_tot = fields.Float(
         string='Costo tot. ANACO (col. BC)',
-        digits=(16, 2),
-        help='Totale costo riga da colonna BC Excel (opzionale; altrimenti BB × Qt.).',
+        readonly=True,
+        help='Valore della cella BC al momento dell\'import (controllo).',
     )
 
     # Computed price totals (ANACO: listino componenti → sconti successivi → comm %)
@@ -155,49 +167,42 @@ class SbuEstimateLine(models.Model):
         string='Listino / base CAD',
         compute='_compute_price_totals',
         store=True,
-        digits=(16, 2),
         help='Somma componenti prezzo (listino / base prima degli sconti a catena).',
     )
     price_after_discounts_cad = fields.Float(
         string='Prezzo dopo sconti CAD',
         compute='_compute_price_totals',
         store=True,
-        digits=(16, 2),
         help='Listino / base CAD × (1−Sc1%) × (1−Sc2%) × (1−Sc3%). Prima della commissione %.',
     )
     price_after_discounts_tot = fields.Float(
         string='Prezzo dopo sconti TOT',
         compute='_compute_price_totals',
         store=True,
-        digits=(16, 2),
         help='Prezzo dopo sconti CAD × Qt.',
     )
     price_total_cad = fields.Float(
         string='Prezzo cliente CAD',
         compute='_compute_price_totals',
         store=True,
-        digits=(16, 2),
         help='Dopo sconti e commissione %, oppure colonna BS ANACO se valorizzata.',
     )
     price_total_tot = fields.Float(
         string='Prezzo cliente TOT',
         compute='_compute_price_totals',
         store=True,
-        digits=(16, 2),
         help='Prezzo cliente CAD × Qt.',
     )
     price_per_sqm = fields.Float(
         string='Prezzo cliente / MQ',
         compute='_compute_price_totals',
         store=True,
-        digits=(16, 2),
-        help='Prezzo cliente TOT ÷ Mq tot. when U.M. calcolo is MQ; otherwise 0.',
+        help='Prezzo cliente TOT ÷ Mq tot. (col. BU = BT / I).',
     )
     price_unit_rate = fields.Float(
         string='Client unit rate',
         compute='_compute_unit_rates',
         store=True,
-        digits=(16, 2),
         help='Client price per calculation unit (€/m², €/pz, or lump sum per line).',
     )
     unit_rate_label = fields.Char(
@@ -207,135 +212,128 @@ class SbuEstimateLine(models.Model):
     )
 
     # ── COST columns (buying side — from ANACO) ───────────────────────────────
-    cost_coibentazione_cad = fields.Float(string='Coibentazione CAD', digits=(16, 2))
-    cost_posa_lamiera_lin_cad = fields.Float(string='Posa Lamiera LIN CAD', digits=(16, 2))
+    cost_coibentazione_cad = fields.Float(string='Coibentazione CAD')
+    cost_posa_lamiera_lin_cad = fields.Float(string='Posa Lamiera LIN CAD')
     cost_industrial_pct = fields.Float(
         string='Costi Industriali %',
-        digits=(16, 2),
-        help='Percentuale applicata su (Coibentazione + Posa lamiera LIN); l\'importo è in «Oneri Industriali CAD» e incluso nel costo totale.',
+        help='Costi industriali % sul costo materiale lavorato e posato (col. BM; BN = BB × BM). Incluso nel costo totale.',
     )
-    cost_tech_pm_cad = fields.Float(string='Sviluppo Tecnico/PM CAD', digits=(16, 2))
+    cost_tech_pm_cad = fields.Float(
+        string='Sviluppo Tecnico/PM CAD', compute='_compute_cost_totals', store=True,
+        help='BB × % sviluppo tecnico e PM del preventivo (col. BG = BB × $BG$5).',
+    )
     cost_mol_pct = fields.Float(
         string='MOL %',
-        digits=(16, 2),
-        help='Margine teorico su (Coibentazione + Posa): valorizzato in «MOL su Materiale (€ CAD)»; non sommato al costo totale (come indicatore ANACO).',
+        help='MOL % sul costo materiale lavorato e posato (col. BP; BQ = BB × BP). Entra nel prezzo BS, non nel costo.',
     )
-    cost_trasporto_cad = fields.Float(string='Trasporto/Imballo CAD', digits=(16, 2))
-    cost_cantiere_cad = fields.Float(string='Presidio Cantiere/Site Mng CAD', digits=(16, 2))
-    cost_staffame_cad = fields.Float(string='ST/LZ Staffame CAD', digits=(16, 2))
-    cost_extra_cad = fields.Float(string='Extra CAD', digits=(16, 2))
+    cost_trasporto_cad = fields.Float(
+        string='Trasporto/Imballo CAD', compute='_compute_cost_totals', store=True,
+        help='BB × % trasporto e imballo del preventivo (col. BE = BB × $BE$5).',
+    )
+    cost_cantiere_cad = fields.Float(
+        string='Presidio Cantiere/Site Mng CAD', compute='_compute_cost_totals', store=True,
+        help='BB × % presidio cantiere del preventivo (col. BI = BB × $BI$5).',
+    )
+    cost_staffame_cad = fields.Float(string='ST/LZ Staffame CAD')
+    cost_extra_cad = fields.Float(
+        string='Extra CAD', compute='_compute_cost_totals', store=True,
+        help='BB × % extra del preventivo (col. BK = BB × $BK$5).',
+    )
 
     # ANACO cost rollup (Cosimo schema: materiale → add-on → subtotale → industriali → MOL)
     cost_material_worked_cad = fields.Float(
         string='Costo materiale lavorato e posato CAD',
         compute='_compute_cost_totals',
         store=True,
-        digits=(16, 2),
-        help='Coibentazione + posa lamiera LIN dopo sconti a catena (base ANACO col. BB).',
+        help='Somma delle 16 colonne costo CAD (col. BB = N+R+V+AB+AD+AF+AH+AJ+AL+AN+AP+AR+AT+AV+AX+AZ).',
     )
     cost_material_worked_tot = fields.Float(
         string='Costo materiale lavorato e posato TOT',
         compute='_compute_cost_totals',
         store=True,
-        digits=(16, 2),
     )
     cost_trasporto_tot = fields.Float(
         string='Trasporto e imballo TOT',
         compute='_compute_cost_totals',
         store=True,
-        digits=(16, 2),
     )
     cost_tech_pm_tot = fields.Float(
         string='Sviluppo tecnico e PM TOT',
         compute='_compute_cost_totals',
         store=True,
-        digits=(16, 2),
     )
     cost_cantiere_tot = fields.Float(
         string='Presidio cantiere / site mng TOT',
         compute='_compute_cost_totals',
         store=True,
-        digits=(16, 2),
     )
     cost_staffame_tot = fields.Float(
         string='ST/LZ staffame TOT',
         compute='_compute_cost_totals',
         store=True,
-        digits=(16, 2),
     )
     cost_extra_tot = fields.Float(
         string='Extra TOT',
         compute='_compute_cost_totals',
         store=True,
-        digits=(16, 2),
     )
     cost_subtotal_cad = fields.Float(
         string='Subtotale costo CAD',
         compute='_compute_cost_totals',
         store=True,
-        digits=(16, 2),
-        help='Materiale lavorato + trasporto + PM + cantiere + extra (prima oneri industriali).',
+        help='BB + trasporto + sviluppo tecnico/PM + presidio cantiere + extra (prima degli oneri industriali).',
     )
     cost_subtotal_tot = fields.Float(
         string='Subtotale costo TOT',
         compute='_compute_cost_totals',
         store=True,
-        digits=(16, 2),
     )
     cost_industrial_tot = fields.Float(
         string='Oneri industriali TOT',
         compute='_compute_cost_totals',
         store=True,
-        digits=(16, 2),
     )
     cost_mol_amount_tot = fields.Float(
         string='MOL su materiale TOT',
         compute='_compute_cost_totals',
         store=True,
-        digits=(16, 2),
-        help='Indicatore ANACO: non sommato al costo totale.',
+        help='MOL TOT (col. BR = BC × BP): margine incluso nel prezzo cliente.',
     )
 
     cost_gross_cad = fields.Float(
         string='List cost / base CAD',
         compute='_compute_cost_discount_chain',
         store=True,
-        digits=(16, 2),
         help='Sum of cost component columns before chained discounts (audit, like listino costo).',
     )
     cost_after_discounts_cad = fields.Float(
         string='Cost after discounts CAD',
         compute='_compute_cost_discount_chain',
         store=True,
-        digits=(16, 2),
         help='List cost CAD × (1−Sc1%) × (1−Sc2%) × (1−Sc3%), same chain as selling price.',
     )
     cost_after_discounts_tot = fields.Float(
         string='Cost after discounts TOT',
         compute='_compute_cost_discount_chain',
         store=True,
-        digits=(16, 2),
         help='Cost after discounts CAD × Qt.',
     )
     cost_industrial_cad = fields.Float(
         string='Oneri Industriali CAD',
         compute='_compute_cost_totals',
         store=True,
-        digits=(16, 2),
-        help='Percentuale su (Coibentazione + Posa lamiera LIN), come da ANACO.',
+        help='Oneri industriali CAD (col. BN = BB × BM).',
     )
     cost_mol_amount_cad = fields.Float(
         string='MOL su Materiale (€ CAD)',
         compute='_compute_cost_totals',
         store=True,
-        digits=(16, 2),
-        help='Indicatore: MOL % applicato solo su coibentazione + posa (non sommato al costo totale).',
+        help='MOL CAD (col. BQ = BB × BP): margine incluso nel prezzo cliente BS.',
     )
     cost_bom_total = fields.Float(
         string='Costo da Distinta (ITEM)',
         compute='_compute_cost_bom_total',
         store=True,
-        digits=(16, 2),
         help='Somma Σ (qty da distinta × costo unit.) delle righe sbu.estimate.bom.line: unica '
              '«verità» distinta per confronto costi; acquisti collegati usano le stesse righe.',
     )
@@ -344,27 +342,23 @@ class SbuEstimateLine(models.Model):
         string='Costo totale CAD',
         compute='_compute_cost_totals',
         store=True,
-        digits=(16, 2),
-        help='Subtotale CAD + oneri industriali (parità col. BC Excel quando importato).',
+        help='Costo pieno: subtotale + oneri industriali (prezzo BS − MOL).',
     )
     cost_total_tot = fields.Float(
         string='Costo totale TOT',
         compute='_compute_cost_totals',
         store=True,
-        digits=(16, 2),
     )
     cost_per_sqm = fields.Float(
         string='Costo / MQ',
         compute='_compute_cost_totals',
         store=True,
-        digits=(16, 2),
-        help='Costo TOT ÷ Mq tot. when U.M. calcolo is MQ; otherwise 0.',
+        help='Costo materiale lavorato e posato TOT ÷ Mq tot. (col. BD = BC / I).',
     )
     cost_unit_rate = fields.Float(
         string='Cost unit rate',
         compute='_compute_unit_rates',
         store=True,
-        digits=(16, 2),
         help='Cost per calculation unit (€/m², €/pz, or lump sum per line).',
     )
 
@@ -372,55 +366,47 @@ class SbuEstimateLine(models.Model):
         string='Margine €',
         compute='_compute_line_margin',
         store=True,
-        digits=(16, 2),
         help='Prezzo cliente TOT − costo totale TOT.',
     )
     margin_pct = fields.Float(
         string='Margine %',
         compute='_compute_line_margin',
         store=True,
-        digits=(16, 2),
         help='Margine € ÷ prezzo cliente TOT × 100.',
     )
 
     # ── Budget tracking (per item — from ANACO budget columns) ────────────────
-    budget_orders_issued = fields.Float(string='Ordini Emessi', digits=(16, 2))
-    budget_costs_incurred = fields.Float(string='Costi Sostenuti', digits=(16, 2))
+    budget_orders_issued = fields.Float(string='Ordini Emessi')
+    budget_costs_incurred = fields.Float(string='Costi Sostenuti')
     budget_to_fulfill = fields.Float(
         string='Da Evadere',
         compute='_compute_budget',
         store=True,
-        digits=(16, 2),
     )
     budget_pct_paid = fields.Float(
         string='% Pagati su Ordine',
         compute='_compute_budget',
         store=True,
-        digits=(16, 2),
     )
     budget_order_progress_pct = fields.Float(
         string='% Ordine Avanzamento',
         compute='_compute_budget',
         store=True,
-        digits=(16, 2),
     )
     budget_residual = fields.Float(
         string='Disponibilità Residua su Ordine',
         compute='_compute_budget',
         store=True,
-        digits=(16, 2),
     )
     budget_vs_estimate_pct = fields.Float(
         string='% su Preventivato',
         compute='_compute_budget',
         store=True,
-        digits=(16, 2),
     )
     budget_advance = fields.Float(
         string='Avanzo su Budget',
         compute='_compute_budget',
         store=True,
-        digits=(16, 2),
     )
 
     # ── BOM lines ─────────────────────────────────────────────────────────────
@@ -438,58 +424,28 @@ class SbuEstimateLine(models.Model):
                 line.sqm_per_piece = (line.width_mm * line.height_mm) / 1_000_000
             else:
                 line.sqm_per_piece = 0.0
-            line.sqm = line.sqm_per_piece * (line.qty or 1)
+            line.sqm = line.sqm_per_piece * (line.qty or 0.0)  # Excel I = G × H
 
-    # ── Computed: price totals ────────────────────────────────────────────────
-    @api.depends(
-        'qty', 'sqm', 'calc_uom_type',
-        'price_serramento_cad', 'price_oscuramento_cad', 'price_automatismo_cad',
-        'price_zanzariera_cad', 'price_vetro_cad', 'price_pannello_cad',
-        'price_controtelaio_cad', 'price_trasformazione_cad', 'price_accessori_cad',
-        'price_kit_avvolgimento_cad', 'price_smontaggio_cad', 'price_nolo_cad',
-        'price_cassonetto_cad',
-        'discount_sc1', 'discount_sc2', 'discount_sc3', 'commission_pct',
-        'price_anaco_bs_cad',
+    # ── ANACO engine (same formulas as the Excel sheet, see sbu_anaco_engine) ──
+    _ANACO_DEPENDS = ANACO_COMPONENT_FIELDS + (
+        'qty', 'sqm', 'cost_industrial_pct', 'cost_mol_pct', 'commission_pct', 'price_anaco_bs_cad',
+        'estimate_id.anaco_pct_transport', 'estimate_id.anaco_pct_tech_pm',
+        'estimate_id.anaco_pct_site', 'estimate_id.anaco_pct_extra',
     )
+
+    @api.depends(*_ANACO_DEPENDS, 'anaco_price_cad')
     def _compute_price_totals(self):
         for line in self:
-            gross = (
-                line.price_serramento_cad
-                + line.price_oscuramento_cad
-                + line.price_automatismo_cad
-                + line.price_zanzariera_cad
-                + line.price_vetro_cad
-                + line.price_pannello_cad
-                + line.price_controtelaio_cad
-                + line.price_trasformazione_cad
-                + line.price_accessori_cad
-                + line.price_kit_avvolgimento_cad
-                + line.price_smontaggio_cad
-                + line.price_nolo_cad
-                + line.price_cassonetto_cad
-            )
-            line.price_gross_cad = gross
-            disc_factor = _successive_discount_factor(
-                line.discount_sc1,
-                line.discount_sc2,
-                line.discount_sc3,
-            )
-            after_discounts = gross * disc_factor
-            line.price_after_discounts_cad = after_discounts
-            qty = line.qty or 1
-            line.price_after_discounts_tot = after_discounts * qty
-            if line.price_anaco_bs_cad:
-                net_unit = line.price_anaco_bs_cad
-            elif line.commission_pct:
-                net_unit = after_discounts * (1.0 - line.commission_pct / 100.0)
-            else:
-                net_unit = after_discounts
+            qty = line.qty or 0.0
+            # BS: computed like Excel, unless a manual price was typed (Excel override / OFFERTA rows).
+            base = line.price_anaco_bs_cad or line.anaco_price_cad
+            line.price_gross_cad = base
+            line.price_after_discounts_cad = base
+            line.price_after_discounts_tot = base * qty
+            net_unit = base * (1.0 - line.commission_pct / 100.0) if line.commission_pct else base
             line.price_total_cad = net_unit
             line.price_total_tot = net_unit * qty
-            if line.calc_uom_type == 'mq' and line.sqm:
-                line.price_per_sqm = line.price_total_tot / line.sqm
-            else:
-                line.price_per_sqm = 0.0
+            line.price_per_sqm = line.price_total_tot / line.sqm if line.sqm else 0.0
 
     @api.depends('cost_family')
     def _compute_workflow_route(self):
@@ -508,32 +464,14 @@ class SbuEstimateLine(models.Model):
             else:
                 line.manual_input_pending = False
 
-    @api.depends(
-        'cost_coibentazione_cad', 'cost_posa_lamiera_lin_cad',
-        'cost_tech_pm_cad', 'cost_trasporto_cad', 'cost_cantiere_cad',
-        'cost_staffame_cad', 'cost_extra_cad',
-        'discount_sc1', 'discount_sc2', 'discount_sc3', 'qty',
-    )
+    @api.depends(*_ANACO_DEPENDS)
     def _compute_cost_discount_chain(self):
+        """Legacy audit fields: supplier discounts are already inside the ANACO costs (col. N)."""
         for line in self:
-            gross = (
-                (line.cost_coibentazione_cad or 0.0)
-                + (line.cost_posa_lamiera_lin_cad or 0.0)
-                + (line.cost_tech_pm_cad or 0.0)
-                + (line.cost_trasporto_cad or 0.0)
-                + (line.cost_cantiere_cad or 0.0)
-                + (line.cost_staffame_cad or 0.0)
-                + (line.cost_extra_cad or 0.0)
-            )
-            line.cost_gross_cad = gross
-            disc_factor = _successive_discount_factor(
-                line.discount_sc1,
-                line.discount_sc2,
-                line.discount_sc3,
-            )
-            after = gross * disc_factor
-            line.cost_after_discounts_cad = after
-            line.cost_after_discounts_tot = after * (line.qty or 1)
+            bb = sum(line[f] or 0.0 for f in ANACO_COMPONENT_FIELDS)
+            line.cost_gross_cad = bb
+            line.cost_after_discounts_cad = bb
+            line.cost_after_discounts_tot = bb * (line.qty or 0.0)
 
     @api.depends(
         'calc_uom_type', 'price_total_tot', 'cost_total_tot', 'sqm', 'qty',
@@ -578,92 +516,49 @@ class SbuEstimateLine(models.Model):
         for line in self:
             line.cost_bom_total = sum(line.bom_line_ids.mapped('total_cost'))
 
-    # ── Computed: cost totals ─────────────────────────────────────────────────
-    @api.depends(
-        'qty', 'sqm', 'calc_uom_type',
-        'cost_coibentazione_cad', 'cost_posa_lamiera_lin_cad',
-        'cost_industrial_pct', 'cost_mol_pct',
-        'cost_tech_pm_cad', 'cost_trasporto_cad', 'cost_cantiere_cad',
-        'cost_staffame_cad', 'cost_extra_cad',
-        'cost_anaco_bb_cad', 'cost_anaco_bc_tot',
-        'discount_sc1', 'discount_sc2', 'discount_sc3',
-    )
+    # ── Computed: cost totals (ANACO BB … BS) ──────────────────────────────────
+    @api.depends(*_ANACO_DEPENDS)
     def _compute_cost_totals(self):
-        """ANACO rollup: materiale → add-on → subtotale → industriali (+ MOL indicatore)."""
-        addon_cad_fields = (
-            'cost_trasporto_cad',
-            'cost_tech_pm_cad',
-            'cost_cantiere_cad',
-            'cost_staffame_cad',
-            'cost_extra_cad',
-        )
-        addon_tot_fields = (
-            'cost_trasporto_tot',
-            'cost_tech_pm_tot',
-            'cost_cantiere_tot',
-            'cost_staffame_tot',
-            'cost_extra_tot',
-        )
         for line in self:
-            qty = line.qty or 1.0
-            disc_factor = _successive_discount_factor(
-                line.discount_sc1,
-                line.discount_sc2,
-                line.discount_sc3,
-            )
-            if line.cost_anaco_bb_cad:
-                material_net = line.cost_anaco_bb_cad
-                line.cost_material_worked_cad = material_net
-                line.cost_material_worked_tot = material_net * qty
-                other_net = 0.0
-                for cad_name, tot_name in zip(addon_cad_fields, addon_tot_fields):
-                    net_cad = (getattr(line, cad_name) or 0.0) * disc_factor
-                    setattr(line, tot_name, net_cad * qty)
-                    other_net += net_cad
-                line.cost_subtotal_cad = material_net + other_net
-                line.cost_subtotal_tot = line.cost_material_worked_tot + sum(
-                    getattr(line, tot_name) for tot_name in addon_tot_fields
-                )
-                line.cost_industrial_cad = 0.0
-                line.cost_industrial_tot = 0.0
-                line.cost_mol_amount_cad = 0.0
-                line.cost_mol_amount_tot = 0.0
-                # BB/BC Excel: unit costo certificato = BB; totale riga = BC (col. BC).
-                line.cost_total_cad = material_net
-                line.cost_total_tot = (
-                    line.cost_anaco_bc_tot
-                    if line.cost_anaco_bc_tot
-                    else material_net * qty
-                )
-            else:
-                material = (
-                    (line.cost_coibentazione_cad or 0.0)
-                    + (line.cost_posa_lamiera_lin_cad or 0.0)
-                )
-                material_net = material * disc_factor
-                line.cost_material_worked_cad = material_net
-                line.cost_material_worked_tot = material_net * qty
-                other_net = 0.0
-                for cad_name, tot_name in zip(addon_cad_fields, addon_tot_fields):
-                    net_cad = (getattr(line, cad_name) or 0.0) * disc_factor
-                    setattr(line, tot_name, net_cad * qty)
-                    other_net += net_cad
-                line.cost_subtotal_cad = material_net + other_net
-                line.cost_subtotal_tot = line.cost_material_worked_tot + sum(
-                    getattr(line, tot_name) for tot_name in addon_tot_fields
-                )
-                ind_pct = line.cost_industrial_pct or 0.0
-                line.cost_industrial_cad = material_net * (ind_pct / 100.0)
-                line.cost_industrial_tot = line.cost_industrial_cad * qty
-                mol_pct = line.cost_mol_pct or 0.0
-                line.cost_mol_amount_cad = material_net * (mol_pct / 100.0)
-                line.cost_mol_amount_tot = line.cost_mol_amount_cad * qty
-                line.cost_total_cad = line.cost_subtotal_cad + line.cost_industrial_cad
-                line.cost_total_tot = line.cost_subtotal_tot + line.cost_industrial_tot
-            if line.calc_uom_type == 'mq' and line.sqm:
-                line.cost_per_sqm = line.cost_total_tot / line.sqm
-            else:
-                line.cost_per_sqm = 0.0
+            qty = line.qty or 0.0
+            estimate = line.estimate_id
+            bb = sum(line[f] or 0.0 for f in ANACO_COMPONENT_FIELDS)
+            bc = bb * qty
+            line.cost_material_worked_cad = bb
+            line.cost_material_worked_tot = bc
+            line.cost_staffame_tot = (line.cost_staffame_cad or 0.0) * qty
+            overhead_cad = 0.0
+            for pct_field, cad_field, tot_field, *_cols in ANACO_OVERHEADS:
+                pct = (estimate[pct_field] or 0.0) / 100.0
+                line[cad_field] = bb * pct
+                line[tot_field] = bc * pct
+                overhead_cad += bb * pct
+            line.cost_subtotal_cad = bb + overhead_cad
+            line.cost_subtotal_tot = line.cost_subtotal_cad * qty
+            ind = (line.cost_industrial_pct or 0.0) / 100.0
+            mol = (line.cost_mol_pct or 0.0) / 100.0
+            line.cost_industrial_cad = bb * ind
+            line.cost_industrial_tot = bc * ind
+            line.cost_mol_amount_cad = bb * mol
+            line.cost_mol_amount_tot = bc * mol
+            line.cost_total_cad = line.cost_subtotal_cad + line.cost_industrial_cad
+            line.cost_total_tot = line.cost_total_cad * qty
+            line.anaco_price_cad = line.cost_total_cad + line.cost_mol_amount_cad
+            line.cost_per_sqm = bc / line.sqm if line.sqm else 0.0
+
+    @api.depends('anaco_price_cad', 'cost_material_worked_cad', 'anaco_excel_bs_cad', 'cost_anaco_bb_cad',
+                 'price_anaco_bs_cad')
+    def _compute_anaco_check_warning(self):
+        for line in self:
+            issues = []
+            if line.cost_anaco_bb_cad and abs(line.cost_anaco_bb_cad - line.cost_material_worked_cad) > 0.01:
+                issues.append(_('BB Excel %(excel).2f ≠ Odoo %(odoo).2f',
+                                excel=line.cost_anaco_bb_cad, odoo=line.cost_material_worked_cad))
+            if (line.anaco_excel_bs_cad and not line.price_anaco_bs_cad
+                    and abs(line.anaco_excel_bs_cad - line.anaco_price_cad) > 0.01):
+                issues.append(_('BS Excel %(excel).2f ≠ Odoo %(odoo).2f',
+                                excel=line.anaco_excel_bs_cad, odoo=line.anaco_price_cad))
+            line.anaco_check_warning = '; '.join(issues) or False
 
     @api.depends('price_total_tot', 'cost_total_tot')
     def _compute_line_margin(self):
@@ -689,3 +584,67 @@ class SbuEstimateLine(models.Model):
             line.budget_residual = line.cost_total_tot - line.budget_orders_issued
             line.budget_vs_estimate_pct = (line.budget_orders_issued / line.cost_total_tot * 100) if line.cost_total_tot else 0.0
             line.budget_advance = line.cost_total_tot - line.budget_costs_incurred
+
+    # ── ANACO row rules (formulas of columns P / R and AV, read from the workbook) ──
+    _ANACO_RULE_TRIGGERS = ('width_mm', 'height_mm', 'estimate_id')
+
+    def _sbu_anaco_rule_values(self, width_mm, height_mm):
+        """Values of staffame (R) and installation (AV) from the estimate rules, if any.
+
+        R  = 2 × (B + H) / 1000 × €/ml × Q5 × R5       (e.g. =2*(D13+F13)/1000*9)
+        AV = MAX(MQ/cad, min MQ) × €/m²                  (e.g. =MAX(G13,1.8)*60)
+        """
+        self.ensure_one()
+        estimate = self.estimate_id
+        vals = {}
+        if estimate.anaco_staffame_rate_ml and width_mm and height_mm:
+            perimeter_ml = 2.0 * (width_mm + height_mm) / 1000.0
+            vals['cost_staffame_cad'] = perimeter_ml * estimate.anaco_staffame_rate_ml * (
+                estimate.anaco_staffame_multiplier or 1.0)
+        if estimate.anaco_posa_rate_sqm and width_mm and height_mm:
+            sqm_piece = width_mm * height_mm / 1_000_000.0
+            vals['price_smontaggio_cad'] = max(sqm_piece, estimate.anaco_posa_min_sqm or 0.0) * (
+                estimate.anaco_posa_rate_sqm)
+        return vals
+
+    @api.onchange('width_mm', 'height_mm')
+    def _onchange_anaco_rules(self):
+        for line in self:
+            for fname, value in line._sbu_anaco_rule_values(line.width_mm, line.height_mm).items():
+                line[fname] = value
+
+    def _sbu_apply_anaco_rules(self):
+        for line in self:
+            rule_vals = line._sbu_anaco_rule_values(line.width_mm, line.height_mm)
+            if rule_vals:
+                super(SbuEstimateLine, line).write(rule_vals)
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        Estimate = self.env['sbu.estimate']
+        for vals in vals_list:
+            estimate = Estimate.browse(vals.get('estimate_id') or self.env.context.get('default_estimate_id'))
+            if estimate:
+                vals.setdefault('cost_industrial_pct', estimate.anaco_pct_industrial)
+                vals.setdefault('cost_mol_pct', estimate.anaco_pct_mol)
+        lines = super().create(vals_list)
+        for line, vals in zip(lines, vals_list):
+            rule_vals = {
+                k: v for k, v in line._sbu_anaco_rule_values(line.width_mm, line.height_mm).items()
+                if k not in vals  # a value read from Excel (even 0) always wins over the rule
+            }
+            if rule_vals:
+                super(SbuEstimateLine, line).write(rule_vals)
+        return lines
+
+    def write(self, vals):
+        res = super().write(vals)
+        if not self.env.context.get('sbu_skip_anaco_rules') and any(k in vals for k in self._ANACO_RULE_TRIGGERS):
+            for line in self:
+                rule_vals = {
+                    k: v for k, v in line._sbu_anaco_rule_values(line.width_mm, line.height_mm).items()
+                    if k not in vals
+                }
+                if rule_vals:
+                    super(SbuEstimateLine, line).write(rule_vals)
+        return res
