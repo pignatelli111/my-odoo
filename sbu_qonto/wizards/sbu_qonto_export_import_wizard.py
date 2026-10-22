@@ -28,6 +28,8 @@ class SbuQontoExportImportWizard(models.TransientModel):
     )
     data_file = fields.Binary(string='Qonto export (.zip)', required=True)
     data_filename = fields.Char(string='File name')
+    import_movements = fields.Boolean(string='Bank movements', default=True)
+    movements_done = fields.Boolean()
     import_attachments = fields.Boolean(
         string='Attach receipts to movements',
         default=True,
@@ -96,9 +98,30 @@ class SbuQontoExportImportWizard(models.TransientModel):
 
     def action_import(self):
         self.ensure_one()
-        company = self.company_id
         zf = self._sbu_open_zip()
         members = self._sbu_members_by_basename(zf)
+        messages = []
+        if self.import_movements and not self.movements_done:
+            messages.append(self._sbu_import_movements(zf, members))
+            self.movements_done = True
+        messages += self._sbu_import_history(zf, members)
+        if not messages:
+            raise UserError(_('Nothing selected to import.'))
+        self.result_message = '\n'.join(filter(None, [self.result_message] + messages))
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': self._name,
+            'res_id': self.id,
+            'view_mode': 'form',
+            'target': 'new',
+        }
+
+    def _sbu_import_history(self, zf, members):
+        """Hook for contacts and invoices (sbu_qonto_history_import)."""
+        return []
+
+    def _sbu_import_movements(self, zf, members):
+        company = self.company_id
         tx_files = sorted(
             path for name, path in members.items()
             if name.startswith('transactions_') and name.endswith('.json')
@@ -132,18 +155,11 @@ class SbuQontoExportImportWizard(models.TransientModel):
                 if remote_id in receipts:
                     attached += self._sbu_attach_receipts(zf, movement, receipts[remote_id])
 
-        self.result_message = _(
+        return _(
             '%(created)s movement(s) imported, %(skipped)s already present, '
             '%(attached)s receipt file(s) attached.',
             created=created, skipped=skipped, attached=attached,
         )
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': self._name,
-            'res_id': self.id,
-            'view_mode': 'form',
-            'target': 'new',
-        }
 
     def action_open_movements(self):
         return self.env['ir.actions.act_window']._for_xml_id('sbu_qonto.action_sbu_qonto_transaction')

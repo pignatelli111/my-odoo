@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_move_form_inherit_sbu_qonto" model="ir.ui.view">
+        <field name="name">account.move.form.inherit.sbu.qonto</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="before">
+                <div class="alert alert-info mb-0" role="alert" invisible="not sbu_qonto_document_id">
+                    Historical invoice imported from Qonto.
+                    <span invisible="sbu_qonto_vat_source != 'none'"><b>VAT not detailed: check against the attached PDF.</b></span>
+                    <field name="sbu_qonto_document_id" invisible="1"/>
+                    <field name="sbu_qonto_vat_source" invisible="1"/>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_account_invoice_filter_inherit_sbu_qonto" model="ir.ui.view">
+        <field name="name">account.move.search.inherit.sbu.qonto</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_account_invoice_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <separator/>
+                <filter name="sbu_qonto_history" string="Qonto history" domain="[('sbu_qonto_document_id', '!=', False)]"/>
+                <filter name="sbu_qonto_vat_to_check" string="Qonto: VAT to check" domain="[('sbu_qonto_vat_source', '=', 'none')]"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

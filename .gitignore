@@ -4,3 +4,6 @@ __pycache__/
 
 # Regenerate with: python tools/dump_excel_workbooks.py
 docs/excel_workbooks_inventory.json
+
+# Client workbooks (keep out of git)
+ANACO_SCHIAFFINO*.xlsx
