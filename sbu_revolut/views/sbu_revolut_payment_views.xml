@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sbu_revolut_payment_list" model="ir.ui.view">
+        <field name="name">sbu.revolut.payment.list</field>
+        <field name="model">sbu.revolut.payment</field>
+        <field name="arch" type="xml">
+            <list string="Revolut payments" decoration-danger="state == 'failed'" decoration-muted="state == 'cancelled'"
+                  decoration-success="state == 'paid'" decoration-info="state in ('approved', 'sent')">
+                <header>
+                    <button name="action_approve" type="object" string="Approve" class="btn-primary"
+                            groups="sbu_revolut.group_sbu_revolut_payment_approver"/>
+                    <button name="action_send_now" type="object" string="Send now" class="btn-secondary"
+                            groups="sbu_revolut.group_sbu_revolut_payment_approver"
+                            confirm="Send the selected approved payments to Revolut now?"/>
+                </header>
+                <field name="name"/>
+                <field name="execution_date"/>
+                <field name="partner_id"/>
+                <field name="move_id"/>
+                <field name="reference" optional="show"/>
+                <field name="partner_bank_id" optional="show"/>
+                <field name="account_id" optional="hide"/>
+                <field name="amount" sum="Total"/>
+                <field name="currency_id" optional="hide"/>
+                <field name="approved_by_id" optional="show"/>
+                <field name="state" widget="badge"/>
+                <field name="company_id" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_sbu_revolut_payment_form" model="ir.ui.view">
+        <field name="name">sbu.revolut.payment.form</field>
+        <field name="model">sbu.revolut.payment</field>
+        <field name="arch" type="xml">
+            <form string="Revolut payment">
+                <header>
+                    <button name="action_approve" type="object" string="Approve" class="btn-primary"
+                            invisible="state != 'draft'" groups="sbu_revolut.group_sbu_revolut_payment_approver"/>
+                    <button name="action_approve" type="object" string="Second approval" class="btn-primary"
+                            invisible="state != 'waiting_second'" groups="sbu_revolut.group_sbu_revolut_payment_approver"/>
+                    <button name="action_send_now" type="object" string="Send now" class="btn-primary"
+                            invisible="state != 'approved'" groups="sbu_revolut.group_sbu_revolut_payment_approver"
+                            confirm="Send this payment to Revolut now? Money will leave the account."/>
+                    <button name="action_reset_to_draft" type="object" string="Reset to draft" class="btn-secondary"
+                            invisible="state not in ('waiting_second', 'approved', 'failed', 'cancelled')"/>
+                    <button name="action_cancel" type="object" string="Cancel" class="btn-secondary"
+                            invisible="state not in ('draft', 'waiting_second', 'approved', 'failed')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,approved,sent,paid"/>
+                </header>
+                <sheet>
+                    <div class="alert alert-danger" role="alert" invisible="not error_message">
+                        <field name="error_message" nolabel="1"/>
+                    </div>
+                    <div class="alert alert-warning" role="alert" invisible="not requires_second_approval or state not in ('draft', 'waiting_second')">
+                        This amount needs a second approval by a different person.
+                    </div>
+                    <div class="oe_title">
+                        <h1><field name="name"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="move_id" readonly="state != 'draft'" options="{'no_create': True}"/>
+                            <field name="partner_id"/>
+                            <field name="partner_bank_id" readonly="state != 'draft'"
+                                   context="{'default_partner_id': partner_id, 'display_account_trust': True}"/>
+                            <field name="iban" invisible="not iban"/>
+                            <field name="reference" readonly="state != 'draft'"/>
+                        </group>
+                        <group>
+                            <field name="amount" readonly="state != 'draft'"/>
+                            <field name="currency_id" readonly="1" force_save="1"/>
+                            <field name="account_id" readonly="state != 'draft'" options="{'no_create': True}"/>
+                            <field name="execution_date" readonly="state not in ('draft', 'waiting_second', 'approved')"/>
+                            <field name="company_id" groups="base.group_multi_company" readonly="1"/>
+                            <field name="requires_second_approval" invisible="1"/>
+                        </group>
+                    </group>
+                    <group string="Approval and Revolut status">
+                        <group>
+                            <field name="approved_by_id"/>
+                            <field name="approved_on"/>
+                            <field name="second_approved_by_id" invisible="not second_approved_by_id"/>
+                            <field name="second_approved_on" invisible="not second_approved_on"/>
+                        </group>
+                        <group>
+                            <field name="sent_on"/>
+                            <field name="revolut_state"/>
+                            <field name="payment_id"/>
+                            <field name="revolut_transaction_id" groups="base.group_no_one"/>
+                            <field name="request_id" groups="base.group_no_one"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sbu_revolut_payment_search" model="ir.ui.view">
+        <field name="name">sbu.revolut.payment.search</field>
+        <field name="model">sbu.revolut.payment</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="move_id"/>
+                <filter name="to_approve" string="To approve" domain="[('state', 'in', ('draft', 'waiting_second'))]"/>
+                <filter name="scheduled" string="Approved (scheduled)" domain="[('state', '=', 'approved')]"/>
+                <filter name="in_progress" string="Sent" domain="[('state', '=', 'sent')]"/>
+                <filter name="failed" string="Failed" domain="[('state', '=', 'failed')]"/>
+                <filter name="paid" string="Paid" domain="[('state', '=', 'paid')]"/>
+                <group>
+                    <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+                    <filter name="group_partner" string="Supplier" context="{'group_by': 'partner_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_sbu_revolut_payment" model="ir.actions.act_window">
+        <field name="name">Revolut payments</field>
+        <field name="res_model">sbu.revolut.payment</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_sbu_revolut_payment_search"/>
+        <field name="context">{'search_default_to_approve': 1, 'search_default_scheduled': 1, 'search_default_failed': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No Revolut payments to handle</p>
+            <p>Open a posted vendor bill and click "Pay with Revolut", or select bills and use Action → Pay with Revolut.</p>
+        </field>
+    </record>
+
+    <record id="view_sbu_revolut_account_list" model="ir.ui.view">
+        <field name="name">sbu.revolut.account.list</field>
+        <field name="model">sbu.revolut.account</field>
+        <field name="arch" type="xml">
+            <list string="Revolut accounts" editable="bottom" create="0">
+                <header>
+                    <button name="action_refresh_balance" type="object" string="Refresh balance" class="btn-secondary"/>
+                </header>
+                <field name="name"/>
+                <field name="currency_id" readonly="1"/>
+                <field name="balance"/>
+                <field name="iban"/>
+                <field name="bic" optional="hide"/>
+                <field name="journal_id"/>
+                <field name="import_enabled"/>
+                <field name="revolut_state" optional="hide"/>
+                <field name="last_sync" optional="hide"/>
+                <field name="company_id" groups="base.group_multi_company" readonly="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_sbu_revolut_account" model="ir.actions.act_window">
+        <field name="name">Revolut accounts</field>
+        <field name="res_model">sbu.revolut.account</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <record id="view_move_form_inherit_sbu_revolut" model="ir.ui.view">
+        <field name="name">account.move.form.inherit.sbu.revolut</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//button[@id='account_invoice_payment_btn']" position="after">
+                <button name="action_sbu_revolut_pay" type="object" string="Pay with Revolut"
+                        invisible="move_type != 'in_invoice' or state != 'posted' or payment_state not in ('not_paid', 'partial')"
+                        groups="account.group_account_invoice"/>
+            </xpath>
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_sbu_revolut_open_payments" type="object" class="oe_stat_button" icon="fa-university"
+                        invisible="not sbu_revolut_payment_count">
+                    <field name="sbu_revolut_payment_count" widget="statinfo" string="Revolut"/>
+                </button>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="action_server_sbu_revolut_pay_bills" model="ir.actions.server">
+        <field name="name">Pay with Revolut</field>
+        <field name="model_id" ref="account.model_account_move"/>
+        <field name="binding_model_id" ref="account.model_account_move"/>
+        <field name="binding_view_types">list</field>
+        <field name="group_ids" eval="[(4, ref('account.group_account_invoice'))]"/>
+        <field name="state">code</field>
+        <field name="code">action = records.action_sbu_revolut_pay()</field>
+    </record>
+
+    <menuitem id="menu_sbu_revolut_root" name="Revolut" parent="account.menu_finance" sequence="21"
+              groups="account.group_account_invoice"/>
+    <menuitem id="menu_sbu_revolut_movements" name="Movements" parent="menu_sbu_revolut_root"
+              action="action_sbu_revolut_transaction" sequence="10"/>
+    <menuitem id="menu_sbu_revolut_payments" name="Supplier payments" parent="menu_sbu_revolut_root"
+              action="action_sbu_revolut_payment" sequence="20"/>
+    <menuitem id="menu_sbu_revolut_accounts" name="Accounts" parent="menu_sbu_revolut_root"
+              action="action_sbu_revolut_account" sequence="30" groups="account.group_account_manager"/>
+</odoo>

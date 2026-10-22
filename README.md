@@ -9,6 +9,7 @@ Custom **Odoo 19.0** addons for **Suburban SRL a Socio Unico**.
 - **`res.config.settings` fixes:** Policy fields that use `config_parameter` must be **`Char`**, not `Text` (Odoo rejects `Text` for classified settings keys). Graph / OneDrive / Logikal URL settings behave accordingly.
 - **Copying SBU parameters between databases:** **`sbu_integrations`** includes **Settings → Administration → SBU settings JSON (dev → prod)** — export all `sbu.*` `ir.config_parameter` keys as JSON on one DB and import on another. If export is empty, either **save** the SBU block once under Settings or use **Fill missing code defaults** (non-secret defaults only; Azure secrets still require saving Settings or pasting into JSON).
 - **Qonto / Revolut:** Use the **company form** tabs **Qonto (SBU)** / **Revolut (SBU)** and module **SBU Qonto** / **SBU Revolut**. Do **not** use Odoo’s **Accounting → Connect your bank → Qonto** flow unless you have a valid **Odoo Enterprise** subscription linked to the database — that path shows a subscription error for SBU-only setups.
+- **Revolut setup:** company form → **Revolut (SBU)**: *Generate certificate* → in Revolut Business (Settings → APIs → Business API) upload the certificate and the shown redirect URI → paste the client ID → *Authorize in Revolut* → *Fetch accounts* → *Import full history* → *Register webhook*. Supplier payments: vendor bill → **Pay with Revolut** → approval by a user in **SBU — Revolut payments approver** (second, different approver above the company threshold); only trusted supplier bank accounts ("Send Money") can be paid.
 - **Logikal:** The **Logikal / ReynaPro** SQLite file (e.g. from Orgadata/Fonatto) is **not** read by Odoo. Use **Logikal → Imports** with **CSV/JSON** (column aliases documented in code) or an optional **HTTP API bridge** (`sbu.logikal_*` system parameters). **Logikal API base URL** in Settings is only required for API mode.
 - **Custom domains:** You control DNS only for hostnames under **zones you own**. A name like `*.odoo.com` is assigned by Odoo; use your Odoo.sh URL (e.g. `https://…-my-odoo.odoo.com`) or add a **CNAME** from **your** domain to that host per Odoo.sh Domains instructions.
 - **Estimates + CRM opportunities:** The **CRM Opportunity** field reads `crm.lead`. Internal users get **SBU Estimate User** on module install/upgrade (read opportunities via dedicated access rule). Users who also have **Sales / User** keep standard CRM record rules for their pipeline.
@@ -26,7 +27,7 @@ Custom **Odoo 19.0** addons for **Suburban SRL a Socio Unico**.
 | `sbu_integrations` | Graph / OneDrive naming & policies; SBU settings JSON wizard |
 | `sbu_logikal` | Logikal / ReynaPro file or API bridge → products & BOM |
 | `sbu_qonto` | Qonto movements import + webhooks |
-| `sbu_revolut` | Revolut movements import + webhooks |
+| `sbu_revolut` | Revolut Business: OAuth connection (auto token refresh), all accounts, signed webhooks, invoice/bill matching, supplier payments with approval |
 | `sbu_closure` | Job closure requirements / document types |
 | `sbu_mail_ingest` | Email aliases on RFQ/PO; supplier/project ingest routes |
 

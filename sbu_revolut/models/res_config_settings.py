@@ -1,28 +1,23 @@
 # -*- coding: utf-8 -*-
-from odoo import _, fields, models
+from odoo import fields, models
 
 
 class ResConfigSettings(models.TransientModel):
     _inherit = 'res.config.settings'
 
-    sbu_revolut_access_token = fields.Char(related='company_id.sbu_revolut_access_token', readonly=False)
-    sbu_revolut_account_id = fields.Char(related='company_id.sbu_revolut_account_id', readonly=False)
-    sbu_revolut_use_sandbox = fields.Boolean(related='company_id.sbu_revolut_use_sandbox', readonly=False)
-    sbu_revolut_webhook_token = fields.Char(related='company_id.sbu_revolut_webhook_token', readonly=False)
+    sbu_revolut_connection_state = fields.Selection(related='company_id.sbu_revolut_connection_state')
     sbu_revolut_import_enabled = fields.Boolean(related='company_id.sbu_revolut_import_enabled', readonly=False)
     sbu_revolut_import_lookback_days = fields.Integer(related='company_id.sbu_revolut_import_lookback_days', readonly=False)
 
+    def action_revolut_open_company(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'res.company',
+            'res_id': self.company_id.id,
+            'view_mode': 'form',
+        }
+
     def action_revolut_import_now(self):
         self.ensure_one()
-        company = self.company_id
-        n = self.env['sbu.revolut.transaction'].import_transactions_for_company(company, max_pages=5)
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': _('Revolut'),
-                'message': _('Imported or updated %(n)s movements.', n=n),
-                'type': 'success',
-                'sticky': False,
-            },
-        }
+        return self.env['sbu.revolut.transaction'].with_company(self.company_id).action_import_now()
