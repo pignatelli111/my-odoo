@@ -6,20 +6,98 @@
         <field name="inherit_id" ref="base.view_company_form"/>
         <field name="arch" type="xml">
             <xpath expr="//notebook" position="inside">
-                <page string="Revolut (SBU)" name="sbu_revolut_company">
-                    <group string="API (Revolut remains bank of record)" groups="account.group_account_manager">
-                        <field name="sbu_revolut_access_token" password="True"/>
-                        <field name="sbu_revolut_account_id"/>
-                        <field name="sbu_revolut_use_sandbox"/>
-                        <field name="sbu_revolut_import_lookback_days"/>
-                        <field name="sbu_revolut_import_enabled"/>
+                <page string="Revolut (SBU)" name="sbu_revolut_company" groups="account.group_account_manager">
+                    <div class="alert alert-danger" role="alert" invisible="sbu_revolut_connection_state != 'error'">
+                        <strong>Revolut connection lost.</strong> Click "Authorize in Revolut" again.
+                        <field name="sbu_revolut_last_error" nolabel="1"/>
+                    </div>
+                    <group string="1. Connection" groups="base.group_system">
+                        <group>
+                            <field name="sbu_revolut_connection_state" widget="badge"
+                                   decoration-success="sbu_revolut_connection_state == 'connected'"
+                                   decoration-warning="sbu_revolut_connection_state == 'pending'"
+                                   decoration-danger="sbu_revolut_connection_state == 'error'"/>
+                            <field name="sbu_revolut_use_sandbox" readonly="sbu_revolut_connection_state == 'connected'"/>
+                            <field name="sbu_revolut_redirect_uri" widget="CopyClipboardChar"/>
+                            <field name="sbu_revolut_client_id" readonly="sbu_revolut_connection_state == 'connected'"
+                                   placeholder="Paste the client ID from Revolut"/>
+                            <field name="sbu_revolut_token_expiry" invisible="sbu_revolut_connection_state != 'connected'"/>
+                        </group>
+                        <group>
+                            <div colspan="2" class="text-muted">
+                                <ol>
+                                    <li>Click <b>Generate certificate</b>.</li>
+                                    <li>In Revolut Business → Settings → APIs → Business API, add an API certificate:
+                                        paste the certificate below and the OAuth redirect URI.</li>
+                                    <li>Copy the <b>client ID</b> shown by Revolut into this form and save.</li>
+                                    <li>Click <b>Authorize in Revolut</b> and confirm in Revolut.</li>
+                                </ol>
+                            </div>
+                        </group>
                     </group>
-                    <group string="Webhook" groups="account.group_account_manager">
-                        <field
-                            name="sbu_revolut_webhook_token"
-                            password="True"
-                            placeholder="Same value as the &lt;token&gt; segment in /revolut/webhook/&lt;token&gt;"
-                        />
+                    <group groups="base.group_system">
+                        <field name="sbu_revolut_certificate" widget="CopyClipboardButton"
+                               invisible="not sbu_revolut_certificate"/>
+                    </group>
+                    <div class="d-flex flex-wrap gap-2 mb-3" groups="base.group_system">
+                        <button name="action_sbu_revolut_generate_certificate" type="object"
+                                string="Generate certificate" class="btn-secondary"
+                                invisible="sbu_revolut_connection_state == 'connected'"
+                                confirm="This creates a new key pair: the certificate must be uploaded again in Revolut. Continue?"/>
+                        <button name="action_sbu_revolut_authorize" type="object"
+                                string="Authorize in Revolut" class="btn-primary"
+                                invisible="not sbu_revolut_certificate or not sbu_revolut_client_id"/>
+                        <button name="action_sbu_revolut_sync_accounts" type="object"
+                                string="Fetch accounts" class="btn-secondary"
+                                invisible="sbu_revolut_connection_state != 'connected'"/>
+                        <button name="action_sbu_revolut_import_history" type="object"
+                                string="Import full history" class="btn-secondary"
+                                invisible="sbu_revolut_connection_state != 'connected'"/>
+                        <button name="action_sbu_revolut_register_webhook" type="object"
+                                string="Register webhook" class="btn-secondary"
+                                invisible="sbu_revolut_connection_state != 'connected'"/>
+                        <button name="action_sbu_revolut_disconnect" type="object"
+                                string="Disconnect" class="btn-danger"
+                                invisible="sbu_revolut_connection_state != 'connected'"
+                                confirm="Disconnect Revolut? Imports and payments stop until you authorize again."/>
+                    </div>
+                    <group string="2. Accounts">
+                        <field name="sbu_revolut_account_ids" nolabel="1" colspan="2" readonly="1">
+                            <list>
+                                <field name="name"/>
+                                <field name="currency_id"/>
+                                <field name="balance"/>
+                                <field name="iban"/>
+                                <field name="journal_id"/>
+                                <field name="import_enabled"/>
+                            </list>
+                        </field>
+                        <field name="sbu_revolut_journal_id"/>
+                    </group>
+                    <group>
+                        <group string="3. Import">
+                            <field name="sbu_revolut_import_enabled"/>
+                            <field name="sbu_revolut_import_lookback_days"/>
+                            <field name="sbu_revolut_last_sync"/>
+                            <field name="sbu_revolut_webhook_id" string="Webhook"
+                                   placeholder="Not registered"/>
+                        </group>
+                        <group string="4. Matching">
+                            <field name="sbu_revolut_auto_match_high"/>
+                            <field name="sbu_revolut_auto_register_inbound"/>
+                        </group>
+                    </group>
+                    <group string="5. Payments to suppliers">
+                        <group>
+                            <field name="sbu_revolut_payment_account_id"/>
+                            <field name="sbu_revolut_second_approval_amount"/>
+                        </group>
+                        <group>
+                            <div colspan="2" class="text-muted">
+                                Only trusted supplier bank accounts ("Send Money") can be paid.
+                                Approvers need the group "SBU — Revolut payments approver".
+                            </div>
+                        </group>
                     </group>
                 </page>
             </xpath>

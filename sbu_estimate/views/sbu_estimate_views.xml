@@ -184,6 +184,8 @@
                            invisible="not line_ids">
                         <group>
                             <field name="anaco_material_worked_total" widget="monetary" readonly="1"/>
+                            <field name="anaco_installation_total" widget="monetary" readonly="1"/>
+                            <field name="anaco_overhead_total" widget="monetary" readonly="1"/>
                             <field name="anaco_cost_subtotal" widget="monetary" readonly="1"/>
                             <field name="anaco_industrial_total" widget="monetary" readonly="1"/>
                         </group>
@@ -217,14 +219,21 @@
                                            decoration-warning="manual_input_pending and not height_mm"/>
                                     <field name="sqm_per_piece" string="MQ/Cad." readonly="1"/>
                                     <field name="sqm" string="Mq tot." readonly="1"/>
-                                    <field name="price_anaco_bs_cad" string="Prezzo unit. BS"/>
-                                    <field name="price_serramento_cad" string="Serramento CAD" optional="hide"/>
-                                    <field name="cost_coibentazione_cad" string="Coib. CAD" optional="show"/>
-                                    <field name="discount_sc1" string="Sc1 %" optional="show"/>
+                                    <field name="price_serramento_cad" string="N Serramento" optional="show"/>
+                                    <field name="cost_staffame_cad" string="R Staffame" optional="show"/>
+                                    <field name="cost_coibentazione_cad" string="AD Coib." optional="show"/>
+                                    <field name="price_smontaggio_cad" string="AV Posa" optional="show"/>
+                                    <field name="cost_material_worked_cad" string="BB Costo mat. CAD" readonly="1" optional="show"/>
+                                    <field name="cost_material_worked_tot" string="BC Costo mat. TOT" readonly="1" sum="BC" optional="show"/>
+                                    <field name="anaco_price_cad" string="BS Prezzo CAD" readonly="1" optional="show"/>
+                                    <field name="price_anaco_bs_cad" string="Prezzo manuale" optional="hide"/>
+                                    <field name="anaco_check_warning" string="Controllo Excel" optional="show"
+                                           decoration-danger="anaco_check_warning"/>
+                                    <field name="discount_sc1" string="Sc1 %" optional="hide"/>
                                     <field name="discount_sc2" string="Sc2 %" optional="hide"/>
                                     <field name="discount_sc3" string="Sc3 %" optional="hide"/>
-                                    <field name="price_total_tot" string="Prezzo TOT" readonly="1"/>
-                                    <field name="cost_total_tot" string="Costo TOT" readonly="1"/>
+                                    <field name="price_total_tot" string="BT Prezzo TOT" readonly="1" sum="BT"/>
+                                    <field name="cost_total_tot" string="Costo TOT" readonly="1" sum="Costo"/>
                                     <field name="margin_pct" string="Margine %" readonly="1"/>
                                     <field name="note" string="Assunzioni" optional="hide"/>
                                     <field name="workflow_route" string="Workflow" optional="hide"/>
@@ -363,6 +372,28 @@
                             </field>
                         </page>
 
+                        <page string="Parametri ANACO e riepilogo costi" name="anaco_parameters">
+                            <group>
+                                <group string="Riga 5 del foglio ANACO">
+                                    <field name="anaco_layout"/>
+                                    <field name="anaco_pct_transport" string="BE5 · Trasporto e imballo %"/>
+                                    <field name="anaco_pct_tech_pm" string="BG5 · Sviluppo tecnico e PM %"/>
+                                    <field name="anaco_pct_site" string="BI5 · Presidio cantiere %"/>
+                                    <field name="anaco_pct_extra" string="BK5 · Extra %"/>
+                                    <field name="anaco_pct_industrial" string="BM5 · Costi industriali % (nuove righe)"/>
+                                    <field name="anaco_pct_mol" string="BP5 · MOL % (nuove righe)"/>
+                                </group>
+                                <group string="Regole di calcolo per riga">
+                                    <field name="anaco_staffame_rate_ml" string="P · Staffame €/ml perimetro"/>
+                                    <field name="anaco_staffame_multiplier" string="Q5 × R5 · Moltiplicatore staffame"/>
+                                    <field name="anaco_posa_rate_sqm" string="AV · Posa €/m²"/>
+                                    <field name="anaco_posa_min_sqm" string="AV · MQ minimo per pezzo"/>
+                                    <field name="anaco_discount_after_sign" string="Sconto dopo firma % (SUMMARY C26)"/>
+                                </group>
+                            </group>
+                            <separator string="SUMMARY COSTI"/>
+                            <field name="anaco_summary_html" nolabel="1" readonly="1"/>
+                        </page>
                         <page string="Contractual SAL lines" name="sal_lines">
                             <field name="sal_line_ids" context="{'default_estimate_id': id}">
                                 <list editable="bottom" delete="true">

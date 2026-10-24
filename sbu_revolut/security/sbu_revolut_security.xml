@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="group_sbu_revolut_payment_approver" model="res.groups">
+        <field name="name">SBU — Revolut payments approver</field>
+        <field name="comment">Can approve and send vendor bill payments through Revolut. Payments above the company threshold need a second, different approver.</field>
+        <field name="implied_ids" eval="[(4, ref('account.group_account_invoice'))]"/>
+    </record>
+
+    <record id="rule_sbu_revolut_transaction_company" model="ir.rule">
+        <field name="name">Revolut movements: multi-company</field>
+        <field name="model_id" ref="model_sbu_revolut_transaction"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_sbu_revolut_account_company" model="ir.rule">
+        <field name="name">Revolut accounts: multi-company</field>
+        <field name="model_id" ref="model_sbu_revolut_account"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_sbu_revolut_payment_company" model="ir.rule">
+        <field name="name">Revolut payments: multi-company</field>
+        <field name="model_id" ref="model_sbu_revolut_payment"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+</odoo>

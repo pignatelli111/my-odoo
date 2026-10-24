@@ -7,6 +7,9 @@
         <field name="arch" type="xml">
             <form string="Riga Preventivo">
                 <sheet>
+                    <div class="alert alert-warning" role="alert" invisible="not anaco_check_warning">
+                        <field name="anaco_check_warning" nolabel="1"/>
+                    </div>
                     <group>
                         <group>
                             <field name="pos"/>
@@ -16,82 +19,78 @@
                             <field name="calc_uom_type"/>
                             <field name="cost_family"/>
                             <field name="workflow_route" readonly="1"/>
-                            <field name="qty"/>
-                            <field name="width_mm"/>
-                            <field name="height_mm"/>
-                            <field name="sqm_per_piece" readonly="1"/>
-                            <field name="sqm" readonly="1"/>
+                            <field name="qty" string="H · Qt."/>
+                            <field name="width_mm" string="D · B (mm)"/>
+                            <field name="height_mm" string="F · H (mm)"/>
+                            <field name="sqm_per_piece" string="G · MQ/Cad." readonly="1"/>
+                            <field name="sqm" string="I · MQ totali" readonly="1"/>
                             <field name="uom_id"/>
                         </group>
-                        <group string="Sconti a catena (ANACO)">
-                            <field name="price_gross_cad" readonly="1"/>
-                            <field name="discount_sc1"/>
-                            <field name="discount_sc2"/>
-                            <field name="discount_sc3"/>
-                            <field name="price_after_discounts_cad" readonly="1"/>
-                            <field name="price_after_discounts_tot" readonly="1"/>
-                            <field name="commission_pct"/>
-                            <field name="cost_anaco_bb_cad" optional="show"/>
-                            <field name="cost_anaco_bc_tot" optional="hide"/>
-                            <field name="price_anaco_bs_cad"
-                                   string="Prezzo unit. ANACO (BS)"/>
-                            <field name="price_total_cad" readonly="1"/>
-                            <field name="price_total_tot" readonly="1"/>
-                            <field name="price_per_sqm" readonly="1"/>
-                            <field name="unit_rate_label" readonly="1"/>
-                            <field name="price_unit_rate" readonly="1"/>
-                        </group>
-                        <group string="Sconti a catena costo (ANACO)">
-                            <field name="cost_gross_cad" readonly="1"/>
-                            <field name="cost_after_discounts_cad" readonly="1"/>
-                            <field name="cost_after_discounts_tot" readonly="1"/>
-                        </group>
-                        <group string="Componenti prezzo (dettaglio)">
-                            <field name="price_serramento_cad"/>
-                            <field name="price_oscuramento_cad"/>
-                            <field name="price_vetro_cad"/>
-                            <field name="price_pannello_cad"/>
-                            <field name="price_controtelaio_cad"/>
-                            <field name="price_accessori_cad"/>
+                        <group string="Costi ANACO per pezzo (colonne Excel, CAD)">
+                            <field name="price_serramento_cad" string="N · Serramento scontato"/>
+                            <field name="cost_staffame_cad" string="R · Staffame (ST / LZ)"/>
+                            <field name="price_accessori_cad" string="V · Accessori maniglie"/>
+                            <field name="price_oscuramento_cad" string="AB · Oscuramento scontato"/>
+                            <field name="cost_coibentazione_cad" string="AD · Coibentazione"/>
+                            <field name="price_kit_avvolgimento_cad" string="AF · Kit avvolgimento / sistema"/>
+                            <field name="price_cassonetto_cad" string="AH · Cassonetto / sistema acciaio"/>
+                            <field name="price_automatismo_cad" string="AJ · Automatismo / trasf. acciaio"/>
+                            <field name="price_zanzariera_cad" string="AL · Zanzariera / automatismo"/>
+                            <field name="price_vetro_cad" string="AN · Vetro"/>
+                            <field name="price_pannello_cad" string="AP · Pannello"/>
+                            <field name="price_controtelaio_cad" string="AR · Controtelaio"/>
+                            <field name="price_trasformazione_cad" string="AT · Trasformazione"/>
+                            <field name="price_smontaggio_cad" string="AV · Smontaggio / posa"/>
+                            <field name="cost_posa_lamiera_lin_cad" string="AX · Posa lamiera / FW finita"/>
+                            <field name="price_nolo_cad" string="AZ · Nolo"/>
                         </group>
                     </group>
-                    <group string="PREVENTIVO IMPORTATO DA ANACO — schema costi">
-                        <group string="Base materiale">
-                            <field name="cost_material_worked_cad" readonly="1"/>
-                            <field name="cost_material_worked_tot" readonly="1"/>
+                    <group string="Calcolo ANACO (stesse formule del foglio Excel)">
+                        <group>
+                            <field name="cost_material_worked_cad" string="BB · Costo materiale lavorato e posato CAD" readonly="1"/>
+                            <field name="cost_material_worked_tot" string="BC · Costo materiale lavorato e posato TOT" readonly="1"/>
+                            <field name="cost_per_sqm" string="BD · Costo materiale / MQ" readonly="1"/>
+                            <field name="cost_trasporto_cad" string="BE · Trasporto e imballo CAD" readonly="1"/>
+                            <field name="cost_trasporto_tot" string="BF · Trasporto e imballo TOT" readonly="1"/>
+                            <field name="cost_tech_pm_cad" string="BG · Sviluppo tecnico e PM CAD" readonly="1"/>
+                            <field name="cost_tech_pm_tot" string="BH · Sviluppo tecnico e PM TOT" readonly="1"/>
+                            <field name="cost_cantiere_cad" string="BI · Presidio cantiere CAD" readonly="1"/>
+                            <field name="cost_cantiere_tot" string="BJ · Presidio cantiere TOT" readonly="1"/>
+                            <field name="cost_extra_cad" string="BK · Extra CAD" readonly="1"/>
+                            <field name="cost_extra_tot" string="BL · Extra TOT" readonly="1"/>
                         </group>
-                        <group string="A cui sommare (CAD / TOT)">
-                            <field name="cost_trasporto_cad"/>
-                            <field name="cost_trasporto_tot" readonly="1"/>
-                            <field name="cost_tech_pm_cad"/>
-                            <field name="cost_tech_pm_tot" readonly="1"/>
-                            <field name="cost_cantiere_cad"/>
-                            <field name="cost_cantiere_tot" readonly="1"/>
-                            <field name="cost_extra_cad"/>
-                            <field name="cost_extra_tot" readonly="1"/>
-                            <field name="cost_staffame_cad"/>
-                            <field name="cost_staffame_tot" readonly="1"/>
-                        </group>
-                        <group string="Subtotale e oneri">
-                            <field name="cost_subtotal_cad" readonly="1"/>
-                            <field name="cost_subtotal_tot" readonly="1"/>
-                            <field name="cost_industrial_pct"/>
-                            <field name="cost_industrial_cad" readonly="1"/>
-                            <field name="cost_industrial_tot" readonly="1"/>
-                            <field name="cost_mol_pct"/>
-                            <field name="cost_mol_amount_cad" readonly="1"/>
-                            <field name="cost_mol_amount_tot" readonly="1"/>
+                        <group>
+                            <field name="cost_industrial_pct" string="BM · Costi industriali %"/>
+                            <field name="cost_industrial_cad" string="BN · Costi industriali CAD" readonly="1"/>
+                            <field name="cost_industrial_tot" string="BO · Costi industriali TOT" readonly="1"/>
+                            <field name="cost_mol_pct" string="BP · MOL %"/>
+                            <field name="cost_mol_amount_cad" string="BQ · MOL CAD" readonly="1"/>
+                            <field name="cost_mol_amount_tot" string="BR · MOL TOT" readonly="1"/>
+                            <field name="anaco_price_cad" string="BS · Prezzo cliente CAD (calcolato)" readonly="1"/>
+                            <field name="price_total_tot" string="BT · Prezzo cliente TOT" readonly="1"/>
+                            <field name="price_per_sqm" string="BU · Prezzo cliente / MQ" readonly="1"/>
                             <field name="cost_total_cad" readonly="1"/>
                             <field name="cost_total_tot" readonly="1"/>
-                        </group>
-                        <group string="Margini e distinta">
-                            <field name="cost_coibentazione_cad"/>
-                            <field name="cost_posa_lamiera_lin_cad"/>
-                            <field name="cost_bom_total" readonly="1"/>
-                            <field name="cost_per_sqm" readonly="1"/>
-                            <field name="cost_unit_rate" readonly="1"/>
                             <field name="margin_amount" readonly="1"/>
                             <field name="margin_pct" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Prezzo e controllo Excel">
+                        <group>
+                            <field name="price_anaco_bs_cad" string="Prezzo unitario manuale (sostituisce BS)"/>
+                            <field name="commission_pct"/>
+                            <field name="price_total_cad" readonly="1"/>
+                            <field name="unit_rate_label" readonly="1"/>
+                            <field name="price_unit_rate" readonly="1"/>
+                            <field name="cost_bom_total" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="cost_anaco_bb_cad" string="BB letto da Excel"/>
+                            <field name="anaco_excel_bs_cad"/>
+                            <field name="cost_anaco_bc_tot" string="BC letto da Excel"/>
+                            <field name="discount_sc1" string="Sconto K5 % (già in N)"/>
+                            <field name="discount_sc2" string="Sconto L5 % (già in N)"/>
+                            <field name="discount_sc3" string="Sconto M5 % (già in N)"/>
                         </group>
                     </group>
                     <notebook>

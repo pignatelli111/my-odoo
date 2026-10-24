@@ -7,17 +7,38 @@
         <field name="arch" type="xml">
             <form string="Import Qonto export">
                 <div class="alert alert-info" role="alert" invisible="result_message">
-                    Upload the zip produced by the Qonto full export (transactions, receipts).
-                    Movements already in Odoo are skipped; no payment is registered automatically.
+                    Upload the zip produced by the Qonto full export. Everything already in Odoo is skipped,
+                    so the import can be run again safely. Invoices are posted as history in dedicated journals;
+                    no Qonto movement registers a payment by itself.
                 </div>
                 <group invisible="result_message">
-                    <field name="company_id" groups="base.group_multi_company"/>
-                    <field name="data_file" filename="data_filename"/>
-                    <field name="data_filename" invisible="1"/>
-                    <field name="import_attachments"/>
+                    <group>
+                        <field name="company_id" groups="base.group_multi_company"/>
+                        <field name="data_file" filename="data_filename"/>
+                        <field name="data_filename" invisible="1"/>
+                    </group>
+                    <group string="What to import">
+                        <field name="import_movements"/>
+                        <field name="import_attachments" invisible="not import_movements"/>
+                        <field name="import_partners"/>
+                        <field name="import_invoices"/>
+                    </group>
+                </group>
+                <group string="Invoice history" invisible="result_message or not import_invoices">
+                    <group>
+                        <field name="vat_mode"/>
+                        <field name="include_archived"/>
+                        <field name="register_payments"/>
+                    </group>
+                    <group>
+                        <field name="purchase_journal_id" placeholder="Qonto history — purchases (created)"/>
+                        <field name="sale_journal_id" placeholder="Qonto history — sales (created)"/>
+                        <field name="payment_journal_id" invisible="not register_payments" placeholder="Qonto (found or created)"/>
+                    </group>
                 </group>
                 <group invisible="not result_message">
                     <field name="result_message" nolabel="1" colspan="2"/>
+                    <field name="has_more" invisible="1"/>
                 </group>
                 <footer>
                     <button name="action_import"
@@ -26,11 +47,16 @@
                             class="btn-primary"
                             data-hotkey="q"
                             invisible="result_message"/>
+                    <button name="action_continue"
+                            string="Continue"
+                            type="object"
+                            class="btn-primary"
+                            invisible="not has_more"/>
                     <button name="action_open_movements"
                             string="Open Qonto movements"
                             type="object"
-                            class="btn-primary"
-                            invisible="not result_message"/>
+                            class="btn-secondary"
+                            invisible="not result_message or has_more"/>
                     <button string="Close" special="cancel" class="btn-secondary"/>
                 </footer>
             </form>

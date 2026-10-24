@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'SBU Qonto',
-    'version': '19.0.1.0.23',
+    'version': '19.0.1.0.24',
     'summary': 'Qonto import, partner sync, auto customer payment register (Cosimo 10/14)',
     'author': 'SBU Development',
     'category': 'Accounting',
@@ -21,6 +21,7 @@
         'wizards/sbu_qonto_export_import_wizard_views.xml',
         'views/sbu_qonto_transaction_views.xml',
         'views/sbu_qonto_menu.xml',
+        'views/account_move_views.xml',
     ],
     'post_init_hook': 'post_init_hook',
     'installable': True,

@@ -247,7 +247,7 @@ class SbuEstimate(models.Model):
         compute='_compute_totals',
         store=True,
         currency_field='currency_id',
-        help='Somma righe ANACO — base materiale (schema Cosimo / col. BB).',
+        help='Somma colonna BC del foglio ANACO: costo materiale lavorato e posato (16 colonne costo × Qt.).',
     )
     anaco_cost_subtotal = fields.Monetary(
         string='Subtotale costo (prima industriali)',
@@ -262,11 +262,11 @@ class SbuEstimate(models.Model):
         currency_field='currency_id',
     )
     anaco_mol_total = fields.Monetary(
-        string='MOL indicatore TOT',
+        string='MOL TOT',
         compute='_compute_totals',
         store=True,
         currency_field='currency_id',
-        help='Indicatore ANACO — non incluso nel costo totale.',
+        help='Somma colonna BR (MOL): incluso nel prezzo cliente, non nel costo totale.',
     )
     anaco_display_total_price = fields.Monetary(
         related='total_price',

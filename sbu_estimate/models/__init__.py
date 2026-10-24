@@ -8,6 +8,7 @@ from . import sbu_bom_dimension_rules
 from . import sbu_anaco_bom
 from . import sbu_estimate_reference
 from . import sbu_estimate_line
+from . import sbu_estimate_anaco
 from . import sbu_estimate_bom_line
 from . import sbu_estimate_sal_line
 from . import project_project_ext

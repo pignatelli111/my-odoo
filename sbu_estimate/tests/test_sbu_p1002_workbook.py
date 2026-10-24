@@ -67,7 +67,7 @@ class TestSbuP1002Workbook(TransactionCase):
         )
 
     def test_p1002_f1_excel_parity_bs_bb_bc(self):
-        """Row F1: BS prezzo, BB/BC costo certificato Excel (tolleranza €0.05)."""
+        """Every ANACO row and the BC / BT / BR totals equal the Excel values (to the cent)."""
         if not openpyxl:
             self.skipTest('openpyxl not installed')
         path = self._p1002_path()
@@ -75,12 +75,20 @@ class TestSbuP1002Workbook(TransactionCase):
             self.skipTest('P1002 workbook not on disk')
         from odoo.addons.sbu_estimate.wizards.sbu_openpyxl_utils import load_openpyxl_workbook
 
+        columns = {  # Excel column (1-based) -> Odoo line field
+            54: 'cost_material_worked_cad', 55: 'cost_material_worked_tot', 57: 'cost_trasporto_cad',
+            59: 'cost_tech_pm_cad', 61: 'cost_cantiere_cad', 63: 'cost_extra_cad', 66: 'cost_industrial_cad',
+            69: 'cost_mol_amount_cad', 70: 'cost_mol_amount_tot', 71: 'price_total_cad', 72: 'price_total_tot',
+        }
         wb = load_openpyxl_workbook(path, data_only=True, read_only=True)
         anaco = wb['ANACO']
-        excel_bs = float(anaco.cell(13, 71).value or 0)
-        excel_bb = float(anaco.cell(13, 54).value or 0)
-        excel_bc = float(anaco.cell(13, 55).value or 0)
-        excel_qty = float(anaco.cell(13, 8).value or 1)
+        rows = {}
+        for r in range(12, 157):
+            pos = (anaco.cell(r, 2).value or '')
+            bb = anaco.cell(r, 54).value
+            if pos and isinstance(bb, (int, float)) and bb:
+                rows[str(pos).split('\n')[0].strip()] = {c: float(anaco.cell(r, c).value or 0.0) for c in columns}
+        totals = {c: float(anaco.cell(157, c).value or 0.0) for c in (55, 70, 72)}
         wb.close()
 
         partner = self.env['res.partner'].create({'name': 'P1002 F1 parity'})
@@ -95,18 +103,17 @@ class TestSbuP1002Workbook(TransactionCase):
             'auto_detect_first_row': True,
         })
         wizard.action_import()
-        line = estimate.line_ids.filtered(lambda l: (l.pos or '').strip() == 'F1')
-        self.assertEqual(len(line), 1, line.mapped('pos'))
-        line = line[0]
-        self.assertAlmostEqual(line.price_anaco_bs_cad, excel_bs, places=2)
-        self.assertAlmostEqual(line.price_total_cad, excel_bs, places=2)
-        self.assertAlmostEqual(line.cost_anaco_bb_cad, excel_bb, places=2)
-        self.assertAlmostEqual(line.cost_total_cad, excel_bb, places=2)
-        self.assertAlmostEqual(line.cost_anaco_bc_tot, excel_bc, places=0)
-        self.assertAlmostEqual(line.cost_total_tot, excel_bc, places=0)
-        self.assertAlmostEqual(line.qty, excel_qty, places=2)
-        expected_margin_pct = (
-            (line.price_total_tot - line.cost_total_tot) / line.price_total_tot * 100.0
-        )
-        self.assertAlmostEqual(line.margin_pct, expected_margin_pct, places=1)
-        self.assertAlmostEqual(line.cost_staffame_cad, 0.0, places=2)
+        self.assertEqual(estimate.anaco_layout, 'p1002')
+        self.assertAlmostEqual(estimate.anaco_pct_mol, 32.0)
+        self.assertAlmostEqual(estimate.anaco_posa_rate_sqm, 132.5, msg='AV = $AV$5 × G')
+        by_pos = {(line.pos or '').split('\n')[0].strip(): line for line in estimate.line_ids}
+        for pos, excel in rows.items():
+            line = by_pos[pos]
+            for col, fname in columns.items():
+                self.assertAlmostEqual(line[fname], excel[col], places=2, msg=f'{pos} col {col} ({fname})')
+            self.assertFalse(line.anaco_check_warning, pos)
+            self.assertFalse(line.price_anaco_bs_cad, 'BS is a formula in Excel: price stays computed')
+        self.assertAlmostEqual(estimate.anaco_material_worked_total, totals[55], places=2)
+        self.assertAlmostEqual(estimate.anaco_mol_total, totals[70], places=2)
+        self.assertAlmostEqual(estimate.total_price, totals[72], places=2)
+        self.assertAlmostEqual(estimate.anaco_installation_total, 133583.01, places=2)
