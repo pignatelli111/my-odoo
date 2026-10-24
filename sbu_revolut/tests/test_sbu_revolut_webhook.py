@@ -41,7 +41,9 @@ class TestSbuRevolutWebhook(HttpCase):
         }})
         Movement = self.env['sbu.revolut.transaction']
         self.assertEqual(self._post(body, token='wrong').status_code, 401)
-        self.assertEqual(self._post(body, secret='forged').status_code, 401)
+        with self.assertLogs('odoo.addons.sbu_revolut.controllers.main', level='WARNING') as logs:
+            self.assertEqual(self._post(body, secret='forged').status_code, 401)
+        self.assertIn('invalid signature', logs.output[0])
         self.assertFalse(Movement.search([('revolut_remote_id', '=', 'wh-1')]))
         with patch.object(rc, '_http', side_effect=AssertionError('no API call expected')):
             response = self._post(body)

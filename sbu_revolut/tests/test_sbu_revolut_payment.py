@@ -141,7 +141,9 @@ class TestSbuRevolutPayment(RevolutTestCommon):
         with self.fake_revolut() as fake:
             self._fake_pay(fake)
             fake.on('POST', '/1.0/pay', rc.RevolutHttpError(400, 'Revolut API request failed', '{"message":"Insufficient funds"}'))
-            self.env['sbu.revolut.payment'].cron_sbu_revolut_payments()
+            with self.assertLogs('odoo.addons.sbu_revolut.models.sbu_revolut_payment', level='WARNING') as logs:
+                self.env['sbu.revolut.payment'].cron_sbu_revolut_payments()
+        self.assertIn('Insufficient funds', logs.output[0])
         self.assertEqual(order.state, 'approved')
         self.assertIn('Insufficient funds', order.error_message)
 
