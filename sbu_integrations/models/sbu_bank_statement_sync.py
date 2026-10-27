@@ -15,9 +15,41 @@ from odoo.tools import float_compare, float_is_zero
 _logger = logging.getLogger(__name__)
 
 
+def reconcile_statement_line_with_payment(st_line, payment):
+    """Reconcile a bank statement line with an Odoo payment when the amounts match.
+
+    The statement line's suspense item is moved to the payment's outstanding account and the two items
+    are reconciled. Returns True when the line ends up reconciled.
+    """
+    st_line, payment = st_line.sudo(), payment.sudo()
+    if not st_line or st_line.is_reconciled or not payment or payment.move_id.state != 'posted':
+        return False
+    outstanding = payment.move_id.line_ids.filtered(
+        lambda l: l.account_id == payment.outstanding_account_id and not l.reconciled
+    )
+    _liquidity, suspense, _other = st_line._seek_for_lines()
+    if len(suspense) != 1 or len(outstanding) != 1 or not outstanding.account_id.reconcile:
+        return False
+    if float_compare(suspense.balance, -outstanding.balance, precision_rounding=st_line.company_id.currency_id.rounding):
+        _logger.info('Statement line %s not reconciled: amount differs from payment %s', st_line.id, payment.name)
+        return False
+    st_line.move_id.with_context(skip_readonly_check=True).write({'line_ids': [
+        Command.update(suspense.id, {
+            'account_id': outstanding.account_id.id,
+            'partner_id': payment.partner_id.id or suspense.partner_id.id,
+        }),
+    ]})
+    (suspense | outstanding).reconcile()
+    return st_line.is_reconciled
+
+
 class AccountBankStatementLine(models.Model):
     _inherit = 'account.bank.statement.line'
 
+    sbu_import_ref = fields.Char(
+        string='Bank reference (import)', readonly=True, copy=False, index='btree_not_null',
+        help='Unique reference of the line in the imported bank file: the same line is never imported twice.',
+    )
     sbu_opening_balance = fields.Boolean(
         string='SBU opening balance', readonly=True, copy=False,
         help='Balance of the bank account before the "bank statements from" date, computed from the '
@@ -161,28 +193,7 @@ class SbuBankStatementSyncMixin(models.AbstractModel):
     def _sbu_reconcile_statement_line(self):
         """Reconcile the statement line with the payment's outstanding item when the amounts match."""
         self.ensure_one()
-        st_line = self.statement_line_id.sudo()
-        payment = self._sbu_stmt_payment().sudo()
-        if not st_line or st_line.is_reconciled or not payment or payment.move_id.state != 'posted':
-            return False
-        outstanding = payment.move_id.line_ids.filtered(
-            lambda l: l.account_id == payment.outstanding_account_id and not l.reconciled
-        )
-        _liquidity, suspense, _other = st_line._seek_for_lines()
-        if len(suspense) != 1 or len(outstanding) != 1 or not outstanding.account_id.reconcile:
-            return False
-        rounding = st_line.company_id.currency_id.rounding
-        if float_compare(suspense.balance, -outstanding.balance, precision_rounding=rounding):
-            _logger.info('Statement line %s not reconciled: amount differs from payment %s', st_line.id, payment.name)
-            return False
-        st_line.move_id.with_context(skip_readonly_check=True).write({'line_ids': [
-            Command.update(suspense.id, {
-                'account_id': outstanding.account_id.id,
-                'partner_id': payment.partner_id.id or suspense.partner_id.id,
-            }),
-        ]})
-        (suspense | outstanding).reconcile()
-        return st_line.is_reconciled
+        return reconcile_statement_line_with_payment(self.statement_line_id, self._sbu_stmt_payment())
 
     def action_sbu_sync_statement_lines(self):
         records = self or self.search([('company_id', '=', self.env.company.id)])

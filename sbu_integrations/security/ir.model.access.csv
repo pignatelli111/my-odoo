@@ -2,3 +2,4 @@ id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_sbu_icp_sync_wizard,access_sbu_icp_sync_wizard,model_sbu_icp_sync_wizard,base.group_system,1,1,1,1
 access_sbu_app_review_wizard,access_sbu_app_review_wizard,model_sbu_app_review_wizard,base.group_system,1,1,1,1
 access_sbu_app_review_line,access_sbu_app_review_line,model_sbu_app_review_line,base.group_system,1,1,1,1
+access_sbu_bank_statement_import_wizard,access_sbu_bank_statement_import_wizard,model_sbu_bank_statement_import_wizard,account.group_account_user,1,1,1,1
