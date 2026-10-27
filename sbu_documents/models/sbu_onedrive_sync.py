@@ -388,12 +388,14 @@ class ResConfigSettings(models.TransientModel):
                                               default=4)
     sbu_onedrive_sync_status = fields.Char(string='Connected folder', compute='_compute_sbu_onedrive_sync_status')
     sbu_onedrive_backup_last = fields.Char(string='Last backup', compute='_compute_sbu_onedrive_sync_status')
+    sbu_backup_download_last = fields.Char(string='Last downloaded backup', compute='_compute_sbu_onedrive_sync_status')
 
     def _compute_sbu_onedrive_sync_status(self):
         icp = _icp(self.env)
         for settings in self:
             settings.sbu_onedrive_sync_status = icp.get_param(ICP_PREFIX + 'root_name') or _('Not connected')
             settings.sbu_onedrive_backup_last = icp.get_param(ICP_PREFIX + 'backup_last') or _('Never')
+            settings.sbu_backup_download_last = icp.get_param(ICP_PREFIX + 'backup_download_last') or _('Never')
 
     def _sbu_notify(self, message, kind='success'):
         return {'type': 'ir.actions.client', 'tag': 'display_notification',
@@ -428,6 +430,10 @@ class ResConfigSettings(models.TransientModel):
         attachments = self.env['ir.attachment'].sudo().search([('res_model', 'in', list(ATTACHMENT_FOLDERS))])
         queued = len(Upload._sbu_enqueue_attachments(attachments)) + len(Upload._sbu_enqueue_snapshots(limit=100000))
         return self._sbu_notify(_('%s document(s) queued for OneDrive.', queued))
+
+    def action_sbu_download_backup(self):
+        """Download a full backup to save in OneDrive by hand (no Azure app needed)."""
+        return {'type': 'ir.actions.act_url', 'url': '/sbu/backup/download', 'target': 'self'}
 
     def action_sbu_onedrive_backup_now(self):
         self.ensure_one()

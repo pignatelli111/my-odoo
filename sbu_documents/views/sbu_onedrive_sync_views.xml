@@ -91,7 +91,12 @@
                                     class="btn-link" icon="fa-list"/>
                         </div>
                     </setting>
-                    <setting string="Weekly full backup" help="Every Sunday night: complete copy of the database and its files (Odoo restorable .zip) in the folder «Backup Odoo».">
+                    <setting string="Download a full backup" help="Complete copy of the database and its files (Odoo restorable .zip). Save it in the company OneDrive folder. Works without the Azure app; it can take a few minutes to prepare.">
+                        <div class="text-muted"><field name="sbu_backup_download_last" readonly="1"/></div>
+                        <button name="action_sbu_download_backup" type="object" string="Download backup"
+                                class="btn-primary mt-2" icon="fa-download" groups="base.group_system"/>
+                    </setting>
+                    <setting string="Weekly full backup (Azure app)" help="Every Sunday night: complete copy of the database and its files (Odoo restorable .zip) in the folder «Backup Odoo». Needs the Azure app.">
                         <field name="sbu_onedrive_backup_enabled"/>
                         <div class="mt-1">
                             <span class="text-muted">Keep the last </span><field name="sbu_onedrive_backup_keep" class="oe_inline"/>
