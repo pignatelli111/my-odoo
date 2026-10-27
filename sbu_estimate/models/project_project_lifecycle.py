@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from odoo import _, models
+from odoo import _, api, models
 from odoo.exceptions import UserError
 
 _MAX_LISTED = 10
@@ -7,6 +7,26 @@ _MAX_LISTED = 10
 
 class ProjectProject(models.Model):
     _inherit = 'project.project'
+
+    # ── Analytic account per job (cost and revenue in the standard reports) ──
+    def _sbu_ensure_analytic_account(self):
+        """Give every SBU job its analytic account: purchase lines, vendor bills and SAL invoices use it."""
+        jobs = self.filtered(lambda p: p.sbu_estimate_id and not p.account_id)
+        if jobs:
+            jobs.sudo()._create_analytic_account()
+        return jobs
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        projects = super().create(vals_list)
+        projects._sbu_ensure_analytic_account()
+        return projects
+
+    def write(self, vals):
+        res = super().write(vals)
+        if vals.get('sbu_estimate_id'):
+            self._sbu_ensure_analytic_account()
+        return res
 
     def _sbu_job_documents(self):
         """Documents linked to the job, as [(record, kind label)].
