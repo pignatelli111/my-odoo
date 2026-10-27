@@ -6,3 +6,6 @@ access_sbu_graph_drive_item_project_user,sbu.graph.drive.item project user,model
 access_sbu_graph_drive_item_project_manager,sbu.graph.drive.item project manager,model_sbu_graph_drive_item,project.group_project_manager,1,1,1,1
 access_sbu_graph_drive_item_system,sbu.graph.drive.item system,model_sbu_graph_drive_item,base.group_system,1,1,1,1
 access_sbu_planner_task_import_wizard_user,sbu.planner.task.import.wizard user,model_sbu_planner_task_import_wizard,project.group_project_user,1,1,1,1
+access_sbu_onedrive_upload_system,sbu.onedrive.upload system,model_sbu_onedrive_upload,base.group_system,1,1,1,1
+access_sbu_onedrive_upload_manager,sbu.onedrive.upload project manager,model_sbu_onedrive_upload,project.group_project_manager,1,0,0,0
+access_sbu_onedrive_folder_system,sbu.onedrive.folder system,model_sbu_onedrive_folder,base.group_system,1,1,1,1

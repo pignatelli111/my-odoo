@@ -1,6 +1,6 @@
 {
     "name": "SBU Documents",
-    "version": "19.0.1.0.11",
+    "version": "19.0.1.1.0",
     "summary": "M365 docs + Graph sync + Teams/Planner/Outlook deep links (Phase 5.1–5.3)",
     "author": "SBU Development",
     "category": "Document Management",
@@ -17,6 +17,8 @@
         "views/project_m365_collaboration_views.xml",
         "views/project_task_m365_views.xml",
         "wizards/sbu_planner_task_import_wizard_views.xml",
+        "data/sbu_onedrive_cron.xml",
+        "views/sbu_onedrive_sync_views.xml",
     ],
     "installable": True,
     "application": False,

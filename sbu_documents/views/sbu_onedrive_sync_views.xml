@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sbu_onedrive_upload_list" model="ir.ui.view">
+        <field name="name">sbu.onedrive.upload.list</field>
+        <field name="model">sbu.onedrive.upload</field>
+        <field name="arch" type="xml">
+            <list string="OneDrive copies" create="0" decoration-danger="state == 'error'" decoration-muted="state == 'pending'">
+                <header>
+                    <button name="action_retry" type="object" string="Retry" class="btn-secondary"/>
+                </header>
+                <field name="name"/>
+                <field name="folder_path"/>
+                <field name="filename" optional="hide"/>
+                <field name="state" widget="badge" decoration-success="state == 'done'" decoration-danger="state == 'error'"/>
+                <field name="uploaded_on" optional="show"/>
+                <field name="attempts" optional="hide"/>
+                <field name="last_error" optional="show"/>
+                <field name="web_url" widget="url" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_sbu_onedrive_upload_search" model="ir.ui.view">
+        <field name="name">sbu.onedrive.upload.search</field>
+        <field name="model">sbu.onedrive.upload</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="folder_path"/>
+                <filter name="pending" string="To upload" domain="[('state', '=', 'pending')]"/>
+                <filter name="error" string="Errors" domain="[('state', '=', 'error')]"/>
+                <filter name="done" string="In OneDrive" domain="[('state', '=', 'done')]"/>
+                <group>
+                    <filter name="group_folder" string="Folder" context="{'group_by': 'folder_path'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_sbu_onedrive_upload" model="ir.actions.act_window">
+        <field name="name">OneDrive copies</field>
+        <field name="res_model">sbu.onedrive.upload</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_sbu_onedrive_upload_search"/>
+    </record>
+
+    <menuitem id="menu_sbu_onedrive_upload" name="OneDrive copies" parent="sbu_estimate.menu_sbu_root"
+              action="action_sbu_onedrive_upload" sequence="90" groups="base.group_system"/>
+
+    <record id="view_project_form_sbu_onedrive_sync" model="ir.ui.view">
+        <field name="name">project.project.form.sbu.onedrive.sync</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.edit_project"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_sbu_open_onedrive_uploads" type="object" class="oe_stat_button" icon="fa-cloud-upload"
+                        invisible="not sbu_onedrive_upload_count">
+                    <field name="sbu_onedrive_upload_count" widget="statinfo" string="OneDrive"/>
+                </button>
+            </xpath>
+            <xpath expr="//page[@name='sbu_document_hub']" position="inside">
+                <group string="Copy to the company OneDrive" colspan="2">
+                    <button name="action_sbu_export_job_to_onedrive" type="object" string="Export whole job to OneDrive"
+                            class="btn-secondary" icon="fa-cloud-upload" groups="project.group_project_manager"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="res_config_settings_view_form_sbu_onedrive_sync" model="ir.ui.view">
+        <field name="name">res.config.settings.form.sbu.onedrive.sync</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="sbu_integrations.res_config_settings_view_form_inherit_sbu"/>
+        <field name="arch" type="xml">
+            <xpath expr="//block[@name='sbu_onedrive_block']" position="after">
+                <block title="OneDrive copy and backups (SBU)" name="sbu_onedrive_sync_block">
+                    <setting string="OneDrive folder" help="Sharing link of the company OneDrive folder that receives a copy of every document (one folder per job) and the full backups. Needs the Azure app above with Files.ReadWrite.All.">
+                        <field name="sbu_onedrive_sync_link" placeholder="https://…sharepoint.com/:f:/…"/>
+                        <div class="mt-1">
+                            <field name="sbu_onedrive_sync_status" readonly="1" class="fw-bold"/>
+                        </div>
+                        <button name="action_sbu_onedrive_connect" type="object" string="Connect folder"
+                                class="btn-secondary mt-2" icon="fa-link"/>
+                    </setting>
+                    <setting string="Copy documents" help="Offers, purchase orders, DDT, invoices and every attachment of jobs, estimates, purchases, SAL, CDP, bills and closure documents are copied every 15 minutes.">
+                        <field name="sbu_onedrive_sync_enabled"/>
+                        <div class="mt-2">
+                            <button name="action_sbu_onedrive_queue_all" type="object" string="Copy all existing documents"
+                                    class="btn-link" icon="fa-cloud-upload"/>
+                            <button name="action_sbu_onedrive_open_queue" type="object" string="Open copy log"
+                                    class="btn-link" icon="fa-list"/>
+                        </div>
+                    </setting>
+                    <setting string="Weekly full backup" help="Every Sunday night: complete copy of the database and its files (Odoo restorable .zip) in the folder «Backup Odoo».">
+                        <field name="sbu_onedrive_backup_enabled"/>
+                        <div class="mt-1">
+                            <span class="text-muted">Keep the last </span><field name="sbu_onedrive_backup_keep" class="oe_inline"/>
+                        </div>
+                        <div class="mt-1 text-muted"><field name="sbu_onedrive_backup_last" readonly="1"/></div>
+                        <button name="action_sbu_onedrive_backup_now" type="object" string="Back up now"
+                                class="btn-secondary mt-2" icon="fa-database"
+                                confirm="Create a full backup now and copy it to OneDrive? It can take several minutes."/>
+                    </setting>
+                </block>
+            </xpath>
+        </field>
+    </record>
+</odoo>
