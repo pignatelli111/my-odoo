@@ -8,9 +8,9 @@
             <xpath expr="//div[@name='button_box']" position="inside">
                 <button name="action_sbu_open_tms_import_wizard" type="object"
                         class="oe_stat_button" icon="fa-file-excel-o"
-                        title="Import origin TMS Excel (RDA, ACO, ACP, LDS, drawings).">
+                        title="Import origin SBU Excel (RDA, ACO, ACP, LDS, drawings).">
                     <div class="o_stat_info">
-                        <span class="o_stat_text">TMS import</span>
+                        <span class="o_stat_text">SBU import</span>
                     </div>
                 </button>
                 <button name="action_view_sbu_lds_entries" type="object"
@@ -126,10 +126,10 @@
                         </list>
                     </field>
                 </page>
-                <page string="TMS registers" name="sbu_tms_registers">
+                <page string="SBU registers" name="sbu_tms_registers">
                     <div class="mb-2">
                         <button name="action_sbu_open_tms_import_wizard" type="object"
-                                string="Import TMS Excel" class="btn-primary"/>
+                                string="Import SBU Excel" class="btn-primary"/>
                     </div>
                     <group string="LDS shipping register">
                         <field name="sbu_lds_entry_ids" nolabel="1" context="{'default_project_id': id}">

@@ -85,7 +85,7 @@ class ProjectProject(models.Model):
         self.ensure_one()
         return {
             'type': 'ir.actions.act_window',
-            'name': _('Import TMS Excel'),
+            'name': _('Import SBU Excel'),
             'res_model': 'sbu.project.tms.import.wizard',
             'view_mode': 'form',
             'target': 'new',

@@ -96,12 +96,12 @@ class SbuPurchaseRequestExcelImportWizard(models.TransientModel):
     filename = fields.Char(string='Filename')
     sheet_name = fields.Char(
         string='Sheet name',
-        help='Leave empty: TMS templates use «Esempio RDA/ACO/ACP» automatically.',
+        help='Leave empty: SBU templates use «Esempio RDA/ACO/ACP» automatically.',
     )
     template_format = fields.Selection(
         [
-            ('auto', 'Auto-detect (TMS or generic)'),
-            ('tms', 'Suburban TMS (M.4.3.x)'),
+            ('auto', 'Auto-detect (SBU or generic)'),
+            ('tms', 'SBU template (M.4.3.x)'),
             ('generic', 'Generic flat header'),
         ],
         string='Excel layout',
@@ -120,7 +120,7 @@ class SbuPurchaseRequestExcelImportWizard(models.TransientModel):
     import_header = fields.Boolean(
         string='Import header (Item, Topic, Drawn by, …)',
         default=True,
-        help='When using TMS layout, fill request header from the Excel block.',
+        help='When using the SBU layout, fill request header from the Excel block.',
     )
     sync_vdc_catalog = fields.Boolean(
         string='Sync VdC catalog from «Vdc» sheet',

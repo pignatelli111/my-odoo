@@ -96,23 +96,23 @@ class SbuPurchaseRequestLine(models.Model):
     )
     vdc_code = fields.Char(
         string='VdC / budget code',
-        help='Voce di budget from TMS Excel (Vdc sheet), e.g. B_GAMMISTA_ALLUMINIO.',
+        help='Voce di budget from SBU Excel (Vdc sheet), e.g. B_GAMMISTA_ALLUMINIO.',
     )
     reference_rda = fields.Char(
         string='RDA reference',
-        help='RIFERIMENTO RDA from TMS ACO/ACP template.',
+        help='RIFERIMENTO RDA from SBU ACO/ACP template.',
     )
     order_number = fields.Char(
         string='PO / order n°',
-        help='N° ORDINE from TMS ACO/ACP/LDS template.',
+        help='N° ORDINE from SBU ACO/ACP/LDS template.',
     )
     logistics_supplier = fields.Char(
         string='Logistics supplier',
-        help='FORNITORE / LOGISTICA (DDT column on TMS template).',
+        help='FORNITORE / LOGISTICA (DDT column on SBU template).',
     )
     logistics_site = fields.Char(
         string='Logistics / site',
-        help='LOGISTICA / CANTIERE (DDT column on TMS template).',
+        help='LOGISTICA / CANTIERE (DDT column on SBU template).',
     )
     weight_kg = fields.Float(string='Weight kg', digits=(16, 3))
     product_id = fields.Many2one('product.product', string='Product')

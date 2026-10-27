@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'SBU Revolut',
-    'version': '19.0.2.0.0',
+    'version': '19.0.2.0.1',
     'summary': 'Revolut Business: OAuth connection, multi-account import, signed webhooks, '
                'invoice matching and approved supplier payments',
     'author': 'SBU Development',

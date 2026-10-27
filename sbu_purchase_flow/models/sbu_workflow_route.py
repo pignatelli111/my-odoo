@@ -48,11 +48,11 @@ class SbuWorkflowRoute(models.Model):
     )
     default_drawn_by = fields.Char(
         string='Default drawn by',
-        help='From TMS «Elenco elementi» — pre-filled on new documents for this route.',
+        help='From SBU «Elenco elementi» — pre-filled on new documents for this route.',
     )
     default_author = fields.Char(
         string='Default author / office',
-        help='Consultant or internal office name (TMS Elenco elementi).',
+        help='Consultant or internal office name (SBU Elenco elementi).',
     )
     notes = fields.Text(string='Notes')
 

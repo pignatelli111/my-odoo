@@ -1,6 +1,6 @@
 {
     "name": "SBU Integrations",
-    "version": "19.0.1.2.2",
+    "version": "19.0.1.2.3",
     "summary": "Microsoft Graph, OneDrive naming, Teams/Planner collaboration policy (Phase 5.1–5.3)",
     "author": "SBU Development",
     "category": "Technical",

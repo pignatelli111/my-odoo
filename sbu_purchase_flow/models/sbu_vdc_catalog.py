@@ -62,7 +62,7 @@ def _guess_cost_family_from_vdc_code(code, name=''):
 
 class SbuVdcCatalog(models.Model):
     _name = 'sbu.vdc.catalog'
-    _description = 'SBU TMS VdC budget code'
+    _description = 'SBU VdC budget code'
     _order = 'code'
 
     code = fields.Char(string='VdC code', required=True, index=True)
@@ -73,7 +73,7 @@ class SbuVdcCatalog(models.Model):
     cost_family = fields.Selection(
         selection=SBU_COST_FAMILY_SELECTION,
         string='Cost family',
-        help='Maps TMS VdC to ANACO ITEM budget family for traffic lights.',
+        help='Maps SBU VdC to ANACO ITEM budget family for traffic lights.',
     )
     active = fields.Boolean(default=True)
 

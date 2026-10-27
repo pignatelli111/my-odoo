@@ -7,6 +7,12 @@
         <field name="arch" type="xml">
             <!-- SBU blocks live under General Settings (one <app>) so the Settings client stays stable; Qonto/Revolut/Logikal xpaths still target named blocks. -->
             <xpath expr="//app[@name='general_settings']" position="inside">
+                <block title="SBU — Setup checklist" name="sbu_setup_checklist_block"
+                       help="What is still missing before using SBU in production. Click Open to fix a row.">
+                    <div class="col-12">
+                        <field name="sbu_setup_checklist_html" nolabel="1" readonly="1"/>
+                    </div>
+                </block>
                 <block title="Microsoft Graph (SBU)" name="sbu_integration_block">
                         <setting string="Enable Graph sync" help="Allows project users to run “Sync folder from Graph” when drive and item ids are set.">
                             <field name="sbu_graph_sync_enabled"/>

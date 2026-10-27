@@ -79,17 +79,17 @@ class SbuPurchaseRequest(models.Model):
     delivery_date_2 = fields.Date(
         string='2nd delivery',
         tracking=True,
-        help='SECONDA CONSEGNA from TMS template.',
+        help='SECONDA CONSEGNA from SBU template.',
     )
     delivery_date_3 = fields.Date(
         string='3rd delivery',
         tracking=True,
-        help='TERZA CONSEGNA from TMS template.',
+        help='TERZA CONSEGNA from SBU template.',
     )
     delivery_date_4 = fields.Date(
         string='4th delivery',
         tracking=True,
-        help='QUARTA CONSEGNA from TMS template.',
+        help='QUARTA CONSEGNA from SBU template.',
     )
     site_required_date = fields.Date(
         string='Site / install date',
@@ -182,20 +182,20 @@ class SbuPurchaseRequest(models.Model):
         help='Checked by (RDA / submission sheet).',
     )
     project_code = fields.Char(
-        string='Project code (TMS)',
-        help='CODICE COMMESSA / Project from TMS Excel header.',
+        string='Project code (SBU)',
+        help='CODICE COMMESSA / Project from SBU Excel header.',
     )
     tms_document_number = fields.Char(
-        string='TMS document n°',
-        help='n°RDA / n°ACO / n°ACP from TMS template header.',
+        string='SBU document n°',
+        help='n°RDA / n°ACO / n°ACP from SBU template header.',
     )
     tms_template_name = fields.Char(
-        string='TMS template',
-        help='Template file name from TMS header row (M.4.3.x).',
+        string='SBU template',
+        help='Template file name from SBU header row (M.4.3.x).',
     )
     document_date = fields.Date(
         string='Document date',
-        help='Data / Date from TMS Excel header.',
+        help='Data / Date from SBU Excel header.',
     )
     leed_scheme = fields.Selection(
         [
@@ -203,11 +203,11 @@ class SbuPurchaseRequest(models.Model):
             ('bream', 'BREAM'),
         ],
         string='Certification scheme',
-        help='LEED / BREAM flag from TMS template.',
+        help='LEED / BREAM flag from SBU template.',
     )
     area_code = fields.Char(
         string='Area / zone',
-        help='Area or zone code from TMS template (e.g. F01).',
+        help='Area or zone code from SBU template (e.g. F01).',
     )
     state = fields.Selection(
         [

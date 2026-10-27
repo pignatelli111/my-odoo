@@ -155,7 +155,7 @@
         <field name="name">sbu.project.tms.import.wizard.form</field>
         <field name="model">sbu.project.tms.import.wizard</field>
         <field name="arch" type="xml">
-            <form string="Import TMS Excel">
+            <form string="Import SBU Excel">
                 <group invisible="result_summary">
                     <field name="project_id" options="{'no_create': True}"/>
                     <field name="data_file" filename="filename"/>
@@ -173,7 +173,7 @@
                     <field name="result_summary" nolabel="1" readonly="1"/>
                 </group>
                 <p class="text-muted" invisible="result_summary">
-                    Upload origin TMS files (M.4.3.x RDA/ACO/ACP, M.4.4.x LDS, Report tav appr).
+                    Upload origin SBU files (M.4.3.x RDA/ACO/ACP, M.4.4.x LDS, Report tav appr).
                     Auto-detect reads filename and sheet names. RDA imports also sync the VdC
                     catalog and route owners when those sheets exist.
                 </p>
@@ -187,7 +187,7 @@
     </record>
 
     <record id="action_sbu_project_tms_import_wizard" model="ir.actions.act_window">
-        <field name="name">Import TMS Excel</field>
+        <field name="name">Import SBU Excel</field>
         <field name="res_model">sbu.project.tms.import.wizard</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>
