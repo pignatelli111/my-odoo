@@ -1,4 +1,5 @@
-from odoo import api, fields, models
+from odoo import _, api, fields, models
+from odoo.exceptions import ValidationError
 
 # Local copy — avoid cross-addon import at module load (Odoo.sh install order).
 SBU_CONTRACT_UOM_LABELS = {
@@ -150,3 +151,24 @@ class SbuSalSheetLine(models.Model):
         sal_lines = self.mapped('estimate_sal_line_id')
         if sal_lines:
             sal_lines._sbu_recompute_billing_from_sheet_lines()
+
+    @api.constrains('percent_this_sal', 'estimate_sal_line_id', 'sheet_id')
+    def _check_cumulative_percent_cap(self):
+        """A contract item cannot be billed for more than 100% over all its (non-cancelled) SAL sheets."""
+        for line in self:
+            if not line.estimate_sal_line_id or line.sheet_id.state == 'cancelled':
+                continue
+            others = self.search([
+                ('estimate_sal_line_id', '=', line.estimate_sal_line_id.id),
+                ('sheet_id.state', '!=', 'cancelled'),
+                ('id', '!=', line.id),
+            ])
+            prior = sum(others.mapped('percent_this_sal'))
+            total = prior + (line.percent_this_sal or 0.0)
+            if total > 100.01:
+                raise ValidationError(_(
+                    'Cumulative SAL on «%(item)s» would be %(total).2f%% (max 100%%): other SAL sheets %(prior).2f%% '
+                    '(%(sheets)s), this sheet %(this).2f%%.',
+                    item=line.estimate_sal_line_id.display_name, total=total, prior=prior,
+                    sheets=', '.join(others.sheet_id.mapped('display_name')), this=line.percent_this_sal,
+                ))

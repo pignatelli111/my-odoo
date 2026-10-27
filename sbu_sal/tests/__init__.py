@@ -5,3 +5,4 @@ from . import test_sbu_sal_line_import_wizard
 from . import test_sbu_project_billing_dashboard
 from . import test_sbu_setup_checklist
 from . import test_sbu_job_cancel
+from . import test_sbu_sal_fixes

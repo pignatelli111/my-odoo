@@ -574,12 +574,38 @@ class SbuEstimate(models.Model):
             'approved_by_id': False,
             'approved_on': False,
         })
+        self._sbu_copy_revision_content(new_estimate)
+        siblings = self.search([('name', '=', self.name)])
+        self.env.add_to_compute(self._fields['sbu_is_latest_revision'], siblings)
+        siblings.flush_recordset(['sbu_is_latest_revision'])
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'sbu.estimate',
             'res_id': new_estimate.id,
             'view_mode': 'form',
         }
+
+    def _sbu_copy_revision_content(self, new_estimate):
+        """Copy lines, contractual SAL items, BOM, suppliers per column and references to a new revision."""
+        self.ensure_one()
+        line_map = {}
+        for line in self.line_ids:
+            line_map[line.id] = line.copy({'estimate_id': new_estimate.id})
+        for sal in self.sal_line_ids:
+            sal.copy({
+                'estimate_id': new_estimate.id,
+                'estimate_line_ids': [(6, 0, [line_map[l.id].id for l in sal.estimate_line_ids if l.id in line_map])],
+            })
+        for bom in self.item_bom_line_ids:
+            bom.copy({
+                'estimate_id': new_estimate.id,
+                'estimate_line_id': line_map[bom.estimate_line_id.id].id if bom.estimate_line_id.id in line_map else False,
+            })
+        if 'column_supplier_ids' in self._fields:
+            for row in self.column_supplier_ids:
+                row.copy({'estimate_id': new_estimate.id})
+        for reference in self.reference_ids:
+            reference.copy({'estimate_id': new_estimate.id})
 
     # ── Project creation ──────────────────────────────────────────────────────
     def action_create_project(self):

@@ -178,6 +178,7 @@ class SbuSalSheet(models.Model):
         return res
 
     def action_confirm(self):
+        self.line_ids._check_cumulative_percent_cap()  # also after a cancelled sheet was reset to draft
         self.write({'state': 'confirmed'})
 
     def action_cancel(self):

@@ -738,7 +738,9 @@ class SbuPurchaseRequest(models.Model):
         for line in pr_lines:
             if not line.product_id:
                 continue
-            qty = line._sbu_qty_remaining_to_order()
+            # Each supplier's RFQ asks for everything not yet confirmed (RFQs to several suppliers are
+            # alternatives); re-running brings a reduced draft back to that quantity.
+            qty = line._sbu_qty_to_request()
             if float_is_zero(qty, precision_rounding=line.product_uom.rounding):
                 continue
             line._sbu_upsert_rfq_po_line(po, qty)

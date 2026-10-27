@@ -283,10 +283,8 @@ class SbuPurchaseRequestLine(models.Model):
     )
     def _compute_qty_order_balance(self):
         for line in self:
-            active_lines = line.po_line_ids.filtered(
-                lambda pol: pol.order_id.state in SBU_PO_ACTIVE_STATES and not pol.display_type
-            )
-            ordered = sum(active_lines.mapped('product_qty'))
+            confirmed, draft = line._sbu_ordered_quantities()
+            ordered = confirmed + draft
             rounding = line.product_uom.rounding if line.product_uom else 0.01
             line.qty_ordered = ordered
             remaining = (line.product_qty or 0.0) - ordered
@@ -401,15 +399,34 @@ class SbuPurchaseRequestLine(models.Model):
                 sqm_total=line.sqm_total,
             )
 
-    def _sbu_qty_remaining_to_order(self):
-        """Live residual (qty richiesta − somma RFQ/PO); safe before stored compute is flushed."""
+    def _sbu_ordered_quantities(self):
+        """(confirmed, largest draft RFQ) quantities for this line.
+
+        Draft RFQs sent to several suppliers for the same line are alternatives (quotes to compare), so
+        only the largest one counts; confirmed purchase orders add up.
+        """
         self.ensure_one()
-        active_lines = self.po_line_ids.filtered(
+        lines = self.po_line_ids.filtered(
             lambda pol: pol.order_id.state in SBU_PO_ACTIVE_STATES and not pol.display_type
         )
-        ordered = sum(active_lines.mapped('product_qty'))
+        confirmed = sum(lines.filtered(lambda pol: pol.order_id.state not in SBU_PO_DRAFT_STATES).mapped('product_qty'))
+        draft_by_order = {}
+        for pol in lines.filtered(lambda pol: pol.order_id.state in SBU_PO_DRAFT_STATES):
+            draft_by_order[pol.order_id.id] = draft_by_order.get(pol.order_id.id, 0.0) + pol.product_qty
+        return confirmed, max(draft_by_order.values(), default=0.0)
+
+    def _sbu_qty_to_request(self):
+        """Quantity a supplier RFQ must carry: requested − already confirmed."""
+        self.ensure_one()
+        confirmed, _draft = self._sbu_ordered_quantities()
+        return max((self.product_qty or 0.0) - confirmed, 0.0)
+
+    def _sbu_qty_remaining_to_order(self):
+        """Live residual (requested − confirmed − largest draft RFQ); safe before the stored compute is flushed."""
+        self.ensure_one()
+        confirmed, draft = self._sbu_ordered_quantities()
         rounding = self.product_uom.rounding if self.product_uom else 0.01
-        remaining = (self.product_qty or 0.0) - ordered
+        remaining = (self.product_qty or 0.0) - confirmed - draft
         if float_compare(remaining, 0.0, precision_rounding=rounding) <= 0:
             return 0.0
         return remaining
@@ -522,7 +539,7 @@ class SbuPurchaseRequestLine(models.Model):
         )
 
     def _sbu_upsert_rfq_po_line(self, purchase_order, qty):
-        """Create or update a single draft PO line with ``qty`` (residual to order)."""
+        """Create or update the single draft line of this RDA line on ``purchase_order`` to ``qty``."""
         self.ensure_one()
         Pol = self.env['purchase.order.line']
         po = purchase_order
