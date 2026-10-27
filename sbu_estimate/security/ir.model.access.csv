@@ -25,3 +25,4 @@ access_sbu_bulk_estimate_bom_wizard,sbu.bulk.estimate.bom.line.wizard,model_sbu_
 access_sbu_bulk_estimate_sal_wizard,sbu.bulk.estimate.sal.line.wizard,model_sbu_bulk_estimate_sal_line_wizard,base.group_user,1,1,1,1
 access_sbu_project_cancel_wizard,sbu.project.cancel.wizard,model_sbu_project_cancel_wizard,project.group_project_manager,1,1,1,1
 access_sbu_project_cancel_wizard_line,sbu.project.cancel.wizard.line,model_sbu_project_cancel_wizard_line,project.group_project_manager,1,1,1,1
+access_sbu_estimate_column_supplier,sbu.estimate.column.supplier,model_sbu_estimate_column_supplier,base.group_user,1,1,1,1

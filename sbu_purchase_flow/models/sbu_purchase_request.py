@@ -786,12 +786,6 @@ class SbuPurchaseRequest(models.Model):
             raise UserError(_('Add at least one line before creating an RFQ.'))
         if not self.line_ids.filtered('product_id'):
             raise UserError(_('At least one line must have a product to generate purchase lines.'))
-        vendors = self._sbu_rfq_vendor_partners()
-        if not vendors:
-            raise UserError(
-                _('Set «RFQ vendors» and/or a preferred vendor on this request, '
-                  'or create a supplier contact (Purchase tab: Vendor) before generating RFQs.')
-            )
         lines_to_order = self.line_ids.filtered(
             lambda line: line.product_id and not float_is_zero(
                 line._sbu_qty_remaining_to_order(),
@@ -808,10 +802,24 @@ class SbuPurchaseRequest(models.Model):
             )
         Po = self.env['purchase.order']
         created = Po.browse()
-        for vendor in vendors:
+        # Lines with a supplier (ANACO column supplier) go only to that supplier.
+        for vendor in lines_to_order.vendor_id:
             po = self._sbu_find_or_create_draft_po(vendor)
-            self._sbu_create_rfq_po_lines(po, lines_to_order)
+            self._sbu_create_rfq_po_lines(po, lines_to_order.filtered(lambda l, v=vendor: l.vendor_id == v))
             created |= po
+        # Lines without a supplier go to the RFQ vendors of the request (as before).
+        unassigned = lines_to_order.filtered(lambda l: not l.vendor_id)
+        if unassigned:
+            vendors = self._sbu_rfq_vendor_partners()
+            if not vendors:
+                raise UserError(
+                    _('Set «RFQ vendors» and/or a preferred vendor on this request, set the supplier of the '
+                      'ANACO columns on the estimate, or create a supplier contact before generating RFQs.')
+                )
+            for vendor in vendors:
+                po = self._sbu_find_or_create_draft_po(vendor)
+                self._sbu_create_rfq_po_lines(po, unassigned)
+                created |= po
         for po in created:
             self.purchase_order_ids = [(4, po.id)]
         if len(created) == 1:

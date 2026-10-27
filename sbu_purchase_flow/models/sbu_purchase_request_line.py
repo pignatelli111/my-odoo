@@ -195,6 +195,11 @@ class SbuPurchaseRequestLine(models.Model):
         related='request_id.estimate_id',
         readonly=True,
     )
+    vendor_id = fields.Many2one(
+        'res.partner', string='Supplier', compute='_compute_vendor_id', store=True, readonly=False,
+        help='Supplier of the ANACO column of the BOM line: "Create draft RFQ(s)" sends this line only to them. '
+             'Empty: the line goes to the RFQ vendors of the request.',
+    )
     source_bom_line_id = fields.Many2one(
         'sbu.estimate.bom.line',
         string='Estimate BOM line',
@@ -558,3 +563,9 @@ class SbuPurchaseRequestLine(models.Model):
                 pol_vals['price_unit'] = offer.unit_price
         pol_vals.update(self._sbu_po_line_dimension_vals())
         return Pol.create(pol_vals)
+
+    @api.depends('source_bom_line_id.vendor_id')
+    def _compute_vendor_id(self):
+        for line in self:
+            # The column supplier wins; a supplier typed on a line without one is kept.
+            line.vendor_id = line.source_bom_line_id.vendor_id or line.vendor_id

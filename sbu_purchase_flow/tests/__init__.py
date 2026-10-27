@@ -12,3 +12,4 @@ from . import test_sbu_pr_excel_import
 from . import test_sbu_tms_excel_import
 from . import test_sbu_workflow_route_catalog
 from . import test_sbu_job_analytic
+from . import test_sbu_column_supplier
