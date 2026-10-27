@@ -107,6 +107,10 @@ class SbuQontoExportImportWizard(models.TransientModel):
         messages += self._sbu_import_history(zf, members)
         if not messages:
             raise UserError(_('Nothing selected to import.'))
+        if not self.has_more and self.company_id.sbu_bank_statement_start_date:
+            created, reconciled = self.env['sbu.qonto.transaction']._sbu_sync_company_statements(self.company_id)
+            messages.append(_('Accounting: %(created)s bank statement line(s) created, %(reconciled)s reconciled.',
+                              created=created, reconciled=reconciled))
         self.result_message = '\n'.join(filter(None, [self.result_message] + messages))
         return {
             'type': 'ir.actions.act_window',

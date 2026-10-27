@@ -14,6 +14,8 @@
                     <button name="action_sync_counterparties" type="object" string="Sync counterparties" class="btn-secondary"
                             display="always"/>
                     <button name="action_export_csv" type="object" string="Export CSV" class="btn-secondary"/>
+                    <button name="action_sbu_sync_statement_lines" type="object" string="Sync to Accounting"
+                            class="btn-secondary" display="always" groups="account.group_account_user"/>
                 </header>
                 <field name="transfer_date"/>
                 <field name="account_id" optional="show"/>
@@ -35,6 +37,9 @@
                 <field name="match_vendor_bill_id" optional="show"/>
                 <field name="match_payment_id" optional="show"/>
                 <field name="state" widget="badge"/>
+                <field name="statement_status" widget="badge" optional="show"
+                       decoration-success="statement_status == 'reconciled'"
+                       decoration-warning="statement_status == 'to_reconcile'"/>
                 <field name="source" optional="hide"/>
                 <field name="revolut_remote_id" optional="hide"/>
                 <field name="company_id" column_invisible="1"/>
@@ -97,6 +102,8 @@
                             <field name="match_vendor_bill_id" invisible="amount_signed &gt; 0"/>
                             <field name="match_payment_id"/>
                             <field name="revolut_payment_id" invisible="not revolut_payment_id"/>
+                            <field name="statement_status" widget="badge"/>
+                            <field name="statement_line_id" invisible="not statement_line_id"/>
                         </group>
                     </group>
                     <notebook>
