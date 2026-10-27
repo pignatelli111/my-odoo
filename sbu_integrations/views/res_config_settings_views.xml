@@ -11,6 +11,8 @@
                        help="What is still missing before using SBU in production. Click Open to fix a row.">
                     <div class="col-12">
                         <field name="sbu_setup_checklist_html" nolabel="1" readonly="1"/>
+                        <button name="action_sbu_review_installed_apps" type="object" string="Review installed apps"
+                                class="btn-secondary mt-2" icon="fa-th-large" groups="base.group_system"/>
                     </div>
                 </block>
                 <block title="Bank statements (SBU)" name="sbu_bank_statement_block">
