@@ -231,3 +231,18 @@ class ProjectProject(models.Model):
             'domain': self._sbu_customer_invoice_domain(self),
             'context': {'default_move_type': 'out_invoice'},
         }
+
+    def _sbu_job_documents(self):
+        docs = getattr(super(), '_sbu_job_documents', lambda: [])()
+        sheets = self.env['sbu.sal.sheet'].search([('project_id', '=', self.id)])
+        passive = self.env['sbu.sal.passive.sheet'].search([('project_id', '=', self.id)])
+        certificates = self.env['sbu.payment.certificate'].search([('project_id', '=', self.id)])
+        docs += [(sheet, _('SAL sheet')) for sheet in sheets]
+        docs += [(sheet, _('Subcontractor SAL')) for sheet in passive]
+        docs += [(cert, _('Payment certificate (CDP)')) for cert in certificates]
+        moves = (
+            sheets.invoice_id | passive.vendor_bill_id | certificates.invoice_id
+            | self.env['account.move'].search([('sbu_sal_sheet_id', 'in', sheets.ids)])
+        )
+        docs += [(move, _('SAL invoice') if move.is_sale_document() else _('Subcontractor bill')) for move in moves]
+        return docs

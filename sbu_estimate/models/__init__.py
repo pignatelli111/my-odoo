@@ -12,3 +12,4 @@ from . import sbu_estimate_anaco
 from . import sbu_estimate_bom_line
 from . import sbu_estimate_sal_line
 from . import project_project_ext
+from . import project_project_lifecycle

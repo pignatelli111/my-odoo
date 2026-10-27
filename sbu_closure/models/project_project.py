@@ -64,7 +64,8 @@ class ProjectProject(models.Model):
                 pre = self.filtered(lambda p: p.sbu_estimate_id)
                 if pre:
                     pre._sbu_closure_init_missing_lines()
-            if target in ('closed', 'archived'):
+            # A cancelled job (Cancel job wizard) is archived without going through closure.
+            if target in ('closed', 'archived') and not self.env.context.get('sbu_job_cancelled'):
                 for project in self.filtered(lambda p: p.sbu_estimate_id):
                     if not project.sbu_closure_requirement_ids:
                         project._sbu_closure_init_missing_lines()

@@ -1,6 +1,6 @@
 {
     'name': 'SBU Purchase Flow',
-    'version': '19.0.1.0.104',
+    'version': '19.0.1.0.105',
     'summary': 'RDA/ACP/ACO/LDS purchase requests; full SBU Excel origin integration',
     'author': 'SBU Development',
     'category': 'Purchase',

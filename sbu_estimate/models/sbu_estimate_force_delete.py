@@ -7,16 +7,13 @@ class SbuEstimateForceDelete(models.Model):
     _inherit = 'sbu.estimate'
 
     def _sbu_check_uat_force_delete_access(self):
-        if self.env.user.has_group('sbu_estimate.group_sbu_estimate_uat_cleanup'):
+        """Force delete is for test data only: administrators only."""
+        if self.env.su or self.env.user.has_group('base.group_system'):
             return
-        if self.env.user.has_group('base.group_system'):
-            return
-        raise UserError(
-            _(
-                'Only users in «SBU UAT cleanup» (or Administrators) can delete test '
-                'preventivi with commessa / SAL. Ask an admin to assign the group on your user.'
-            )
-        )
+        raise UserError(_(
+            'Only administrators can force-delete an estimate with its job and documents. '
+            'To stop a real job, use "Cancel job" on the job instead.'
+        ))
 
     def action_open_force_delete_wizard(self):
         self._sbu_check_uat_force_delete_access()
@@ -35,6 +32,8 @@ class SbuEstimateForceDelete(models.Model):
         """Remove linked UAT documents, then delete preventivo(s). Returns count removed."""
         self._sbu_check_uat_force_delete_access()
         count = len(self)
+        # Posted (or once-posted) invoices and bills are never removed, even for test data.
+        self.project_id._sbu_check_no_protected_moves()
         for estimate in self:
             project = estimate.project_id
             if project:
@@ -91,22 +90,11 @@ class SbuEstimateForceDelete(models.Model):
         sheet.unlink()
 
     def _sbu_force_cancel_account_move(self, move):
-        env = self.env(su=True)
+        """Remove a draft (or never-posted cancelled) move; posted fiscal documents are refused earlier."""
         move = move.sudo()
-        if move.state == 'draft':
-            move.unlink()
-            return
-        if move.state == 'posted':
-            if hasattr(move, 'button_cancel'):
-                move.button_cancel()
-            return
-        if move.state == 'cancel':
-            if hasattr(move, 'button_draft'):
-                try:
-                    move.button_draft()
-                    move.unlink()
-                except UserError:
-                    pass
+        if move.state == 'posted' or move.posted_before:
+            raise UserError(_('%s was posted: it cannot be removed.', move.display_name))
+        move.unlink()
 
     def _sbu_force_cancel_purchase_order(self, po):
         po = po.sudo()

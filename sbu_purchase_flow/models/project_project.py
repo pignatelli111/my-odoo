@@ -287,3 +287,8 @@ class ProjectProject(models.Model):
             'domain': [('id', 'in', created.ids)],
             'target': 'current',
         }
+
+    def _sbu_job_documents(self):
+        docs = getattr(super(), '_sbu_job_documents', lambda: [])()
+        requests = self.env['sbu.purchase.request'].search([('project_id', '=', self.id)])
+        return docs + [(request, _('Purchase request')) for request in requests]
