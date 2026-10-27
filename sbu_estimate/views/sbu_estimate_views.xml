@@ -94,6 +94,11 @@
                             string="Import ANACO Excel"
                             type="object"
                             class="btn-secondary"/>
+                    <button name="action_download_anaco_template"
+                            string="Download ANACO template"
+                            type="object"
+                            class="btn-secondary"
+                            help="Protected ANACO workbook with this estimate's parameters (row 5); the import checks it."/>
                     <button name="action_print_offer"
                             string="Print offer"
                             type="object"

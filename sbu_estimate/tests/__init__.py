@@ -14,3 +14,4 @@ from . import test_sbu_field_labels
 from . import test_sbu_bulk_wizards
 from . import test_sbu_account_line_utils
 from . import test_sbu_offer_report
+from . import test_sbu_anaco_template
