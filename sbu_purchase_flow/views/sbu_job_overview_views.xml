@@ -20,7 +20,7 @@
                 <field name="costs" sum="Total"/>
                 <field name="budget_used_pct" widget="progressbar" optional="show"/>
                 <field name="paid" sum="Total" optional="hide"/>
-                <field name="to_pay" sum="Total" optional="show"/>
+                <field name="to_pay" sum="Total" optional="hide"/>
                 <field name="invoiced" sum="Total"/>
                 <field name="invoiced_pct" widget="progressbar" optional="show"/>
                 <field name="collected" sum="Total"/>
@@ -56,8 +56,6 @@
         <field name="arch" type="xml">
             <graph string="Jobs overview" type="bar">
                 <field name="project_id"/>
-                <field name="budget_cost" type="measure"/>
-                <field name="costs" type="measure"/>
                 <field name="invoiced" type="measure"/>
             </graph>
         </field>

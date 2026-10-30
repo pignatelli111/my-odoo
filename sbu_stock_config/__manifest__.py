@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'SBU Stock configuration',
-    'version': '19.0.1.1.8',
+    'version': '19.0.1.1.9',
     'summary': 'SBU stock layout + project-linked logistics, services/subcontract hints (Phase 4.3)',
     'author': 'SBU Development',
     'category': 'Inventory',
