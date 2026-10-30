@@ -64,3 +64,12 @@ class TestSbuSalFixes(AccountTestInvoicingCommon):
         self.assertTrue(bill.invoice_line_ids)
         for line in bill.invoice_line_ids:
             self.assertEqual(line.tax_ids, reverse_charge, 'exactly the chosen tax, never two taxes')
+
+    def test_invoice_made_in_invoicing_counts_in_job_billing(self):
+        invoice = self.init_invoice('out_invoice', partner=self.customer, amounts=[1500.0], taxes=[])
+        invoice.sbu_job_id = self.project
+        invoice.action_post()
+        self.project.invalidate_recordset()
+        self.assertAlmostEqual(self.project.sbu_billing_other_invoiced, 1500.0)
+        self.assertEqual(self.project.sbu_billing_last_invoice_id, invoice)
+        self.assertIn(invoice, self.env['account.move'].search(self.project.action_sbu_customer_invoices()['domain']))

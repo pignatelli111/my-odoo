@@ -47,6 +47,7 @@
                         <group string="Riepilogo contratto">
                             <field name="sbu_billing_contract_total" widget="monetary"/>
                             <field name="sbu_billing_billed" widget="monetary"/>
+                            <field name="sbu_billing_other_invoiced" widget="monetary"/>
                             <field name="sbu_billing_remaining" widget="monetary"/>
                             <field name="sbu_billing_progress_pct"/>
                         </group>

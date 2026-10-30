@@ -22,3 +22,5 @@ access_sbu_lds_entry_manager,sbu.lds.entry manager,model_sbu_lds_entry,purchase.
 access_sbu_drawing_register_user,sbu.drawing.register user,model_sbu_drawing_register,base.group_user,1,1,1,0
 access_sbu_drawing_register_manager,sbu.drawing.register manager,model_sbu_drawing_register,purchase.group_purchase_manager,1,1,1,1
 access_sbu_project_tms_import_wizard_user,sbu.project.tms.import.wizard user,model_sbu_project_tms_import_wizard,base.group_user,1,1,1,1
+access_sbu_job_overview_billing,sbu.job.overview billing,model_sbu_job_overview,account.group_account_invoice,1,0,0,0
+access_sbu_job_overview_pm,sbu.job.overview project manager,model_sbu_job_overview,project.group_project_manager,1,0,0,0

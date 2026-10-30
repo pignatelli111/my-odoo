@@ -23,6 +23,13 @@ class ProjectProject(models.Model):
         compute='_compute_sbu_billing_dashboard',
         currency_field='currency_id',
     )
+    sbu_billing_other_invoiced = fields.Monetary(
+        string='Invoiced outside SAL',
+        compute='_compute_sbu_billing_dashboard',
+        currency_field='currency_id',
+        help='Posted customer invoices minus credit notes of this job not made from a SAL sheet '
+             '(e.g. made directly in Invoicing with the job), untaxed.',
+    )
     sbu_billing_remaining = fields.Monetary(
         string='Remaining to bill',
         compute='_compute_sbu_billing_dashboard',
@@ -73,7 +80,8 @@ class ProjectProject(models.Model):
             ('state', '!=', 'cancel'),
         ]
         if 'sbu_sal_sheet_id' in Move._fields:
-            domain.append(('sbu_sal_sheet_id.project_id', '=', project.id))
+            # SAL invoices, plus invoices made directly in Invoicing for the job.
+            domain += ['|', ('sbu_sal_sheet_id.project_id', '=', project.id), ('sbu_job_id', '=', project.id)]
         elif 'project_id' in Move._fields:
             domain.append(('project_id', '=', project.id))
         else:
@@ -127,6 +135,7 @@ class ProjectProject(models.Model):
             if not est:
                 project.sbu_billing_contract_total = 0.0
                 project.sbu_billing_billed = 0.0
+                project.sbu_billing_other_invoiced = 0.0
                 project.sbu_billing_remaining = 0.0
                 project.sbu_billing_progress_pct = 0.0
                 project.sbu_billing_open_sal_count = 0
@@ -140,6 +149,10 @@ class ProjectProject(models.Model):
             project.sbu_billing_contract_total = contract
             project.sbu_billing_billed = billed
             project.sbu_billing_remaining = remaining
+            project.sbu_billing_other_invoiced = sum(Move.search([
+                ('sbu_job_id', '=', project.id), ('sbu_sal_sheet_id', '=', False), ('state', '=', 'posted'),
+                ('move_type', 'in', ('out_invoice', 'out_refund')),
+            ]).mapped('amount_untaxed_signed'))
             project.sbu_billing_progress_pct = (
                 (billed / contract * 100.0) if contract else 0.0
             )
@@ -221,11 +234,11 @@ class ProjectProject(models.Model):
         }
 
     def action_sbu_customer_invoices(self):
-        """Customer invoices linked to this job via SAL."""
+        """Customer invoices of this job: from SAL sheets or made directly with the job."""
         self.ensure_one()
         return {
             'type': 'ir.actions.act_window',
-            'name': _('Customer invoices (SAL)'),
+            'name': _('Customer invoices'),
             'res_model': 'account.move',
             'view_mode': 'list,form',
             'domain': self._sbu_customer_invoice_domain(self),

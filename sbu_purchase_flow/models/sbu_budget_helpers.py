@@ -249,15 +249,15 @@ def sbu_collect_project_budget(project, env):
         elif pr_line.request_id.state in OPEN_PR_REQUEST_STATES:
             totals[fam]['open_pr'] += sbu_pr_line_engaged_amount(pr_line)
 
-    # PO lines without PR link (rare): attribute to extra
+    # PO lines without PR link (orders made directly in Purchase): family from the product, else extra
     Po = env['purchase.order']
     pos = Po.search([
         ('project_id', '=', project.id),
         ('state', '!=', 'cancel'),
     ])
     for po in pos:
-        for pol in po.order_line.filtered(lambda l: not l.sbu_pr_line_id):
-            fam = 'extra'
+        for pol in po.order_line.filtered(lambda l: not l.sbu_pr_line_id and sbu_is_product_line(l)):
+            fam = sbu_cost_family_from_product(pol.product_id) or 'extra'
             subtotal = sbu_pol_amount_company(pol)
             if po.state in PO_DRAFT_STATES:
                 totals[fam]['po_draft'] += subtotal
@@ -265,7 +265,26 @@ def sbu_collect_project_budget(project, env):
                 totals[fam]['po_confirmed'] += subtotal
             totals[fam]['actual'] += sbu_pol_posted_bill_amount(pol, env)
 
+    # Vendor bills of the job without a purchase order (made directly in Invoicing)
+    for aml in sbu_job_bill_lines_without_po(project, env):
+        fam = sbu_cost_family_from_product(aml.product_id) or 'extra'
+        totals[fam]['actual'] += aml.balance
+
     return totals
+
+
+def sbu_job_bill_lines_without_po(project, env):
+    """Posted vendor bill / refund product lines of the job that are not linked to a PO line."""
+    Aml = env['account.move.line']
+    if 'sbu_job_id' not in env['account.move']._fields:
+        return Aml
+    return Aml.search([
+        ('move_id.sbu_job_id', '=', project.id),
+        ('move_id.move_type', 'in', ('in_invoice', 'in_refund')),
+        ('parent_state', '=', 'posted'),
+        ('display_type', '=', 'product'),
+        ('purchase_line_id', '=', False),
+    ])
 
 
 def sbu_projects_for_budget_refresh(records, env):
@@ -276,9 +295,9 @@ def sbu_projects_for_budget_refresh(records, env):
     for po in records if records._name == 'purchase.order' else Po.browse():
         if po.project_id:
             projects |= po.project_id
-    Move = env.get('account.move')
-    if not Move:
+    if 'account.move' not in env:
         return projects
+    Move = env['account.move']  # (an empty recordset is falsy: never test the model itself)
     for move in records if records._name == 'account.move' else Move.browse():
         if move.move_type not in ('in_invoice', 'in_refund'):
             continue
@@ -286,6 +305,8 @@ def sbu_projects_for_budget_refresh(records, env):
         for pol in bill_lines.mapped('purchase_line_id'):
             if pol and pol.order_id.project_id:
                 projects |= pol.order_id.project_id
+        if 'sbu_job_id' in move._fields and move.sbu_job_id:
+            projects |= move.sbu_job_id
     return projects
 
 

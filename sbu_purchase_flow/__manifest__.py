@@ -1,6 +1,6 @@
 {
     'name': 'SBU Purchase Flow',
-    'version': '19.0.1.0.107',
+    'version': '19.0.1.0.108',
     'summary': 'RDA/ACP/ACO/LDS purchase requests; full SBU Excel origin integration',
     'author': 'SBU Development',
     'category': 'Purchase',
@@ -38,6 +38,7 @@
         'views/sbu_estimate_views.xml',
         'views/sbu_estimate_budget_views.xml',
         'views/menu.xml',
+        'views/sbu_job_overview_views.xml',
     ],
     'external_dependencies': {
         'python': ['openpyxl'],
