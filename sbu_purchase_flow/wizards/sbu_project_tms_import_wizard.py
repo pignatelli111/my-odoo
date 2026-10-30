@@ -25,7 +25,7 @@ except ImportError:
 
 class SbuProjectTmsImportWizard(models.TransientModel):
     _name = 'sbu.project.tms.import.wizard'
-    _description = 'Import TMS Excel files on project'
+    _description = 'Import SBU Excel files on project'
 
     project_id = fields.Many2one(
         'project.project',
@@ -121,7 +121,7 @@ class SbuProjectTmsImportWizard(models.TransientModel):
         rows = list(ws.iter_rows(values_only=True))
         header, line_rows = parse_tms_worksheet_rows(rows)
         if not line_rows:
-            raise UserError(_('No lines found in the TMS worksheet.'))
+            raise UserError(_('No lines found in the SBU worksheet.'))
         pr = self._find_or_create_pr(request_type)
         if not pr:
             raise UserError(
@@ -230,7 +230,7 @@ class SbuProjectTmsImportWizard(models.TransientModel):
                 raise UserError(_('Unsupported import type: %s') % kind)
             summary = '\n'.join(parts)
             self.result_summary = summary
-            self.project_id.message_post(body=_('TMS import (%(kind)s): %(msg)s') % {
+            self.project_id.message_post(body=_('SBU import (%(kind)s): %(msg)s') % {
                 'kind': kind,
                 'msg': summary.replace('\n', ' · '),
             })

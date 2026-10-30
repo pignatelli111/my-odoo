@@ -1,5 +1,5 @@
 from odoo import api, fields, models, _
-from odoo.exceptions import UserError
+from odoo.exceptions import RedirectWarning, UserError
 
 from odoo.addons.sbu_estimate.models.sbu_revision_display import sbu_doc_name_with_revision
 
@@ -178,6 +178,7 @@ class SbuSalSheet(models.Model):
         return res
 
     def action_confirm(self):
+        self.line_ids._check_cumulative_percent_cap()  # also after a cancelled sheet was reset to draft
         self.write({'state': 'confirmed'})
 
     def action_cancel(self):
@@ -487,8 +488,11 @@ class SbuSalSheet(models.Model):
         if not self.amount_net or self.amount_net <= 0:
             raise UserError(_('Net payable must be greater than zero.'))
         if self.amount_retention > 0 and not self.company_id.sbu_sal_retention_account_id:
-            raise UserError(
-                _('Configure the SAL retention account on the company before invoicing a SAL with retention.')
+            raise RedirectWarning(
+                _('Configure the SAL retention account on the company before invoicing a SAL with retention '
+                  '(company form → General Information → SBU SAL → "SAL retention account").'),
+                self.company_id._sbu_sal_settings_action(),
+                _('Open company settings'),
             )
         journal = self.env['account.journal'].search([
             ('type', '=', 'sale'),

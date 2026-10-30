@@ -214,3 +214,12 @@ class ProjectProject(models.Model):
             'view_mode': 'form',
             'target': 'current',
         }
+
+    def _sbu_job_documents(self):
+        docs = getattr(super(), '_sbu_job_documents', lambda: [])()
+        orders = self.env['purchase.order'].search([('project_id', '=', self.id)])
+        pickings = self.env['stock.picking'].search([('project_id', '=', self.id)])
+        docs += [(order, _('Purchase order')) for order in orders]
+        docs += [(picking, _('Transfer')) for picking in pickings]
+        docs += [(bill, _('Vendor bill')) for bill in orders.invoice_ids]
+        return docs

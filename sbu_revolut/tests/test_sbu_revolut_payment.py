@@ -171,3 +171,20 @@ class TestSbuRevolutPayment(RevolutTestCommon):
             with self.assertRaises(UserError):
                 order.with_user(self.approver).action_send_now()
             self.assertFalse(fake.called('POST', '/1.0/pay'))
+
+    def test_completed_payment_is_reconciled_in_accounting(self):
+        self.company.sbu_bank_statement_start_date = '2026-01-01'
+        order, _bill = self._order(1000.0)
+        order.with_user(self.approver).action_approve()
+        with self.fake_revolut() as fake:
+            self._fake_pay(fake, state='pending')
+            order.with_user(self.approver).action_send_now()
+            fake.on('GET', '/1.0/transaction/rev-tx-1', self.tx('rev-tx-1', -1000.0, request_id=order.request_id))
+            self.env['sbu.revolut.transaction'].revolut_process_webhook_event(
+                self.company, {'event': 'TransactionStateChanged', 'data': {'id': 'rev-tx-1'}},
+            )
+        movement = self.env['sbu.revolut.transaction'].search([('revolut_remote_id', '=', 'rev-tx-1')])
+        self.assertEqual(movement.statement_line_id.journal_id, self.bank_journal)
+        self.assertEqual(movement.statement_line_id.amount, -1000.0)
+        self.assertEqual(movement.statement_status, 'reconciled')
+        self.assertTrue(order.payment_id.is_matched)

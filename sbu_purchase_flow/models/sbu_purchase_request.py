@@ -79,17 +79,17 @@ class SbuPurchaseRequest(models.Model):
     delivery_date_2 = fields.Date(
         string='2nd delivery',
         tracking=True,
-        help='SECONDA CONSEGNA from TMS template.',
+        help='SECONDA CONSEGNA from SBU template.',
     )
     delivery_date_3 = fields.Date(
         string='3rd delivery',
         tracking=True,
-        help='TERZA CONSEGNA from TMS template.',
+        help='TERZA CONSEGNA from SBU template.',
     )
     delivery_date_4 = fields.Date(
         string='4th delivery',
         tracking=True,
-        help='QUARTA CONSEGNA from TMS template.',
+        help='QUARTA CONSEGNA from SBU template.',
     )
     site_required_date = fields.Date(
         string='Site / install date',
@@ -182,20 +182,20 @@ class SbuPurchaseRequest(models.Model):
         help='Checked by (RDA / submission sheet).',
     )
     project_code = fields.Char(
-        string='Project code (TMS)',
-        help='CODICE COMMESSA / Project from TMS Excel header.',
+        string='Project code (SBU)',
+        help='CODICE COMMESSA / Project from SBU Excel header.',
     )
     tms_document_number = fields.Char(
-        string='TMS document n°',
-        help='n°RDA / n°ACO / n°ACP from TMS template header.',
+        string='SBU document n°',
+        help='n°RDA / n°ACO / n°ACP from SBU template header.',
     )
     tms_template_name = fields.Char(
-        string='TMS template',
-        help='Template file name from TMS header row (M.4.3.x).',
+        string='SBU template',
+        help='Template file name from SBU header row (M.4.3.x).',
     )
     document_date = fields.Date(
         string='Document date',
-        help='Data / Date from TMS Excel header.',
+        help='Data / Date from SBU Excel header.',
     )
     leed_scheme = fields.Selection(
         [
@@ -203,11 +203,11 @@ class SbuPurchaseRequest(models.Model):
             ('bream', 'BREAM'),
         ],
         string='Certification scheme',
-        help='LEED / BREAM flag from TMS template.',
+        help='LEED / BREAM flag from SBU template.',
     )
     area_code = fields.Char(
         string='Area / zone',
-        help='Area or zone code from TMS template (e.g. F01).',
+        help='Area or zone code from SBU template (e.g. F01).',
     )
     state = fields.Selection(
         [
@@ -738,7 +738,9 @@ class SbuPurchaseRequest(models.Model):
         for line in pr_lines:
             if not line.product_id:
                 continue
-            qty = line._sbu_qty_remaining_to_order()
+            # Each supplier's RFQ asks for everything not yet confirmed (RFQs to several suppliers are
+            # alternatives); re-running brings a reduced draft back to that quantity.
+            qty = line._sbu_qty_to_request()
             if float_is_zero(qty, precision_rounding=line.product_uom.rounding):
                 continue
             line._sbu_upsert_rfq_po_line(po, qty)
@@ -786,12 +788,6 @@ class SbuPurchaseRequest(models.Model):
             raise UserError(_('Add at least one line before creating an RFQ.'))
         if not self.line_ids.filtered('product_id'):
             raise UserError(_('At least one line must have a product to generate purchase lines.'))
-        vendors = self._sbu_rfq_vendor_partners()
-        if not vendors:
-            raise UserError(
-                _('Set «RFQ vendors» and/or a preferred vendor on this request, '
-                  'or create a supplier contact (Purchase tab: Vendor) before generating RFQs.')
-            )
         lines_to_order = self.line_ids.filtered(
             lambda line: line.product_id and not float_is_zero(
                 line._sbu_qty_remaining_to_order(),
@@ -808,10 +804,24 @@ class SbuPurchaseRequest(models.Model):
             )
         Po = self.env['purchase.order']
         created = Po.browse()
-        for vendor in vendors:
+        # Lines with a supplier (ANACO column supplier) go only to that supplier.
+        for vendor in lines_to_order.vendor_id:
             po = self._sbu_find_or_create_draft_po(vendor)
-            self._sbu_create_rfq_po_lines(po, lines_to_order)
+            self._sbu_create_rfq_po_lines(po, lines_to_order.filtered(lambda l, v=vendor: l.vendor_id == v))
             created |= po
+        # Lines without a supplier go to the RFQ vendors of the request (as before).
+        unassigned = lines_to_order.filtered(lambda l: not l.vendor_id)
+        if unassigned:
+            vendors = self._sbu_rfq_vendor_partners()
+            if not vendors:
+                raise UserError(
+                    _('Set «RFQ vendors» and/or a preferred vendor on this request, set the supplier of the '
+                      'ANACO columns on the estimate, or create a supplier contact before generating RFQs.')
+                )
+            for vendor in vendors:
+                po = self._sbu_find_or_create_draft_po(vendor)
+                self._sbu_create_rfq_po_lines(po, unassigned)
+                created |= po
         for po in created:
             self.purchase_order_ids = [(4, po.id)]
         if len(created) == 1:

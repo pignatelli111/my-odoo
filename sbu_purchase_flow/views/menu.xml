@@ -30,7 +30,7 @@
               sequence="19"/>
 
     <menuitem id="menu_sbu_project_tms_import"
-              name="Import TMS Excel"
+              name="Import SBU Excel"
               parent="menu_sbu_purchase_root"
               action="action_sbu_project_tms_import_wizard"
               sequence="6"/>

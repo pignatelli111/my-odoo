@@ -21,6 +21,7 @@ from ..models.sbu_cost_family import (
     infer_cost_family_from_price_cost_vals,
 )
 from ..models.sbu_anaco_engine import ANACO_COL_BB, ANACO_COL_BC, ANACO_COL_BS, ANACO_COMPONENTS
+from ..models.sbu_anaco_template import check_anaco_template
 from .sbu_anaco_p1002_layout import (
     is_p1002_anaco_layout,
     p1002_anaco_import_maps,
@@ -646,6 +647,12 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
         help='La colonna «Comm.» in testata ANACO non è mappata per-riga in REV7; '
              'impostare qui la commissione da applicare a tutte le righe importate, se serve.',
     )
+    allow_legacy_files = fields.Boolean(
+        string='Accetta file non da modello SBU',
+        default=True,
+        help='Importa anche file ANACO non creati con «Scarica modello ANACO» (vecchi file o file di terzi). '
+             'I file da modello SBU vengono sempre controllati: colonne spostate o rinominate bloccano l\'import.',
+    )
     warn_when_bs_missing = fields.Boolean(
         string='Avvisa se manca colonna BS',
         default=True,
@@ -697,10 +704,14 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
             return _cell_str_merged(anaco_sh, sh_form, row, col)
 
         params = {letter: _cell_num(anaco_sh, ANACO_ROW_PARAMS, _col(letter)) for letter in (
-            'K', 'L', 'M', 'Q', 'R')}
-        serramento_mult = 1.0
-        for letter in ('K', 'L', 'M'):
-            serramento_mult *= params[letter] if params[letter] not in (None, 0.0) else 1.0
+            'K', 'L', 'M', 'Q', 'R', 'U', 'Y', 'Z', 'AA')}
+
+        def _mult(*letters):
+            factor = 1.0
+            for letter in letters:
+                factor *= params[letter] if params[letter] not in (None, 0.0) else 1.0
+            return factor
+
         sc1, sc2, sc3 = (_mult_to_discount_pct(params[letter]) for letter in ('K', 'L', 'M'))
 
         seq = 10
@@ -752,12 +763,13 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
                     line_vals[fname] = value
             # Rows saved without computed values (no cache): rebuild N and R from their inputs.
             if 'price_serramento_cad' not in line_vals and _cached(r, 'J') is not None:
-                line_vals['price_serramento_cad'] = _cached(r, 'J') * serramento_mult
+                line_vals['price_serramento_cad'] = _cached(r, 'J') * _mult('K', 'L', 'M')
             if 'cost_staffame_cad' not in line_vals and _cached(r, 'P') is not None:
-                staff_mult = 1.0
-                for letter in ('Q', 'R'):
-                    staff_mult *= params[letter] if params[letter] not in (None, 0.0) else 1.0
-                line_vals['cost_staffame_cad'] = _cached(r, 'P') * staff_mult
+                line_vals['cost_staffame_cad'] = _cached(r, 'P') * _mult('Q', 'R')
+            if 'price_accessori_cad' not in line_vals and _cached(r, 'T') is not None:
+                line_vals['price_accessori_cad'] = _cached(r, 'T') * _mult('U')
+            if 'price_oscuramento_cad' not in line_vals and _cached(r, 'X') is not None:
+                line_vals['price_oscuramento_cad'] = _cached(r, 'X') * _mult('Y', 'Z', 'AA')
             for fname, letter in (('cost_industrial_pct', 'BM'), ('cost_mol_pct', 'BP')):
                 value = _cached(r, letter)
                 if value is not None:
@@ -806,7 +818,7 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
             note = Markup('<br/>').join(notes)
         return count, note
 
-    def _sbu_anaco_import_summary(self, estimate):
+    def _sbu_anaco_import_summary(self, estimate, template_version=None):
         rules = []
         if estimate.anaco_staffame_rate_ml:
             rules.append(_('staffame %(rate)s €/ml perimetro', rate=f'{estimate.anaco_staffame_rate_ml:g}'))
@@ -824,6 +836,9 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
             t=f'{estimate.anaco_pct_transport:g}', pm=f'{estimate.anaco_pct_tech_pm:g}',
             site=f'{estimate.anaco_pct_site:g}', extra=f'{estimate.anaco_pct_extra:g}',
             mol=f'{estimate.anaco_pct_mol:g}', rules=', '.join(rules) or _('nessuna'),
+        ) + ' ' + (
+            _('File da modello SBU (versione %s): intestazioni verificate.', template_version) if template_version
+            else _('File non da modello SBU (import tollerante): verificare le righe con «Controllo Excel».')
         )
 
     def _sbu_anaco_header_vals(self, anaco_sh, anaco_sh_form, first_row, wb_vals):
@@ -957,6 +972,12 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
         except Exception as err:  # pylint: disable=broad-except
             raise UserError(_('Impossibile leggere il file Excel: %s') % (err,)) from err
 
+        template_version = check_anaco_template(self.env, wb_vals) if self.import_anaco else None
+        if self.import_anaco and template_version is None and not self.allow_legacy_files:
+            raise UserError(_(
+                'This file was not created from the SBU ANACO template. Download the template from the estimate '
+                '(«Scarica modello ANACO»), or tick «Accetta file non da modello SBU».'
+            ))
         anaco_sh = _sheet_by_aliases(wb_vals, ('ANACO', 'Anaco'))
         anaco_sh_form = _sheet_by_aliases(wb_form, ('ANACO', 'Anaco')) if wb_form else None
         sal_sh = _sheet_by_aliases(wb_vals, (
@@ -1051,7 +1072,7 @@ class SbuEstimateAnacoImportWizard(models.TransientModel):
                         'Esempi: %(sample)s'
                     ) % {'n': len(missing_bs), 'sample': sample})
             if n_anaco:
-                estimate.message_post(body=self._sbu_anaco_import_summary(estimate))
+                estimate.message_post(body=self._sbu_anaco_import_summary(estimate, template_version))
             if self.import_distinta_bom and n_anaco:
                 if self.replace_anaco_lines:
                     estimate.line_ids.mapped('bom_line_ids').unlink()

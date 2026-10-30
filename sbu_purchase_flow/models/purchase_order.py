@@ -6,6 +6,7 @@ from odoo.addons.sbu_estimate.models.sbu_account_line_utils import sbu_is_produc
 
 from .sbu_budget_helpers import (
     sbu_cost_family_for_pr_line,
+    sbu_cost_family_from_product,
     sbu_cost_family_label,
     sbu_refresh_projects_budget,
 )
@@ -95,7 +96,7 @@ class PurchaseOrder(models.Model):
         pr_line = pol.sbu_pr_line_id
         if pr_line:
             return sbu_cost_family_for_pr_line(pr_line)
-        return 'extra'
+        return sbu_cost_family_from_product(pol.product_id) or 'extra'
 
     def _sbu_check_budget_before_confirm(self):
         """Block PO confirm when any affected cost family is over budget (unless admin unlock)."""

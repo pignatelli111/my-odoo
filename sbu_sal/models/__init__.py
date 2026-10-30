@@ -8,3 +8,4 @@ from . import sbu_estimate_sal_line
 from . import sbu_payment_certificate
 from . import account_move
 from . import project_project
+from . import res_config_settings

@@ -7,6 +7,20 @@
         <field name="arch" type="xml">
             <!-- SBU blocks live under General Settings (one <app>) so the Settings client stays stable; Qonto/Revolut/Logikal xpaths still target named blocks. -->
             <xpath expr="//app[@name='general_settings']" position="inside">
+                <block title="SBU — Setup checklist" name="sbu_setup_checklist_block"
+                       help="What is still missing before using SBU in production. Click Open to fix a row.">
+                    <div class="col-12">
+                        <field name="sbu_setup_checklist_html" nolabel="1" readonly="1"/>
+                        <button name="action_sbu_review_installed_apps" type="object" string="Review installed apps"
+                                class="btn-secondary mt-2" icon="fa-th-large" groups="base.group_system"/>
+                    </div>
+                </block>
+                <block title="Bank statements (SBU)" name="sbu_bank_statement_block">
+                    <setting string="Bank statements from"
+                             help="Qonto / Revolut movements from this date become bank statement lines in Accounting and are reconciled with their payments. Earlier movements become one opening balance line per bank journal. Usually the go-live date.">
+                        <field name="sbu_bank_statement_start_date"/>
+                    </setting>
+                </block>
                 <block title="Microsoft Graph (SBU)" name="sbu_integration_block">
                         <setting string="Enable Graph sync" help="Allows project users to run “Sync folder from Graph” when drive and item ids are set.">
                             <field name="sbu_graph_sync_enabled"/>

@@ -3,3 +3,4 @@ from . import sbu_graph_drive_item
 from . import ir_attachment
 from . import project_project
 from . import project_task
+from . import sbu_onedrive_sync

@@ -84,6 +84,14 @@ class SbuSalPassiveSheet(models.Model):
         readonly=True,
         tracking=True,
     )
+    tax_ids = fields.Many2many(
+        'account.tax', 'sbu_sal_passive_sheet_tax_rel', 'sheet_id', 'tax_id',
+        string='Bill taxes',
+        domain="[('type_tax_use', '=', 'purchase'), ('company_id', '=', company_id)]",
+        default=lambda self: self.env.company.account_purchase_tax_id,
+        help='VAT of the subcontractor bill (e.g. 22% or reverse charge for construction subcontracts). '
+             'Empty: the company default purchase tax.',
+    )
     date = fields.Date(string='SAL date', default=fields.Date.today, tracking=True)
     state = fields.Selection(
         [
@@ -268,50 +276,27 @@ class SbuSalPassiveSheet(models.Model):
         if aa and 'analytic_distribution' in self.env['account.move.line']._fields:
             analytic_kw['analytic_distribution'] = {str(aa.id): 100.0}
 
-        purchase_taxes = self.env['account.tax'].search([
-            ('type_tax_use', '=', 'purchase'),
-            ('company_id', '=', self.company_id.id),
-        ], limit=2)
+        purchase_taxes = self.tax_ids or self.company_id.account_purchase_tax_id
         if fiscal_position:
             expense_account = fiscal_position.map_account(expense_account)
             purchase_taxes = fiscal_position.map_tax(purchase_taxes)
 
-        commands = []
-        if self.amount_retention > 0 and len(self.line_ids) > 1:
-            for line in self.line_ids:
-                if not line.amount_this_sal:
-                    continue
-                net_line = line.amount_this_sal * (1.0 - (self.retention_percent or 0.0) / 100.0)
-                commands.append(fields.Command.create({
-                    'name': '%s — %s' % (self.name, line.description),
-                    'quantity': 1.0,
-                    'price_unit': net_line,
-                    'account_id': expense_account.id,
-                    'tax_ids': [fields.Command.set(purchase_taxes.ids)],
-                    **analytic_kw,
-                }))
-        elif self.line_ids:
-            for line in self.line_ids.filtered(lambda l: l.amount_this_sal):
-                net_unit = line.amount_this_sal
-                if self.retention_percent:
-                    net_unit *= 1.0 - (self.retention_percent or 0.0) / 100.0
-                commands.append(fields.Command.create({
-                    'name': '%s — %s' % (self.name, line.description),
-                    'quantity': 1.0,
-                    'price_unit': net_unit,
-                    'account_id': expense_account.id,
-                    'tax_ids': [fields.Command.set(purchase_taxes.ids)],
-                    **analytic_kw,
-                }))
-        else:
-            commands.append(fields.Command.create({
-                'name': _('Passive SAL %s — progress') % self.name,
+        retention_factor = 1.0 - (self.retention_percent or 0.0) / 100.0
+        line_values = [
+            ('%s — %s' % (self.name, line.description), line.amount_this_sal * retention_factor)
+            for line in self.line_ids.filtered('amount_this_sal')
+        ] or [(_('Passive SAL %s — progress') % self.name, self.amount_net)]
+        commands = [
+            fields.Command.create({
+                'name': name,
                 'quantity': 1.0,
-                'price_unit': self.amount_net,
+                'price_unit': price,
                 'account_id': expense_account.id,
                 'tax_ids': [fields.Command.set(purchase_taxes.ids)],
                 **analytic_kw,
-            }))
+            })
+            for name, price in line_values
+        ]
         return commands
 
     def action_create_vendor_bill(self):

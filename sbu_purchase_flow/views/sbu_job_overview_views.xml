@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sbu_job_overview_list" model="ir.ui.view">
+        <field name="name">sbu.job.overview.list</field>
+        <field name="model">sbu.job.overview</field>
+        <field name="arch" type="xml">
+            <list string="Jobs overview" create="0" edit="0" delete="0"
+                  decoration-danger="over_budget" decoration-muted="not active">
+                <field name="project_code" optional="show"/>
+                <field name="project_id"/>
+                <field name="partner_id" optional="show"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="active" column_invisible="1"/>
+                <field name="over_budget" column_invisible="1"/>
+                <field name="contract_value" sum="Total"/>
+                <field name="budget_cost" sum="Total" optional="show"/>
+                <field name="planned_margin" sum="Total" optional="hide"/>
+                <field name="ordered" sum="Total"/>
+                <field name="received" sum="Total" optional="show"/>
+                <field name="costs" sum="Total"/>
+                <field name="budget_used_pct" widget="progressbar" optional="show"/>
+                <field name="paid" sum="Total" optional="hide"/>
+                <field name="to_pay" sum="Total" optional="hide"/>
+                <field name="invoiced" sum="Total"/>
+                <field name="invoiced_pct" widget="progressbar" optional="show"/>
+                <field name="collected" sum="Total"/>
+                <field name="to_collect" sum="Total"/>
+                <field name="margin" sum="Total"/>
+                <button name="action_open_purchase_orders" type="object" icon="fa-shopping-cart" title="Purchase orders"/>
+                <button name="action_open_vendor_bills" type="object" icon="fa-file-text-o" title="Vendor bills"/>
+                <button name="action_open_customer_invoices" type="object" icon="fa-pencil-square-o" title="Customer invoices"/>
+                <button name="action_open_job" type="object" icon="fa-building" title="Open job"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_sbu_job_overview_pivot" model="ir.ui.view">
+        <field name="name">sbu.job.overview.pivot</field>
+        <field name="model">sbu.job.overview</field>
+        <field name="arch" type="xml">
+            <pivot string="Jobs overview">
+                <field name="partner_id" type="row"/>
+                <field name="budget_cost" type="measure"/>
+                <field name="ordered" type="measure"/>
+                <field name="costs" type="measure"/>
+                <field name="invoiced" type="measure"/>
+                <field name="collected" type="measure"/>
+                <field name="margin" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_sbu_job_overview_graph" model="ir.ui.view">
+        <field name="name">sbu.job.overview.graph</field>
+        <field name="model">sbu.job.overview</field>
+        <field name="arch" type="xml">
+            <graph string="Jobs overview" type="bar">
+                <field name="project_id"/>
+                <field name="invoiced" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_sbu_job_overview_search" model="ir.ui.view">
+        <field name="name">sbu.job.overview.search</field>
+        <field name="model">sbu.job.overview</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="project_id"/>
+                <field name="project_code"/>
+                <field name="partner_id"/>
+                <filter name="over_budget" string="Over budget" domain="[('over_budget', '=', True)]"/>
+                <filter name="to_collect" string="To collect" domain="[('to_collect', '!=', 0)]"/>
+                <filter name="to_pay" string="To pay" domain="[('to_pay', '!=', 0)]"/>
+                <separator/>
+                <filter name="archived" string="Archived / cancelled" domain="[('active', '=', False)]"/>
+                <group>
+                    <filter name="group_partner" string="Customer" context="{'group_by': 'partner_id'}"/>
+                    <filter name="group_company" string="Company" context="{'group_by': 'company_id'}"
+                            groups="base.group_multi_company"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_sbu_job_overview" model="ir.actions.act_window">
+        <field name="name">Jobs overview</field>
+        <field name="res_model">sbu.job.overview</field>
+        <field name="view_mode">list,pivot,graph</field>
+        <field name="search_view_id" ref="view_sbu_job_overview_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No SBU job yet</p>
+            <p>Every job made from an estimate appears here with its budget, orders, costs, invoices and
+                payments, whether they were made in SBU or directly in Purchase and Invoicing.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_sbu_job_overview"
+              name="Jobs overview"
+              parent="sbu_estimate.menu_sbu_root"
+              action="action_sbu_job_overview"
+              groups="account.group_account_invoice,project.group_project_manager"
+              sequence="21"/>
+
+    <menuitem id="menu_sbu_job_overview_accounting"
+              name="Jobs overview (SBU)"
+              parent="account.menu_finance_reports"
+              action="action_sbu_job_overview"
+              groups="account.group_account_invoice"
+              sequence="90"/>
+</odoo>

@@ -28,6 +28,7 @@
                     <field name="sal_col_sal_start" invisible="not import_sal or auto_detect_sal_columns"/>
                     <field name="default_commission_pct" invisible="not import_anaco"/>
                     <field name="warn_when_bs_missing" invisible="not import_anaco"/>
+                    <field name="allow_legacy_files" invisible="not import_anaco"/>
                     <field name="import_sal_retention" invisible="not import_sal"/>
                 </group>
                 <footer>

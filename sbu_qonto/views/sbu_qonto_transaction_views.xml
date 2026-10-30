@@ -13,6 +13,10 @@
                     <button name="action_refresh_dates_from_raw_json" type="object"
                             string="Refresh dates" class="btn-secondary"
                             title="Re-read transfer dates from stored Qonto JSON (after upgrade)"/>
+                    <button name="action_sbu_sync_statement_lines" type="object" string="Sync to Accounting"
+                            class="btn-secondary" display="always" groups="account.group_account_user"/>
+                    <button name="action_sbu_create_bank_journals" type="object" string="Create missing bank journals"
+                            class="btn-secondary" display="always" groups="account.group_account_manager"/>
                     <button name="%(sbu_qonto.action_sbu_qonto_export_import_wizard)d" type="action"
                             string="Import export file" class="btn-secondary" display="always"
                             groups="account.group_account_manager"/>
@@ -39,6 +43,9 @@
                 <field name="match_vendor_bill_id" optional="show"/>
                 <field name="match_payment_id" optional="show"/>
                 <field name="source"/>
+                <field name="statement_status" widget="badge" optional="show"
+                       decoration-success="statement_status == 'reconciled'"
+                       decoration-warning="statement_status == 'to_reconcile'"/>
                 <field name="company_id" column_invisible="1"/>
             </list>
         </field>
@@ -85,6 +92,12 @@
                             <field name="settled_at"/>
                             <field name="emitted_at"/>
                         </group>
+                    </group>
+                    <group string="Accounting">
+                        <field name="statement_status" widget="badge"/>
+                        <field name="statement_line_id" invisible="not statement_line_id"/>
+                        <button name="action_sbu_open_statement_line" type="object" string="Open journal entry"
+                                class="btn-link" invisible="not statement_line_id" colspan="2"/>
                     </group>
                     <group string="Counterparty">
                         <field name="counterparty_name"/>

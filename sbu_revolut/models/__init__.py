@@ -6,3 +6,4 @@ from . import sbu_revolut_account
 from . import sbu_revolut_transaction
 from . import sbu_revolut_payment
 from . import account_move
+from . import sbu_revolut_bank_statement

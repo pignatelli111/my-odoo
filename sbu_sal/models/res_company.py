@@ -36,3 +36,14 @@ class ResCompany(models.Model):
         domain="[('active', '=', True)]",
         help='Credit line for retention on SAL customer invoices (liability / garanzia). Required when invoicing with a positive retention %.',
     )
+
+    def _sbu_sal_settings_action(self):
+        """Company form, where the SBU SAL settings are (General Information tab)."""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'res.company',
+            'res_id': self.id,
+            'views': [(False, 'form')],
+            'target': 'current',
+        }

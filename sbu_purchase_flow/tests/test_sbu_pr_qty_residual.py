@@ -78,4 +78,30 @@ class TestSbuPrQtyResidual(TransactionCase):
         pr.action_create_rfq()
         self.env.flush_all()
         self.assertEqual(len(pr.purchase_order_ids), 1)
-        self.assertAlmostEqual(pol.product_qty, 7.03, places=2)
+        self.assertAlmostEqual(pol.product_qty, 10.03, places=2, msg='re-run brings the draft back to the full need')
+        self.assertAlmostEqual(line._sbu_qty_remaining_to_order(), 0.0, places=2)
+
+    def test_rfq_to_several_suppliers_are_alternatives(self):
+        second = self.env['res.partner'].create({'name': 'Second quote', 'supplier_rank': 1})
+        pr, line = self._create_pr_with_line(10.0)
+        pr.vendor_ids = [(6, 0, (self.vendor | second).ids)]
+        pr.action_create_rfq()
+        self.env.flush_all()
+        self.assertEqual(len(pr.purchase_order_ids), 2)
+        for po in pr.purchase_order_ids:
+            self.assertAlmostEqual(po.order_line.filtered('sbu_pr_line_id').product_qty, 10.0, places=2,
+                                   msg=f'{po.partner_id.name} gets the full quantity to quote')
+        self.assertAlmostEqual(line.qty_ordered, 10.0, places=2, msg='alternative quotes are not added up')
+
+    def test_confirmed_partial_order_then_rfq_for_the_rest(self):
+        pr, line = self._create_pr_with_line(10.03)
+        pr.action_create_rfq()
+        po = pr.purchase_order_ids
+        po.order_line.filtered('sbu_pr_line_id').product_qty = 4.0
+        po.button_confirm()
+        self.env.flush_all()
+        self.assertAlmostEqual(line._sbu_qty_remaining_to_order(), 6.03, places=2)
+        pr.action_create_rfq()
+        new_po = pr.purchase_order_ids - po
+        self.assertEqual(len(new_po), 1)
+        self.assertAlmostEqual(new_po.order_line.filtered('sbu_pr_line_id').product_qty, 6.03, places=2)
