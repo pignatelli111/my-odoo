@@ -7,17 +7,16 @@ and uploaded in the background, so an unreachable OneDrive never blocks the user
 import json
 import logging
 import os
-import shutil
 import subprocess
 import tempfile
 import time
+import zipfile
 
 from markupsafe import Markup
 
 import odoo
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
-from odoo.tools import osutil
 from odoo.tools.misc import exec_pg_environ, find_pg_tool
 
 from odoo.addons.sbu_integrations.services.microsoft_graph import (
@@ -260,25 +259,45 @@ class SbuOnedriveUpload(models.Model):
 
     # ── Full backup ───────────────────────────────────────────────────────────
     @api.model
+    def _sbu_backup_tmpdir(self):
+        """Work folder next to the filestore: /tmp can be too small for a full backup on Odoo.sh."""
+        root = os.path.join(odoo.tools.config['data_dir'], 'sbu_backup_tmp')
+        os.makedirs(root, exist_ok=True)
+        return tempfile.TemporaryDirectory(dir=root)
+
+    @api.model
     def _sbu_build_backup(self, path):
-        """Odoo restorable archive: dump.sql + filestore + manifest.json (as the database manager makes)."""
+        """Odoo restorable archive: dump.sql + filestore + manifest.json (as the database manager makes).
+
+        The filestore is zipped in place instead of being copied first, so the backup only needs room
+        for the SQL dump and the archive. Failures raise a UserError that says why.
+        """
         dbname = self.env.cr.dbname
-        with tempfile.TemporaryDirectory() as dump_dir:
+        try:
+            pg_dump = find_pg_tool('pg_dump')
+        except Exception as err:  # noqa: BLE001 — find_pg_tool raises a bare Exception
+            raise UserError(_('The backup tool pg_dump is not available on this server (%s).', err)) from err
+        self.env.cr.execute("SELECT name, latest_version FROM ir_module_module WHERE state = 'installed'")
+        manifest = {
+            'odoo_dump': '1', 'db_name': dbname, 'version': odoo.release.version,
+            'version_info': odoo.release.version_info, 'major_version': odoo.release.major_version,
+            'pg_version': '%d.%d' % divmod(self.env.cr._obj.connection.server_version / 100, 100),
+            'modules': dict(self.env.cr.fetchall()),
+        }
+        with self._sbu_backup_tmpdir() as dump_dir:
+            dump = os.path.join(dump_dir, 'dump.sql')
+            proc = subprocess.run([pg_dump, '--no-owner', '--file=' + dump, dbname], env=exec_pg_environ(),
+                                  stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, check=False)
+            if proc.returncode:
+                raise UserError(_('pg_dump failed: %s', proc.stderr.decode(errors='replace').strip()[-1000:]))
             filestore = odoo.tools.config.filestore(dbname)
-            if os.path.exists(filestore):
-                shutil.copytree(filestore, os.path.join(dump_dir, 'filestore'))
-            self.env.cr.execute("SELECT name, latest_version FROM ir_module_module WHERE state = 'installed'")
-            manifest = {
-                'odoo_dump': '1', 'db_name': dbname, 'version': odoo.release.version,
-                'version_info': odoo.release.version_info, 'major_version': odoo.release.major_version,
-                'modules': dict(self.env.cr.fetchall()),
-            }
-            with open(os.path.join(dump_dir, 'manifest.json'), 'w') as fh:
-                json.dump(manifest, fh, indent=4)
-            cmd = [find_pg_tool('pg_dump'), '--no-owner', '--file=' + os.path.join(dump_dir, 'dump.sql'), dbname]
-            subprocess.run(cmd, env=exec_pg_environ(), stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, check=True)
-            with open(path, 'wb') as stream:
-                osutil.zip_dir(dump_dir, stream, include_dir=False, fnct_sort=lambda name: name != 'dump.sql')
+            with zipfile.ZipFile(path, 'w', compression=zipfile.ZIP_DEFLATED, allowZip64=True) as zf:
+                zf.write(dump, 'dump.sql')
+                zf.writestr('manifest.json', json.dumps(manifest, indent=4))
+                for folder, _dirs, files in os.walk(filestore):
+                    for name in files:
+                        full = os.path.join(folder, name)
+                        zf.write(full, os.path.join('filestore', os.path.relpath(full, filestore)))
         return path
 
     @api.model
@@ -292,7 +311,7 @@ class SbuOnedriveUpload(models.Model):
             client, token = self._sbu_client()
             drive_id, _root = self._sbu_root()
             folder_id = self._sbu_folder_id(client, token, BACKUP_FOLDER)
-            with tempfile.TemporaryDirectory() as tmp:
+            with self._sbu_backup_tmpdir() as tmp:
                 path = self._sbu_build_backup(os.path.join(tmp, filename))
                 size = os.path.getsize(path)
                 client.upload_file(drive_id, folder_id, filename, path, token)
