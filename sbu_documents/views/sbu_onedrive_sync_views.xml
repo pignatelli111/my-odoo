@@ -91,12 +91,26 @@
                                     class="btn-link" icon="fa-list"/>
                         </div>
                     </setting>
-                    <setting string="Download a full backup" help="Complete copy of the database and its files (Odoo restorable .zip). Save it in the company OneDrive folder. Works without the Azure app; it can take a few minutes to prepare.">
-                        <div class="text-muted"><field name="sbu_backup_download_last" readonly="1"/></div>
-                        <button name="action_sbu_download_backup" type="object" string="Download backup"
-                                class="btn-primary mt-2" icon="fa-download" groups="base.group_system"/>
+                    <setting string="Download a backup" help="Save it in the company OneDrive / SharePoint folder. Works without the Azure app; it can take a few minutes to prepare.">
+                        <field name="sbu_full_backup_available" invisible="1"/>
+                        <div class="text-muted" invisible="not sbu_full_backup_available">
+                            Full backup: database and files, restorable in Odoo (.zip).
+                        </div>
+                        <div class="text-muted" invisible="sbu_full_backup_available">
+                            On Odoo.sh the database is backed up by Odoo.sh every day (kept 3 months). To download it:
+                            <a href="https://www.odoo.sh/project" target="_blank">Odoo.sh</a> &gt; production branch &gt;
+                            Backups &gt; Download, with the filestore. Here you can download all documents.
+                        </div>
+                        <div class="text-muted mt-1"><field name="sbu_backup_download_last" readonly="1"/></div>
+                        <div class="d-flex flex-wrap gap-2 mt-2" groups="base.group_system">
+                            <button name="action_sbu_download_backup" type="object" string="Download backup"
+                                    class="btn-primary" icon="fa-download" invisible="not sbu_full_backup_available"/>
+                            <button name="action_sbu_download_documents" type="object" string="Download all documents"
+                                    icon="fa-file-archive-o"
+                                    class="btn-secondary"/>
+                        </div>
                     </setting>
-                    <setting string="Weekly full backup (Azure app)" help="Every Sunday night: complete copy of the database and its files (Odoo restorable .zip) in the folder «Backup Odoo». Needs the Azure app.">
+                    <setting string="Weekly backup (Azure app)" help="Every Sunday night, in the folder «Backup Odoo»: a full backup (database and files), or on Odoo.sh a zip of all documents. Needs the Azure app.">
                         <field name="sbu_onedrive_backup_enabled"/>
                         <div class="mt-1">
                             <span class="text-muted">Keep the last </span><field name="sbu_onedrive_backup_keep" class="oe_inline"/>
@@ -104,7 +118,7 @@
                         <div class="mt-1 text-muted"><field name="sbu_onedrive_backup_last" readonly="1"/></div>
                         <button name="action_sbu_onedrive_backup_now" type="object" string="Back up now"
                                 class="btn-secondary mt-2" icon="fa-database"
-                                confirm="Create a full backup now and copy it to OneDrive? It can take several minutes."/>
+                                confirm="Create a backup now and copy it to OneDrive? It can take several minutes."/>
                     </setting>
                 </block>
             </xpath>
