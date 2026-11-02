@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 import base64
-import io
-import zipfile
 from unittest.mock import patch
 
 from odoo.tests import tagged
@@ -150,21 +148,9 @@ class TestSbuOnedriveSync(TransactionCase):
             return path
 
         self.drive.backups = [{'id': f'old-{i}', 'name': f'{dbname}_2026-0{i}-01_0100.zip'} for i in range(1, 5)]
-        with patch.object(type(self.Upload), '_sbu_build_backup', fake_build), \
-                patch.object(type(self.Upload), '_sbu_full_backup_available', lambda _self: True):
+        with patch.object(type(self.Upload), '_sbu_build_backup', fake_build):
             status = self.Upload._sbu_backup_to_onedrive()
         self.assertTrue(status.startswith('OK'), status)
         self.assertTrue(self.drive.uploads[-1][1].startswith(f'{dbname}_'))
         self.assertEqual(sorted(self.drive.deleted), ['old-1', 'old-2'], 'only the 2 most recent are kept')
         self.assertIn('OK', self.env['ir.config_parameter'].sudo().get_param('sbu.onedrive_sync_backup_last'))
-
-    def test_weekly_backup_without_database_dump_sends_the_documents(self):
-        """Odoo.sh: no pg_dump rights, so the weekly backup is the zip of all documents."""
-        self._attach(self.job, 'contratto.pdf')
-        with patch.object(type(self.Upload), '_sbu_full_backup_available', lambda _self: False):
-            status = self.Upload._sbu_backup_to_onedrive()
-        self.assertTrue(status.startswith('OK'), status)
-        _parent, filename, data = self.drive.uploads[-1]
-        self.assertIn('_documenti_', filename)
-        with zipfile.ZipFile(io.BytesIO(data)) as zf:
-            self.assertTrue(any(n.endswith('/00 Documenti/contratto.pdf') for n in zf.namelist()), zf.namelist())

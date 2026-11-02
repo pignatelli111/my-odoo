@@ -19,6 +19,7 @@ from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 from odoo.tools.misc import exec_pg_environ, find_pg_tool
 
+from odoo.addons.sbu_documents.services.sql_dump import SqlDumpError, write_sql_dump
 from odoo.addons.sbu_integrations.services.microsoft_graph import (
     GraphHttpError,
     SbuMicrosoftGraphClient,
@@ -272,14 +273,11 @@ class SbuOnedriveUpload(models.Model):
     def _sbu_build_backup(self, path):
         """Odoo restorable archive: dump.sql + filestore + manifest.json (as the database manager makes).
 
-        The filestore is zipped in place instead of being copied first, so the backup only needs room
-        for the SQL dump and the archive. Failures raise a UserError that says why.
+        dump.sql comes from pg_dump where the server allows it, otherwise from the built-in dump (Odoo.sh
+        refuses pg_dump); both restore the same way. The filestore is zipped in place instead of being
+        copied first. Failures raise a UserError that says why.
         """
         dbname = self.env.cr.dbname
-        try:
-            pg_dump = find_pg_tool('pg_dump')
-        except Exception as err:  # noqa: BLE001 — find_pg_tool raises a bare Exception
-            raise UserError(_('The backup tool pg_dump is not available on this server (%s).', err)) from err
         self.env.cr.execute("SELECT name, latest_version FROM ir_module_module WHERE state = 'installed'")
         manifest = {
             'odoo_dump': '1', 'db_name': dbname, 'version': odoo.release.version,
@@ -289,10 +287,19 @@ class SbuOnedriveUpload(models.Model):
         }
         with self._sbu_backup_tmpdir() as dump_dir:
             dump = os.path.join(dump_dir, 'dump.sql')
-            proc = subprocess.run([pg_dump, '--no-owner', '--file=' + dump, dbname], env=exec_pg_environ(),
-                                  stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, check=False)
-            if proc.returncode:
-                raise UserError(_('pg_dump failed: %s', proc.stderr.decode(errors='replace').strip()[-1000:]))
+            pg_dump = self._sbu_pg_dump_allowed()
+            if pg_dump:
+                proc = subprocess.run([pg_dump, '--no-owner', '--file=' + dump, dbname], env=exec_pg_environ(),
+                                      stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, check=False)
+                if proc.returncode:
+                    raise UserError(_('pg_dump failed: %s', proc.stderr.decode(errors='replace').strip()[-1000:]))
+            else:
+                # Own cursor: one consistent snapshot, and its search_path change stays out of this request.
+                with self.env.registry.cursor() as dump_cr, open(dump, 'wb') as out:
+                    try:
+                        write_sql_dump(dump_cr, out)
+                    except SqlDumpError as err:
+                        raise UserError(str(err)) from err
             filestore = odoo.tools.config.filestore(dbname)
             with zipfile.ZipFile(path, 'w', compression=zipfile.ZIP_DEFLATED, allowZip64=True) as zf:
                 zf.write(dump, 'dump.sql')
@@ -304,14 +311,14 @@ class SbuOnedriveUpload(models.Model):
         return path
 
     @api.model
-    def _sbu_full_backup_available(self):
-        """False on Odoo.sh: its database user may not read pg_settings, which pg_dump needs."""
+    def _sbu_pg_dump_allowed(self):
+        """Path of pg_dump, or False where it cannot run: missing, or (Odoo.sh) no right to read pg_settings."""
         try:
-            find_pg_tool('pg_dump')
+            pg_dump = find_pg_tool('pg_dump')
         except Exception:  # noqa: BLE001 — find_pg_tool raises a bare Exception
             return False
         self.env.cr.execute("SELECT has_table_privilege('pg_catalog.pg_settings', 'SELECT')")
-        return bool(self.env.cr.fetchone()[0])
+        return pg_dump if self.env.cr.fetchone()[0] else False
 
     @api.model
     def _sbu_document_attachments(self):
@@ -326,8 +333,7 @@ class SbuOnedriveUpload(models.Model):
     def _sbu_build_files_backup(self, path):
         """Zip of every document and attachment in readable folders (job / kind), without the database.
 
-        Used where a database dump is not allowed (Odoo.sh); the database itself is in the Odoo.sh backups.
-        Returns the number of files.
+        For people who want to browse the files; the full backup has them too. Returns the number of files.
         """
         attachments = self._sbu_document_attachments()
         records = {}
@@ -361,8 +367,8 @@ class SbuOnedriveUpload(models.Model):
                 f'Documenti Odoo - {self.env.cr.dbname} - {fields.Datetime.now():%Y-%m-%d %H:%M} UTC\n'
                 f'{count} file: allegati e PDF, una cartella per commessa ({NO_JOB_FOLDER} / {OTHER_FOLDER}'
                 ' per il resto).\n\n'
-                'Il database non e incluso: su Odoo.sh il backup completo si scarica da\n'
-                'Odoo.sh > branch production > Backups > Download (con il filestore).\n'
+                'Il database non e incluso: e nel backup completo (Impostazioni > Download backup,\n'
+                'oppure la cartella Backup Odoo su OneDrive).\n'
             ))
         return count
 
@@ -372,18 +378,13 @@ class SbuOnedriveUpload(models.Model):
         keep = max(int(icp.get_param(ICP_PREFIX + 'backup_keep') or 4), 1)
         dbname = self.env.cr.dbname
         stamp = fields.Datetime.now().strftime('%Y-%m-%d_%H%M')
-        full_backup = self._sbu_full_backup_available()
-        filename = f'{dbname}_{stamp}.zip' if full_backup else f'{dbname}_documenti_{stamp}.zip'
+        filename = f'{dbname}_{stamp}.zip'
         try:
             client, token = self._sbu_client()
             drive_id, _root = self._sbu_root()
             folder_id = self._sbu_folder_id(client, token, BACKUP_FOLDER)
             with self._sbu_backup_tmpdir() as tmp:
-                path = os.path.join(tmp, filename)
-                if full_backup:
-                    self._sbu_build_backup(path)
-                else:
-                    self._sbu_build_files_backup(path)
+                path = self._sbu_build_backup(os.path.join(tmp, filename))
                 size = os.path.getsize(path)
                 client.upload_file(drive_id, folder_id, filename, path, token)
             backups = sorted(
@@ -472,14 +473,13 @@ class ResConfigSettings(models.TransientModel):
         help='Sharing link of the OneDrive / SharePoint folder that receives the documents and backups.',
     )
     sbu_onedrive_sync_enabled = fields.Boolean(string='Copy documents to OneDrive', config_parameter=ICP_PREFIX + 'enabled')
-    sbu_onedrive_backup_enabled = fields.Boolean(string='Weekly backup to OneDrive',
+    sbu_onedrive_backup_enabled = fields.Boolean(string='Weekly full backup to OneDrive',
                                                  config_parameter=ICP_PREFIX + 'backup_enabled')
     sbu_onedrive_backup_keep = fields.Integer(string='Backups to keep', config_parameter=ICP_PREFIX + 'backup_keep',
                                               default=4)
     sbu_onedrive_sync_status = fields.Char(string='Connected folder', compute='_compute_sbu_onedrive_sync_status')
     sbu_onedrive_backup_last = fields.Char(string='Last backup', compute='_compute_sbu_onedrive_sync_status')
     sbu_backup_download_last = fields.Char(string='Last downloaded backup', compute='_compute_sbu_onedrive_sync_status')
-    sbu_full_backup_available = fields.Boolean(compute='_compute_sbu_onedrive_sync_status')
 
     def _compute_sbu_onedrive_sync_status(self):
         icp = _icp(self.env)
@@ -487,7 +487,6 @@ class ResConfigSettings(models.TransientModel):
             settings.sbu_onedrive_sync_status = icp.get_param(ICP_PREFIX + 'root_name') or _('Not connected')
             settings.sbu_onedrive_backup_last = icp.get_param(ICP_PREFIX + 'backup_last') or _('Never')
             settings.sbu_backup_download_last = icp.get_param(ICP_PREFIX + 'backup_download_last') or _('Never')
-            settings.sbu_full_backup_available = self.env['sbu.onedrive.upload']._sbu_full_backup_available()
 
     def _sbu_notify(self, message, kind='success'):
         return {'type': 'ir.actions.client', 'tag': 'display_notification',

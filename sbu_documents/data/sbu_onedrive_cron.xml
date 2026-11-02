@@ -12,7 +12,7 @@
             <field name="active" eval="True"/>
         </record>
         <record id="ir_cron_sbu_onedrive_backup" model="ir.cron">
-            <field name="name">SBU OneDrive: weekly backup</field>
+            <field name="name">SBU OneDrive: full backup</field>
             <field name="model_id" ref="model_sbu_onedrive_upload"/>
             <field name="state">code</field>
             <field name="code">model.cron_sbu_onedrive_backup()</field>

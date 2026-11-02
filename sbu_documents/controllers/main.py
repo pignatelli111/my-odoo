@@ -11,8 +11,6 @@ from odoo.http import content_disposition, request
 
 _logger = logging.getLogger(__name__)
 
-ODOO_SH_URL = 'https://www.odoo.sh/project'
-
 
 class SbuBackupController(http.Controller):
 
@@ -20,16 +18,8 @@ class SbuBackupController(http.Controller):
     def sbu_backup_download(self):
         """Full Odoo backup (.zip: database + files), streamed to the administrator's browser."""
         self._sbu_check_admin()
-        _ = request.env._
-        Upload = request.env['sbu.onedrive.upload']
-        if not Upload._sbu_full_backup_available():
-            return self._sbu_page(_('Full backups are made by Odoo.sh'), Markup('<p>%s</p><p>%s</p>') % (
-                _('This server does not allow Odoo to copy its own database. '
-                  'Odoo.sh backs up the database every day and keeps the backups for 3 months.'),
-                _('To download one: Odoo.sh project > production branch > Backups > Download, with the filestore.'),
-            ), links=[(ODOO_SH_URL, _('Open Odoo.sh')), ('/sbu/backup/documents', _('Download all documents (.zip)'))])
         filename = f'{request.env.cr.dbname}_{fields.Datetime.now().strftime("%Y-%m-%d_%H%M")}.zip'
-        return self._sbu_send_zip(filename, Upload._sbu_build_backup)
+        return self._sbu_send_zip(filename, request.env['sbu.onedrive.upload']._sbu_build_backup)
 
     @http.route('/sbu/backup/documents', type='http', auth='user', methods=['GET'])
     def sbu_backup_documents(self):
