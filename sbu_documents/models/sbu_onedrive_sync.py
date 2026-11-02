@@ -46,6 +46,9 @@ ATTACHMENT_FOLDERS = {
     'account.move': '05 Fatture',
     'sbu.closure.requirement': '06 Chiusura',
 }
+# Binary fields whose file is a real document (other field attachments are images, icons, ...).
+DOCUMENT_FIELDS = ('invoice_pdf_report_file', 'l10n_it_edi_attachment_file')
+OTHER_FOLDER = 'Altri documenti'
 # PDF of confirmed documents: (model, domain, report xmlid, sub-folder).
 SNAPSHOT_RULES = (
     ('sbu.estimate', [('state', 'in', ('sent', 'won'))], 'sbu_estimate.action_report_sbu_estimate_offer', '01 Preventivo'),
@@ -301,18 +304,86 @@ class SbuOnedriveUpload(models.Model):
         return path
 
     @api.model
+    def _sbu_full_backup_available(self):
+        """False on Odoo.sh: its database user may not read pg_settings, which pg_dump needs."""
+        try:
+            find_pg_tool('pg_dump')
+        except Exception:  # noqa: BLE001 — find_pg_tool raises a bare Exception
+            return False
+        self.env.cr.execute("SELECT has_table_privilege('pg_catalog.pg_settings', 'SELECT')")
+        return bool(self.env.cr.fetchone()[0])
+
+    @api.model
+    def _sbu_document_attachments(self):
+        """Attachments that are documents: everything users attached, plus invoice PDF / XML files."""
+        attachments = self.env['ir.attachment'].sudo().search([
+            ('type', '=', 'binary'), ('res_model', '!=', False), ('res_id', '!=', 0),
+            '|', ('res_field', '=', False), ('res_field', 'in', DOCUMENT_FIELDS),
+        ], order='res_model, res_id, id')
+        return attachments.filtered(lambda a: not a.res_model.startswith('ir.') and a.res_model in self.env)
+
+    @api.model
+    def _sbu_build_files_backup(self, path):
+        """Zip of every document and attachment in readable folders (job / kind), without the database.
+
+        Used where a database dump is not allowed (Odoo.sh); the database itself is in the Odoo.sh backups.
+        Returns the number of files.
+        """
+        attachments = self._sbu_document_attachments()
+        records = {}
+        for model in set(attachments.mapped('res_model')):
+            ids = attachments.filtered(lambda a, m=model: a.res_model == m).mapped('res_id')
+            records.update({(model, r.id): r for r in self.env[model].sudo().browse(ids).exists()})
+        used, count = set(), 0
+        with zipfile.ZipFile(path, 'w', compression=zipfile.ZIP_DEFLATED, allowZip64=True) as zf:
+            for att in attachments:
+                record = records.get((att.res_model, att.res_id))
+                if not record:
+                    continue
+                if att.res_model in ATTACHMENT_FOLDERS:
+                    folder = self._sbu_folder_path(record, ATTACHMENT_FOLDERS[att.res_model])
+                else:
+                    folder = '/'.join([OTHER_FOLDER, safe_drive_name(self.env[att.res_model]._description),
+                                       safe_drive_name(record.display_name or str(record.id))])
+                base, ext = os.path.splitext(safe_drive_name(att.name or att.res_field or str(att.id)))
+                name, n = f'{folder}/{base}{ext}', 1
+                while name.lower() in used:
+                    n += 1
+                    name = f'{folder}/{base} ({n}){ext}'
+                used.add(name.lower())
+                full = att.store_fname and att._full_path(att.store_fname)
+                if full and os.path.isfile(full):
+                    zf.write(full, name)
+                else:
+                    zf.writestr(name, att.raw or b'')
+                count += 1
+            zf.writestr('LEGGIMI.txt', (
+                f'Documenti Odoo - {self.env.cr.dbname} - {fields.Datetime.now():%Y-%m-%d %H:%M} UTC\n'
+                f'{count} file: allegati e PDF, una cartella per commessa ({NO_JOB_FOLDER} / {OTHER_FOLDER}'
+                ' per il resto).\n\n'
+                'Il database non e incluso: su Odoo.sh il backup completo si scarica da\n'
+                'Odoo.sh > branch production > Backups > Download (con il filestore).\n'
+            ))
+        return count
+
+    @api.model
     def _sbu_backup_to_onedrive(self):
         icp = _icp(self.env)
         keep = max(int(icp.get_param(ICP_PREFIX + 'backup_keep') or 4), 1)
         dbname = self.env.cr.dbname
         stamp = fields.Datetime.now().strftime('%Y-%m-%d_%H%M')
-        filename = f'{dbname}_{stamp}.zip'
+        full_backup = self._sbu_full_backup_available()
+        filename = f'{dbname}_{stamp}.zip' if full_backup else f'{dbname}_documenti_{stamp}.zip'
         try:
             client, token = self._sbu_client()
             drive_id, _root = self._sbu_root()
             folder_id = self._sbu_folder_id(client, token, BACKUP_FOLDER)
             with self._sbu_backup_tmpdir() as tmp:
-                path = self._sbu_build_backup(os.path.join(tmp, filename))
+                path = os.path.join(tmp, filename)
+                if full_backup:
+                    self._sbu_build_backup(path)
+                else:
+                    self._sbu_build_files_backup(path)
                 size = os.path.getsize(path)
                 client.upload_file(drive_id, folder_id, filename, path, token)
             backups = sorted(
@@ -401,13 +472,14 @@ class ResConfigSettings(models.TransientModel):
         help='Sharing link of the OneDrive / SharePoint folder that receives the documents and backups.',
     )
     sbu_onedrive_sync_enabled = fields.Boolean(string='Copy documents to OneDrive', config_parameter=ICP_PREFIX + 'enabled')
-    sbu_onedrive_backup_enabled = fields.Boolean(string='Weekly full backup to OneDrive',
+    sbu_onedrive_backup_enabled = fields.Boolean(string='Weekly backup to OneDrive',
                                                  config_parameter=ICP_PREFIX + 'backup_enabled')
     sbu_onedrive_backup_keep = fields.Integer(string='Backups to keep', config_parameter=ICP_PREFIX + 'backup_keep',
                                               default=4)
     sbu_onedrive_sync_status = fields.Char(string='Connected folder', compute='_compute_sbu_onedrive_sync_status')
     sbu_onedrive_backup_last = fields.Char(string='Last backup', compute='_compute_sbu_onedrive_sync_status')
     sbu_backup_download_last = fields.Char(string='Last downloaded backup', compute='_compute_sbu_onedrive_sync_status')
+    sbu_full_backup_available = fields.Boolean(compute='_compute_sbu_onedrive_sync_status')
 
     def _compute_sbu_onedrive_sync_status(self):
         icp = _icp(self.env)
@@ -415,6 +487,7 @@ class ResConfigSettings(models.TransientModel):
             settings.sbu_onedrive_sync_status = icp.get_param(ICP_PREFIX + 'root_name') or _('Not connected')
             settings.sbu_onedrive_backup_last = icp.get_param(ICP_PREFIX + 'backup_last') or _('Never')
             settings.sbu_backup_download_last = icp.get_param(ICP_PREFIX + 'backup_download_last') or _('Never')
+            settings.sbu_full_backup_available = self.env['sbu.onedrive.upload']._sbu_full_backup_available()
 
     def _sbu_notify(self, message, kind='success'):
         return {'type': 'ir.actions.client', 'tag': 'display_notification',
@@ -453,6 +526,10 @@ class ResConfigSettings(models.TransientModel):
     def action_sbu_download_backup(self):
         """Download a full backup to save in OneDrive by hand (no Azure app needed)."""
         return {'type': 'ir.actions.act_url', 'url': '/sbu/backup/download', 'target': 'self'}
+
+    def action_sbu_download_documents(self):
+        """Download every document and attachment (no database): works everywhere, Odoo.sh included."""
+        return {'type': 'ir.actions.act_url', 'url': '/sbu/backup/documents', 'target': 'self'}
 
     def action_sbu_onedrive_backup_now(self):
         self.ensure_one()
